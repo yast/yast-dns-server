@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Jul 11 14:24:00 CEST 2003 - jsrain@suse.de
+
+- several minor updates
+- updated checking of bind version installed
+- 2.8.1
+
+-------------------------------------------------------------------
 Mon Jun 23 17:36:36 CEST 2003 - jsrain@suse.de
 
 - initial version

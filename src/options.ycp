@@ -668,25 +668,43 @@
 	    "widget" : `custom,
 	    "init" : ``(DnsServer::soaInit ()),
 	    "store" : ``(DnsServer::soaStore ()),
-	    "custom_widget" : `HBox (
+	    "custom_widget" : /*`VBox (
+		`HBox (
+		    `HWeight (1, `TextEntry (`id ("ttl"), _("$&TTL"))),
+		    `HWeight (1, `TextEntry (`id ("refresh"), _("Re&fresh")))
+		),
+		`HBox (
+		    `HWeight (1, `HStretch ()),
+		    `HWeight (1, `TextEntry (`id ("retry"), _("Re&try")))
+		)),*/
+
+		`HBox (
 		`VBox (
-		    // text entry
-		    `TextEntry (`id ("ttl"), _("$&TTL")),
-		    // text entry
-		    `TextEntry (`id ("server"), _("Primary &source")),
-		    // text entry
-		    `TextEntry (`id ("mail"), _("&Administrator's mail"))
+		    `VWeight (1,
+			// text entry
+			`TextEntry (`id ("ttl"), _("$TT&L"))),
+		    `VWeight (1, `VStretch ()),
+		    `VWeight (1,
+			// text entry
+			`TextEntry (`id ("server"), _("Primary &source"))),
+		    `VWeight (1,
+			// text entry
+			`TextEntry (`id ("mail"), _("&Administrator's mail")))
 		),
 		`HSpacing (1),
 		`VBox (
-		    // text entry
-		    `TextEntry (`id ("refresh"), _("Re&fresh")),
-		    // text entry
-		    `TextEntry (`id ("retry"), Label::RetryButton ()),
-		    // text entry
-		    `TextEntry (`id ("expiry"), _("E&xpiry")),
-		    // text entry
-		    `TextEntry (`id ("minimum"), _("Mi&nimum"))
+		    `VWeight (1,
+			// text entry
+			`TextEntry (`id ("refresh"), _("Re&fresh"))),
+		    `VWeight (1,
+			// text entry
+			`TextEntry (`id ("retry"), _("Re&try"))),
+		    `VWeight (1,
+			// text entry
+			`TextEntry (`id ("expiry"), _("E&xpiry"))),
+		    `VWeight (1,
+			// text entry
+			`TextEntry (`id ("minimum"), _("Mi&nimum")))
 		)
 	    ),
 	];
