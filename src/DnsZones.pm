@@ -157,14 +157,19 @@ sub ZoneRead {
     my $zone = $_[0];
     my $file = $_[1];
 
-    my %zonemap = %{SCR::Read (".dns.zone", "/var/lib/named/$file")};
+    my $zonemap_ref = SCR::Read (".dns.zone", "/var/lib/named/$file");
+    if (! defined ($zonemap_ref))
+    {
+	return return {};
+    }
+    my %zonemap = %{$zonemap_ref};
     my %soa = %{$zonemap{"soa"} || {}};
     my %ret = (
 	"zone" => $zone,
 	"ttl" => $zonemap{"TTL"} || "2D",
 	"soa" => \%soa,
     );
-    my @original_records = @{$zonemap{"records"}};
+    my @original_records = @{$zonemap{"records"} || []};
     my %in_mx = ();
     my %in_prt = ();
     my %in_cname = ();

@@ -123,7 +123,11 @@ while ( <STDIN> )
 
 	    y2milestone ("Reading zone file $file");
 
-	    open (IN, "$file");
+	    if (! open (IN, "$file"))
+	    {
+		ycp::Return (undef);
+		next;
+	    }
 	    while ( $line = <IN> )
 	    {
 		if ($line =~ /^\$TTL[ \t]*[0-9]+[A-Za-z]*.*$/) # TTL record

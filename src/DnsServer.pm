@@ -31,6 +31,7 @@ YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("Mode");
 YaST::YCP::Import ("Package");
 YaST::YCP::Import ("Progress");
+YaST::YCP::Import ("Report");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("DnsZones");
 YaST::YCP::Import ("DnsTSIGKeys");
@@ -225,7 +226,7 @@ sub ReadDDNSKeys {
     foreach my $key (@globals) {
         if ($key eq "include")
         {
-	    my @filenames = SCR::Read (".dns.named.value.$key");
+	    my @filenames = SCR::Read (".dns.named.value.$key") || ();
 	    foreach my $filename (@filenames) {
 		y2milestone ("Reading include file $filename");
 		$filename = NormalizeFilename ($filename);
@@ -247,7 +248,7 @@ sub AdaptDDNS {
 
     my @globals = SCR::Dir (".dns.named.value");
 
-    my @includes = SCR::Read (".dns.named.value.include");
+    my @includes = SCR::Read (".dns.named.value.include") || ();
     #translate list to hash
     my %includes = ();
     foreach my $i (@includes) {
@@ -279,7 +280,7 @@ sub AdaptDDNS {
     y2milestone ("Final includes: @includes");
     SCR::Write (".dns.named.value.include", \@includes);
 
-    my $includes = SCR::Read (".sysconfig.named.NAMED_CONF_INCLUDE_FILES");
+    my $includes = SCR::Read (".sysconfig.named.NAMED_CONF_INCLUDE_FILES")|| "";
     @includes = split (/ /, $includes);
     %includes = ();
     foreach my $i (@includes) {
@@ -650,7 +651,7 @@ sub Read {
     # Information about the daemon
     $start_service = Service::Enabled ("named");
     y2milestone ("Service start: $start_service");
-    $chroot = SCR::Read (".sysconfig.named.NAMED_RUN_CHROOTED", "")
+    $chroot = SCR::Read (".sysconfig.named.NAMED_RUN_CHROOTED")
 	? 1
 	: 0;
     y2milestone ("Chroot: $chroot");
@@ -665,11 +666,11 @@ sub Read {
 	@opt_names = ();
     }
     foreach my $key (@opt_names) {
-	my @values = SCR::Read (".dns.named.value.options.$key");
+	my @values = SCR::Read (".dns.named.value.options.$key") || ();
 	foreach my $value (@values) {
 	    push @options, {
 		"key" => $key,
-		"value" => SCR::Read (".dns.named.value.options.$key"),
+		"value" => SCR::Read (".dns.named.value.options.$key") || "",
 	    };
 	}
     }
@@ -682,9 +683,9 @@ sub Read {
 	my $path_el = $_;
 	$path_el =~ s/\"/\\\"/g;
 	$path_el = "\"$path_el\"";
-	my @tmp = SCR::Read (".dns.named.value.$path_el.type");
+	my @tmp = SCR::Read (".dns.named.value.$path_el.type") || ();
 	my $zonetype = $tmp[0] || "";
-	@tmp = SCR::Read (".dns.named.value.$path_el.file");
+	@tmp = SCR::Read (".dns.named.value.$path_el.file") || ();
 	my $filename = $tmp[0] || "";
 	if (! defined $filename)
 	{
@@ -717,7 +718,7 @@ sub Read {
 	my @zone_options_names = SCR::Dir (".dns.named.value.$path_el");
 	my @zone_options = ();
 	foreach my $key (@zone_options_names) {
-	    my @values = SCR::Read (".dns.named.value.$path_el.$key");
+	    my @values = SCR::Read (".dns.named.value.$path_el.$key") || ();
 	    foreach my $value (@values) {
 		push @zone_options, {
 		    "key" => $key,
