@@ -1564,36 +1564,36 @@ map<string,map<string,any> > new_widgets = $[
     "auto_start_up" : CWMServiceStart::CreateAutoStartWidget ($[
 	"get_service_auto_start" : DnsServer::GetStartService,
 	"set_service_auto_start" : DnsServer::SetStartService,
-	// radio button
+	// radio button (starting DNS service - option 1)
 	"start_auto_button" : _("Start DNS Server When &Booting"),
-	// radio button
+	// radio button (starting DNS service - option 2)
 	"start_manual_button" : _("Start DNS Server &Manually"),
 	"help" : sformat (CWMServiceStart::AutoStartHelpTemplate (),
-	    // part of help text - radio button label, NO SHORTCUT!!!
+	    // part of help text, used to describe radiobuttons (matching starting DNS service but without "&")
 	    _("Start DNS Server when Booting"),
-	    // part of help text - radio button label, NO SHORTCUT!!!
+	    // part of help text, used to describe radiobuttons (matching starting DNS service but without "&")
 	    _("Start DNS Server Manually")
 	),
     ]),
     "start_stop" : CWMServiceStart::CreateStartStopWidget ($[
 	"service_id" : "named",
-	// label - service status
+	// label - service status, informative text
 	"service_running_label" : _("DNS server is running"),
-	// label - service status
+	// label - service status, informative text
 	"service_not_running_label" : _("DNS server is not running"),
-	// push button
+	// push button (DNS service handling)
 	"start_now_button" : _("&Start DNS Server Now"),
-	// push button
+	// push button (DNS service handling)
 	"stop_now_button" : _("S&top DNS Server Now"),
 	"save_now_action" : SaveAndRestart,
-	// push button
+	// push button (DNS service handling)
 	"save_now_button" : _("Save Settings and Restart DNS Server &Now"),
 	"help" : sformat (CWMServiceStart::StartStopHelpTemplate (true),
-	    // part of help text - push button label, NO SHORTCUT!!!
+	    // part of help text, used to describe pusbuttons (matching DNS service handling but without "&")
 	    _("Start DNS Server Now"),
-	    // part of help text - push button label, NO SHORTCUT!!!
+	    // part of help text, used to describe pusbuttons (matching DNS service handling but without "&")
 	    _("Stop DNS Server Now"),
-	    // part of help text - push button label, NO SHORTCUT!!!
+	    // part of help text, used to describe pusbuttons (matching DNS service handling but without "&")
 	    _("Save Settings and Restart DNS Server Now")),
     ]),
     "firewall" : CWMFirewallInterfaces::CreateOpenFirewallWidget ($[
@@ -1603,10 +1603,9 @@ map<string,map<string,any> > new_widgets = $[
     "use_ldap" : CWMServiceStart::CreateLdapWidget ($[
 	"get_use_ldap" : DnsServer::GetUseLdap,
 	"set_use_ldap" : DnsServer::SetUseLdap,
-	// checkbox label
+	// TRANSLATORS: checkbox label, turning LDAP support on or off
 	"use_ldap_checkbox" : _("&LDAP Support Active"),
-	// FIXME: help for SLES
-	"help" : "",
+	"help" : CWMServiceStart::EnableLdapHelp(),
     ]),
     "forwarders" : $[
 	"widget"	: `custom,
