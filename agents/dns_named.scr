@@ -21,7 +21,10 @@
 	    "comments"	: [ "^[ \t]*#.*$", "^[ \t]*$" ],
 	    "params"    : [
 		$[ "match" : [ "([^ \t]+)[ \t]([^ \t]+(.*[^ \t]+)+)[ \t]*;$", "%s %s;" ]],
-		$[ "match" : [ "([^ \t]+)(.*[^ \t]+)*[ \t]*(\\{.*\\})[ \t]*;", "%s %s;" ]],
+		// (...)* made the agent crash when it did not match,
+		// changed it to ((...)*), #39597
+		// Still don't know why this is here at all
+		$[ "match" : [ "([^ \t]+)((.*[^ \t]+)*)[ \t]*\\{.*\\}[ \t]*;", "%s %s;" ]],
 	    ],
 	    "sections" : [
 		$[

@@ -1,8 +1,9 @@
 @HEADER-COMMENT@
-# neededforbuild yast2-devel-packages perl-gettext yast2-perl-bindings yast2-firewall
+# neededforbuild yast2-devel-packages perl-gettext yast2-perl-bindings yast2-firewall yast2-ldap-server perl-X500-DN yast2-network perl-Digest-SHA1 perl-Parse-RecDescent
+
 
 @HEADER@
-Requires:	yast2 /usr/bin/host yast2-firewall perl-gettext yast2-perl-bindings bind-utils
+Requires:	yast2 /usr/bin/host yast2-firewall perl-gettext yast2-perl-bindings bind-utils yast2-ldap-server perl-X500-DN yast2-network perl-Digest-SHA1 perl-Parse-RecDescent
 
 BuildArchitectures:	noarch
 

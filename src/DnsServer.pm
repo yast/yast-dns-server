@@ -8,28 +8,24 @@ package DnsServer;
 use strict;
 
 use ycp;
-use YaST::YCP qw(Boolean);
+use YaST::YCP qw(Boolean sformat);
 use Data::Dumper;
 use Time::localtime;
 
-use Locale::gettext;
-use POSIX ();     # Needed for setlocale()
-
-POSIX::setlocale(LC_MESSAGES, "");
+use YaPI;
 textdomain("dns-server");
 
 our %TYPEINFO;
 
 
-# FIXME this should be defined only once for all modules
-sub _ {
-    return gettext ($_[0]);
-}
-
-
 YaST::YCP::Import ("SCR");
+YaST::YCP::Import ("Directory");
+YaST::YCP::Import ("DNS");
+YaST::YCP::Import ("Ldap");
 YaST::YCP::Import ("Mode");
+YaST::YCP::Import ("NetworkDevices");
 YaST::YCP::Import ("Package");
+YaST::YCP::Import ("Popup");
 YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Report");
 YaST::YCP::Import ("Service");
@@ -37,12 +33,37 @@ YaST::YCP::Import ("SuSEFirewall");
 use DnsZones;
 use DnsTsigKeys;
 
+use lib "/usr/share/YaST2/modules/";
+use YaPI::LdapServer;
+
 use DnsData qw(@tsig_keys $start_service $chroot @allowed_interfaces
 @zones @options @logging $ddns_file_name
 $modified $save_all @files_to_delete %current_zone $current_zone_index
 $adapt_firewall %firewall_settings $write_only @new_includes @deleted_includes
 @zones_update_actions);
 use DnsRoutines;
+
+my $use_ldap = 0;
+
+my $ldap_available = 0;
+
+my %yapi_conf = ();
+
+my $modify_named_conf_dynamically = 0;
+
+my $modify_resolv_conf_dynamically = 0;
+
+my @acl = ();
+
+my @logging = ();
+
+my $ldap_server = "";
+
+my $ldap_port = "";
+
+my $ldap_domain = "";
+
+my $ldap_config_dn = "";
 
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
@@ -84,6 +105,12 @@ sub ZoneWrite {
 	return 1;
     }
 
+    if ($zone_name eq "localhost" || $zone_name eq "0.0.127.in-addr.arpa")
+    {
+	y2milestone ("Skipping system zone $zone_name");
+	return 1;
+    }
+
     my $zone_file = $zone_map{"file"} || "";
     if ($zone_file eq "")
     {
@@ -122,7 +149,8 @@ sub ZoneWrite {
     $zone_map{"file"} = $zone_file;
 
     #save changed of named.conf
-    my $base_path = ".dns.named.value.\"zone \\\"$zone_name\\\" in\"";
+    my $path_comp = "zone \"$zone_name\" in";
+    my $base_path = ".dns.named.value.\"\Q$path_comp\E\"";
     SCR->Write ("$base_path.type", [$zone_map{"type"} || "master"]);
 
     my @old_options = @{SCR->Dir ($base_path) || []};
@@ -133,7 +161,7 @@ sub ZoneWrite {
 	! $self->contains (\@save_options, $_);
     } @old_options;
     foreach my $o (@del_options) {
-	SCR->Write ("$base_path.$o", undef);
+	SCR->Write ("$base_path.\"\Q$o\E\"", undef);
     };
 
     my @tsig_keys = ();
@@ -141,7 +169,7 @@ sub ZoneWrite {
     foreach my $o (@{$zone_map{"options"}}) {
 	my $key = $o->{"key"};
 	my $val = $o->{"value"};
-	SCR->Write ("$base_path.$key", [$val]);
+	SCR->Write ("$base_path.\"\Q$key\E\"", [$val]);
 	if ($key eq "allow-update"
 	    && $val =~ /^.*key[ \t]+([^ \t;]+)[ \t;]+.*$/)
 	{
@@ -150,11 +178,14 @@ sub ZoneWrite {
     };
 
     my $zone_type = $zone_map{"type"} || "master";
-
     if ($zone_type eq "master")
     {
 	# write the zone file
-	if (@tsig_keys == 0 || ! $allow_update)
+	if ($use_ldap)
+	{
+	    DnsZones->ZoneFileWriteLdap (\%zone_map);
+	}
+	elsif (@tsig_keys == 0 || ! $allow_update)
 	{
 	    DnsZones->ZoneFileWrite (\%zone_map);
 	}
@@ -245,7 +276,7 @@ sub AdaptFirewall {
     if (! $ret)
     {
         # error report
-        Report->Error (_("Error occurred while setting firewall settings."));
+        Report->Error (__("Error occurred while setting firewall settings."));
     }
     return $ret;
 }
@@ -323,12 +354,25 @@ sub SaveGlobals {
     my @del_zones = grep {
 	! $self->contains (\@current_zones, $_);
     } @old_zones;
+    @del_zones = grep {
+	$_ ne "zone \".\" in" && $_ ne "zone \"localhost\" in"
+	    && $_ ne "zone \"0.0.127.in-addr.arpa\" in"
+    } @del_zones;
     y2milestone ("Deleting zones @del_zones");
     foreach my $z (@del_zones) {
 	$z =~ /^zone[ \t]+\"([^ \t]+)\".*/;
 	$z = $1;
-	$z = "\"zone \\\"$z\\\" in\"";
-	SCR->Write (".dns.named.section.$z", undef);
+	$z = "zone \"$z\" in";
+	SCR->Write (".dns.named.section.\"\Q$z\E\"", undef);
+    }
+
+    if ($use_ldap)
+    {
+	my @zone_names = map {
+	    my %zone = %{$_};
+	    $zone{"zone"};
+	} @zones;
+	DnsZones->ZonesDeleteLdap (\@zone_names);
     }
 
     # delete all removed options
@@ -339,17 +383,57 @@ sub SaveGlobals {
     my @del_options = grep {
 	! $self->contains (\@current_options, $_);
     } @old_options;
-    foreach my $o (@del_options) {
-	SCR->Write (".dns.named.value.options.$o", undef);
+    foreach my $o (@del_options)
+    {
+	SCR->Write (".dns.named.value.options.\"\Q$o\E\"", undef);
     }
 
     # save the settings
+    my %opt_map = ();
     foreach my $option (@options)
     {
 	my $key = $option->{"key"};
 	my $value = $option->{"value"};
-	# FIXME doesn't work with multiple occurences !!!
-	SCR->Write (".dns.named.value.options.$key", [$value]);
+	my @values = @{$opt_map{$key} || []};
+	push @values, $value;
+	$opt_map{$key} = \@values;
+    }
+    foreach my $key (sort (keys (%opt_map)))
+    {
+	my @values = @{$opt_map{$key} || []};
+	SCR->Write (".dns.named.value.options.\"\Q$key\E\"", \@values);
+    }
+
+    # delete all removed logging options
+    my @old_logging = ();
+    if (scalar (grep (/logging/, @{SCR->Dir (".dns.named.section") || []})) > 0)
+    {
+	@old_logging = @{SCR->Dir (".dns.named.value.logging") || []};
+    }
+    my @current_logging = map {
+	$_->{"key"}
+    } (@logging);
+    my @del_logging = grep {
+	! $self->contains (\@current_logging, $_);
+    } @old_logging;
+    foreach my $o (@del_logging) {
+	SCR->Write (".dns.named.value.logging.\"\Q$o\E\"", undef);
+    }
+
+    # save the logging settings
+    my %log_map = ();
+    foreach my $logopt (@logging)
+    {
+	my $key = $logopt->{"key"};
+	my $value = $logopt->{"value"};
+	my @values = @{$log_map{$key} || []};
+	push @values, $value;
+	$log_map{$key} = \@values;
+    }
+    foreach my $key (sort (keys (%log_map)))
+    {
+	my @values = @{$log_map{$key} || []};
+	SCR->Write (".dns.named.value.logging.\"\Q$key\E\"", \@values);
     }
 
     # really save the file
@@ -484,6 +568,7 @@ BEGIN { $TYPEINFO{SetStartService} = [ "function", "void", "boolean" ];}
 sub SetStartService {
     my $self = shift;
     $start_service = shift;
+
     $self->SetModified ();
 }
 
@@ -492,6 +577,31 @@ sub GetStartService {
     my $self = shift;
 
     return Boolean($start_service);
+}
+
+BEGIN { $TYPEINFO{SetUseLdap} = [ "function", "void", "boolean", "boolean" ];}
+sub SetUseLdap {
+    my $self = shift;
+    $use_ldap = shift;
+    my $process_change = shift;
+
+    $save_all = 1;
+
+    if ($process_change)
+    {
+	$self->LdapStore ();
+	Progress->off ();
+	$self->Read ();
+	Progress->on ();
+	$self->SetModified ();
+    }
+}
+
+BEGIN { $TYPEINFO{GetUseLdap} = [ "function", "boolean" ];}
+sub GetUseLdap {
+    my $self = shift;
+
+    return Boolean($use_ldap);
 }
 
 BEGIN { $TYPEINFO{SetChrootJail} = [ "function", "void", "boolean" ];}
@@ -599,6 +709,21 @@ sub SetGlobalOptions {
     $self->SetModified ();
 }
 
+BEGIN{$TYPEINFO{GetLoggingOptions}=["function",["list",["map","string","any"]]];}
+sub GetLoggingOptions {
+    my $self = shift;
+
+    return \@logging;
+}
+
+BEGIN{$TYPEINFO{SetLoggingOptions}=["function","void",["list",["map","string","any"]]];}
+sub SetLoggingOptions {
+    my $self = shift;
+    @logging = @{+shift};
+
+    $self->SetModified ();
+}
+
 BEGIN{$TYPEINFO{StopDnsService} = ["function", "boolean"];}
 sub StopDnsService {
     my $self = shift;
@@ -635,7 +760,50 @@ sub StartDnsService {
     }
     y2error ("Starting DNS daemon failed");
     return 0;
-}   
+}
+
+BEGIN{$TYPEINFO{GetModifyNamedConfDynamically} = ["function","boolean"];}
+sub GetModifyNamedConfDynamically {
+    my $self = shift;
+
+    return $modify_named_conf_dynamically;
+}
+
+BEGIN{$TYPEINFO{SetModifyNamedConfDynamically} = ["function","void","boolean"];}
+sub SetModifyNamedConfDynamically {
+    my $self = shift;
+    $modify_named_conf_dynamically = shift;
+    $self->SetModified ();
+}
+
+BEGIN{$TYPEINFO{GetModifyResolvConfDynamically} = ["function","boolean"];}
+sub GetModifyResolvConfDynamically {
+    my $self = shift;
+
+    return $modify_resolv_conf_dynamically;
+}
+
+BEGIN{$TYPEINFO{SetModifyResolvConfDynamically} = ["function","void","boolean"];}
+sub SetModifyResolvConfDynamically {
+    my $self = shift;
+    $modify_resolv_conf_dynamically = shift;
+    $self->SetModified ();
+}
+
+BEGIN{$TYPEINFO{GetAcl} = ["function",["list","string"]];}
+sub GetAcl {
+    my $self = shift;
+
+    return \@acl;
+}
+
+
+BEGIN{$TYPEINFO{SetAcl} = ["function","void",["list","string"]];}
+sub SetAcl {
+    my $self = shift;
+    @acl = @{+shift};
+}
+   
 
 ##------------------------------------
 
@@ -654,25 +822,25 @@ sub Read {
     my $self = shift;
 
     # DNS server read dialog caption
-    my $caption = _("Initializing DNS Server Configuration");
+    my $caption = __("Initializing DNS Server Configuration");
 
     Progress->New( $caption, " ", 3, [
 	# progress stage
-	_("Check the environment"),
+	__("Check the environment"),
 	# progress stage
-	_("Flush caches of the DNS daemon"),
+	__("Flush caches of the DNS daemon"),
 	# progress stage
-	_("Restart the DNS daemon"),
+	__("Read the settings"),
     ],
     [
 	# progress step
-	_("Checking the environment..."),
+	__("Checking the environment..."),
 	# progress step
-	_("Flushing caches of the DNS daemon..."),
+	__("Flushing caches of the DNS daemon..."),
 	# progress step
-	_("Reading the settings..."),
+	__("Reading the settings..."),
 	# progress step
-	_("Finished")
+	__("Finished")
     ],
     ""
     );
@@ -686,12 +854,15 @@ sub Read {
     if (! (Mode->config () || Package->Installed ("bind")))
     {
 	my $installed = Package->Install ("bind");
-	if (! $installed && ! Package->LastOperationCanceled ())
+	if (! $installed)
 	{
 	    # error popup
-	    Report->Error (_("Installing required packages failed."));
+	    Report->Error (__("Installing required packages failed."));
+	    return Boolean (0);
 	}
     }
+
+    $self->LdapInit (0);
  
     Progress->NextStage ();
     sleep ($sl);
@@ -709,20 +880,36 @@ sub Read {
     # Information about the daemon
     $start_service = Service->Enabled ("named");
     y2milestone ("Service start: $start_service");
-    $chroot = SCR->Read (".sysconfig.named.NAMED_RUN_CHROOTED")
+    $chroot = SCR->Read (".sysconfig.named.NAMED_RUN_CHROOTED") ne "no"
 	? 1
 	: 0;
     y2milestone ("Chroot: $chroot");
+
+    $modify_named_conf_dynamically = SCR->Read (
+	".sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY") eq "yes"
+	    ? 1
+	    : 0;
+
+    $modify_resolv_conf_dynamically = SCR->Read (
+	".sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY") eq "yes"
+	    ? 1
+	    : 0;
 
     my @zone_headers = @{SCR->Dir (".dns.named.section") || []};
     @zone_headers = grep (/^zone/, @zone_headers);
     y2milestone ("Read zone headers @zone_headers");
 
+    @options = ();
     my @opt_names = @{SCR->Dir (".dns.named.value.options") || []};
     if (! @opt_names)
     {
 	@opt_names = ();
     }
+    my %opt_hash = ();
+    foreach my $opt_name (@opt_names) {
+	$opt_hash{$opt_name} = 1;
+    }
+    @opt_names = sort (keys (%opt_hash));
     foreach my $key (@opt_names) {
 	my @values = @{SCR->Read (".dns.named.value.options.$key") || []};
 	foreach my $value (@values) {
@@ -733,14 +920,40 @@ sub Read {
 	}
     }
 
+    @logging = ();
+    my @log_names = ();
+    if (scalar (grep (/logging/, @{SCR->Dir (".dns.named.section") || []})) > 0)
+    {
+	@log_names = @{SCR->Dir (".dns.named.value.logging") || []};
+    }
+    if (! @log_names)
+    {
+	@log_names = ();
+    }
+    my %log_hash = ();
+    foreach my $log_name (@log_names) {
+	$log_hash{$log_name} = 1;
+    }
+    @log_names = sort (keys (%log_hash));
+    foreach my $key (@log_names) {
+	my @values = @{SCR->Read (".dns.named.value.logging.$key") || []};
+	foreach my $value (@values) {
+	    push @logging, {
+		"key" => $key,
+		"value" => $value,
+	    };
+	}
+    }
+
+    @acl = @{SCR->Read (".dns.named.value.acl") || {}};
+
     $self->ReadDDNSKeys ();
 
     @zones = map {
 	my $zonename = $_;
 	$zonename =~ s/.*\"(.*)\".*/$1/;
 	my $path_el = $_;
-	$path_el =~ s/\"/\\\"/g;
-	$path_el = "\"$path_el\"";
+	$path_el = "\"\Q$path_el\E\"";
 	my @tmp = @{SCR->Read (".dns.named.value.$path_el.type") || []};
 	my $zonetype = $tmp[0] || "";
 	@tmp = @{SCR->Read (".dns.named.value.$path_el.file") || []};
@@ -754,10 +967,19 @@ sub Read {
 	{
 	    $filename =~ s/^\"(.*)\"$/$1/;
 	}
-	my %zd = ();
+	my %zd = (
+	    "type" => $zonetype
+	);
 	if ($zonetype eq "master")
 	{
-	    %zd = %{DnsZones->ZoneRead ($zonename, $filename)};
+	    if ($use_ldap)
+	    {
+		%zd = %{DnsZones->ZoneReadLdap ($zonename, $filename)};
+	    }
+	    else
+	    {
+		%zd = %{DnsZones->ZoneRead ($zonename, $filename)};
+	    }
 	}
 	elsif ($zonetype eq "slave" || $zonetype eq "stub")
 	{
@@ -776,7 +998,7 @@ sub Read {
 	my @zone_options_names = @{SCR->Dir (".dns.named.value.$path_el")|| []};
 	my @zone_options = ();
 	foreach my $key (@zone_options_names) {
-	    my @values = @{SCR->Read (".dns.named.value.$path_el.$key") || []};
+	    my @values = @{SCR->Read (".dns.named.value.$path_el.\"\Q$key\E\"") || []};
 	    foreach my $value (@values) {
 		push @zone_options, {
 		    "key" => $key,
@@ -784,13 +1006,19 @@ sub Read {
 		}
 	    }
 	}
-	
-	$zd{"file"} = $filename;
-	$zd{"type"} = $zonetype;
-	$zd{"zone"} = $zonename;
-	$zd{"options"} = \@zone_options;
+
+	if (scalar (keys (%zd)) > 0)
+	{	
+	    $zd{"file"} = $filename;
+	    $zd{"type"} = $zonetype;
+	    $zd{"zone"} = $zonename;
+	    $zd{"options"} = \@zone_options;
+	}
 	\%zd;
     } @zone_headers;
+    @zones = grep {
+	scalar (keys (%{$_})) > 0
+    } @zones;
     $modified = 0;
 
     Progress->NextStage ();
@@ -804,33 +1032,33 @@ sub Write {
     my $self = shift;
 
     # DNS server read dialog caption
-    my $caption = _("Initializing DNS Server Configuration");
+    my $caption = __("Saving DNS Server Configuration");
 
     Progress->New( $caption, " ", 5, [
 	# progress stage
-	_("Flush caches of the DNS daemon"),
+	__("Flush caches of the DNS daemon"),
 	# progress stage
-	_("Save configuration files"),
+	__("Save configuration files"),
 	# progress stage
-	_("Restart the DNS daemon"),
+	__("Restart the DNS daemon"),
 	# progress stage
-	_("Update zone files"),
+	__("Update zone files"),
 	# progress stage
-	_("Adjust the DNS service"),
+	__("Adjust the DNS service"),
     ],
     [
 	# progress step
-	_("Flushing caches of the DNS daemon..."),
+	__("Flushing caches of the DNS daemon..."),
 	# progress step
-	_("Saving configuration files..."),
+	__("Saving configuration files..."),
 	# progress step
-	_("Restarting the DNS daemon..."),
+	__("Restarting the DNS daemon..."),
 	# progress step
-	_("Updating zone files..."),
+	__("Updating zone files..."),
 	# progress step
-	_("Adjusting the DNS service..."),
+	__("Adjusting the DNS service..."),
 	# progress step
-	_("Finished")
+	__("Finished")
     ],
     ""
     );
@@ -852,14 +1080,26 @@ sub Write {
     Progress->NextStage ();
     sleep ($sl);
 
+    # authenticate to LDAP 
+    if ($use_ldap)
+    {
+	LdapPrepareToWrite ();
+    }
+
     #adapt firewall
     $ok = $self->AdaptFirewall () && $ok;
+
+    # save ACLs
+    $ok = SCR->Write (".dns.named.value.acl", \@acl) && $ok;
 
     #save globals
     $ok = $self->SaveGlobals () && $ok;
 
     #adapt included files
     $ok = $self->AdaptDDNS () && $ok;
+
+    #ensure that if there is an include file, named.conf.include gets recreated
+    $ok = $self->EnsureNamedConfIncludeIsRecreated () && $ok;
 
     #save all zones
     @zones_update_actions = ();
@@ -873,6 +1113,15 @@ sub Write {
     #set daemon starting
     SCR->Write (".sysconfig.named.NAMED_RUN_CHROOTED", $chroot ? "yes" : "no");
     SCR->Write (".sysconfig.named", undef);
+
+    SCR->Write (".sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY",
+	$modify_named_conf_dynamically ? "yes" : "no");
+    SCR->Write (".sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY",
+	$modify_resolv_conf_dynamically ? "yes" : "no");
+    SCR->Write (".sysconfig.network.config", undef);
+
+    #set to sysconfig if LDAP is to be used
+    LdapStore ();
 
     Progress->NextStage ();
     sleep ($sl);
@@ -924,6 +1173,12 @@ sub Write {
 	Service->Disable ("named");
     }
 
+    if ($ok)
+    {
+	# FIXME when YaST settings are needed
+	SCR->Write (".target.ycp", Directory->vardir() . "/dns_server", {});
+    }
+
     Progress->NextStage ();
     sleep ($sl);
 
@@ -963,6 +1218,15 @@ sub Import {
     $current_zone_index = -1;
     $adapt_firewall = 0;
     $write_only = 0;
+
+    if (Mode->autoinst ())
+    {
+	# Initialize LDAP if needed
+	$self->InitYapiConfigOptions ({"use_ldap" => $use_ldap});
+	$self->LdapInit ([], 1);
+	$self->CleanYapiConfigOptions ();
+    }
+
     return Boolean(1);
 }
 
@@ -972,28 +1236,28 @@ sub Summary {
 
     my %zone_types = (
 	# type of zone to be used in summary
-	"master" => _("master"),
+	"master" => __("master"),
 	# type of zone to be used in summary
-	"slave" => _("slave"),
+	"slave" => __("slave"),
 	# type of zone to be used in summary
-	"stub" => _("stub"),
+	"stub" => __("stub"),
 	# type of zone to be used in summary
-	"hint" => _("hint"),
+	"hint" => __("hint"),
 	# type of zone to be used in summary
-	"forward" => _("forward"),
+	"forward" => __("forward"),
     );
     my @ret = ();
 
     if ($start_service)
     {
 	# summary string
-	push (@ret, _("The DNS server starts when booting the system."));
+	push (@ret, __("The DNS server starts when booting the system."));
     }
     else
     {
 	push (@ret,
 	    # summary string
-	    _("The DNS server does not start when booting the system."));
+	    __("The DNS server does not start when booting the system."));
     }
 
     my @zones_descr = map {
@@ -1022,9 +1286,425 @@ sub Summary {
 
     my $zones_list = join (", ", @zones_descr);
     #  summary string, %s is list of DNS zones (their names), coma separated
-    push (@ret, sprintf (_("Configured Zones: %s"), $zones_list));
+    push (@ret, sprintf (__("Configured Zones: %s"), $zones_list));
     return \@ret;
 }
 
+BEGIN { $TYPEINFO{LdapInit} = ["function", "void", "boolean" ]; }
+sub LdapInit {
+    my $self = shift;
+    my $report_errors = shift;
+
+    $ldap_available = 0;
+    $use_ldap = 0;
+
+    #error message
+    my $ldap_error_msg = __("Invalid LDAP configuration. Cannot use LDAP.");
+
+    if (Mode->test ())
+    {
+	return;
+    }
+
+    y2milestone ("Initializing LDAP support");
+
+    # grab info about the LDAP server
+    Ldap->Read ();
+    my $ldap_data_ref = Ldap->Export ();
+
+    my $server = $ldap_data_ref->{"ldap_server"};
+    if (! defined ($server))
+    {
+	$server = "";
+    }
+    my @server_port = split /:/, $server;
+    $server = $server_port[0] || "";
+    my $port = $server_port[1] || "389";
+
+    if ($server eq "")
+    {
+	$use_ldap = 0;
+	y2milestone ("LDAP not configured - can't find server");
+	if ($report_errors)
+	{
+	    Report->Error ($ldap_error_msg);
+	}
+	return;
+    }
+    $ldap_domain = $ldap_data_ref->{"ldap_domain"} || "";
+    if ($ldap_domain eq "")
+    {
+	$use_ldap = 0;
+	y2milestone ("LDAP not configured - can't read LDAP domain");
+	if ($report_errors)
+	{
+	    Report->Error ($ldap_error_msg);
+	}
+	return;
+    }
+    $ldap_server = $server;
+    $ldap_port = $port;
+
+    # get main configuration DN
+    $ldap_config_dn = Ldap->GetMainConfigDN ();
+    y2milestone ("Main configuration DN: $ldap_config_dn");
+    if (! defined ($ldap_config_dn) || $ldap_config_dn eq "")
+    {
+	$use_ldap = 0;
+	y2milestone ("Main config DN not found");
+	if ($report_errors)
+	{
+	    Report->Error ($ldap_error_msg);
+	}
+	return;
+    }
+
+    $ldap_available = 1;
+
+    if (defined $yapi_conf{"use_ldap"})
+    {
+	$use_ldap = $yapi_conf{"use_ldap"};
+	y2milestone ("YaPI sepcified to use LDAP: $use_ldap");
+    }
+    else
+    {
+	my $reload_script = SCR->Read (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS");
+	if (! defined ($reload_script))
+	{
+	    # yes-no popup
+	    $use_ldap = Popup->YesNo (__("Enable LDAP support?"));
+	    y2milestone ("User chose to use LDAP: $use_ldap");
+	}
+	else
+	{
+	    $use_ldap = $reload_script =~ /.*ldapdump.*/;
+	    y2milestone ("Use LDAP according to sysconfig: $use_ldap");
+	}
+    }
+
+    if (! $use_ldap)
+    {
+	y2milestone ("Not using LDAP");
+	return;
+    }
+
+    # connect to the LDAP server
+    my %ldap_init = (
+	"hostname" => $server,
+	"port" => $port,
+    );
+    my $ret = SCR->Execute (".ldap", \%ldap_init);
+    if ($ret == 0)
+    {
+	$use_ldap = 0;
+	Ldap->LDAPErrorMessage ("init", Ldap->LDAPError ());
+	return;
+    }
+
+    $ret = SCR->Execute (".ldap.bind", {});
+    if ($ret == 0)
+    {
+	$use_ldap = 0;
+	Ldap->LDAPErrorMessage ("bind", Ldap->LDAPError ());
+	return;
+    }
+
+
+
+    # find suseDnsConfiguration object
+    my %ldap_query = (
+        "base_dn" => $ldap_config_dn,
+        "scope" => 2,   # top level only
+        "map" => 1,     # gimme a list (single entry)
+	"filter" => "(objectclass=suseDnsConfiguration)",
+    );
+
+    my $found_ref = SCR->Read (".ldap.search", \%ldap_query);
+    my %found = %{ $found_ref || {} };
+    if (scalar (keys (%found)) == 0)
+    {
+	%found = (
+	    'objectclass' => [ 'top', 'suseDnsConfiguration' ],
+	    'cn' => [ 'defaultDNS' ],
+	    'susedefaultbase' => [ 'ou=DNS,'.$ldap_domain ],
+	);
+    }
+    else
+    {
+	my @keys = sort (keys (%found));
+	my $dns_conf_dn = $keys[0];
+	%found = %{$found{$dns_conf_dn}}
+    }
+
+    # check if base DN for zones is defined
+    my @bases = @{ $found{"susedefaultbase"} || [] };
+    if (@bases == 0)
+    {
+	@bases = ("ou=DNS,$ldap_domain");
+    }
+    my $zone_base_config_dn = $bases[0];
+
+    y2milestone ("Base config DN: $zone_base_config_dn");
+    DnsZones->SetZoneBaseConfigDn ($zone_base_config_dn);
+
+    # Check perl-ldap package (required for syncing LDAP to zone files)
+    if (! (Mode->config () || Package->Installed ("perl-ldap")))
+    {
+	my $installed = Package->Install ("perl-ldap");
+	if (! $installed && ! Package->LastOperationCanceled ())
+	{
+	    # error popup
+	    Report->Error (__("Installing required packages failed."));
+	    $use_ldap = 0;
+	    return;
+	}
+    }
+
+    # finalize the function
+    y2milestone ("Running in the LDAP mode");
+    $use_ldap = 1;
+    return;
+}
+
+BEGIN { $TYPEINFO{LdapPrepareToWrite} = ["function", "boolean"];}
+sub LdapPrepareToWrite {
+    my $self = shift;
+
+    my %ldap_query = ();
+    my $found_ref = 0;
+    my $zone_base_config_dn = DnsZones->GetZoneBaseConfigDn ();
+
+    # check if the schema is properly included
+    NetworkDevices->Read ();
+    DNS->Read ();
+    if ($ldap_server eq "127.0.0.1" || $ldap_server eq "localhost"
+	|| -1 != index (lc ($ldap_server), lc (DNS->hostname ()))
+	|| 0 != scalar (@{NetworkDevices->Locate ("IPADDR", $ldap_server)}))
+    {
+	y2milestone ("LDAP server is local, checking included schemas");
+	my @schemas = @{YaPI::LdapServer->ReadSchemaIncludeList ()};
+	my @dns_schema = grep /dnszone.schema/, @schemas;
+	if (0 == scalar (@dns_schema))
+	{
+	    y2milestone ("Including the DNS zone schema");
+	    push @schemas, "/etc/openldap/schema/dnszone.schema";
+	    YaPI::LdapServer->WriteSchemaIncludeList (\@schemas);
+	    YaPI::LdapServer->SwitchService(1);
+	}
+	else
+	{
+	    y2milestone ("DNS zone schema is already included");
+	}
+    }
+    else
+    {
+	y2milestone ("LDAP server is remote, not checking if schemas are properly included");
+    }
+
+    # connect to the LDAP server
+    my $ret = Ldap->LDAPInit ();
+    if ($ret ne "")
+    {
+	Ldap->LDAPErrorMessage ("init", $ret);
+	return 0;
+    }
+
+    # login to the LDAP server
+    if (defined ($yapi_conf{"ldap_passwd"}))
+    {
+	my $err = Ldap->LDAPBind ($yapi_conf{"ldap_passwd"});
+	Ldap->SetBindPassword ($yapi_conf{"ldap_passwd"});
+	if ($err ne "")
+	{
+	    Ldap->LDAPErrorMessage ("bind", $err);
+	    return 0;
+	}
+    }
+    else
+    {
+	my $auth_ret = Ldap->LDAPAskAndBind (0);
+	Ldap->SetBindPassword ($auth_ret);
+
+	if (! defined ($auth_ret) || $auth_ret eq "")
+	{
+	    y2milestone ("Authentication canceled");
+	    return;
+	}
+    }
+
+    Ldap->SetGUI(YaST::YCP::Boolean(0)); 
+    if(! Ldap->CheckBaseConfig($ldap_config_dn))
+    { 
+	Ldap->SetGUI(YaST::YCP::Boolean(1)); 
+	Report->Error (sformat (__("Error occurred while creating %1."),
+	    $ldap_config_dn));
+    } 
+    Ldap->SetGUI(YaST::YCP::Boolean(1)); 
+
+    # find suseDnsConfiguration object
+    %ldap_query = (
+        "base_dn" => $ldap_config_dn,
+        "scope" => 2,   # top level only
+        "map" => 1,     # gimme a list (single entry)
+	"filter" => "(objectclass=suseDnsConfiguration)",
+	"not_found_ok" => 1,
+    );
+
+    $found_ref = SCR->Read (".ldap.search", \%ldap_query);
+    my %found = %{ $found_ref || {} };
+    if (scalar (keys (%found)) == 0)
+    {
+	y2milestone ("No DNS configuration found in LDAP, creating it");
+	my %ldap_object = (
+	    'objectclass' => [ 'top', 'suseDnsConfiguration' ],
+	    'cn' => [ 'defaultDNS' ],
+	    'susedefaultbase' => [ 'ou=DNS,'.$ldap_domain ],
+	);
+	my %ldap_request = (
+	    "dn" => "cn=defaultDNS,$ldap_config_dn",
+	);
+	my $result = SCR->Write (".ldap.add", \%ldap_request, \%ldap_object);
+	if (! $result)
+	{
+	    # error report
+	    Report->Error (sformat (__("Error occurred while creating cn=defaultDNS,%1. Not using LDAP."), $ldap_config_dn));
+	    my $err = SCR->Read (".ldap.error") || {};
+	    my $err_descr = Dumper ($err);
+	    y2error ("Error descr: $err_descr");
+	    return;
+	}
+	%found = %ldap_object;
+    }
+    else
+    {
+	my @keys = sort (keys (%found));
+	my $dns_conf_dn = $keys[0];
+	%found = %{$found{$dns_conf_dn}};
+	# check if base DN for zones is defined
+	my @bases = @{ $found{"susedefaultbase"} || [] };
+	if (@bases == 0)
+	{
+	    my %ldap_object = %found;
+	    $ldap_object{"susedefaultbase"} = ["ou=DNS,$ldap_domain"];
+	    my %ldap_request = (
+		"dn" => "$dns_conf_dn",
+	    );
+	    my $result = SCR->Write (".ldap.modify", \%ldap_request, \%ldap_object);
+	    if (! $result)
+	    {
+		# error report
+		Report->Error (sformat (__("Error occurred while updating %1."), $dns_conf_dn));
+		my $err = SCR->Read (".ldap.error") || {};
+		my $err_descr = Dumper ($err);
+		y2error ("Error descr: $err_descr");
+		return;
+	    }
+	    @bases = ("ou=DNS,$ldap_domain");
+	}
+    }
+
+    # check existence of base DN for zones
+    %ldap_query = (
+        "base_dn" => $zone_base_config_dn,
+        "scope" => 0,   # top level only
+        "map" => 0,     # gimme a list (single entry)
+	"not_found_ok" => 1,
+    );
+    $found_ref = SCR->Read (".ldap.search", \%ldap_query);
+    my @found = @{ $found_ref || [] };
+    if (@found == 0)
+    {
+	$zone_base_config_dn =~ m/^ou=([^,]+),.*/;
+	my $ou = $1;
+	my %ldap_object = (
+            'objectclass' => [ 'top', 'organizationalUnit' ],
+            'ou' => [ $ou ],
+	);
+	my %ldap_request = (
+	    "dn" => $zone_base_config_dn,
+	);
+
+	my $result = SCR->Write (".ldap.add", \%ldap_request, \%ldap_object);
+	if (! $result)
+	{
+	    # error report
+	    Report->Error (sformat (__("Error occurred while creating %1. Not using LDAP."), $zone_base_config_dn));
+	    my $err = SCR->Read (".ldap.error") || {};
+	    my $err_descr = Dumper ($err);
+	    y2error ("Error descr: $err_descr");
+	    return;
+	}
+    }
+}
+
+BEGIN { $TYPEINFO{LdapStore} = ["function", "void" ]; }
+sub LdapStore {
+    my $self = shift;
+
+    my $reload_script = SCR->Read (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS");
+    my @reload_scripts = split / /, $reload_script;
+
+    if ($use_ldap)
+    {
+	my $already_present = scalar (grep (/ldapdump/, @reload_scripts)) > 0;
+	if (! $already_present)
+	{
+	    push @reload_scripts, "ldapdump";
+	}
+    }
+    else
+    {
+	@reload_scripts = grep (!/ldapdump/, @reload_scripts);
+    }
+
+    $reload_script = join (" ", @reload_scripts);
+    SCR->Write (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS", $reload_script);
+    SCR->Write (".sysconfig.named", undef);
+}
+
+BEGIN{$TYPEINFO{EnsureNamedConfIncludeIsRecreated} = ["function", "boolean"];}
+sub EnsureNamedConfIncludeIsRecreated {
+    my $self = shift;
+
+#    my $includes = SCR->Read (".sysconfig.named.NAMED_CONF_INCLUDE_FILES");
+#    if ($includes eq "")
+#    {
+#	return 1;
+#    }
+
+    my $reload_script = SCR->Read (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS");
+    my @reload_scripts = split / /, $reload_script;
+
+    my $already_present
+	= scalar (grep (/createNamedConfInclude/, @reload_scripts)) > 0;
+    if (! $already_present)
+    {
+	unshift @reload_scripts, "createNamedConfInclude";
+    }
+
+    $reload_script = join (" ", @reload_scripts);
+    SCR->Write (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS", $reload_script);
+    SCR->Write (".sysconfig.named", undef);
+
+    return 1;
+}
+
+# initialize options passed through the YaPI
+BEGIN { $TYPEINFO{InitYapiConfigOptions} = ["function", "void", ["map", "string", "any"]]; }
+sub InitYapiConfigOptions {
+    my $self = shift;
+    my $config_ref = shift;
+
+    %yapi_conf = %{$config_ref || {}};
+}
+
+BEGIN { $TYPEINFO{CleanYapiConfigOptions} = ["function", "void"]; }
+sub CleanYapiConfigOptions {
+    my $self = shift;
+
+    %yapi_conf = ();
+}
+
+1;
 
 # EOF

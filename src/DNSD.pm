@@ -12,20 +12,32 @@ This package is the public YaST2 API to configure the Bind version 9
 
 use YaPI::DNSD
 
-$status = StopDnsService()
+$status = StopDnsService($config)
 
-$status = StartDnsService()
+$status = StartDnsService($config)
 
-$status = GetDnsServiceStatus()
+$status = GetDnsServiceStatus($config)
 
-$options = ReadGlobalOptions()
+$options = ReadGlobalOptions($config)
 
-$ret = WriteGlobalOptions($options)
+$ret = WriteGlobalOptions($config,$options)
 
-$zones = ReadZones()
+$zones = ReadZones($config)
 
-$ret = WriteZones($zones)
+$ret = WriteZones($config,$zones)
 
+
+The C<$config> parameter is always a refernece to a hash, that contains various
+configuration options. Currently following keys are supported:
+
+C<"use_ldap">
+ says if settings should be written/read to LDAP or not. Possible values are
+ 1 (use LDAP if configured properly) or 0 (don't use LDAP).
+ If not specified, mode is detected automatically.
+
+C<"ldap_passwd">
+ holds the LDAP password needed for authentication against the LDAP server.
+ Needed only for writing operation if LDAP is used for data storing.
 
 =head1 DESCRIPTION
 
@@ -35,11 +47,8 @@ $ret = WriteZones($zones)
 
 package YaPI::DNSD;
 use YaST::YCP;
-YaST::YCP::Import ("DNSServer");
-YaST::YCP::Import ("SCR");
+YaST::YCP::Import ("DnsServer");
 YaST::YCP::Import ("Service");
-YaST::YCP::Import ("SuSEFirewall");
-YaST::YCP::Import ("NetworkDevices");
 YaST::YCP::Import ("Progress");
 
 #if(not defined do("YaPI.inc")) {
@@ -49,7 +58,8 @@ YaST::YCP::Import ("Progress");
 #######################################################
 # temoprary solution end
 #######################################################
-our $VERSION="0.01";
+our $VERSION='1.0.0';
+our @CAPABILITIES = ('SLES9');
 our %TYPEINFO;
 
 use strict;
@@ -60,14 +70,14 @@ use Errno qw(ENOENT);
 #######################################################
 
 =item *
-C<$status = StopDnsService();>
+C<$status = StopDnsService($config);>
 
 Immediatelly stops the DNS service. Returns nonzero if operation succeeded,
 zero if operation failed.
 
 EXAMPLE:
 
-  my $status = StopDnsService ();
+  my $status = StopDnsService ({});
   if ($status == 0)
   {
     print "Stopping DNS server failed";
@@ -79,20 +89,22 @@ EXAMPLE:
 
 =cut
 
-BEGIN{$TYPEINFO{StopDnsService} = ["function", "boolean"];}
+BEGIN{$TYPEINFO{StopDnsService} = ["function", "boolean", ["map", "string", "any"]];}
 sub StopDnsService {
+    my $self = shift;
+    my $config_options = shift;
     return DnsServer->StopDnsService ();
 }
 
 =item *
-C<$status = StartDnsService ();>
+C<$status = StartDnsService ($config);>
 
 Immediatelly starts the DNS service. Returns nonzero if operation succeeded,
 zero if operation failed.
 
 EXAMPLE:
 
-  my $status = StartDnsService ();
+  my $status = StartDnsService ({});
   if ($status == 0)
   {
     print "Starting DNS server failed";
@@ -104,20 +116,22 @@ EXAMPLE:
 
 =cut
 
-BEGIN{$TYPEINFO{StartDnsService} = ["function", "boolean"];}
-sub StartDndService {
+BEGIN{$TYPEINFO{StartDnsService} = ["function", "boolean", ["map", "string", "any"]];}
+sub StartDnsService {
+    my $self = shift;
+    my $config_options = shift;
     return DnsServer->StartDnsService ();
 }
 
 =item *
-C<$status = GetDnsServiceStatus ();>
+C<$status = GetDnsServiceStatus ($config);>
 
 Check if DNS service is running. Returns nonzero if service is running,
 zero otherwise.
 
 EXAMPLE:
 
-  my $status = GetDnsServiceStatus ();
+  my $status = GetDnsServiceStatus ({});
   if ($status == 0)
   {
     print "DNS server is not running";
@@ -129,13 +143,15 @@ EXAMPLE:
 
 =cut
 
-BEGIN{$TYPEINFO{GetDnsServiceStatus} = ["function", "boolean"];}
+BEGIN{$TYPEINFO{GetDnsServiceStatus} = ["function", "boolean", ["map", "string", "any"]];}
 sub GetDnsServiceStatus {
+    my $self = shift;
+    my $config_options = shift;
     return DnsServer->GetDnsServiceStatus ();
 }
 
 =item *
-C<$options = ReadGlobalOptions ();>
+C<$options = ReadGlobalOptions ($config);>
 
 Reads all global options of the DNS server.
 
@@ -144,7 +160,7 @@ Returns undef on fail.
 
 EXAMPLE:
 
-  my $options = ReadGlobalOptions ();
+  my $options = ReadGlobalOptions ({});
   if (! defined ($options))
   {
     print "Reading options failed";
@@ -163,9 +179,12 @@ Prints all options adjusted to tbe specified declaration.
 
 =cut
 
-BEGIN{$TYPEINFO{ReadGlobalOptions} = ["function", ["list", ["map", "string","string"]]];}
+BEGIN{$TYPEINFO{ReadGlobalOptions} = ["function", ["list", ["map", "string","string"]], ["map", "string", "any"]];}
 sub ReadGlobalOptions {
     my $self = shift;
+    my $config_options = shift;
+
+    DnsServer->InitYapiConfigOptions ($config_options);
 
     Progress::off ();
     my $ret = DnsServer->Read ();
@@ -175,11 +194,14 @@ sub ReadGlobalOptions {
 	$options = DnsServer->GetGlobalOptions ();
     }
     Progress::on ();
+
+    DnsServer->CleanYapiConfigOptions ();
+
     return $options;
 }
 
 =item *
-C<$ret = WriteGlobalOptions ($options);>
+C<$ret = WriteGlobalOptions ($config, $options);>
 
 Writes all global options of the DNS server. The taken argument has the same
 structure as return value of ReadGlobalOptions function.
@@ -188,35 +210,41 @@ Returns nonzero on success, zero on fail.
 
 EXAMPLE: 
 
-  my $options = {
-    [
+  my $options = [
+    {
       "key" => "dump-file",
       "value" => "\"/var/log/named_dump.db\"",
-    ],
-    [
+    },
+    {
       "key" => "statistics-file",
       "value" => "\"/var/log/named.stats\"",
-    ],
-  }
-  $success = WriteGlobalOptions ($options);
+    },
+  ]
+  $success = WriteGlobalOptions ({}, $options);
 
 =cut
 
-BEGIN{$TYPEINFO{WriteGlobalOptions} = ["function", "boolean", ["list", ["map", "string","string"]]];}
+BEGIN{$TYPEINFO{WriteGlobalOptions} = ["function", "boolean", ["map", "string", "any"], ["list", ["map", "string","string"]]];}
 sub WriteGlobalOptions {
     my $self = shift;
+    my $config_options = shift;
     my $options = shift;
+
+    DnsServer->InitYapiConfigOptions ($config_options);
 
     Progress::off ();
     my $ret = DnsServer->Read ();
     $ret = $ret && DnsServer->SetGlobalOptions ($options);
     $ret = $ret && DnsServer->Write ();
     Progress::on ();
+
+    DnsServer->CleanYapiConfigOptions ();
+
     return $ret;
 }
 
 =item *
-C<$zones = ReadZones ();>
+C<$zones = ReadZones ($config);>
 
 Reads all zones of the DNS server.
 
@@ -225,7 +253,7 @@ The hash representing a zone is described below. On fail, returns undef.
 
 EXAMPLE: 
 
-  my $zones = ReadZones ();
+  my $zones = ReadZones ({});
   if (! defined ($zones))
   {
     print ("Could not read zones");
@@ -240,9 +268,12 @@ This prints the cound of zones maintained by the DNS server.
 
 =cut
 
-BEGIN{$TYPEINFO{ReadZones} = ["function", ["list", ["map", "string", "any"]]];}
+BEGIN{$TYPEINFO{ReadZones} = ["function", ["list", ["map", "string", "any"]], ["map", "string", "any"]];}
 sub ReadZones {
     my $self = shift;
+    my $config_options = shift;
+
+    DnsServer->InitYapiConfigOptions ($config_options);
 
     Progress::off ();
     my $ret = DnsServer->Read ();
@@ -252,11 +283,14 @@ sub ReadZones {
 	$zones = DnsServer->FetchZones ();
     }
     Progress::on ();
+
+    DnsServer->CleanYapiConfigOptions ();
+
     return $zones;
 }
 
 =item *
-C<$ret = WriteZones ($zones);>
+C<$ret = WriteZones ($config,$zones);>
 
 Writes all zones to the DNS server, removes zones that are not mentioned in the
 argument. The structrure of the argument is clear from the example below.
@@ -305,23 +339,36 @@ EXAMPLE:
       }
     }
   ];
-  WriteZones ($zones);
+  WriteZones ({}, $zones);
 
 This removes all DNS zones, and writes the specified zone
 (in this case only one).
 
 =cut
 
-BEGIN{$TYPEINFO{WriteZones} = ["function", "boolean", ["list", ["map", "string", "any"]]];}
+BEGIN{$TYPEINFO{WriteZones} = ["function", "boolean", ["map", "string", "any"], ["list", ["map", "string", "any"]]];}
 sub WriteZones {
     my $self = shift;
+    my $config_options = shift;
     my $zones = shift;
+
+    my @zones = @{$zones || []};
+    @zones = map {
+	$_->{"modified"} = 1;
+	$_;
+    } @zones;
+    $zones = \@zones;
+
+    DnsServer->InitYapiConfigOptions ($config_options);
 
     Progress::off ();
     my $ret = DnsServer->Read ();
     $ret = $ret && DnsServer->StoreZones ($zones);
     $ret = $ret && DnsServer->Write ();
     Progress::on ();
+
+    DnsServer->CleanYapiConfigOptions ();
+
     return $ret;
 }
 

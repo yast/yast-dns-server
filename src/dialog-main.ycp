@@ -1,0 +1,1663 @@
+/**
+ * File:	include/dns-server/dialog-main.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Main tab-style dialog definitions
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *              Lukas Ocilka <lukas.ocilka@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+textdomain "dns-server";
+
+import "DnsServer";
+import "IP";
+import "Hostname";
+import "Popup";
+import "Label";
+import "CWM";
+import "Wizard";
+
+/**
+ * Dialog Expert Settings - Start Up
+ * @return term for Get_ExpertDialog()
+ */
+term ExpertStartUpDialog () {
+    term dialog =
+	`Top (
+	    `VBox (
+		// Frame label (DNS starting)
+		`Frame ( _("Booting"),
+		    `Left (
+			`RadioButtonGroup( `id ( "dns_server_type" ),
+			    `VBox (
+				// Radiobutton label
+				`Left( `RadioButton( `id (`on), _("O&n -- Start DNS Server Now and when Booting") ) ),
+				// Radiobutton label
+				`Left( `RadioButton( `id (`off), _("O&ff -- Server Only Starts Manually") ) ),
+				`VSpacing ( 1 )
+			    )
+			)
+		    )
+		),
+		`VSpacing ( 1 ),
+		// check box
+		`Left (`CheckBox (`id ("use_ldap"), `opt (`notify), _("&LDAP Support Active"))),
+		`VSpacing ( 1 ),
+		// Frame label (stoping starting DNS server)
+		`Frame ( _("Switch On and Off"),
+		    `Left (
+			`HSquash (
+			    `VBox (
+				`HBox (
+				    // Current status
+				    `Label (_("Current Status: ")),
+				    `ReplacePoint (`id ("service_status_rp"),
+					// service status - label
+					`Label (_("DNS server is running."))
+				    ),
+				    `HStretch ()
+				),
+				// Pushbutton for starting the DNS server
+				`PushButton ( `id ( "start_dns_now" ), `opt( `hstretch ), _("&Start DNS Server Now") ),
+				// Pushbutton for stopping the DNS server
+				`PushButton ( `id ( "stop_dns_now" ),  `opt( `hstretch ), _("S&top DNS Server Now") )
+			    )
+			)
+		    )
+		)
+	    )
+	);
+    return dialog;
+}
+
+void UpdateServiceStatusWidget () {
+    if (Mode::config)
+    {
+	UI::ChangeWidget (`id ("start_dns_now"), `Enabled, false);
+	UI::ChangeWidget (`id ("stop_dns_now"), `Enabled, false);
+	UI::ReplaceWidget (`id ("service_status_rp"), `Label (""));
+    }
+    else
+    {
+	boolean status = DnsServer::GetDnsServiceStatus ();
+	UI::ChangeWidget (`id ("start_dns_now"), `Enabled, ! status);
+	UI::ChangeWidget (`id ("stop_dns_now"), `Enabled, status);
+	UI::ReplaceWidget (`id ("service_status_rp"),
+	    `Label (status
+		// service sttus - label
+		? _("DNS server is running.")
+		// service sttus - label
+		: _("DNS server is not running.")
+	    )
+	);
+    }
+}
+
+/**
+ * Initialize the tab of the dialog
+ */
+void InitExpertStartUpPage () {
+    boolean auto_start = DnsServer::GetStartService ();
+    UI::ChangeWidget (`id ("dns_server_type"), `CurrentButton, auto_start
+	? `on
+	: `off);
+    boolean use_ldap = DnsServer::GetUseLdap ();
+    UI::ChangeWidget (`id ("use_ldap"), `Value, use_ldap);
+    UpdateServiceStatusWidget ();
+}
+
+/**
+ * Store settings of a tab of a dialog
+ */
+void StoreExpertStartUpPage () {
+    boolean auto_start
+	= UI::QueryWidget (`id ("dns_server_type"), `CurrentButton) == `on;
+    boolean use_ldap = (boolean)UI::QueryWidget (`id ("use_ldap"), `Value);
+    DnsServer::SetStartService (auto_start);
+}
+
+/**
+ * Handle events in a tab of a dialog
+ */
+symbol HandleExpertStartUpPage (map event) {
+    any ret = event["ID"]:nil;
+    if ( ret == "start_dns_now" ) {
+	boolean status = DnsServer::StartDnsService ();
+	if (! status)
+	    // error report
+	    Report::Error (_("Starting the DNS daemon failed."));
+	else
+	{
+	    sleep (500);
+	    UpdateServiceStatusWidget ();
+	}
+    }
+    else if ( ret == "stop_dns_now" ) {
+	boolean status = DnsServer::StopDnsService ();
+	if (! status)
+		// error report
+		Report::Error (_("Stopping the DNS daemon failed."));
+	else
+	{
+	    sleep (500);
+	    UpdateServiceStatusWidget ();
+	}
+    }
+    else if (ret == "use_ldap")
+    {
+	// yes-no popup
+/*	if (! Popup::YesNo (*/string popup = _("All your changes will be lost. Settings will
+be reread from new data storage.
+Continue?
+");//))
+//	{
+//	    return nil;
+//	}
+	boolean use_ldap = (boolean)UI::QueryWidget (`id ("use_ldap"), `Value);
+	DnsServer::SetUseLdap (use_ldap, false);
+	if (! Mode::config)
+	{
+	    DnsServer::InitYapiConfigOptions ($["use_ldap" : use_ldap]);
+	    DnsServer::LdapInit (true);
+	    DnsServer::CleanYapiConfigOptions ();
+	}
+	use_ldap = DnsServer::GetUseLdap ();
+	UI::ChangeWidget (`id ("use_ldap"), `Value, use_ldap);
+    }
+    return nil;
+}
+/**
+ * Dialog Expert Settings - Forwarders
+ * @return term for Get_ExpertDialog()
+ */
+term ExpertForwardersDialog () {
+    term dialog =
+	`VBox (
+	    // label
+	    `Left (`Label (_("Select forwarder settings"))),
+	    `VSpacing (1),
+	    `VBox (
+		`RadioButtonGroup( `id ( "who_sets_forwarder" ),
+		    `VBox (
+			// Radiobutton DNS-Forwarders
+			`Left( `RadioButton( `id ( "ppp_forwarder" ), _("&PPP Daemon Sets Forwarders (used with dial-up
+connections if supported by provider)") ) ),
+			// Radiobutton DNS-Forwarders
+			`Left( `RadioButton( `id ( "manually_forwarder" ), _("Set Forwarders &Manually"), true ) )
+		    )
+		)
+	    ),
+	    `VSpacing ( 1 ),
+	    // Frame label for DNS-Forwarders options
+/*	    `Frame ( _("Options"),
+		`Left (
+		    `VBox (
+			// Checkbox - DNS-Forwarders options
+			`Left ( `CheckBox ( `id ( "forward_first" ), `opt (`notify), _("Forward &First") ) ),
+			// Checkbox - DNS-Forwarders options
+			`Left ( `CheckBox ( `id ( "forward_only" ),  `opt (`notify), _("Fo&rward Only") ) )
+		    )
+		)
+	    ),
+	    `VSpacing ( 0.5 ),*/
+	    `VSquash (
+		`HBox (
+		    `HWeight ( 9,
+			// Frame label for DNS-Forwarders adding IP
+			`Frame ( _("Add IP Address"),
+			    // Textentry for DNS-Forwarders adding IP
+			    `TextEntry ( `id ( "forwarders_new_ip_address" ), `opt ( `hstretch ), _("IP A&ddress"), "" )
+			)
+		    ),
+		    `HWeight ( 2,
+			`Bottom ( `PushButton ( `id ( "forwarders_add_ip_address" ), `opt ( `hstretch ), Label::AddButton() ) )
+		    )
+		)
+	    ),
+	    `VSpacing ( 0.5 ),
+	    `HBox (
+		`HWeight ( 9,
+		  `ReplacePoint (`id ("forwarders_list_rp"),
+		    `SelectionBox ( `id ( "forwarders_list" ), `opt ( `hstretch ),
+			// Selectionbox for listing current DNS-Forwarders
+			_("Forwarder &List"),
+			[ ]
+		    )
+		  )
+		),
+		`HWeight ( 2,
+		    `VBox (
+			`VSquash ( `VSpacing ( 1 ) ),
+			`VSquash ( `PushButton ( `id ( "forwarders_delete_ip_address" ), `opt ( `hstretch ), Label::DeleteButton() ) ),
+			`VStretch ()
+		    )
+		)
+	    )
+	);
+    return dialog;
+}
+
+void RedrawForwardersListWidget () {
+    UI::ReplaceWidget (`id ("forwarders_list_rp"),
+	`SelectionBox ( `id ( "forwarders_list" ), `opt ( `hstretch ),
+	    // Selectionbox for listing current DNS-Forwarders
+	    _("Forwarder &List"),
+	    forwarders));
+//    UI::ChangeWidget (`id ("forward_first"), `Value, forward == "first");
+//    UI::ChangeWidget (`id ("forward_only"), `Value, forward == "only");
+    UI::ChangeWidget (`id ("forwarders_delete_ip_address"),
+	`Enabled, forwarders != []);
+    if (forwarders != [])
+    {
+	UI::ChangeWidget (`id ("forwarders_list"),
+	    `CurrentItem, forwarders[0]:"");
+    }
+}
+
+void ReadForwarders () {
+    list<map<string,any> > options = DnsServer::GetGlobalOptions ();
+    foreach (map<string,any> o, options, {
+	if (o["key"]:"" == "forwarders")
+	{
+	    forwarders = splitstring (o["value"]:"", " ");
+	    forwarders = filter (string f, forwarders, ``(
+		! issubstring (f, "{") && ! issubstring (f, "}") && f != ""
+	    ));
+	    forwarders = maplist (string f, forwarders, {
+		integer i = findfirstof (f, ";");
+		if (i != nil)
+		    f = substring (f, 0, i);
+		return f;
+	    });
+	}
+/*	else if (o["key"]:"" == "forward")
+	{
+	    if (issubstring (o["value"]:"", "first"))
+		forward = "first";
+	    else if (issubstring (o["value"]:"", "only"))
+		forward = "only";
+	    else
+		forward = "";
+	}*/
+
+    });
+}
+
+/**
+ * Setting `ValidChars for the dialog
+ */
+void ValidCharsForwardersPage () {
+    // setting `ValidChars
+    UI::ChangeWidget( `id("forwarders_new_ip_address"), `ValidChars,    IP::ValidChars4);
+}
+
+/**
+ * Initialize the tab of the dialog
+ */
+void InitExpertForwardersPage () {
+    if (DnsServer::GetModifyNamedConfDynamically ())
+    {
+	UI::ChangeWidget (`id ("who_sets_forwarder"), `CurrentButton, "ppp_forwarder");
+    }
+    else
+    {
+	UI::ChangeWidget (`id ("who_sets_forwarder"), `CurrentButton, "manually_forwarder");
+    }
+    ReadForwarders ();
+    RedrawForwardersListWidget ();
+    ValidCharsForwardersPage ();
+}
+
+/**
+ * Store settings of a tab of a dialog
+ */
+void StoreExpertForwardersPage () {
+    if (UI::QueryWidget (`id ("who_sets_forwarder"), `CurrentButton)
+	== "ppp_forwarder")
+    {
+	DnsServer::SetModifyNamedConfDynamically (true);
+	DnsServer::SetModifyResolvConfDynamically (false);
+    }
+    else
+    {
+	DnsServer::SetModifyNamedConfDynamically (false);
+	DnsServer::SetModifyResolvConfDynamically (true);
+    }
+    list<map<string,any> > options = DnsServer::GetGlobalOptions ();
+    options = filter (map<string,any> o, options, {
+	return o["key"]:"" != "forwarders"/* && o["key"]:"" != "forward"*/;
+    });
+    if (forwarders != [])
+    {
+	string forwarders_str = mergestring (forwarders, "; ");
+	forwarders_str = sformat ("{ %1; }", forwarders_str);
+	options = add (options, $[
+	    "key" : "forwarders",
+	    "value" : forwarders_str,
+	]);
+    }
+/*    if (forward != "")
+    {
+	options = add (options, $[
+	    "key" : "forward",
+	    "value" : forward,
+	]);
+    }*/
+
+    DnsServer::SetGlobalOptions (options);
+}
+
+/**
+ * Handle events in a tab of a dialog
+ */
+symbol HandleExpertForwardersPage (map event) {
+    any ret = event["ID"]:nil;
+/*    if (ret == "forward_first")
+    {
+	if ((boolean)UI::QueryWidget (`id ("forward_first"), `Value))
+	{
+	    UI::ChangeWidget (`id ("forward_only"), `Value, false);
+	    forward = "first";
+	}
+	else
+	{
+	    forward = "";
+	}
+	return nil;
+    }
+    else if (ret == "forward_only")
+    {
+	if ((boolean)UI::QueryWidget (`id ("forward_only"), `Value))
+	{
+	    UI::ChangeWidget (`id ("forward_first"), `Value, false);
+	    forward = "only";
+	}
+	else
+	{
+	    forward = "";
+	}
+	return nil;
+    }
+    else */ if (ret == "forwarders_add_ip_address")
+    {
+	string new_addr = (string)
+	    UI::QueryWidget (`id ("forwarders_new_ip_address"), `Value);
+	if (! IP::Check4 (new_addr))
+	{
+	    Report::Error (IP::Valid4 ());
+	    return nil;
+	}
+	if (contains (forwarders, new_addr))
+	{
+	    // error report
+	    Report::Error (_("Specified forwarder is already present."));
+	    return nil;
+	}
+	forwarders = add (forwarders, new_addr);
+    }
+    else if (ret == "forwarders_delete_ip_address")
+    {
+	string old_addr = (string)
+	    UI::QueryWidget (`id ("forwarders_list"), `CurrentItem);
+	y2error ("DA: %1", old_addr);
+	forwarders = filter (string f, forwarders, ``(f != old_addr));
+    }
+
+    RedrawForwardersListWidget ();
+    return nil;
+}
+
+list<string> global_options_add_items = sort([
+    "hostname", "version", "directory", "named-xfer",
+    "dump-file", "memstatistics-file", "pid-file",
+    "statistics-file", "auth-nxdomain", "deallocate-on-exit",
+    "dialup", "fake-iquery", "fetch-glue", "has-old-clients",
+    "host-statistics", "host-statistics-max", "multiple-cnames",
+    "notify", "suppress-initial-notify", "recursion",
+    "rfc2308-type1", "use-id-pool", "treat-cr-as-space",
+    "also-notify", "forward", "forwarders", "check-names",
+    "allow-query", "allow-recursion", "allow-transfer",
+    "blackhole", "listen-on", "query-source", "lame-ttl",
+    "max-transfer-time-in", "max-ncache-ttl", "min-roots",
+    "serial-queries", "transfer-format", "transfers-in",
+    "transfers-out", "transfers-per-ns", "transfer-source",
+    "maintain-ixfr-base", "max-ixfr-log-size", "coresize",
+    "datasize", "files", "stacksize", "cleaning-interval",
+    "heartbeat-interval", "interface-interval",
+    "statistics-interval", "topology", "sortlist", "rrset-order",
+    "preferred-glue", "listen-on-v6",
+]);
+
+/**
+ * Dialog Expert Settings - Basic Options
+ * @return term for Get_ExpertDialog()
+ */
+term ExpertBasicOptionsDialog () {
+    term dialog =
+	`Top (
+	    `VBox (
+		`VSquash (
+		    `HBox (
+			`HWeight ( 9,
+			    // Frame label for Basic-Options
+			    `Frame ( _("Add or Change Option"),
+				`VBox (
+				    `HBox (
+					// Combobox for choosing the basic-option
+					`ComboBox ( `id ( "basic_option_selection" ), `opt(`editable), _("O&ption"),
+					    global_options_add_items
+					),
+					// Textentry for setting the basic-option value
+					`TextEntry ( `id ( "basic_option_value" ), _("&Value"), "" )
+				    ),
+				    `VSpacing ( 2 )
+				)
+			    )
+			),
+			`HWeight ( 2,
+			    `VBox (
+				`VStretch (),
+				`VSquash ( `PushButton ( `id ( "add_basic_option" ), `opt ( `hstretch ), Label::AddButton () ) ),
+				// Pushbutton for changing the basic-option
+				`VSquash ( `PushButton ( `id ( "change_basic_option" ), `opt ( `hstretch ), _("C&hange") ) )
+			    )
+			)
+		    )
+		),
+		`VSpacing ( 0.5 ),
+		`VBox (
+		    // Table label for basic-options listing
+		    `Left ( `Label ( _("Current Options") ) ),
+		    `HBox (
+			`HWeight ( 9,
+			    `Table (  `id ( "basic_options_table" ),
+				`opt (`notify, `immediate),
+				`header (
+					// Table header item - basic-options listing
+					_("Option"),
+					// Table header item - basic-options listing
+					_("Value")
+				),
+				[]
+			    )
+			),
+			`HWeight ( 2,
+			    `VBox (
+				`VSquash ( `PushButton ( `id ( "delete_basic_option" ), `opt ( `hstretch ), Label::DeleteButton () ) ),
+				`VStretch ()
+			    )
+			)
+		    )
+		)
+	    )
+	);
+    return dialog;
+}
+
+void ReinitializeOptionAddWidgets () {
+    integer current_opt = (integer)
+	UI::QueryWidget (`id ("basic_options_table"), `CurrentItem);
+    map<string,any> o = options[current_opt]:$[];
+    if (o == $[])
+    {
+	UI::ChangeWidget (`id ("basic_option_value"), `Value, "");
+    }
+    else
+    {
+	UI::ChangeWidget (`id ("basic_option_value"), `Value, o["value"]:"");
+	UI::ChangeWidget (`id ("basic_option_selection"), `Value, o["key"]:"");
+    }
+}
+
+void RedrawOptionsTableWidget () {
+    integer current = (integer)
+	UI::QueryWidget (`id ("basic_options_table"), `CurrentItem);
+    integer index = -1;
+    UI::ChangeWidget (`id ("basic_options_table"), `Items,
+	maplist (map<string,any> o, options, {
+	    index = index + 1;
+	    return `item (`id (index), o["key"]:"", o["value"]:nil);
+	})
+    );
+    if (current != nil && current < size (options))
+    {
+	UI::ChangeWidget (`id ("basic_options_table"), `CurrentItem, current);
+    }
+    UI::ChangeWidget (`id ("delete_basic_option"), `Enabled, size(options) > 0);
+    ReinitializeOptionAddWidgets ();
+}
+
+/**
+ * Initialize the tab of the dialog
+ */
+void InitExpertBasicOptionsPage () {
+    options = DnsServer::GetGlobalOptions ();
+    current_option_index = 0;
+    RedrawOptionsTableWidget ();
+}
+
+/**
+ * Store settings of a tab of a dialog
+ */
+void StoreExpertBasicOptionsPage () {
+    DnsServer::SetGlobalOptions (options);
+}
+
+/**
+ * Handle events in a tab of a dialog
+ */
+symbol HandleExpertBasicOptionsPage (map event) {
+    any ret = event["ID"]:nil;
+    integer index = (integer)
+	UI::QueryWidget (`id ("basic_options_table"), `CurrentItem);
+    string current_key = (string)
+	UI::QueryWidget (`id ("basic_option_selection"), `Value);
+    string current_value = (string)
+	UI::QueryWidget (`id ("basic_option_value"), `Value);
+    if (ret == "basic_options_table")
+    {
+	ReinitializeOptionAddWidgets ();
+    }
+    else if (ret == "delete_basic_option")
+    {
+	options[index] = nil;
+	options = filter (map<string,any> o, options, ``(o != nil));
+	RedrawOptionsTableWidget ();
+	return nil;
+    }
+    else if (ret == "add_basic_option" )
+    {
+	options = add (options, $[
+	    "key" : current_key,
+	    "value" : current_value,
+	]);
+	RedrawOptionsTableWidget ();
+	return nil;
+    }
+    else if (ret == "change_basic_option")
+    {
+	options[index, "key"] = current_key;
+	options[index, "value"] = current_value;
+	RedrawOptionsTableWidget ();
+	return nil;
+    }
+
+    return nil;
+}
+
+
+/**
+ * Dialog Expert Settings - Logging
+ * @return term for Get_ExpertDialog()
+ */
+term Expert_Logging_Dialog () {
+    term dialog =
+	`Top (
+	    `HBox (
+		`HWeight ( 5,
+		    // Table header - logging options
+		    `Frame ( _("Log Type"),
+			`Top (
+			    `VBox (
+				`VSquash (
+				    `RadioButtonGroup( `id ( "log_type" ),
+					`VBox (
+					    // Radiobutton - log type
+					    `Left( `RadioButton( `id ( "log_type_system" ), `opt (`notify), _("&Log to System Log"), true ) ),
+					    // Radiobutton - log type
+					    `Left( `RadioButton( `id ( "log_type_file" ), `opt (`notify), _("Log to &File") ) )
+					)
+				    )
+				),
+				`VSpacing ( 0.5 ),
+				`HBox (
+				    `HSpacing ( 3 ),
+				    `VBox (
+					`VWeight ( 25,
+					    `HBox (
+						// Textentry - log to filename
+						`TextEntry ( `id ( "logfile_path" ), _("&File Name") ),
+						`VBox (
+						    `VStretch (),
+						    // Pushbutton - browse filesystem for logfile
+						    `PushButton ( `id ( "browse_logfile_path" ), Label::BrowseButton () )
+						)
+					    )
+					),
+					// IntField - max. log size
+					`VWeight ( 25, `IntField  ( `id ( "max_size" ), _("Maximum &Size (MB)"), 0, 4096, 0 ) ),
+					// IntField - max. log age
+					`VWeight ( 25, `IntField  ( `id ( "max_versions" ), _("Maximum &Versions"), 0, 100, 0 ) ),
+					`VStretch ()
+				    )
+				)
+			    )
+			)
+		    )
+		),
+		`HSpacing ( 1 ),
+		`HWeight ( 3,
+		    // Frame label - additional-logging
+		    `Frame ( _("Additional Logging"),
+			`Top (
+			    `VBox (
+				// Checkbox - additional-logging
+				`Left ( `CheckBox ( `id ( "l_named_queries" ),	_("Log Named &Queries") ) ),
+				// Checkbox - additional-logging
+				`Left ( `CheckBox ( `id ( "l_zone_updates" ),	_("Log Zone &Updates") ) ),
+				// Checkbox - additional-logging
+				`Left ( `CheckBox ( `id ( "l_zone_transfers" ),	_("Log Zone &Transfers") ) ),
+				`VStretch ()
+			    )
+			)
+		    )
+		)
+	    )
+	);
+    return dialog;
+}
+
+symbol HandleExpertLoggingPage (map event);
+
+/**
+ * Initialize the tab of the dialog
+ */
+void InitExpertLoggingPage () {
+    logging = DnsServer::GetLoggingOptions ();
+    foreach (map<string,any> l, logging, {
+	string value = l["value"]:"";
+	if (l["key"]:"" == "category")
+	{
+	    if (regexpmatch (value, "^[ \t]*default[ \t]*\\{[ \t]*log_file"))
+		UI::ChangeWidget (`id ("log_type"), `CurrentButton,
+		    "log_type_file");
+	    if (regexpmatch (value, "^[ \t]*queries[ \t]*\\{"))
+		UI::ChangeWidget (`id ("l_named_queries"), `Value, true);
+	    if (regexpmatch (value, "^[ \t]*xfer-in[ \t]*\\{"))
+		UI::ChangeWidget (`id ("l_zone_updates"), `Value, true);
+	    if (regexpmatch (value, "^[ \t]*xfer-out[ \t]*\\{"))
+		UI::ChangeWidget (`id ("l_zone_transfers"), `Value, true);
+	}
+	else if (l["key"]:"" == "channel"
+	    && regexpmatch (l["value"]:"", "^[ \t]*log_file[ \t]*\\{"))
+	{
+	    string s = l["value"]:"";
+	    integer index = findfirstof (s, "{");
+	    s = substring (s, index + 1);
+	    index = findlastof (s, "}");
+	    s = substring (s, 0, index);
+	    string fn = regexpsub (s, "file[ \t]+\"([^\"]+)\"", "\\1");
+	    if (fn != nil)
+		UI::ChangeWidget (`id ("logfile_path"), `Value, fn);
+	    integer sz = tointeger (regexpsub (s, "size[ \t]+([^ \t]+)","\\1"));
+	    if (sz != nil)
+		UI::ChangeWidget (`id ("max_size"), `Value, sz);
+	    integer vc = tointeger (regexpsub (s, "versions[ \t]+([^ \t]+)","\\1"));
+	    if (vc != nil)
+		UI::ChangeWidget (`id ("max_versions"), `Value, vc);
+	}
+
+    });
+
+    HandleExpertLoggingPage ($["ID" : "log_type_system"]);
+}
+
+/**
+ * Store settings of a tab of a dialog
+ */
+void StoreExpertLoggingPage () {
+    logging = filter (map<string,any> l, logging, {
+	return (l["key"]:"" != "category" || ! (
+	    regexpmatch (l["value"]:"", "^[ \t]*default[ \t]*\\{")
+	    || regexpmatch (l["value"]:"", "^[ \t]*queries[ \t]*\\{")
+	    || regexpmatch (l["value"]:"", "^[ \t]*xfer-in[ \t]*\\{")
+	    || regexpmatch (l["value"]:"", "^[ \t]*xfer-out[ \t]*\\{")
+	))
+	&& ! (l["key"]:"" == "channel"
+	    && regexpmatch (l["value"]:"", "^[ \t]*log_file[ \t]*\\{"));
+    });
+
+    boolean use_file = UI::QueryWidget (`id ("log_type"), `CurrentButton)
+	== "log_type_file";
+    string channel = "default_syslog";
+    if (use_file)
+    {
+	channel = "log_file";
+	string fn = (string)UI::QueryWidget (`id ("logfile_path"), `Value);
+	integer sz = (integer)UI::QueryWidget (`id ("max_size"), `Value);
+	integer vc = (integer)UI::QueryWidget (`id ("max_versions"), `Value);
+	logging = add (logging, $[
+	    "key" : "channel",
+	    "value" : sformat ("log_file { file \"%1\" size %2 versions %3; }",
+		fn, sz, vc),
+	]);
+    }
+    logging = add (logging, $[
+	"key" : "category",
+	"value" : sformat ("default { %1; }", channel),
+    ]);
+    if ((boolean)UI::QueryWidget (`id ("l_named_queries"), `Value))
+    {
+	logging = add (logging, $[
+	    "key" : "category",
+	    "value" : sformat ("queries { %1; }", channel),
+	]);
+    }
+    if ((boolean)UI::QueryWidget (`id ("l_zone_updates"), `Value))
+    {
+	logging = add (logging, $[
+	    "key" : "category",
+	    "value" : sformat ("xfer-in { %1; }", channel),
+	]);
+    }
+    if ((boolean)UI::QueryWidget (`id ("l_zone_transfers"), `Value))
+    {
+	logging = add (logging, $[
+	    "key" : "category",
+	    "value" : sformat ("xfer-out { %1; }", channel),
+	]);
+    }
+    DnsServer::SetLoggingOptions (logging);
+}
+
+/**
+ * Handle events in a tab of a dialog
+ */
+symbol HandleExpertLoggingPage (map event) {
+    any ret = event["ID"]:nil;
+    if (ret == "log_type_system" || ret == "log_type_file")
+    {
+	boolean en = UI::QueryWidget (`id ("log_type"), `CurrentButton)
+	    == "log_type_file";
+	foreach (string w, [ "logfile_path", "browse_logfile_path",
+	    "max_size", "max_versions"],
+	{
+	    UI::ChangeWidget (`id (w), `Enabled, en);
+	});
+    }
+    else if (ret == "browse_logfile_path")
+    {
+	string fn = (string)UI::QueryWidget (`id ("logfile_path"), `Value);
+	fn = (string)UI::AskForSaveFileName (fn, "",
+	    // popup headline
+	    _("Select File for Log"));
+	if (fn != nil)
+	    UI::ChangeWidget (`id ("logfile_path"), `Value, fn);
+    }
+    return nil;
+}
+
+
+/**
+ * Dialog Expert Settings - ACLs
+ * @return term for Get_ExpertDialog()
+ */
+term Expert_ACLs_Dialog () {
+    term dialog =
+	`Top (
+	    `VBox (
+		`VSquash (
+		    `HBox (
+			`HWeight ( 9,
+			    // Frame label - adding ACL-optiopn
+			    `Frame ( _("Option Setup"),
+				`VBox (
+				    `HBox (
+					// Textentry - adding ACL-optiopn - name
+					`TextEntry ( `id ( "new_acl_name" ), `opt ( `hstretch ), _("&Name") ),
+					// Textentry - adding ACL-optiopn - value
+					`TextEntry ( `id ( "new_acl_value" ), `opt ( `hstretch ), _("&Value") )
+				    ),
+				    `VSpacing ( 1 )
+				)
+			    )
+			),
+			`HWeight ( 2,
+			    `VBox (
+				`VStretch (),
+				`VSquash ( `PushButton ( `id ( "add_acl" ), `opt ( `hstretch ), Label::AddButton () ) )
+			    )
+			)
+		    )
+		),
+		`VSpacing ( 1 ),
+		`VBox (
+		    // Table header - ACL-options listing
+		    `Left ( `Label ( _("Current ACL List") ) ),
+		    `HBox (
+			`HWeight ( 9,
+			    `Table ( `id ( "acl_listing_table" ), `header ( 
+				    // Table header item - ACL-options
+				    _("ACL"),
+				    // Table header item - ACL-options
+				    _("Value")
+				), [
+				// FIXME: real ACL data (list)
+				`item ( `id ( 1 ), "can_acfr", nil ),
+				`item ( `id ( 2 ), "can_query", nil ),
+			    ])
+			),
+			`HWeight ( 2,
+			    `VBox (
+				`VSquash ( `PushButton ( `id ( "delete_acl" ), `opt ( `hstretch ), Label::DeleteButton () ) ),
+				`VStretch ()
+			    )
+			)
+		    )
+		)
+	    )
+	);
+    return dialog;
+}
+
+void RedrawAclPage () {
+    integer index = -1;
+    list items = maplist (string a, acl, {
+	index = index + 1;
+	while (substring (a, 0, 1) == " " || substring (a, 0, 1) == "\t")
+	    a = substring (a, 1);
+	list<string> s = splitstring (a, " \t");
+	string type = s[0]:"";
+	s[0] = "";
+	a = mergestring (s, " ");
+	while (substring (a, 0, 1) == " " || substring (a, 0, 1) == "\t")
+	    a = substring (a, 1);
+	return `item (`id (index), type, a);
+    });
+    UI::ChangeWidget (`id ("acl_listing_table"), `Items, items);
+}
+
+/**
+ * Initialize the tab of the dialog
+ */
+void InitExpertAclPage () {
+    acl = DnsServer::GetAcl ();
+    UI::ChangeWidget (`id ("new_acl_name"), `ValidChars,
+	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
+    RedrawAclPage ();
+}
+
+/**
+ * Store settings of a tab of a dialog
+ */
+void StoreExpertAclPage () {
+   DnsServer::SetAcl (acl);
+}
+
+/**
+ * Testing for acls duplicity
+ * @returns true if the name is duplicate
+ */
+boolean IsAclDefined (string new_name, list<string> acls) {
+    if (foreach (string acl, acls, {
+	list<string> splitted = splitstring (acl, " \t");
+	if (new_name == splitted[0]:"") return true;
+    }) == true) {
+	return true;
+    }
+    return false;
+}
+
+/**
+ * Handle events in a tab of a dialog
+ */
+symbol HandleExpertAclPage (map event) {
+    any ret = event["ID"]:nil;
+    integer index = (integer)UI::QueryWidget (`id ("acl_listing_table"),
+	`CurrentItem);
+    if (ret == "delete_acl")
+    {
+	string a = acl[index]:"";
+	while (substring (a, 0, 1) == " " || substring (a, 0, 1) == "\t")
+	    a = substring (a, 1);
+	list<string> s = splitstring (a, " \t");
+	a = s[0]:"";
+	list<map<any,any> > zones = DnsServer::FetchZones ();
+	zones = maplist (map<any,any> z, zones, {
+	    list<map> options = z["options"]:[];
+	    options = maplist (map o, options, {
+		if (o["key"]:"" == "allow-transfer")
+		{
+		    list<string> keys = splitstring (o["value"]:"", "; {}");
+		    keys = filter (string k, keys, ``(k != ""));
+		    keys = filter (string k, keys, ``(k != a));
+		    o["value"] = sformat ("{ %1; }", mergestring (keys, "; "));
+		}
+		return o;
+	    });
+	    z["options"] = options;
+	    return z;
+	});
+	DnsServer::StoreZones (zones);
+
+	acl[index] = nil;
+	acl = filter (string a, acl, ``(a != nil));
+	RedrawAclPage ();
+    }
+    else if (ret == "add_acl")
+    {
+	string n = (string)UI::QueryWidget (`id ("new_acl_name"), `Value);
+	string v = (string)UI::QueryWidget (`id ("new_acl_value"), `Value);
+	if (n != nil && regexpmatch (n, "^[ \t]*[a-z0-9_-]+[ \t]*$") &&
+	    v != nil && regexpmatch (v, "[^ \t\\{\\};]"))
+	{
+	    // strip leading & trailing spaces
+	    // as well as a trailing ';' char
+	    if (regexpmatch (v, "^[ \t]+.*$"))
+		v = regexpsub (v, "^[ \t]+(.*)$",  "\\1");
+	    if (regexpmatch (v, "^.*[ \t]+$"))
+		v = regexpsub (v, "^(.*)[ \t]+$", "\\1");
+	    if (regexpmatch (v, "^.*[ \t]*;$"))
+		v = regexpsub (v, "^(.*)[ \t]*;$", "\\1");
+
+	    // should be a block begining with a '{'
+	    if (! regexpmatch (v, "^\\{"))
+	    {
+		v = "{ " + v;
+	    }
+
+	    // make sure, there is a block end '}'
+            // note: ';' after '}' is added later
+	    if (! regexpmatch (v, "\\}$"))
+	    {
+		// terminate list with ';' if needed
+		if (! regexpmatch (v, ";$"))
+		{
+		    v = v + ";";
+		}
+		v = v + " }";
+	    }
+	    // testing for ACL duplicity
+	    if (IsAclDefined (n, acl))
+	    {
+		UI::SetFocus(`id ("new_acl_name") );
+		// An error popup message
+		Popup::Message( _("Specified ACL entry already exists.") );
+	    }
+	    else
+	    {
+		acl = add (acl, sformat ("%1 %2", n, v));
+		RedrawAclPage ();
+	    }
+	}
+    }
+    return nil;
+}
+/**
+ * Dialog Expert Settings - Keys
+ * @return term for Get_ExpertDialog()
+ */
+term ExpertKeysDialog () {
+    term dialog =
+	`Top (
+	    `VBox (
+		`VSquash (
+		    `HBox (
+			`HWeight ( 9,
+			    // Frame label - adding new server key
+			    `Frame ( _("Add or Generate a New TSIG Key"),
+				`VBox (
+				    `HBox (
+					// Table header item - new server key - name
+					`TextEntry ( `id ( "new_key_name" ), `opt ( `hstretch ), _("&Key ID") ),
+					// Table header item - new server key - value
+					`TextEntry ( `id ( "new_key_file" ), `opt ( `hstretch ), _("&File Name") ),
+					`VBox (
+					    `Label (" "),
+					    `PushButton ( `id ( "browse_key_file" ), Label::BrowseButton ())
+					)
+				    ),
+				    `HBox (
+					// Combobox - new server key - algorithm type
+/*					`HSquash ( `ComboBox ( `id ( "new_key_algorithm" ), _("Algo&rithm") ,
+					    // FIXME: real list of algorithms
+					    [ "hmdac-md5", "des3" ]
+					) ),*/
+					// Pushbutton - generate new server key
+					`HSquash ( `Bottom ( `PushButton ( `id ( "generate_key" ), _("&Generate") ) ) ),
+					`HStretch ()
+				    )
+				)
+			    )
+			),
+			`HWeight ( 2,
+			    `VBox (
+				`VStretch (),
+				`VSquash ( `PushButton ( `id ( "add_key" ), `opt ( `hstretch ), Label::AddButton () ) )
+			    )
+			)
+		    )
+		),
+		`VSpacing ( 1 ),
+		`VBox (
+		    // Table header - DNS key listing
+		    `Left ( `Label ( _("Current TSIG Keys") ) ),
+		    `HBox (
+			`HWeight ( 9,
+			    `Table ( `id ( "key_listing_table" ), `header (
+				    // Table header item - DNS key listing
+				    _("Key"),
+				    // Table header item - DNS key listing
+//				    _("Type"),
+				    // Table header item - DNS key listing
+				    _("File")
+				), []
+			    )
+			),
+			`HWeight ( 2,
+			    `VBox (
+				`VSquash ( `PushButton ( `id ( "delete_key" ), `opt ( `hstretch ), Label::DeleteButton () ) ),
+				`VStretch ()
+			    )
+			)
+		    )
+		)
+	    )
+	);
+    return dialog;
+}
+
+
+/**
+ * Redraw the table of DDNS keys
+ */
+define void DdnsKeysWidgetRedraw () ``{
+    list items = maplist (map<string,string> k, current_tsig_keys, ``(
+        `item (`id (k["key"]:""), k["key"]:"", k["filename"]:"")
+    ));
+    UI::ChangeWidget (`id ("delete_key"), `Enabled, size(items) > 0);
+    UI::ChangeWidget (`id ("key_listing_table"), `Items, items);
+    UI::SetFocus (`id ("key_listing_table"));
+}
+
+void InitExpertKeysPage () {
+    current_tsig_keys = DnsTsigKeys::ListTSIGKeys ();
+    UI::ChangeWidget (`id ("new_key_file"), `Value, "/etc");
+    UI::ChangeWidget (`id ("new_key_name"), `ValidChars,
+	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
+    DdnsKeysWidgetRedraw ();
+}
+
+void StoreExpertKeysPage () {
+    foreach (string key, deleted_tsig_keys, ``{
+	DnsTsigKeys::DeleteTSIGKey (key);
+    });
+    foreach (string file, new_tsig_keys, ``{
+	DnsTsigKeys::AddTSIGKey (file);
+    });
+}
+
+symbol HandleExpertKeysPage (map event) {
+    any ret = event["ID"]:nil;
+    string filename = (string)UI::QueryWidget (`id ("new_key_file"),`Value);
+    if (ret == "delete_key")
+    {
+	string key = (string)UI::QueryWidget (`id ("key_listing_table"),
+	    `CurrentItem);
+	current_tsig_keys = filter (map<string,string>k, current_tsig_keys, ``(
+	    k["key"]:nil != key
+	));
+	deleted_tsig_keys = add (deleted_tsig_keys, key);
+    }
+    else if (ret == "browse_key_file")
+    {
+
+	filename = (string)UI::AskForExistingFile (filename, "",
+	    // popup headline
+	    _("Select File with the Authentication Key"));
+	if (filename != nil)
+	    UI::ChangeWidget (`id ("new_key_file"), `Value, filename);
+	return nil;
+    }
+    else if (ret == "generate_key")
+    {
+	string key = (string)UI::QueryWidget (`id ("new_key_name"), `Value);
+	map stat = (map)SCR::Read (.target.stat, filename);
+	if (size (stat) != 0)
+	{
+	    if (stat["isdir"]:false)
+	    {
+		UI::SetFocus (`id ("new_key_file"));
+		// error report
+		Report::Error (_("Specified file name is an existing directory."));
+		return nil;
+	    }
+	    // yes-no popup
+	    if (! Popup::YesNo (_("Specified file exists. Rewrite it?")))
+	    {
+		return nil;
+	    }
+	}
+	if (key == nil || key == "")
+	{
+	    UI::SetFocus (`id ("new_key_name"));
+	    // error report
+	    Popup::Error (_("The TSIG key ID was not specified."));
+	    return nil;
+	}
+        // yes-no popup
+        if (! Popup::YesNo (_("The key will be created now. Continue?")))
+            return nil;
+	SCR::Execute (.target.bash,
+            "test -d /etc/named.d || mkdir /etc/named.d");
+        SCR::Execute (.target.bash, sformat (
+            "/usr/bin/genDDNSkey --force  -f %1 -n %2 -d /etc/named.d",
+	    filename, key));
+	ret = "add_key";
+    }
+    if (ret == "add_key")
+    {
+	list<string> keys = DnsTsigKeys::AnalyzeTSIGKeyFile (filename);
+	if (size (keys) == 0)
+	{
+	    // message popup
+	    Popup::Message (_("The specified file does not contain any TSIG key."));
+	    return nil;
+	}
+	boolean collision = false;
+	foreach (map<string,string> k, current_tsig_keys, ``{
+	    if (contains (keys, k["key"]:""))
+		collision = true;
+	});
+	if (collision)
+	{
+	    // yes-no popup
+	    if (!Popup::YesNo (_("The specified file contains a TSIG key with the same
+identifier as some of already present keys.
+Old keys will be removed. Continue?")))
+	    {
+		return nil;
+	    }
+	}
+	new_tsig_keys = add (new_tsig_keys, filename);
+	foreach (string k, keys, ``{
+	    current_tsig_keys = filter (map<string,string> key, current_tsig_keys, ``(
+		key["key"]:nil != k && key["filename"]:nil != filename
+	    ));
+	    current_tsig_keys = add (current_tsig_keys, $[
+	        "key" : k,
+	        "filename" : filename,
+	    ]);
+	});
+    }
+    DdnsKeysWidgetRedraw ();
+    return nil;
+}
+/**
+ * Dialog Expert Settings - ZonesZones
+ * @return term for Get_ExpertDialog()
+ */
+term ExpertZonesDialog () {
+    term dialog =
+	`Top (
+	    `VBox (
+		`VSquash (
+		    `HBox (
+			`HWeight ( 3,
+			    // Frame label - DNS adding zone
+			    `Frame ( _("A&dd New Zone "),
+				`VBox (
+				    `VSpacing ( 0.5 ),
+				    `HBox (
+					// Textentry - DNS adding zone - Name
+					`TextEntry ( `id ( "new_zone_name" ), `opt ( `hstretch ), _("Zone &Name"), "example.com" ),
+					// Combobox - DNS adding zone - Type
+					`ComboBox ( `id ( "new_zone_type" ), _("Zone &Type") , [
+					    // Combobox - DNS adding zone - Type Master
+					    `item ( `id ( "master" ), _("Master") ),
+					    // Combobox - DNS adding zone - Type Slave
+					    `item ( `id ( "slave" ),  _("Slave") )
+					] )
+				    ),
+				    `VSpacing ( 0.5 )
+				)
+			    )
+			),
+			`HWeight ( 1,
+			    `VBox (
+				`VStretch (),
+				`VSquash ( `PushButton ( `id ( "add_zone" ), `opt ( `hstretch ), Label::AddButton () ) )
+			    )
+			)
+		    )
+		),
+		`VSpacing ( 1 ),
+		`VBox (
+		    // Table header - DNS listing zones
+		    `Left ( `Label ( _("Configured DNS Zones") ) ),
+		    `HBox (
+			`HWeight ( 5,
+			    `Table ( `id ( "zones_list_table" ), `header (
+				// Table header item - DNS listing zones
+				_("Zone"),
+				// Table header item - DNS listing zones
+				_("Type")
+			    ),
+			    []
+			    )
+			),
+			`HWeight ( 2,
+			    `VBox (
+				// Pushbutton - delete zone selected in table
+				`VSquash ( `PushButton ( `id ( "delete_zone" ), `opt ( `hstretch ), _("&Delete Zone") ) ),
+				// Pushbutton - edit zone selected in table
+				`VSquash ( `PushButton ( `id ( "edit_zone" ), `opt ( `hstretch ), _("&Edit Zone...") ) ),
+				`VStretch ()
+			    )
+			)
+		    )
+		)
+	    )
+	);
+    return dialog;
+}
+
+void RedrawZonesListWidget () {
+    integer index = -1;
+    list items = maplist (map z, zones, ``{
+	index = index + 1;
+	string zone_name = z["zone"]:"";
+	if (zone_name == "." || zone_name == "0.0.127.in-addr.arpa"
+	    || zone_name == "localhost")
+	{
+	    return `item ();
+	}
+	return `item (`id (index), zone_name, z["type"]:"master");
+    });
+    items = filter (any i, items, ``(i != `item ()));
+    UI::ChangeWidget (`id ("zones_list_table"), `Items, items);
+    UI::SetFocus (`id ("zones_list_table"));
+    UI::ChangeWidget (`id ("delete_zone"), `Enabled, size (items) > 0);
+    UI::ChangeWidget (`id ("edit_zone"), `Enabled, size (items) > 0);
+}
+
+/**
+ * Setting `ValidChars for the dialog
+ */
+void ValidCharsZonesPage () {
+    // setting `ValidChars
+    UI::ChangeWidget( `id("new_zone_name"),	`ValidChars,	Hostname::ValidCharsDomain);
+}
+
+/**
+ * Initialize the tab of the dialog
+ */
+void InitExpertZonesPage () {
+    zones = DnsServer::FetchZones ();
+    RedrawZonesListWidget ();
+    ValidCharsZonesPage ();
+}
+
+/**
+ * Store settings of a tab of a dialog
+ */
+void StoreExpertZonesPage () {
+    return;
+}
+
+/**
+ * Handle events in a tab of a dialog
+ */
+symbol HandleExpertZonesPage (map event) {
+    any ret = event["ID"]:nil;
+    integer index = (integer)
+	UI::QueryWidget (`id ("zones_list_table"), `CurrentItem);
+    if (ret == "delete_zone")
+    {
+	zones[index] = nil;
+	zones = filter (map z, zones, ``(z != nil));
+	DnsServer::StoreZones (zones);
+	RedrawZonesListWidget ();
+	return nil;
+    }
+    else if (ret == "add_zone")
+    {
+	string zone_name = (string)
+	    UI::QueryWidget (`id ("new_zone_name"), `Value);
+	string zone_type = (string)
+	    UI::QueryWidget (`id ("new_zone_type"), `Value);
+	// zone validation
+	if ( Hostname::CheckDomain (zone_name) != true )
+	{
+	    UI::SetFocus ( `id ("new_zone_name") );
+	    Popup::Error ( Hostname::ValidDomain() );
+	    return nil;
+	}
+	list<map> zones_same = filter (map z, zones, {
+	    return z["zone"]:"" == zone_name;
+	});
+	if (size (zones_same) != 0)
+	{
+	    UI::SetFocus ( `id ("new_zone_name") );
+	    // error report
+	    Popup::Error (_("Zone with specified name is already configured."));
+	    return nil;
+	}
+
+	DnsServer::StoreZones (zones);
+	DnsServer::SelectZone (-1);
+	map<string,any> z = DnsServer::FetchCurrentZone ();
+	z = (map<string,any>)union (z, $[
+	    "zone" : zone_name,
+	    "type" : zone_type,
+	]);
+
+	y2milestone ("Created zone: %1", z);
+	DnsServer::StoreCurrentZone (z);
+	DnsServer::StoreZone ();
+	zones = DnsServer::FetchZones ();
+	RedrawZonesListWidget ();
+    }
+    else if (ret == "edit_zone")
+    {
+	DnsServer::SelectZone (index);
+	current_zone = DnsServer::FetchCurrentZone ();
+	return `edit_zone;
+    }
+
+    return nil;
+}
+
+/**
+ * Dialog Expert Settings
+ * @param string dialog_id
+ * @return term dialog for Get_ExpertDialog()
+ */
+term Get_ExpertDialog (string dialog) {
+    if ( dialog == "start_up" )		return ExpertStartUpDialog();
+    if ( dialog == "forwarders" )	return ExpertForwardersDialog();
+    if ( dialog == "basic_options" )	return ExpertBasicOptionsDialog();
+    if ( dialog == "logging" )		return Expert_Logging_Dialog();
+    if ( dialog == "acls" )		return Expert_ACLs_Dialog();
+    if ( dialog == "keys" )		return ExpertKeysDialog();
+    if ( dialog == "zones" )		return ExpertZonesDialog();
+
+					// This should never happen, but ...
+					y2error ( "No dialog defined: %1", dialog );
+					// If no dialog defined for this menu item (software error)
+    					return `Label ( _("No dialog defined.") );
+}
+
+/**
+ * Dialog Expert Settings Label
+ * @param string dialog_id
+ * @return string label for Expert_Dialog()
+ */
+string Get_DialogCaption (string dialog) {
+					// Tree Menu Item & Dialog Label - DNS - expert settings
+    if ( dialog == "start_up" )		return _("Start-Up");
+					// Tree Menu Item & Dialog Label - DNS - expert settings
+    if ( dialog == "forwarders" )	return _("Forwarders");
+					// Tree Menu Item & Dialog Label - DNS - expert settings
+    if ( dialog == "basic_options" )	return _("Basic Options");
+					// Tree Menu Item - DNS & Dialog Label - expert settings
+    if ( dialog == "logging" )		return _("Logging");
+					// Tree Menu Item - DNS & Dialog Label - expert settings
+    if ( dialog == "acls" )		return _("ACLs");
+					// Tree Menu Item - DNS & Dialog Label - expert settings
+    if ( dialog == "keys" )		return _("TSIG Keys");
+					// Tree Menu Item - DNS & Dialog Label - expert settings
+    if ( dialog == "zones" )		return _("DNS Zones");
+
+					// This should never happen ... but...
+					y2error ( "No caption defined: %1", dialog );
+					// Tree Menu Item - DNS & Dialog Label - expert settings
+    					return _("No caption defined.");
+}
+
+/**
+ * Dialog Expert Settings Help
+ * @param string dialog_id
+ * @return string help for Expert_Dialog()
+ */
+string Get_DialogHelp (string dialog) {
+    // fallback help - error message
+    return HELPS[dialog]:_("Software error -- no help defined.");
+}
+
+// start page functions
+
+
+
+
+
+
+void InitExpertDialog (string dialog) {
+    if (dialog == "start_up")
+    {
+	InitExpertStartUpPage ();
+    }
+    else if (dialog == "forwarders")
+    {
+	InitExpertForwardersPage ();
+    }
+    else if (dialog == "basic_options")
+    {
+	InitExpertBasicOptionsPage ();
+    }
+    else if (dialog == "logging")
+    {
+	InitExpertLoggingPage ();
+    }
+    else if (dialog == "acls")
+    {
+	InitExpertAclPage ();
+    }
+    else if (dialog == "keys")
+    {
+	InitExpertKeysPage ();
+    }
+    else if (dialog == "zones")
+    {
+	InitExpertZonesPage ();
+    }
+}
+
+void StoreExpertDialog (string dialog) {
+    if (dialog == "start_up")
+    {
+	StoreExpertStartUpPage ();
+    }
+    else if (dialog == "forwarders")
+    {
+	StoreExpertForwardersPage ();
+    }
+    else if (dialog == "basic_options")
+    {
+	StoreExpertBasicOptionsPage ();
+    }
+    else if (dialog == "logging")
+    {
+	StoreExpertLoggingPage ();
+    }
+    else if (dialog == "acls")
+    {
+	StoreExpertAclPage ();
+    }
+    else if (dialog == "keys")
+    {
+	StoreExpertKeysPage ();
+    }
+    else if (dialog == "zones")
+    {
+	StoreExpertZonesPage ();
+    }
+
+}
+
+symbol HandleExpertDialog (string dialog, map event) {
+    symbol ret = nil;
+    if (dialog == "start_up")
+    {
+	ret = HandleExpertStartUpPage (event);
+    }
+    else if (dialog == "forwarders")
+    {
+	ret = HandleExpertForwardersPage (event);
+    }
+    else if (dialog == "basic_options")
+    {
+	ret = HandleExpertBasicOptionsPage (event);
+    }
+    else if (dialog == "logging")
+    {
+	ret = HandleExpertLoggingPage (event);
+    }
+    else if (dialog == "acls")
+    {
+	ret = HandleExpertAclPage (event);
+    }
+    else if (dialog == "keys")
+    {
+	ret = HandleExpertKeysPage (event);
+    }
+    else if (dialog == "zones")
+    {
+	ret = HandleExpertZonesPage (event);
+    }
+    return ret;
+}
+
+/**
+ * Dialog Expert Settings
+ * @return any dialog return for wizard
+ */
+symbol runExpertDialog () {
+
+    // UI initialization
+    Wizard::OpenTreeNextBackDialog();
+
+    // Tree (left menu) definition
+    list<map> Tree = [];
+    //				    Menu item has the same name as the Dialog's caption
+    Tree = Wizard::AddTreeItem( Tree, "",  Get_DialogCaption ( "start_up" ),		"start_up" );
+    Tree = Wizard::AddTreeItem( Tree, "",  Get_DialogCaption ( "forwarders" ),		"forwarders" );
+    Tree = Wizard::AddTreeItem( Tree, "",  Get_DialogCaption ( "basic_options" ),	"basic_options" );
+    Tree = Wizard::AddTreeItem( Tree, "",  Get_DialogCaption ( "logging" ),		"logging" );
+    Tree = Wizard::AddTreeItem( Tree, "",  Get_DialogCaption ( "acls" ),		"acls" );
+    if (! Mode::config)
+    {
+	Tree = Wizard::AddTreeItem (Tree, "", Get_DialogCaption ("keys"),
+	    "keys");
+    }
+    Tree = Wizard::AddTreeItem( Tree, "",  Get_DialogCaption ( "zones" ),		"zones" );
+
+    Wizard::CreateTree(Tree, ""); // FIXME shouldn't there be a label here?
+
+    string current_dialog = was_editing_zone
+	? "zones"
+	: "start_up";
+
+    // Code block - First dialog definition
+    // Expert dialog title plus dialog title for every single dialog ("DNS Server - DNS Zones")
+    string caption = _("DNS Server") + " - " + Get_DialogCaption ( current_dialog );
+
+    string help = Get_DialogHelp ( current_dialog );
+    term dialog = Get_ExpertDialog( current_dialog );
+    Wizard::SetContentsButtons (caption, dialog, help,
+	Label::CancelButton(), Label::FinishButton());
+
+    if (UI::WidgetExists(`id(`wizardTree)))
+    {
+	Wizard::ReplaceBackButton (`PushButton (`id(`help), `opt(`key_F1), Label::HelpButton()));
+    }
+    else
+    {
+	Wizard::HideBackButton();
+    }
+
+
+    InitExpertDialog ( current_dialog );
+
+    if (UI::WidgetExists(`id(`wizardTree)))
+    {
+	UI::ChangeWidget(`id(`wizardTree), `CurrentItem, current_dialog);
+	UI::SetFocus (`id (`wizardTree));
+    }
+    else
+    {
+	UI::WizardCommand(`SelectTreeItem(current_dialog));
+    }
+
+    map event = nil;
+    any ret = nil;
+    while(true) {
+
+	event = UI::WaitForEvent();
+	ret = event["ID"]:nil;
+
+	if (ret == `wizardTree)
+	{
+	    ret = (string)UI::QueryWidget (`id (`wizardTree), `CurrentItem);
+	}
+
+        if (ret == `next ) {
+	    break;
+	}
+	else if ( ret == `back || ret == `cancel || ret == `abort) {
+	    if ( ReallyAbort() )
+		break;
+	    else
+		continue;
+        }
+        else if (ret == `help)
+        {
+	    UI::OpenDialog( `opt(`decorated ),
+		`HBox( `VSpacing(16),
+		    `VBox(
+			`HSpacing(60),
+// FIXME add heading for next version
+			 // popup window header
+//			`Heading(_("Help")),
+			`VSpacing(0.5),
+			`RichText(help),
+			`VSpacing(1.5),
+			`PushButton(`id(`ok), `opt(`default, `key_F10), Label::OKButton())
+		    )
+		)
+	    );
+
+	    UI::SetFocus(`id(`ok));
+	    UI::UserInput();
+	    UI::CloseDialog();
+        }
+	else if ( ret == "start_up"  || ret == "forwarders" || ret == "basic_options" || ret == "logging" || ret == "acls" || ret == "keys" || ret == "zones" ) {
+	    StoreExpertDialog (current_dialog);
+	    current_dialog = (string)ret;
+	    // Changing dialogs
+	    caption = _("DNS Server") + " - " + Get_DialogCaption ( current_dialog );
+	    help = Get_DialogHelp ( current_dialog );
+	    dialog = Get_ExpertDialog( current_dialog );
+
+	    Wizard::SetContents( caption, dialog, help, true, true);
+	    InitExpertDialog ( current_dialog );
+	    if (UI::WidgetExists(`id(`wizardTree)))
+	    {
+		UI::SetFocus (`id (`wizardTree));
+	    }
+	}
+	else
+	{
+	    ret = HandleExpertDialog (current_dialog, event);
+	    if (ret != nil)
+		break;
+	}
+    }
+
+    if (ret == `next)
+    {
+	StoreExpertDialog (current_dialog);
+	DnsServer::SetModified ();
+    }
+    UI::CloseDialog();
+
+    return (symbol)ret;
+}
+
+
+
+/* EOF */
+}
