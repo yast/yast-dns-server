@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Sep 13 17:12:33 CEST 2004 - locilka@suse.de
+
+- fixed testsuites
+- 2.10.9
+
+-------------------------------------------------------------------
 Fri Sep  3 13:20:31 CEST 2004 - locilka@suse.cz
 
 - added GetModified/SetModified support into the autoyast client

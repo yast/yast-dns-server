@@ -162,6 +162,15 @@
 		    "MODIFY_RESOLV_CONF_DYNAMICALLY" : "yes",
 		],
 	    ],
+	    "console" : $[ "CONSOLE_ENCODING" : "utf8" ],
+	    "language" : $[
+		"RC_LANG" : "en_US.UTF-8",
+		"ROOT_USES_LANG" : "ctype",
+	    ],
+	],
+	"target" : $[
+	    "yast2" : $[ "lang2iso.ycp" : $[] ],
+	    "size" : 1,
 	],
     ];
     map WRITE = $[];
