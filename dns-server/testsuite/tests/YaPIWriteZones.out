@@ -1,0 +1,57 @@
+Dump	==========================================================
+Execute	.target.bash "/etc/init.d/named status" 0
+Execute	.target.bash "/etc/init.d/named stop" 0
+Execute	.target.bash "/etc/init.d/named restart" 0
+Execute	.target.bash_output "stat --format='rights: %a, blocks: %b, size: %s, owner: %u:%g changed: %Z, modifyied: %Y' /etc/named.conf" $["exit":1, "stderr":"", "stdout":""]
+Read	.sysconfig.named.NAMED_RUN_CHROOTED nil
+Read	.sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY "yes"
+Read	.sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY "yes"
+Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
+Dir	.dns.named.value.options: ["directory", "notify"]
+Read	.dns.named.value.options.directory ["\"/var/lib/named\""]
+Read	.dns.named.value.options.notify ["no"]
+Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
+Read	.dns.named.value.acl []
+Read	.sysconfig.named.NAMED_CONF_INCLUDE_FILES nil
+Read	.dns.named.value."zone \"localhost\" in".type ["master"]
+Read	.dns.named.value."zone \"localhost\" in".file ["\"localhost.zone\""]
+Read	.dns.zone "/var/lib/named/localhost.zone" $["TTL":"1W", "records":[$["key":"", "type":"NS", "value":"@"], $["key":"", "type":"A", "value":"127.0.0.1"], $["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":42, "server":"@", "zone":"@"]]
+Dir	.dns.named.value."zone \"localhost\" in": ["file", "type"]
+Read	.dns.named.value."zone \"localhost\" in"."file" ["\"localhost.zone\""]
+Read	.dns.named.value."zone \"localhost\" in"."type" ["master"]
+Execute	.target.bash "/etc/init.d/named stop" 0
+Execute	.target.bash_output "stat --format='rights: %a, blocks: %b, size: %s, owner: %u:%g changed: %Z, modifyied: %Y' /etc/named.conf" $["exit":1, "stderr":"", "stdout":""]
+Write	.dns.named.value.acl [] true
+Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
+Dir	.dns.named.value.options: ["directory", "notify"]
+Write	.dns.named.value.options."forwarders" nil true
+Write	.dns.named.value.options."directory" ["\"/var/lib/named\""] true
+Write	.dns.named-forwarders ["/etc/named.d/forwarders.conf", ""] true
+Write	.dns.named.value.options."include" ["\"/etc/named.d/forwarders.conf\""] true
+Write	.dns.named.value.options."notify" ["no"] true
+Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
+Write	.dns.named nil true
+Dir	.dns.named.value: ["acl", "options", "zone \"localhost\" in"]
+Read	.sysconfig.named.NAMED_CONF_INCLUDE_FILES nil
+Write	.sysconfig.named.NAMED_CONF_INCLUDE_FILES "" true
+Read	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS nil
+Write	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS "createNamedConfInclude" true
+Write	.sysconfig.named nil true
+Write	.dns.named.value."zone \"example.com\" in".type ["master"] true
+Dir	.dns.named.value."zone \"example.com\" in": []
+Write	.dns.named.value."zone \"example.com\" in"."type" ["master"] true
+Write	.dns.named.value."zone \"example.com\" in"."file" ["\"example.com.zone\""] true
+Execute	.target.bash_output "/bin/hostname --fqdn" $["exit":1, "stderr":"", "stdout":""]
+Write	.dns.zone ["/var/lib/named/example.com", $["TTL":"1W", "records":[$["key":"host", "type":"A", "value":"127.0.0.1"], $["key":"example.com.", "type":"NS", "value":"@"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":"2004012701", "server":"@", "zone":"@"]]] true
+Write	.dns.named.value."zone \"example.com\" in".file ["\"example.com\""] true
+Write	.dns.named.value."zone \"example.com\" in".type ["master"] true
+Write	.dns.named nil true
+Write	.sysconfig.named.NAMED_RUN_CHROOTED "yes" true
+Write	.sysconfig.named nil true
+Write	.sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY "yes" true
+Write	.sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY "yes" true
+Write	.sysconfig.network.config nil true
+Execute	.target.bash "/etc/init.d/named stop" 0
+Write	.target.ycp "/var/lib/YaST2/dns_server" $[] true
+Return	true
+Dump	==========================================================

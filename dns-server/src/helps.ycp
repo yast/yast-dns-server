@@ -1,0 +1,480 @@
+/**
+ * File:	include/dns-server/helps.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Help texts of all the dialogs
+ * Authors:	Jiri Srain <jiri.srain@suse.cz>,
+ *		Lukas Ocilka <lukas.ocilka@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+textdomain "dns-server";
+
+import "ProductFeatures";
+
+/**
+ * All helps are here
+ */
+global map HELPS = $[
+
+    /* Read dialog help 1/2 */
+    "read" : _("<p><b><big>Initializing DNS Server Configuration</big></b><br>
+Please wait...<br></p>") +
+
+    /* Read dialog help 2/2 */
+    _("<p><b><big>Aborting Initialization:</big></b><br>
+Safely abort the configuration utility by pressing <b>Abort</b> now.</p>"),
+
+    /* Write dialog help 1/2 */
+    "write" : _("<p><b><big>Saving DNS Server Configuration</big></b><br>
+Please wait...<br></p>") +
+
+    /* Write dialog help 2/2 */
+    _("<p><b><big>Aborting Saving:</big></b><br>
+Abort the save procedure by pressing <b>Abort</b>.
+An additional dialog informs you whether it is safe to do so.</p>"),
+
+    // main dialog
+    // help 1/4
+    "start" : _("<p><b><big>Start DNS Server</big></b><br>
+To run the DNS server every time your computer is started, set
+<b>Start DNS Server</b>.</p>"),
+
+    // help 2/4
+    "chroot" : _("<p><b><big>Chroot Jail</big></b><br>
+To run the DNS server in chroot jail, set
+<b>Run DNS Server in Chroot Jail</b>. Starting any daemon in a chroot jail
+is more secure and strongly recommended."),
+
+    // help 3/4
+    "zones" : _("<p><b><big>Editing DNS Zones</big></b><br>
+To edit settings of a DNS zone, choose the appropriate
+entry of the table and click <B>Edit</B>.
+To add a new DNS zone, use <B>Add</B>. To remove
+a configured DNS zone, select it and click <B>Delete</B>.</P>"),
+
+    // help 4/4
+    "adv_mbutton" : _("<p><b><big>Advanced Functions</big></b><br>
+To edit global options,
+adjust firewall settings,
+manage the TSIG keys for dynamic updates of the zones,
+or display the log of the DNS server,
+use <b>Advanced</b>.</p>"),
+
+    // zone dialog
+    // help 1/5
+    "zone_name" : _("<p><b><big>Zone Name</big></b><br>
+Enter the name of the zone (domain) in <b>Zone Name</b>.</p>"),
+
+    // help 2/5, alt. 1
+    "allow_ddns" : _("<p><b><big>Dynamic DNS Zone Updates</big></b><br>
+The zone can be updated automatically, usually because of dynamically
+assigned IP addresses by DHCP server. To allow DDNS updates, set
+<b>Allow Dynamic Updates</b> and the <b>TSIG Key</b>
+to use for authentication. The key must be the same for
+both DHCP and DNS servers.</p>"),
+
+    // help 3/5, only for alt. 1
+    "master_zone" : _("<p><b><big>Editing a DNS Zone</big></b><br>
+To edit the zone settings, choose the appropriate
+entry of the table then click <b>Edit</b>.</p>")
+    // help 4/5, only for alt. 1
+    + _("<p>To add a new record to the zone, click <b>Add</b>. To remove
+a record, select it and click <b>Delete</b>.</p>"),
+
+    // help 5/5, only for alt. 1
+    "soa_button" : _("<p><b><big>SOA Record</big></b><br>
+To edit the SOA (Start of Authority) record of the zone, click
+<b>Edit SOA</b>.</p>"),
+
+    // help 2/5 alt. 2
+    "zone_masters" : _("<p><b><big>Master Servers</big></b><br>
+Set the IP addresses of the master name servers for this zone. Use <b>Add</b>
+to add a new master name server. Select an existing one then click <b>Delete</b>
+to remove an exising one.</p>"),
+
+    // help 1/2
+    "zone_type" : _("<p><b><big>Zone Type</big></b><br>
+To make this name server the primary source of the data of the zone,
+select <b>Master</b>. To make it the secondary name server, select <b>Slave</b>
+or <b>Stub</b>, so the data of the zone will be mirrored from the master
+server.</p>"),
+
+    // help 2/2
+    "zone_direction" : _("<p><b><big>Zone Direction</big></b><br>
+DNS is used both for translating from domain names to IP addresses and back.
+Select if this zone will be used to translate from domain names to IP
+addresses (select <b>Forward</b>) or from IP addresses to domain names
+(select <b>Reverse</b>).</p>"),
+
+    // firewall dialog
+    // help text 1/2
+    "iface_classes" : _("<p><b><big>Interface Classes</big></b><br>
+Select through which interface classes access to the DNS server should be
+allowed. The interface classes are defined in the
+firewall configuration component.</p>"),
+
+    // help text 2/2
+    "adapt_firewall" : _("<p><b><big>Adapting Firewall Settings</big></b><br>
+To adapt the firewall settings so the DNS server can be accessed
+through all network interfaces to which it listens, check
+<b>Adapt Firewall Settings</b>.</p>"),
+
+    // soa dialog
+    // help text 1/9
+    "soa" : _("<p><b><big>SOA Record Configuration</big></b><br>
+Set the entries of the SOA record.</p>")
+
+    // help text 2/9 - TTL
+    + _("<p><b>$TTL</b> specifies the time to live for all records in the
+zone that do not have an explicit TTL.</p>")
+
+    // help text 3/9 - Primary source
+    + _("<p><b>Primary Source</b> must contain the fully qualified domain name
+of the primary name server.</p>")
+
+    // help text 4/9 - Administrator's mail
+    + _("<p><b>Administrator's Mail</b> must contain the e-mail address of
+administrator responsible for the zone.</p>")
+
+    // help text 5/9 - Serial
+    + _("<p><b>Serial</b> number is used for determining if the zone has changed on
+master servers (so slave servers do not always need to synchronize the
+entire zone).</p>")
+
+    // help text 6/9 - Refresh
+    + _("<p><b>Refresh</b> sets how often the zone should be synchronized from
+master name server to slave name servers.</p>")
+
+    // help text 7/9 - Retry
+    + _("<p><b>Retry</b> sets how often slave servers try to synchronize
+the zone from the master server if synchronization fails.</p>")
+
+    // help text 8/9 - Expiry
+    + _("<p><b>Expiry</b> means the period after which the zone expires on slave
+servers and slave servers stop answering replies until it is synchronized.
+</p>")
+
+    // help text 9/9 - Minimum
+    + _("<p><b>Minimum</b> sets for how long the slave servers should cache
+negative answers (name resolution failed).</p>"),
+
+    // ddns keys dialog
+    // help text 1/1
+    "ddns_keys" :  _("<p><b><big>TSIG Key Management</big></b><br>
+Define TSIG keys used for dynamic zone updates.
+To add a new TSIG key, use the 
+<b>File Name</b> text field or the <b>Browse</b> button then click <b>Add</b>.
+To delete an existing TSIG key, select it in the list and click <b>Delete</b>.
+</p>"),
+
+
+    /* Expert Mode Configuration - Start Up 1/3 */
+"start_up" : _("<p><b><big>Booting</big></b><br>
+To start the DNS server every time your computer is booted, set
+<b>On</b>. Otherwise set <b>Off</b>.</p> ") +
+
+((ProductFeatures::ui_mode == "expert") ? 
+    /* Expert Mode Configuration - Start Up 1/3 */
+_("<p><b><big>LDAP Support</big></b><br>
+To store the DNS zones in LDAP instead of native configuration files,
+set <b>LDAP Support Active</b>.</p>")
+:
+"") +
+
+    /* Expert Mode Configuration - Start Up 3/3 */
+_("<p><b><big>Switch On or Off</big></b><br>
+To start or stop the DNS server immediately, use 
+<b>Start DNS Server Now</b> or
+<b>Stop DNS Server Now</b>.</p>
+"),
+
+    /* Expert Mode Configuration - Forwarders 1/3 */
+"forwarders" : _("<p><b><big>Forwarders</big></b><br>
+To allow the PPP daemon to update the forwarders after the PPP connection
+is brought up, set <b>PPP Daemon Sets Forwarders</b>. To update forwarders
+only manually, set <b>Set Forwarders Manually</b>.</p>
+") +
+
+    /* Expert Mode Configuration - Forwarders 2/3 */
+/*_("<p>To ask forwarders during name resolution and in case of fail do full
+DNS lookup, set <b>Forward First</b>. To ask forwarders only, set
+<b>Forwarders Only</b>. To do full DNS lookup always, do not check any
+of these check boxes.</p>
+") +*/
+
+    /* Expert Mode Configuration - Forwarders 3/3 */
+_("<p>To add a new forwarder, set its <b>IP Address</b> and click <b>Add</b>.
+To delete a configured forwarder, select it and click <b>Delete</b>."),
+
+    /* Expert Mode Configuration - Basic Options 1/2 */
+"basic_options" : _("<p><b><big>Edit DNS Server Options</big></b><br>
+Use this dialog to edit options of the DNS server.</p>") +
+
+    /* Expert Mode Configuration - Basic Options 2/3 */
+_("<p>To add new options, select the <b>Option</b>,
+enter its <b>Value</b>, and click <b>Add</b>.</p>
+<p>To modify a configured option, select it in the table,
+change the <b>Value</b>, and click <b>Change</b>.</p>
+") +
+
+    /* Expert Mode Configuration - Basic Options 1/3 */
+_("<p>To remove an option, select it and click <b>Delete</b>.</p>"),
+
+    /* Expert Mode Configuration - Logging 1/3 */
+"logging" : _("<p><b><big>Logging</big></b><br>
+Use this dialog to define various options of the DNS server logging.</p>") +
+
+    /* Expert Mode Configuration - Logging 2/3 */
+_("<p><b><big>Log Type</big></b><br>
+Select <b>Log to System Log</b> to save DNS server log messages to system log.
+<br>
+To save the DNS server log messages to a separate file, select <b>Log to File</b> and specify the <b>File Name</b> to which to save the log and 
+the <b>Maximum Size</b> of the log file.
+The DNS server automatically rotates the log files. Use <b>Maximum Versions</b>
+to specify how many files with the log should be saved.
+") +
+
+    /* Expert Mode Configuration - Logging 3/3 */
+_("<p><b><big>Additional Logging</big></b><br>
+Set which loggable actions should be logged. Common actions are always logged.<br>
+<b>Log Named Queries</b> logs all queries from clients to the DNS server.<br>
+<b>Log Zone Updates</b> logs when the DNS has been updated.<br>
+<b>Log Zone Transfers</b> logs when zone is completely transferred to secondary
+name server.</p>
+"),
+
+    /* Expert Mode Configuration - ACLs 1/3 */
+"acls" : _("<p><b><big>ACLs</big></b><br>
+In this dialog, define access control lists to control
+access to zones.</p>
+") +
+
+    /* Expert Mode Configuration - ACLs 2/3 */
+_("<p>To add a new ACL entry, just enter the option's <b>Name</b>
+and <b>Value</b> and click <b>Add</b>.</p>
+") +
+
+    /* Expert Mode Configuration - ACLs 3/3 */
+_("<p>To remove an already set ACL entry, select it
+and click <b>Delete</b>.</p>
+"),
+
+    /* Expert Mode Configuration - Keys 1/3 */
+"keys" : _("<p><b><big>TSIG Keys</big></b><br>
+TSIG keys are used for authentication when remotely
+changing the configuration of the DNS server. This is needed
+for the dynamic updates of DNS zones (DDNS).</p>
+") +
+
+    /* Expert Mode Configuration - Keys 2/3 */
+_("<p>To add an already created key, set the <b>File Name</b>
+(or use the <b>Browse</b> button to select it) and click <b>Add</b>.<br>
+To generate a new key, enter the <b>File Name</b> and the <b>Key ID</b>
+and click <b>Generate</b>. The new key will be generated and also added.</p>
+") +
+
+    /* Expert Mode Configuration - Keys 3/3 */
+_("<p>To remove an existing key, select it and
+click <b>Delete</b>.</p>"),
+
+    /* Expert Mode Configuration - Zones 1/2 */
+"zones" : _("<p><b><big>DNS Zones</big></b><br>
+Use this dialog to manage the DNS zones.</p>
+") +
+
+    /* Expert Mode Configuration - Zones 2/2 */
+_("<p>To add a new zone, enter its <b>Zone Name</b>, select the <b>Zone Type</b>,
+and click <b>Add</b>.
+To add a new reverse zone, enter a part of reverse IP address followed by
+<i>.in-addr.arpa</i> as its <b>Zone Name</b> (e.g., Zone Name
+<i>0.168.192.in-addr.arpa</i> for network <i>192.168.0.0/24</i>), select
+the <b>Zone Type</b>, and click <b>Add</b>.</p>
+<p>To remove a configured zone, select it and click <b>Delete Zone</b>.
+To edit a zone, select it and click <b>Edit Zone</b>.</p>
+"),
+
+"zone_editor_basics"	:
+
+((ProductFeatures::ui_mode == "expert") ? 
+    /* Zone Editor - Help for tab - Basics  1/3 */
+_("<p><b><big>DDNS and Zone Transport</big></b><br>
+Use this dialog to change dynamic DNS settings of the zone and control access
+to the zone.</p>
+")
+:
+"") +
+
+((ProductFeatures::ui_mode == "expert") ? 
+    /* Zone Editor - Help for tab - Basics  2/3 */
+_("<p><big><b>Dynamic DNS</b></big><br>
+To allow dynamic updates of the zone, set <b>Allow Dynamic Updates</b>
+and select the <b>TSIG Key</b>. At least one TSIG key must be defined
+before allowing the zone to be updated dynamically.</p>
+")
+:
+"") +
+
+    /* Zone Editor - Help for tab - Basics  3/3 */
+_("<p><big><b>Zone Transport</b></big><br>
+To allow transports of the zone, set <b>Enable Zone Transport</b>
+and select the <b>ACLs</b> that will be checked when a remote host
+attempts to transfer the zone. At least one ACL must be defined
+before allowing zone transports.</p>"),
+
+    /* Zone Editor - Help for tab - Name Servers */
+"zone_editor_nameservers"  : _("<p><b><big>NS Records</big></b><br>
+To add a new name server, enter the name server address and click <b>Add</b>.<br>
+To remove one of the listed name servers, select it and click
+<b>Delete</b>.</p>
+"),
+
+    /* Zone Editor - Help for tab - Mail Servers */
+"zone_editor_mailservers"  : _("<p><b><big>MX Records</big></b><br>
+To add a new mail server, enter the mail server address and priority
+and click <b>Add</b>.<br>
+To remove one of the listed mail servers, select it and click
+<b>Delete</b>.</p>
+"),
+
+    /* Zone Editor - Help for tab - Zone (SOA) 1/7 */
+"zone_editor_soa" : _("<p><b><big>SOA Record Configuration</big></b><br>
+Set the entries of the SOA record.</p>")
+
+    /* Zone Editor - Help for tab - Zone (SOA) 2/7 */
++ _("<p><b>Serial</b> number is used for determining if the zone has changed on
+master servers (so slave servers do not always need to synchronize the
+entire zone).</p>")
+
+    /* Zone Editor - Help for tab - Zone (SOA) 3/7 */
++ _("<p><b>TTL</b> specifies the time to live for all records in the
+zone that do not have an explicit TTL.</p>")
+
+    /* Zone Editor - Help for tab - Zone (SOA) 4/7 */
++ _("<p><b>Refresh</b> sets how often the zone should be synchronized from
+master name server to slave name servers.</p>")
+
+    /* Zone Editor - Help for tab - Zone (SOA) 5/7 */
++ _("<p><b>Retry</b> sets how often slave servers try to synchronize
+the zone from the master server if synchronization fails.</p>")
+
+    /* Zone Editor - Help for tab - Zone (SOA) 6/7 */
++ _("<p><b>Expiry</b> means the period after which the zone expires on slave
+servers and slave servers stop answering replies until it is synchronized.
+</p>")
+
+    /* Zone Editor - Help for tab - Zone (SOA) 7/7 */
++ _("<p><b>Minimum</b> sets for how long the slave servers should cache
+negative answers (name resolution failed).</p>"),
+
+    /* Zone Editor - Help for tab - Records 1/7  or 1/5 */
+"zone_editor_records"  : _("<p><b><big>Records</big></b><br>
+In this dialog, edit the resource records of the zone. To add new resource
+records, set the <b>Record Key</b>, the <b>Type</b>, and <b>Value</b> and
+click <b>Add</b>.</p>") +
+
+    /* Zone Editor - Help for tab - Records 2/7 or 2/5 */
+_("<p>To change an existing record, select it, modify requested entries,
+and click <b>Change</b>. To delete a record, select it and click
+<b>Delete</b>.</p>") +
+
+    /* Zone Editor - Help for tab - Records 3/7 or 3/5 */
+_("<p><b><big>Record Settings</big></b><br>
+Each type of record has its own syntax defined in the RFC.</p>
+"),
+
+    /* Zone Editor - Help for tab - Records 4/7 (alt. 1) */
+"zone_editor_records_forward" : _("<p><b>A -- Domain Name Translation</b><br>
+<b>Record Key</b> is a host name without domain or a fully qualified host
+name followed by a dot.
+<b>Value</b> is an IP address.</p>") +
+
+    /* Zone Editor - Help for tab - Records 5/7 (alt. 1) */
+_("<p><b>CNAME -- Alias for Domain Name</b><br>
+<b>Record Key</b> is a host name relative to the current zone or a fully
+qualified host name followed by a dot.
+<b>Value</b> is a host name relative to the current zone or a fully
+qualified host name followed by a dot. It must be represented by
+an A record.</p>
+") +
+
+    /* Zone Editor - Help for tab - Records 6/7 (alt. 1) */
+_("<p><b>NS -- Name Server</b><br>
+<b>Record Key</b> is a zone name relative to the current zone or an absolute
+domain name followed by a dot.
+<b>Value</b> is a host name relative to the current zone or fully qualified
+host name followed by a dot.  It must be represented by an A record.</p>
+") +
+
+    /* Zone Editor - Help for tab - Records 7/7 (alt. 1) */
+_("<p><b>MX -- Mail Relay</b><br>
+<b>Record Key</b> is a host or zone name relative to the current zone
+or an absolute host or zone name followed by a dot.
+<b>Value</b> is a host name relative to the current zone or fully qualified
+host name followed by a dot.  It must be represented by an A record.</p>
+"),
+
+    /* Zone Editor - Help for tab - Records 4/5 (alt. 2) */
+"zone_editor_records_reverse" : _("<p><b>PTR -- Reverse Translation</b><br>
+<b>Record Key</b> is a full reverse zone name (derived from IP address)
+followed by a dot
+(e.g., <i>1.0.168.192.in-addr.arpa.</i> for IP address <i>192.168.0.1</i>)
+ or a part of reverse zone name relative to the current zone
+(e.g., <i>1</i> for IP address <i>192.168.0.1</i> in zone
+<i>0.168.192.in-addr.arpa.</i>).
+<b>Value</b> is a fully qualified host name followed by a dot.</p>
+") +
+
+    /* Zone Editor - Help for tab - Records 5/5 (alt. 2) */
+_("<p><b>NS -- Name Server</b><br>
+<b>Record Key</b> is a zone name relative to the current zone or an absolute
+domain name followed by a dot.
+<b>Value</b> is a host name relative to the current zone or fully qualified
+host name followed by a dot.  It must be represented by an A record.</p>
+"),
+
+// Final step of the installation wizard - 1/5
+"installwizard_step3" : _("<p><b><big>Finish the Configuration</big></b>
+Check the entered settings before finishing the configuration.</p> 
+") +
+
+// Final step of the installation wizard - 2/5
+_("<p>Select <b>Open Port in Firewall</b> to adapt the
+SuSEfirewall2 settings to allow all connections to your DNS server.") +
+
+// Final step of the installation wizard - 3/5
+_("<p><b><big>Booting</big></b><br>
+To start the DNS server every time your computer is booted, set
+<b>On</b>. Otherwise set <b>Off</b>.</p> ") +
+
+((ProductFeatures::ui_mode == "expert") ? 
+    // Final step of the installation wizard - 4/5
+_("<p><b><big>LDAP Support</big></b><br>
+To store the DNS zones in LDAP instead of native configuration files,
+set <b>LDAP Support Active</b>.</p>")
+:
+"") +
+
+    // Final step of the installation wizard - 5/5
+_("<p><b><big>Expert Mode</big></b><br>
+To enter the expert mode of the DNS server configuration, click
+<b>DNS Server Expert Configuration...</b>.</p>"),
+
+    // slave zone help text 1/2
+"slave_zone" : _("<p><big><b>Slave DNS Zone</b></big><br>
+Each slave zone must have the master name server defined. Use
+<b>Master DNS Server IP</b> to define the master name server.</p>") +
+
+    // slave zone help text 2/2
+_("<p><big><b>Zone Transport</b></big><br>
+To allow transports of the zone, set <b>Enable Zone Transport</b>
+and select the <b>ACLs</b> that will be checked when a remote host
+attempts to transfer the zone. At least one ACL must be defined
+before allowing zone transports.</p>"),
+
+];
+
+/* EOF */
+}
