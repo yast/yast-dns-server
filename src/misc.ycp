@@ -473,6 +473,23 @@ Packages %2 will be removed.</p>
       * @return map of the zone
       */
     global define map createNewZone(string zone_type) ``{
+	if (zone_type == "master")
+	{
+	    return $[
+		"type" : zone_type,
+		"soa":$[
+		    "expiry":"6W",
+		    "mail":"root",
+		    "minimum":"1W",
+		    "refresh":"2D",
+		    "retry":"4H",
+		    "serial":"",
+		    "server":"@",
+		    "zone":"@"
+		],
+		"ttl":"2W",
+	    ];
+	}
 	return $[
 	    "type" : zone_type,
 	];
