@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Aug  4 14:09:17 CEST 2003 - jsrain@suse.de
+
+- fixed installation of bind packages, displaying error if failed
+- added desktop file
+- 2.8.2
+
+-------------------------------------------------------------------
 Tue Jul 29 14:49:30 CEST 2003 - jsrain@suse.de
 
 - adapted to udpated CWM interface
