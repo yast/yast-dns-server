@@ -18,6 +18,12 @@
     import "CWM";
     import "Wizard";
 
+    global define boolean reallyExit () ``{
+	// yes-no popup
+	return Popup::YesNo (_("Really exit?
+All changes will be lost."));
+    }
+
     /**
       * Read settings dialog
       * @return `abort if aborted and `next otherwise
@@ -68,9 +74,7 @@
 
 	return CWM::Run (w,
 	     $[`abort : ``(! DnsServer::modified
-		// yes-no popup
-		|| Popup::YesNo (_("Really exit?
-All changes will be lost.")))]);
+		|| DnsServer::reallyExit ())]);
     }
 
     /**
@@ -89,10 +93,7 @@ All changes will be lost.")))]);
 	return CWM::ShowAndRun (["zones"], DnsServer::widgets,
 	    contents, caption, Label::BackButton (), Label::OKButton (),
 	     $[`abort : ``(! (DnsServer::modified || DnsServer::zones_modified)
-		// yes-no popup
-		|| Popup::YesNo (_("Really exit?
-All changes will be lost.")))]);
-
+		|| Popup::ReallyAbort (true))]);
     }
 
     /**
@@ -110,10 +111,7 @@ All changes will be lost.")))]);
 
 	return CWM::ShowAndRun (["master_table"], DnsServer::widgets,
 	    contents, caption, Label::BackButton (), Label::OKButton (),
-	     $[`abort : ``(! DnsServer::modified
-		// yes-no popup
-		|| Popup::YesNo (_("Really exit?
-All changes will be lost.")))]);
+	     $[`abort : ``(Popup::ReallyAbort (true))]);
     }
 
     /**
@@ -131,10 +129,7 @@ All changes will be lost.")))]);
 
 	return CWM::ShowAndRun (["slave_table"], DnsServer::widgets,
 	    contents, caption, Label::BackButton (), Label::OKButton (),
-	     $[`abort : ``(! DnsServer::modified
-		// yes-no popup
-		|| Popup::YesNo (_("Really exit?
-All changes will be lost.")))]);
+	     $[`abort : ``(Popup::ReallyAbort (true))]);
     }
 
 /* EOF */
