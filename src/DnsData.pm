@@ -27,7 +27,7 @@ $adapt_firewall %firewall_settings $write_only @new_includes @deleted_includes
 
 our $start_service = 0;
 
-my $chroot = 0;
+our $chroot = 0;
 
 my @allowed_interfaces = ();
 
