@@ -6,6 +6,8 @@ Tue Sep  2 10:03:55 CEST 2003 - jsrain@suse.de
 - fixed translation of exit without saving popup (was evaluated in
   incorect textdomain)
 - using Popup::RealyAbort function
+- when creating new master zone, prefilling soa record (#29779)
+- fixed ag_dns_zone agent when reading incorrect files (#29779)
 
 -------------------------------------------------------------------
 Mon Sep  1 13:11:28 CEST 2003 - jsrain@suse.de
