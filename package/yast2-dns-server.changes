@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Nov  2 17:12:32 CET 2004 - visnov@suse.cz
+
+- added yast2-ldap-client and yast2-pam to NFB
+- 2.11.1
+
+-------------------------------------------------------------------
 Mon Nov  1 08:29:03 CET 2004 - locilka@suse.cz
 
 - Adjusted for changes in Mode.
