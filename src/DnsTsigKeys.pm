@@ -69,6 +69,7 @@ sub ListTSIGKeys {
 }
 
 # FIXME multiple keys in one file
+# FIXME the same function in DHCP server component
 BEGIN{$TYPEINFO{AnalyzeTSIGKeyFile}=["function",["list","string"],"string"];}
 sub AnalyzeTSIGKeyFile {
     my $filename = $_[0];
@@ -87,26 +88,26 @@ BEGIN{$TYPEINFO{AddTSIGKey}=["function", "boolean", "string"];}
 sub AddTSIGKey {
     my $filename = $_[0];
 
-    my @tsig_keys = AnalyzeTSIGKeyFile ($filename);
+    my @new_keys = AnalyzeTSIGKeyFile ($filename);
     y2milestone ("Reading TSIG file $filename");
     $filename = NormalizeFilename ($filename);
     my $contents = SCR::Read (".target.string", $filename);
-    if (0 != @tsig_keys)
+    if (0 != @new_keys)
     {
-	foreach my $tsig_key (@tsig_keys) {
-	    y2milestone ("Having key $tsig_key, file $filename");
+	foreach my $new_key (@new_keys) {
+	    y2milestone ("Having key $new_key, file $filename");
 	    # remove the key if already exists
 	    my @current_keys = grep {
-		$_->{"key"} eq $tsig_key;
+		$_->{"key"} eq $new_key;
 	    } @tsig_keys;
 	    if (@current_keys > 0)
 	    {
-		DeleteTSIGKey ($tsig_key);
+		DeleteTSIGKey ($new_key);
 	    }
 	    #now add new one
 	    my %new_include = (
 		"filename" => $filename,
-		"key" => $tsig_key,
+		"key" => $new_key,
 	    );
 	    push @tsig_keys, \%new_include;
 	    push @new_includes, \%new_include;

@@ -135,7 +135,6 @@ sub UpdateSOA {
     my $zonemap_ref = shift;
 
     my $ttl = $zonemap_ref->{"ttl"};
-y2error ("New TTL: $ttl");
     my $filename = $zonemap_ref->{"file"} || "";
     my $soa_ref = $zonemap_ref->{"soa"};
     y2milestone ("Updating SOA of $filename");
@@ -144,11 +143,11 @@ y2error ("New TTL: $ttl");
     my $rz_ref = SCR::Read (".dns.zone", "$filename");
     if (! defined ($rz_ref))
     {
-	Report::Error (_("Failed to read zone file $filename"));
+	# error report
+	Report::Error (sprintf (_("Failed to read zone file %s"), $filename));
 	return Boolean (0);
     }
     my %soa = %{$rz_ref->{"soa"} || {}};
-y2error ("Old TTL: $rz_ref->{\"TTL\"}");
 
     $rz_ref->{"TTL"} = $ttl if (defined ($ttl));
     $rz_ref->{"soa"} = $soa_ref if (defined ($soa_ref));

@@ -9,6 +9,7 @@ Fri Feb 20 15:49:14 CET 2004 - jsrain@suse.de
   administrative contact
 - split to multiple perl modules
 - enhanced Dynamic DNS support
+- 2.9.4
 
 -------------------------------------------------------------------
 Thu Feb 19 13:28:23 CET 2004 - jsrain@suse.de

@@ -34,6 +34,10 @@
     define list<string> current_zone_masters = [];
     define list<map> current_zone_upd_ops = [];
 
+    define list<map<string,string> > current_tsig_keys = [];
+    define list<string> new_tsig_keys = [];
+    define list<string> deleted_tsig_keys = [];
+
     include "dns-server/misc.ycp";
     include "dns-server/helps.ycp";
     include "dns-server/options.ycp";
