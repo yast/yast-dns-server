@@ -47,7 +47,7 @@ $adapt_firewall %firewall_settings $write_only @new_includes @deleted_includes
 @zones_update_actions $firewall_support);
 use DnsRoutines;
 
-my $forwarders_include = '/etc/named.d/named-forwarders.conf';
+my $forwarders_include = '/etc/named.d/forwarders.conf';
 
 my $use_ldap = 0;
 
@@ -439,16 +439,17 @@ sub AdaptDDNS {
 sub AdaptIncludesForForwarders {
     my $class = shift;
 
-    my $includes = SCR->Read (".sysconfig.named.NAMED_CONF_INCLUDE_FILES") || "";
-    my @includes = split (/ /, $includes);
-
-    if (scalar( grep { $_ eq $forwarders_include } @includes ) == 0) {
-	push @includes, $forwarders_include;
-
-	y2milestone("Adding ".$forwarders_include." into sysconfig/named/NAMED_CONF_INCLUDE_FILES");
-	$includes = join (" ", @includes);
-	SCR->Write (".sysconfig.named.NAMED_CONF_INCLUDE_FILES", $includes);
-    }
+#    Removed functionality, it is not needed to include it twice yet
+#    my $includes = SCR->Read (".sysconfig.named.NAMED_CONF_INCLUDE_FILES") || "";
+#    my @includes = split (/ /, $includes);
+#
+#    if (scalar( grep { $_ eq $forwarders_include } @includes ) == 0) {
+#	push @includes, $forwarders_include;
+#
+#	y2milestone("Adding ".$forwarders_include." into sysconfig/named/NAMED_CONF_INCLUDE_FILES");
+#	$includes = join (" ", @includes);
+#	SCR->Write (".sysconfig.named.NAMED_CONF_INCLUDE_FILES", $includes);
+#    }
 
     return 1;
 }

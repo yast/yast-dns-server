@@ -31,5 +31,7 @@ Summary:	Configuration of dns-server
 @scrconfdir@/dns_named.scr
 @scrconfdir@/dns_zone.scr
 @scrconfdir@/cfg_named.scr
+@scrconfdir@/named_forwarders.scr
 @agentdir@/ag_dns_zone
+@agentdir@/ag_named_forwarders
 %doc @docdir@
