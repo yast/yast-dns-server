@@ -37,6 +37,10 @@ my @options = ();
 
 my @logging = ();
 
+my $ddns_file_name = "";
+
+my @update_keys = ();
+
 #transient variables
 
 my $modified = 0;
@@ -54,6 +58,11 @@ my $adapt_firewall = 0;
 my %firewall_settings = ();
 
 my $write_only = 0;
+
+my @new_includes = ();
+
+my @deleted_includes = ();
+
 
 
 # FIXME this should be defined only once for all modules
@@ -226,6 +235,7 @@ print Dumper (\%zone_map);
 	"refresh" => "2D",
 	"retry" => "4H",
 	"server" => "@",
+	"serial" => UpdateSerial (""),
     );
     my %current_soa = %{$zone_map{"soa"}};
     while ((my $key, my $value) = each %current_soa)
@@ -276,15 +286,17 @@ BEGIN { $TYPEINFO{ZoneWrite} = ["function", "boolean", [ "map", "any", "any" ] ]
 sub ZoneWrite {
     my %zone_map = %{$_[0]};
 
-    if (! ($zone_map{"modified"} || $save_all))
-    {
-	return 1;
-    }
-
     my $zone_name = $zone_map{"zone"} || "";
     if ($zone_name eq "")
     {
+	y2error ("Trying to save unnamed zone, aborting");
 	return 0;
+    }
+
+    if (! ($zone_map{"modified"} || $save_all))
+    {
+	y2milestone ("Skipping zone $zone_name, wasn't modified");
+	return 1;
     }
 
     my $zone_file = $zone_map{"file"} || "";
@@ -296,17 +308,31 @@ sub ZoneWrite {
 
     #save changed of named.conf
     my $base_path = ".dns.named.value.\"zone \\\"$zone_name\\\" in\"";
-    SCR::Write (".dns.named.section.\"zone \\\"$zone_name\\\" in\"", "");
+#    SCR::Write (".dns.named.section.\"zone \\\"$zone_name\\\" in\"", "");
 
     my @old_options = @{SCR::Dir ($base_path) || []};
-    my @save_options = @old_options;
+    my @save_options = map {
+	$_->{"key"};
+    } @{$zone_map{"options"}};
+    my @del_options = grep {
+	! contains (\@save_options, $_);
+    } @old_options;
+    foreach my $o (@del_options) {
+	SCR::Write ("$base_path.$o", undef);
+    };
+
+    foreach my $o (@{$zone_map{"options"}}) {
+	my $key = $o->{"key"};
+	my $val = $o->{"value"};
+	SCR::Write ("$base_path.$key", [$val]);
+    };
 
     my $zone_type = $zone_map{"type"} || "master";
 
     if ($zone_type eq "master")
     {
 	# write the zone file
-	if (! $zone_map{"soa_modified"})
+	if ($zone_map{"soa_modified"})
 	{
 	    ZoneFileWrite (\%zone_map);
 	}
@@ -314,34 +340,25 @@ sub ZoneWrite {
 	{
 	    ZoneFileUpdate (\%zone_map);
 	}
-	@save_options = ("type", "file");
 
 	# write existing keys
-	SCR::Write ("$base_path.$zone_file", "\"$zone_file\"");
+	SCR::Write ("$base_path.file", ["\"$zone_file\""]);
     }
     elsif ($zone_type eq "slave" || $zone_type eq "stub")
     {
-	@save_options = ("masters");
 	my $masters = $zone_map{"masters"} || "";
 	if (! $masters =~ /\{.*;\}/)
 	{
 	    $zone_map{"masters"} = "{$masters;}";
 	}
-        SCR::Write ("$base_path.masters", $zone_map{"masters"} || "");
+        SCR::Write ("$base_path.masters", [$zone_map{"masters"} || ""]);
     }
     elsif ($zone_type eq "hint")
     {
-	@save_options = ("type", "file");
-	SCR::Write ("$base_path.file", "\"$zone_file\"");
+	SCR::Write ("$base_path.file", ["\"$zone_file\""]);
     }
 
-    my @del_options = grep {
-	! contains (\@save_options, $_);
-    } @old_options;
-    foreach my $o (@del_options) {
-	SCR::Write ("$base_path.$o", undef);
-    };
-    SCR::Write ("$base_path.type", $zone_map{"type"} || "master");
+    SCR::Write ("$base_path.type", [$zone_map{"type"} || "master"]);
 
     return 1;
 }
@@ -353,17 +370,166 @@ sub AdaptFirewall {
 	return 1;
     }
 
-    SCR::Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DNS", $start_service
-	? "yes"
-	: "no");
+    my $ret = 1;
 
-# TODO enable or disable firewall for particular interfaces
+    foreach my $i ("INT", "EXT", "DMZ") {
+        y2milestone ("Removing dhcpd iface $i");
+        SuSEFirewall::RemoveService ("42", "UDP", $i);
+        SuSEFirewall::RemoveService ("42", "TCP", $i);
+    }
+    if ($start_service)
+    {
+        foreach my $i (@allowed_interfaces) {
+            y2milestone ("Adding dhcpd iface %1", $i);
+            SuSEFirewall::AddService ("42", "UDP", $i);
+            SuSEFirewall::AddService ("42", "TCP", $i);
+        }
+    }
+    if (! Mode::test ())
+    {
+        Progress::off ();
+        $ret = SuSEFirewall::Write () && $ret;
+        Progress::on ();
+    }
+    if ($start_service)
+    {
+        $ret = SCR::Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD",
+            SuSEFirewall::MostInsecureInterface (\@allowed_interfaces)) && $ret;
+    }
+    else
+    {
+        $ret = SCR::Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD", "no")
+            && $ret;
+    }
 
-    SCR::Write (".sysconfig.SuSEfirewall2", undef);
+    $ret = SCR::Write (".sysconfig.SuSEfirewall2", undef) && $ret;
     if (! $write_only)
     {
-	SCR::Execute (".target.bash", "test -x /sbin/rcSuSEfirewall2 && /sbin/rcSuSEfirewall2 status && /sbin/rcSuSEfirewall2 restart");
+        $ret = SCR::Execute (".target.bash", "test -x /sbin/rcSuSEfirewall2 && /sbin/rcSuSEfirewall2 status && /sbin/rcSuSEfirewall2 restart") && $ret;
     }
+    if (! $ret)
+    {
+        # error report
+        Report::Error (_("Error while setting firewall settings occured"));
+    }
+    return $ret;
+}
+
+sub NormalizeFilename {
+    my $filename = $_[0];
+
+    while ($filename ne "" && (substr ($filename, 0, 1) eq " "
+	|| substr ($filename, 0, 1) eq "\""))
+    {
+	$filename = substr ($filename, 1);
+    }
+    while ($filename ne ""
+	&& (substr ($filename, length ($filename) - 1, 1) eq " "
+	    || substr ($filename, length ($filename) - 1, 1) eq "\""))
+    {
+	$filename = substr ($filename, 0, length ($filename) - 1);
+    }
+    return $filename;
+}
+
+sub ReadDDNSKeys {
+    my @globals = SCR::Dir (".dns.named.value");
+    my %globals = ();
+    foreach my $g (@globals) {
+	$globals{$g} = 1;
+    }
+    @globals = keys (%globals);
+    @update_keys = ();
+    foreach my $key (@globals) {
+        if ($key eq "include")
+        {
+	    my @filenames = SCR::Read (".dns.named.value.$key");
+	    foreach my $filename (@filenames) {
+		y2milestone ("Reading include file $filename");
+		$filename = NormalizeFilename ($filename);
+		my @tsig_keys = AnalyzeTSIGKeyFile ($filename);
+		foreach my $tsig_key (@tsig_keys) {
+		    y2milestone ("Having key $tsig_key, file $filename");
+		    push @update_keys, {
+			"filename" => $filename,
+			"key" => $tsig_key,
+		    };
+		}
+	    }
+	}
+    };
+}
+
+sub AdaptDDNS {
+    my @do_not_copy_chroot = ();
+
+    my @globals = SCR::Dir (".dns.named.value");
+
+    my @includes = SCR::Read (".dns.named.value.include");
+    #translate list to hash
+    my %includes = ();
+    foreach my $i (@includes) {
+	my $i = NormalizeFilename ($i);
+	$includes{$i} = 1;
+    }
+    # remove obsolete
+    foreach my $i (@deleted_includes) {
+	my $file = $i->{"filename"};
+	$includes{$file} = 0;
+    }
+    # add new
+    foreach my $i (@new_includes) {
+	my $file = $i->{"filename"};
+	$includes{$file} = 1;
+    }
+    #save them back
+    foreach my $i (keys (%includes)) {
+	if ($includes{$i} != 1)
+	{
+	    delete $includes{$i};
+	}
+    }
+    @includes = sort (keys (%includes));
+    @includes = map {
+	"\"$_\"";
+    } @includes;
+
+    y2milestone ("Final includes: @includes");
+    SCR::Write (".dns.named.value.include", \@includes);
+
+    my $includes = SCR::Read (".sysconfig.named.NAMED_CONF_INCLUDE_FILES");
+    @includes = split (/ /, $includes);
+    %includes = ();
+    foreach my $i (@includes) {
+	$includes{$i} = 1;
+    }
+    # remove obsolete
+    foreach my $i (@deleted_includes) {
+	my $file = $i->{"filename"};
+	$includes{$file} = 0;
+    }
+    # add new
+    foreach my $i (@new_includes) {
+	my $file = $i->{"filename"};
+	$includes{$file} = 1;
+    }
+    #save them back
+    foreach my $i (keys (%includes)) {
+	if ($includes{$i} != 1)
+	{
+	    delete $includes{$i};
+	}
+    }
+    @includes = sort (keys (%includes));
+    $includes = join (" ", @includes);
+    SCR::Write (".sysconfig.named.NAMED_CONF_INCLUDE_FILES", $includes);
+
+    unshift @options, {
+        "key" => "include",
+        "value" => "\"$ddns_file_name\"",
+    };
+
+    return 1;
 }
 
 BEGIN { $TYPEINFO{SaveGlobals} = [ "function", "boolean" ]; }
@@ -401,7 +567,8 @@ sub SaveGlobals {
     {
 	my $key = $option->{"key"};
 	my $value = $option->{"value"};
-	SCR::Write (".dns.named.value.options.$key", $value);
+	# FIXME doesn't work with multiple occurences !!!
+	SCR::Write (".dns.named.value.options.$key", [$value]);
     }
 
     # really save the file
@@ -573,6 +740,15 @@ sub GetAdaptFirewall {
     return $adapt_firewall;
 }
 
+BEGIN{$TYPEINFO{SetAllowedInterfaces} = ["function","void",["list","string"]];}
+sub SetAllowedInterfaces {
+    @allowed_interfaces = @{$_[0]};
+}
+
+BEGIN { $TYPEINFO{GetAllowedInterfaces} = [ "function", ["list","string"]];}
+sub GetAllowedInterfaces {
+    return @allowed_interfaces;
+}
 BEGIN {$TYPEINFO{FetchCurrentZone} = [ "function", ["map", "string", "any"] ]; }
 sub FetchCurrentZone {
     return \%current_zone;
@@ -628,6 +804,94 @@ sub RemoveGlobalOption {
 #    delete ($options{$key});
 }
 
+BEGIN{$TYPEINFO{GetUpdaterKeys} = ["function", ["list", "string"]];}
+sub GetUpdaterKeys {
+    return map {
+	$_->{"key"};
+    } @update_keys;
+}
+
+BEGIN{$TYPEINFO{ListTSIGKeys}=["function",["list",["map","string","string"]]];}
+sub ListTSIGKeys {
+    return @update_keys;
+}
+
+# FIXME multiple keys in one file
+BEGIN{$TYPEINFO{AnalyzeTSIGKeyFile}=["function",["list","string"],"string"];}
+sub AnalyzeTSIGKeyFile {
+    my $filename = $_[0];
+
+    y2milestone ("Reading TSIG file $filename");
+    $filename = NormalizeFilename ($filename);
+    my $contents = SCR::Read (".target.string", $filename);
+    if ($contents =~ /.*key[ \t]+([^ \t}{;]+).* {/)
+    {
+	return ($1);
+    }
+    return ();
+}
+
+BEGIN{$TYPEINFO{AddTSIGKey}=["function", "boolean", "string"];}
+sub AddTSIGKey {
+    my $filename = $_[0];
+
+    my @tsig_keys = AnalyzeTSIGKeyFile ($filename);
+    y2milestone ("Reading TSIG file $filename");
+    $filename = NormalizeFilename ($filename);
+    my $contents = SCR::Read (".target.string", $filename);
+    if (0 != @tsig_keys)
+    {
+	foreach my $tsig_key (@tsig_keys) {
+	    y2milestone ("Having key $tsig_key, file $filename");
+	    # remove the key if already exists
+	    my @current_keys = grep {
+		$_->{"key"} eq $tsig_key;
+	    } @update_keys;
+	    if (@current_keys > 0)
+	    {
+		DeleteTSIGKey ($tsig_key);
+	    }
+	    #now add new one
+	    my %new_include = (
+		"filename" => $filename,
+		"key" => $tsig_key,
+	    );
+	    push @update_keys, \%new_include;
+	    push @new_includes, \%new_include;
+	}
+	return Boolean (1);
+    }
+    return Boolean (0);
+}
+
+BEGIN{$TYPEINFO{DeleteTSIGKey}=["function", "boolean", "string"];}
+sub DeleteTSIGKey {
+    my $key = $_[0];
+    
+    y2milestone ("Removing TSIG key $key");
+    #add it to deleted list
+    my @current_keys = grep {
+	$_->{"key"} eq $key;
+    } @update_keys;
+    if (@current_keys == 0)
+    {
+	y2error ("Key not found");
+	return Boolean(0);
+    }
+    foreach my $k (@current_keys) {
+	push @deleted_includes, $k;
+    }
+    #remove it from current list
+    @new_includes = grep {
+	$_->{"key"} ne $key;
+    } @new_includes;
+    @update_keys = grep {
+	$_->{"key"} ne $key;
+    } @update_keys;
+
+    return Boolean (1);
+}
+
 ##------------------------------------
 BEGIN { $TYPEINFO{Read} = ["function", "boolean"]; }
 sub Read {
@@ -658,11 +922,16 @@ sub Read {
 	@opt_names = ();
     }
     foreach my $key (@opt_names) {
-	push @options, {
-	    "key" => $key,
-	    "value" => SCR::Read (".dns.named.value.options.$key"),
-	};
+	my @values = SCR::Read (".dns.named.value.options.$key");
+	foreach my $value (@values) {
+	    push @options, {
+		"key" => $key,
+		"value" => SCR::Read (".dns.named.value.options.$key"),
+	    };
+	}
     }
+
+    ReadDDNSKeys ();
 
     @zones = map {
 	my $zonename = $_;
@@ -670,8 +939,10 @@ sub Read {
 	my $path_el = $_;
 	$path_el =~ s/\"/\\\"/g;
 	$path_el = "\"$path_el\"";
-	my $zonetype = SCR::Read (".dns.named.value.$path_el.type");
-	my $filename = SCR::Read (".dns.named.value.$path_el.file");
+	my @tmp = SCR::Read (".dns.named.value.$path_el.type");
+	my $zonetype = $tmp[0] || "";
+	@tmp = SCR::Read (".dns.named.value.$path_el.file");
+	my $filename = $tmp[0] || "";
 	if (! defined $filename)
 	{
 	    $filename = $zonetype eq "master" ? "master" : "slave";
@@ -688,9 +959,9 @@ sub Read {
 	}
 	elsif ($zonetype eq "slave" || $zonetype eq "stub")
 	{
-	    $zd{"masters"} = SCR::Read (".dns.named.value.$path_el.masters")
-		|| "";
-	    if ($zd{"masters"} =~ /\{.*;\}/)
+	    @tmp = SCR::Read (".dns.named.value.$path_el.masters") || ();
+	    $zd{"masters"} = $tmp[0] || "";
+ 	    if ($zd{"masters"} =~ /\{.*;\}/)
 	    {
 		$zd{"masters"} =~ s/\{(.*);\}/$1/
 	    }
@@ -699,9 +970,23 @@ sub Read {
 	{
 # TODO hint, forward, .... not supported at the moment
 	}
+	
+	my @zone_options_names = SCR::Dir (".dns.named.value.$path_el");
+	my @zone_options = ();
+	foreach my $key (@zone_options_names) {
+	    my @values = SCR::Read (".dns.named.value.$path_el.$key");
+	    foreach my $value (@values) {
+		push @zone_options, {
+		    "key" => $key,
+		    "value" => $value,
+		}
+	    }
+	}
+	
 	$zd{"file"} = $filename;
 	$zd{"type"} = $zonetype;
 	$zd{"zone"} = $zonename;
+	$zd{"options"} = \@zone_options;
 	\%zd;
     } @zone_headers;
     $modified = 0;
@@ -722,6 +1007,9 @@ sub Write {
 
     #save globals
     $ok = SaveGlobals () && $ok;
+
+    #adapt included files
+    $ok = AdaptDDNS () && $ok;
 
     #save all zones
     foreach my $z (@zones) {

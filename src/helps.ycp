@@ -58,28 +58,35 @@ a configured DNS zone, select it and click <B>Delete</B>.</P>
 
     // help 4/4
     "adv_mbutton" : _("<p><b><big>Advanced functions</big></b><br>
-To display the log of the DHCP server or edit global options,
+To edit global options,
+adjust firewall settings
+or display the log of the DNS server,
 use <b>Advanced</b>.</p>"),
 
-    // help 1/4
+    // help 1/5
     "zone_name" : _("<p><b><big>Zone Name</big></b><br>
 Enter the name od the of the zone (domain) to <b>Zone Name</b>.</p>"),
 
-    // help 2/4, alt. 1
+    // help 2/5, alt. 1
+    "allow_ddns" : _("<p><b><big></big></b><br>
+
+</p>"),
+
+    // help 3/5, only for alt. 1
     "master_zone" : _("<p><b><big>Editing a DNS Zone</big></b><br>
 To edit the zone settings, choose the appropriate
 entry of the table then click <b>Edit</b>.</p>
 ")
-    // help 3/4, only for alt. 1
+    // help 4/5, only for alt. 1
     + _("<p>To add a new record to the zone, click <b>Add</b>. To remove
 a record, select it and click <b>Delete</b>.</p>"),
 
-    // help 4/4, only for alt. 1
+    // help 5/5, only for alt. 1
     "soa_button" : _("<p><b><big>SOA Record</big></b><br>
 To edit the SOA (Start of Authority) record of the zone, click
 <b>Edit SOA</b>.</p>"),
 
-    // help 2/4 alt. 2
+    // help 2/5 alt. 2
     "zone_masters" : _("<p><b><big>Master Servers</big></b><br>
 Set the IP addresses of the master name servers for this zone. Use <b>Add</b>
 to add a new master name server, select an existing and click <b>Delete</b>
@@ -99,7 +106,21 @@ Select if this zone will be used to translating from domain names to IP
 addresses (select <b>Forward</b>), or from IP addresses to domain names
 (select <b>Reverse</b>.</p>"),
 
-    ];
+    // firewall dialog
+    // help text 1/2
+    "iface_classes" : _("<p><b><big>Interface Classes</big></b><br>
+Select what through which interface classes the DNS server should be
+allowed to be accessed. The interface classes are defined in the
+firewall configuration component.</p>"),
+
+    // help text 2/2
+    "adapt_firewall" : _("<p><b><big>Adapting Firewall Settings</big></b><br>
+To adapt the firewall settings so that the DNS server can be accessed
+through all network interfaces it listens to, check
+<b>Adapt Firewall Settings</b>.</p>"),
+
+
+];
 
 /* EOF */
 }

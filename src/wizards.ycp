@@ -33,6 +33,8 @@
 	    "slave_zone"	: ``(runSlaveZoneDialog ()),
 	    "stub_zone"		: ``(runStubZoneDialog ()),
 	    "store_zone"	:[``(runZoneStore ()), true],
+	    "firewall_settings" : ``(runFirewallDialog ()),
+	    "ddns_settings"	: ``(runDDNSDialog ()),
 	];
 
 	map sequence = $[
@@ -43,8 +45,18 @@
 		`add : "new_zone",
 		`edit : "zone_type_switch",
 		`global_options : "global_options",
+		`firewall : "firewall_settings",
+		`ddns : "ddns_settings",
 	    ],
 	    "global_options" : $[
+		`abort : `abort,
+		`next : "main",
+	    ],
+	    "firewall_settings" : $[
+		`abort : `abort,
+		`next : "main",
+	    ],
+	    "ddns_settings" : $[
 		`abort : `abort,
 		`next : "main",
 	    ],
