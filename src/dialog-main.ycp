@@ -27,6 +27,7 @@ import "ProductFeatures";
 import "CWMFirewallInterfaces";
 import "Message";
 import "DnsRoutines";
+import "CWMTsigKeys";
 
 /**
  * Dialog Expert Settings - Start Up
@@ -1056,7 +1057,8 @@ void StoreExpertLoggingPage (string key, map event) {
     {
 	channel = "log_file";
 	string fn = (string)UI::QueryWidget (`id ("logfile_path"), `Value);
-	string sz = tostring(UI::QueryWidget (`id ("max_size"), `Value)) + "M";
+	integer log_size = tointeger(UI::QueryWidget (`id ("max_size"), `Value));
+	string sz =  ((log_size > 0) ? tostring(log_size) + "M" : "0" );
 	integer vc = (integer)UI::QueryWidget (`id ("max_versions"), `Value);
 	logging = add (logging, $[
 	    "key" : "channel",
@@ -1263,10 +1265,10 @@ boolean ReallyRemoveACL (string acl_name) {
     list<string> zones_where_acl_used = GetZonesWithAclUsed(acl_name);
 
     if (size(zones_where_acl_used) > 0) {
-	return Popup::YesNo (sformat(
+	return Popup::ContinueCancel (sformat(
 	    // A popup question
 	    _("This ACL is used by %1 zones.
-Are you sure you want to remove it?"),
+Do you really want to remove it?"),
 	    size(zones_where_acl_used)
 	));
     } else {
@@ -1363,205 +1365,7 @@ symbol HandleExpertAclPage (string key, map event) {
     }
     return nil;
 }
-/**
- * Dialog Expert Settings - Keys
- * @return term for Get_ExpertDialog()
- */
-term ExpertKeysDialog () {
-    term dialog =
-	`Top (
-	    `VBox (
-		`VSquash (
-		    `HBox (
-			`HWeight ( 9,
-			    // Frame label - adding new server key
-			    `Frame ( _("Add or Generate a New TSIG Key"),
-				`VBox (
-				    `HBox (
-					// Table header item - new server key - name
-					`TextEntry ( `id ( "new_key_name" ), `opt ( `hstretch ), _("&Key ID") ),
-					`TextEntry ( `id ( "new_key_file" ), `opt ( `hstretch ), Label::FileName() ),
-					`VBox (
-					    `Label (" "),
-					    `PushButton ( `id ( "browse_key_file" ), Label::BrowseButton ())
-					)
-				    ),
-				    `HBox (
-					// Combobox - new server key - algorithm type
-/*					`HSquash ( `ComboBox ( `id ( "new_key_algorithm" ), _("Algo&rithm") ,
-					    // FIXME: real list of algorithms
-					    [ "hmdac-md5", "des3" ]
-					) ),*/
-					// Pushbutton - generate new server key
-					`HSquash ( `Bottom ( `PushButton ( `id ( "generate_key" ), _("&Generate") ) ) ),
-					`HStretch ()
-				    )
-				)
-			    )
-			),
-			`HWeight ( 2,
-			    `VBox (
-				`VStretch (),
-				`VSquash ( `PushButton ( `id ( "add_key" ), `opt ( `hstretch ), Label::AddButton () ) )
-			    )
-			)
-		    )
-		),
-		`VSpacing ( 1 ),
-		`VBox (
-		    // Table header - DNS key listing
-		    `Left ( `Label ( _("Current TSIG Keys") ) ),
-		    `HBox (
-			`HWeight ( 9,
-			    `Table ( `id ( "key_listing_table" ), `header (
-				    // Table header item - DNS key listing
-				    _("Key"),
-				    // Table header item - DNS key listing
-//				    _("Type"),
-				    // Table header item - DNS key listing
-				    _("File")
-				), []
-			    )
-			),
-			`HWeight ( 2,
-			    `VBox (
-				`VSquash ( `PushButton ( `id ( "delete_key" ), `opt ( `hstretch ), Label::DeleteButton () ) ),
-				`VStretch ()
-			    )
-			)
-		    )
-		)
-	    )
-	);
-    return dialog;
-}
 
-
-/**
- * Redraw the table of DDNS keys
- */
-define void DdnsKeysWidgetRedraw () ``{
-    list items = maplist (map<string,string> k, current_tsig_keys, ``(
-        `item (`id (k["key"]:""), k["key"]:"", k["filename"]:"")
-    ));
-    UI::ChangeWidget (`id ("delete_key"), `Enabled, size(items) > 0);
-    UI::ChangeWidget (`id ("key_listing_table"), `Items, items);
-    UI::SetFocus (`id ("key_listing_table"));
-}
-
-void InitExpertKeysPage (string key) {
-    current_tsig_keys = DnsTsigKeys::ListTSIGKeys ();
-    UI::ChangeWidget (`id ("new_key_file"), `Value, "/etc");
-    UI::ChangeWidget (`id ("new_key_name"), `ValidChars,
-	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
-    DdnsKeysWidgetRedraw ();
-}
-
-void StoreExpertKeysPage (string key, map event) {
-    foreach (string key, deleted_tsig_keys, ``{
-	DnsTsigKeys::DeleteTSIGKey (key);
-    });
-    foreach (string file, new_tsig_keys, ``{
-	DnsTsigKeys::AddTSIGKey (file);
-    });
-}
-
-symbol HandleExpertKeysPage (string key, map event) {
-    any ret = event["ID"]:nil;
-    string filename = (string)UI::QueryWidget (`id ("new_key_file"),`Value);
-    if (ret == "delete_key")
-    {
-	string key = (string)UI::QueryWidget (`id ("key_listing_table"),
-	    `CurrentItem);
-	current_tsig_keys = filter (map<string,string>k, current_tsig_keys, ``(
-	    k["key"]:nil != key
-	));
-	deleted_tsig_keys = add (deleted_tsig_keys, key);
-    }
-    else if (ret == "browse_key_file")
-    {
-
-	filename = (string)UI::AskForExistingFile (filename, "",
-	    // popup headline
-	    _("Select File with the Authentication Key"));
-	if (filename != nil)
-	    UI::ChangeWidget (`id ("new_key_file"), `Value, filename);
-	return nil;
-    }
-    else if (ret == "generate_key")
-    {
-	string key = (string)UI::QueryWidget (`id ("new_key_name"), `Value);
-	map stat = (map)SCR::Read (.target.stat, filename);
-	if (size (stat) != 0)
-	{
-	    if (stat["isdir"]:false)
-	    {
-		UI::SetFocus (`id ("new_key_file"));
-		// error report
-		Report::Error (_("Specified file name is an existing directory."));
-		return nil;
-	    }
-	    // yes-no popup
-	    if (! Popup::YesNo (_("Specified file exists. Rewrite it?")))
-	    {
-		return nil;
-	    }
-	}
-	if (key == nil || key == "")
-	{
-	    UI::SetFocus (`id ("new_key_name"));
-	    // error report
-	    Popup::Error (_("The TSIG key ID was not specified."));
-	    return nil;
-	}
-        // yes-no popup
-        if (! Popup::YesNo (_("The key will be created now. Continue?")))
-            return nil;
-	SCR::Execute (.target.bash,
-            "test -d /etc/named.d || mkdir /etc/named.d");
-        SCR::Execute (.target.bash, sformat (
-            "/usr/bin/genDDNSkey --force  -f %1 -n %2 -d /etc/named.d",
-	    filename, key));
-	ret = "add_key";
-    }
-    if (ret == "add_key")
-    {
-	list<string> keys = DnsTsigKeys::AnalyzeTSIGKeyFile (filename);
-	if (size (keys) == 0)
-	{
-	    // message popup
-	    Popup::Message (_("The specified file does not contain any TSIG key."));
-	    return nil;
-	}
-	boolean collision = false;
-	foreach (map<string,string> k, current_tsig_keys, ``{
-	    if (contains (keys, k["key"]:""))
-		collision = true;
-	});
-	if (collision)
-	{
-	    // yes-no popup
-	    if (!Popup::YesNo (_("The specified file contains a TSIG key with the same
-identifier as some of already present keys.
-Old keys will be removed. Continue?")))
-	    {
-		return nil;
-	    }
-	}
-	new_tsig_keys = add (new_tsig_keys, filename);
-	foreach (string k, keys, ``{
-	    current_tsig_keys = filter (map<string,string> key, current_tsig_keys, ``(
-		key["key"]:nil != k && key["filename"]:nil != filename
-	    ));
-	    current_tsig_keys = add (current_tsig_keys, $[
-	        "key" : k,
-	        "filename" : filename,
-	    ]);
-	});
-    }
-    DdnsKeysWidgetRedraw ();
-    return nil;
-}
 /**
  * Dialog Expert Settings - ZonesZones
  * @return term for Get_ExpertDialog()
@@ -1735,244 +1539,8 @@ symbol HandleExpertZonesPage (string key, map event) {
     return nil;
 }
 
-/**
- * Dialog Expert Settings
- * @param string dialog_id
- * @return term dialog for Get_ExpertDialog()
- */
-term OBSOLETE_Get_ExpertDialog (string dialog) {
-    if ( dialog == "start_up" )		return ExpertStartUpDialog();
-    if ( dialog == "forwarders" )	return ExpertForwardersDialog();
-    if ( dialog == "basic_options" )	return ExpertBasicOptionsDialog();
-    if ( dialog == "logging" )		return Expert_Logging_Dialog();
-    if ( dialog == "acls" )		return Expert_ACLs_Dialog();
-    if ( dialog == "keys" )		return ExpertKeysDialog();
-    if ( dialog == "zones" )		return ExpertZonesDialog();
-
-					// This should never happen, but ...
-					y2error ( "No dialog defined: %1", dialog );
-					// If no dialog defined for this menu item (software error)
-    					return `Label ( _("No dialog defined.") );
-}
-
-/**
- * Dialog Expert Settings Label
- * @param string dialog_id
- * @return string label for Expert_Dialog()
- */
-string OBSOLETE_Get_DialogCaption (string dialog) {
-					// Tree Menu Item & Dialog Label - DNS - expert settings
-    if ( dialog == "start_up" )		return _("Start-Up");
-					// Tree Menu Item & Dialog Label - DNS - expert settings
-    if ( dialog == "forwarders" )	return _("Forwarders");
-					// Tree Menu Item & Dialog Label - DNS - expert settings
-    if ( dialog == "basic_options" )	return _("Basic Options");
-					// Tree Menu Item - DNS & Dialog Label - expert settings
-    if ( dialog == "logging" )		return _("Logging");
-					// Tree Menu Item - DNS & Dialog Label - expert settings
-    if ( dialog == "acls" )		return _("ACLs");
-					// Tree Menu Item - DNS & Dialog Label - expert settings
-    if ( dialog == "keys" )		return _("TSIG Keys");
-					// Tree Menu Item - DNS & Dialog Label - expert settings
-    if ( dialog == "zones" )		return _("DNS Zones");
-
-					// This should never happen ... but...
-					y2error ( "No caption defined: %1", dialog );
-					// Tree Menu Item - DNS & Dialog Label - expert settings
-    					return _("No caption defined.");
-}
-
-/**
- * Dialog Expert Settings Help
- * @param string dialog_id
- * @return string help for Expert_Dialog()
- */
-string OBSOLETE_Get_DialogHelp (string dialog) {
-    // fallback help - error message
-    return HELPS[dialog]:_("Software error -- no help defined.");
-}
-
-// start page functions
-
-
-
-
-
-
-void OBSOLETE_InitExpertDialog (string dialog) {
-    void removeme = nil;
-#    if (dialog == "start_up")
-#    {
-#	InitExpertStartUpPage ();
-#    }
-#    else if (dialog == "forwarders")
-#    {
-#	InitExpertForwardersPage ();
-#    }
-#    else if (dialog == "basic_options")
-#    {
-#	InitExpertBasicOptionsPage ();
-#    }
-#    else if (dialog == "logging")
-#    {
-#	InitExpertLoggingPage ();
-#    }
-#    else if (dialog == "acls")
-#    {
-#	InitExpertAclPage ();
-#    }
-#    else if (dialog == "keys")
-#    {
-#	InitExpertKeysPage ();
-#    }
-#    else if (dialog == "zones")
-#    {
-#	InitExpertZonesPage ();
-#    }
-#    void ret = nil;
-}
-
-void OBSOLETE_StoreExpertDialog (string dialog) {
-    symbol deleteme = nil;
-#    if (dialog == "start_up")
-#    {
-#	StoreExpertStartUpPage ();
-#    }
-#    else if (dialog == "forwarders")
-#    {
-#	StoreExpertForwardersPage ();
-#    }
-#    else if (dialog == "basic_options")
-#    {
-#	StoreExpertBasicOptionsPage ();
-#    }
-#    else if (dialog == "logging")
-#    {
-#	StoreExpertLoggingPage ();
-#    }
-#    else if (dialog == "acls")
-#    {
-#	StoreExpertAclPage ();
-#    }
-#    else if (dialog == "keys")
-#    {
-#	StoreExpertKeysPage ();
-#    }
-#    else if (dialog == "zones")
-#    {
-#	StoreExpertZonesPage ();
-#    }
-}
-
-symbol OBSOLETE_HandleExpertDialog (string dialog, map event) {
-    void deleteme = nil;
-#    symbol ret = nil;
-#    if (dialog == "start_up")
-#    {
-#	ret = HandleExpertStartUpPage (event);
-#    }
-#    else if (dialog == "forwarders")
-#    {
-#	ret = HandleExpertForwardersPage (event);
-#    }
-#    else if (dialog == "basic_options")
-#    {
-#	ret = HandleExpertBasicOptionsPage (event);
-#    }
-#    else if (dialog == "logging")
-#    {
-#	ret = HandleExpertLoggingPage (event);
-#    }
-#    else if (dialog == "acls")
-#    {
-#	ret = HandleExpertAclPage (event);
-#    }
-#    else if (dialog == "keys")
-#    {
-#	ret = HandleExpertKeysPage (event);
-#    }
-#    else if (dialog == "zones")
-#    {
-#	ret = HandleExpertZonesPage (event);
-#    }
-#    return ret;
-}
-
 // Dialog label DNS - expert settings
 string dns_server_label = _("DNS Server");
-
-map<string, map<string, any> > tabs = $[
-    "start_up" : $[
-	// FIXME: new startup
-	"contents"		: `VBox (
-	    "auto_start_up",
-	    "firewall",
-	    "use_ldap",
-	    "start_stop",
-	    `VStretch ()
-	),
-	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("Start-Up"),
-	// Tree Menu Item - DNS - expert settings
-	"tree_item_label"	: _("Start-Up"),
-	// FIXME: new startup
-	"widget_names"		: ((ProductFeatures::ui_mode == "expert") ?
-		// expert mode
-		[ "auto_start_up", "firewall", "use_ldap", "start_stop" ]
-		:
-		// simple mode
-		[ "auto_start_up", "firewall", "start_stop" ]
-	),
-    ],
-    "forwarders" : $[
-	"contents"		: ExpertForwardersDialog(),
-	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("Forwarders"),
-	// Tree Menu Item - DNS - expert settings
-	"tree_item_label"	: _("Forwarders"),
-	"widget_names"		: [ "forwarders" ],
-    ],
-    "basic_options" : $[
-	"contents"		: ExpertBasicOptionsDialog(),
-	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("Basic Options"),
-	// Tree Menu Item - DNS - expert settings
-	"tree_item_label"	: _("Basic Options"),
-	"widget_names"		: [ "basic_options" ],
-    ],
-    "logging" : $[
-	"contents"		: Expert_Logging_Dialog(),
-	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("Logging"),
-	"tree_item_label"	: _("Logging"),
-	// Tree Menu Item - DNS - expert settings
-	"widget_names"		: [ "logging" ],
-    ],
-    "acls" : $[
-	"contents"		: Expert_ACLs_Dialog(),
-	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("ACLs"),
-	// Tree Menu Item - DNS - expert settings
-	"tree_item_label"	: _("ACLs"),
-	"widget_names"		: [ "acls" ],
-    ],
-    "keys" : $[
-	"contents"		: ExpertKeysDialog(),
-	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("TSIG Keys"),
-	// Tree Menu Item - DNS - expert settings
-	"tree_item_label"	: _("TSIG Keys"),
-	"widget_names"		: [ "keys" ],
-    ],
-    "zones" : $[
-	"contents"		: ExpertZonesDialog(),
-	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("DNS Zones"),
-	// Tree Menu Item - DNS - expert settings
-	"tree_item_label"	: _("DNS Zones"),
-	"widget_names"		: [ "zones" ],
-    ],
-];
 
 void SaveAndRestart () {
     Wizard::CreateDialog ();
@@ -2060,12 +1628,13 @@ map<string,map<string,any> > new_widgets = $[
 	"store"		: StoreExpertAclPage,
 	"help"		: HELPS["acls"]:"",
     ],
+    "tsig_keys"		: CWMTsigKeys::CreateWidget ($[
+				    "get_keys_info" : DnsTsigKeys::GetTSIGKeys,
+				    "set_keys_info" : DnsTsigKeys::SetTSIGKeys,
+			  ]),
     "keys" : $[
 	"widget"	: `custom,
 	"custom_widget"	: `VBox (),
-	"init"		: InitExpertKeysPage,
-	"handle"	: HandleExpertKeysPage,
-	"store"		: StoreExpertKeysPage,
 	"help"		: HELPS["keys"]:"",
     ],
     "zones" : $[
@@ -2075,6 +1644,84 @@ map<string,map<string,any> > new_widgets = $[
 	"handle"	: HandleExpertZonesPage,
 	"store"		: StoreExpertZonesPage,
 	"help"		: HELPS["zones"]:"",
+    ],
+];
+
+map<string, map<string, any> > tabs = $[
+    "start_up" : $[
+	// FIXME: new startup
+	"contents"		: `VBox (
+	    "auto_start_up",
+	    "firewall",
+	    "use_ldap",
+	    "start_stop",
+	    `VStretch ()
+	),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + " - " + _("Start-Up"),
+	// Tree Menu Item - DNS - expert settings
+	"tree_item_label"	: _("Start-Up"),
+	// FIXME: new startup
+	"widget_names"		: ((ProductFeatures::ui_mode == "expert") ?
+		// expert mode
+		[ "auto_start_up", "firewall", "use_ldap", "start_stop" ]
+		:
+		// simple mode
+		[ "auto_start_up", "firewall", "start_stop" ]
+	),
+    ],
+    "forwarders" : $[
+	"contents"		: ExpertForwardersDialog(),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + " - " + _("Forwarders"),
+	// Tree Menu Item - DNS - expert settings
+	"tree_item_label"	: _("Forwarders"),
+	"widget_names"		: [ "forwarders" ],
+    ],
+    "basic_options" : $[
+	"contents"		: ExpertBasicOptionsDialog(),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + " - " + _("Basic Options"),
+	// Tree Menu Item - DNS - expert settings
+	"tree_item_label"	: _("Basic Options"),
+	"widget_names"		: [ "basic_options" ],
+    ],
+    "logging" : $[
+	"contents"		: Expert_Logging_Dialog(),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + " - " + _("Logging"),
+	"tree_item_label"	: _("Logging"),
+	// Tree Menu Item - DNS - expert settings
+	"widget_names"		: [ "logging" ],
+    ],
+    "acls" : $[
+	"contents"		: Expert_ACLs_Dialog(),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + " - " + _("ACLs"),
+	// Tree Menu Item - DNS - expert settings
+	"tree_item_label"	: _("ACLs"),
+	"widget_names"		: [ "acls" ],
+    ],
+    "keys" : $[
+	"contents"		: `HBox (`HSpacing (2), `VBox (
+					`VSpacing (1),
+					"tsig_keys",
+					`VSpacing (1)
+				    ), `HSpacing (2)),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + " - " + _("TSIG Keys"),
+	// Tree Menu Item - DNS - expert settings
+	"tree_item_label"	: _("TSIG Keys"),
+	"widget_names"		: ["tsig_keys"],
+	"widget_descr"		: new_widgets
+    ],
+    "zones" : $[
+	"contents"		: ExpertZonesDialog(),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + " - " + _("DNS Zones"),
+	// Tree Menu Item - DNS - expert settings
+	"tree_item_label"	: _("DNS Zones"),
+	"widget_names"		: [ "zones" ],
     ],
 ];
 
@@ -2101,144 +1748,6 @@ symbol runExpertDialog () {
 	"functions" : functions,
     ]);
 }
-
-/**
- * OBSOLETE Dialog Expert Settings
- * @return any dialog return for wizard
- */
-symbol OBSOLETE_runExpertDialog () {
-
-    // UI initialization
-    Wizard::OpenTreeNextBackDialog();
-
-    // Tree (left menu) definition
-    list<map> Tree = [];
-    //				    Menu item has the same name as the Dialog's caption
-    Tree = Wizard::AddTreeItem( Tree, "",  OBSOLETE_Get_DialogCaption ( "start_up" ),		"start_up" );
-    Tree = Wizard::AddTreeItem( Tree, "",  OBSOLETE_Get_DialogCaption ( "forwarders" ),		"forwarders" );
-    Tree = Wizard::AddTreeItem( Tree, "",  OBSOLETE_Get_DialogCaption ( "basic_options" ),	"basic_options" );
-    Tree = Wizard::AddTreeItem( Tree, "",  OBSOLETE_Get_DialogCaption ( "logging" ),		"logging" );
-    Tree = Wizard::AddTreeItem( Tree, "",  OBSOLETE_Get_DialogCaption ( "acls" ),		"acls" );
-    if (! Mode::config)
-    {
-	Tree = Wizard::AddTreeItem (Tree, "", OBSOLETE_Get_DialogCaption ("keys"),
-	    "keys");
-    }
-    Tree = Wizard::AddTreeItem( Tree, "",  OBSOLETE_Get_DialogCaption ( "zones" ),		"zones" );
-
-    Wizard::CreateTree(Tree, ""); // FIXME shouldn't there be a label here?
-
-    string current_dialog = was_editing_zone
-	? "zones"
-	: "start_up";
-
-    // Code block - First dialog definition
-    // Expert dialog title plus dialog title for every single dialog ("DNS Server - DNS Zones")
-    string caption = _("DNS Server") + " - " + OBSOLETE_Get_DialogCaption ( current_dialog );
-
-    string help = OBSOLETE_Get_DialogHelp ( current_dialog );
-    term dialog = OBSOLETE_Get_ExpertDialog( current_dialog );
-    Wizard::SetContentsButtons (caption, dialog, help,
-	Label::CancelButton(), Label::FinishButton());
-
-    if (UI::WidgetExists(`id(`wizardTree)))
-    {
-	Wizard::ReplaceBackButton (`PushButton (`id(`help), `opt(`key_F1), Label::HelpButton()));
-    }
-    else
-    {
-	Wizard::HideBackButton();
-    }
-
-
-    OBSOLETE_InitExpertDialog ( current_dialog );
-
-    if (UI::WidgetExists(`id(`wizardTree)))
-    {
-	UI::ChangeWidget(`id(`wizardTree), `CurrentItem, current_dialog);
-	UI::SetFocus (`id (`wizardTree));
-    }
-    else
-    {
-	UI::WizardCommand(`SelectTreeItem(current_dialog));
-    }
-
-    map event = nil;
-    any ret = nil;
-    while(true) {
-
-	event = UI::WaitForEvent();
-	ret = event["ID"]:nil;
-
-	if (ret == `wizardTree)
-	{
-	    ret = (string)UI::QueryWidget (`id (`wizardTree), `CurrentItem);
-	}
-
-        if (ret == `next ) {
-	    break;
-	}
-	else if ( ret == `back || ret == `cancel || ret == `abort) {
-	    if ( ReallyAbort() )
-		break;
-	    else
-		continue;
-        }
-        else if (ret == `help)
-        {
-	    UI::OpenDialog( `opt(`decorated ),
-		`HBox( `VSpacing(16),
-		    `VBox(
-			`HSpacing(60),
-// FIXME add heading for next version
-			 // popup window header
-//			`Heading(_("Help")),
-			`VSpacing(0.5),
-			`RichText(help),
-			`VSpacing(1.5),
-			`PushButton(`id(`ok), `opt(`default, `key_F10), Label::OKButton())
-		    )
-		)
-	    );
-
-	    UI::SetFocus(`id(`ok));
-	    UI::UserInput();
-	    UI::CloseDialog();
-        }
-	else if ( ret == "start_up"  || ret == "forwarders" || ret == "basic_options" || ret == "logging" || ret == "acls" || ret == "keys" || ret == "zones" ) {
-	    OBSOLETE_StoreExpertDialog (current_dialog);
-	    current_dialog = (string)ret;
-	    // Changing dialogs
-	    caption = _("DNS Server") + " - " + OBSOLETE_Get_DialogCaption ( current_dialog );
-	    help = OBSOLETE_Get_DialogHelp ( current_dialog );
-	    dialog = OBSOLETE_Get_ExpertDialog( current_dialog );
-
-	    Wizard::SetContents( caption, dialog, help, true, true);
-	    OBSOLETE_InitExpertDialog ( current_dialog );
-	    if (UI::WidgetExists(`id(`wizardTree)))
-	    {
-		UI::SetFocus (`id (`wizardTree));
-	    }
-	}
-	else
-	{
-	    // ret = OBSOLETE_HandleExpertDialog (current_dialog, event); comment done after CWM (deleteme)
-	    if (ret != nil)
-		break;
-	}
-    }
-
-    if (ret == `next)
-    {
-	OBSOLETE_StoreExpertDialog (current_dialog);
-	DnsServer::SetModified ();
-    }
-    UI::CloseDialog();
-
-    return (symbol)ret;
-}
-
-
 
 /* EOF */
 }
