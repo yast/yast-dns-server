@@ -30,13 +30,12 @@ our %TYPEINFO;
 
 
 YaST::YCP::Import ("SCR");
-YaST::YCP::Import ("Mode");
-YaST::YCP::Import ("Progress");
 
 use DnsData qw(@tsig_keys @new_includes @deleted_includes);
 use DnsRoutines;
 
 sub TSIGKeyName2TSIGKey {
+    my $self = shift;
     my $key_name = shift;
 
     my $filename = "";
@@ -52,7 +51,7 @@ sub TSIGKeyName2TSIGKey {
 	return "" ;
     }
 
-    my $contents = SCR::Read (".target.string", $filename);
+    my $contents = SCR->Read (".target.string", $filename);
     if ($contents =~ /secret[ \t\n]+\"([^\"]+)\"/)
     {
 	return $1;
@@ -63,6 +62,8 @@ sub TSIGKeyName2TSIGKey {
 
 BEGIN{$TYPEINFO{ListTSIGKeys}=["function",["list",["map","string","string"]]];}
 sub ListTSIGKeys {
+    my $self = shift;
+
     return \@tsig_keys;
 }
 
@@ -70,15 +71,17 @@ sub ListTSIGKeys {
 # FIXME the same function in DHCP server component
 BEGIN{$TYPEINFO{AnalyzeTSIGKeyFile}=["function",["list","string"],"string"];}
 sub AnalyzeTSIGKeyFile {
-    my $filename = $_[0];
+    my $self = shift;
+
+    my $filename = shift;
 
     y2milestone ("Reading TSIG file $filename");
-    $filename = NormalizeFilename ($filename);
+    $filename = $self->NormalizeFilename ($filename);
     if (substr ($filename, 0, 1) ne "/")
     {
 	$filename = "/etc/named.d/$filename";
     }
-    my $contents = SCR::Read (".target.string", $filename);
+    my $contents = SCR->Read (".target.string", $filename);
     if ($contents =~ /.*key[ \t]+([^ \t}{;]+).* {/)
     {
 	return [$1];
@@ -88,12 +91,13 @@ sub AnalyzeTSIGKeyFile {
 
 BEGIN{$TYPEINFO{AddTSIGKey}=["function", "boolean", "string"];}
 sub AddTSIGKey {
-    my $filename = $_[0];
+    my $self = shift;
+    my $filename = shift;
 
-    my @new_keys = @{AnalyzeTSIGKeyFile ($filename) || []};
+    my @new_keys = @{$self->AnalyzeTSIGKeyFile ($filename) || []};
     y2milestone ("Reading TSIG file $filename");
-    $filename = NormalizeFilename ($filename);
-    my $contents = SCR::Read (".target.string", $filename);
+    $filename = $self->NormalizeFilename ($filename);
+    my $contents = SCR->Read (".target.string", $filename);
     if (0 != @new_keys)
     {
 	foreach my $new_key (@new_keys) {
@@ -104,7 +108,7 @@ sub AddTSIGKey {
 	    } @tsig_keys;
 	    if (@current_keys > 0)
 	    {
-		DeleteTSIGKey ($new_key);
+		$self->DeleteTSIGKey ($new_key);
 	    }
 	    #now add new one
 	    my %new_include = (
@@ -121,7 +125,8 @@ sub AddTSIGKey {
 
 BEGIN{$TYPEINFO{DeleteTSIGKey}=["function", "boolean", "string"];}
 sub DeleteTSIGKey {
-    my $key = $_[0];
+    my $self = shift;
+    my $key = shift;
     
     y2milestone ("Removing TSIG key $key");
     #add it to deleted list
@@ -147,6 +152,18 @@ sub DeleteTSIGKey {
     return Boolean (1);
 }
 
+BEGIN{$TYPEINFO{PushTSIGKey}=["function", "void", ["map", "string", "string"]];}
+sub PushTSIGKey {
+    my $self = shift;
+    my $new_key = shift;
+
+    push @tsig_keys, $new_key;
+}
+
+BEGIN{$TYPEINFO{InitTSIGKeys} = ["function", "void"];}
+sub InitTSIGKeys {
+    @tsig_keys = ();
+}
 
 1;
 

@@ -35,15 +35,16 @@ our %TYPEINFO;
 
 
 YaST::YCP::Import ("SCR");
-YaST::YCP::Import ("Mode");
-YaST::YCP::Import ("DndTsigKeys");
+use DnsTsigKeys;
 
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
 
 BEGIN{$TYPEINFO{GetFQDN} = ["function", "string"];}
 sub GetFQDN {
-    my $out = SCR::Execute (".target.bash_output", "/bin/hostname --fqdn");
+    my $self = shift;
+
+    my $out = SCR->Execute (".target.bash_output", "/bin/hostname --fqdn");
     if ($out->{"exit"} ne 0)
     {
 	return "@";
@@ -55,7 +56,8 @@ sub GetFQDN {
 
 BEGIN { $TYPEINFO{AbsoluteZoneFileName} = ["function", "string", "string" ]; }
 sub AbsoluteZoneFileName {
-    my $file_name = $_[0];
+    my $self = shift;
+    my $file_name = shift;
 
     if (substr ($file_name, 0, 1) eq "/")
     {
@@ -66,7 +68,8 @@ sub AbsoluteZoneFileName {
 
 BEGIN{$TYPEINFO{UpdateSerial} = ["function", "string", "string"];}
 sub UpdateSerial {
-    my $serial = $_[0];
+    my $self = shift;
+    my $serial = shift;
 
     if (! defined ($serial))
     {
@@ -111,7 +114,9 @@ sub UpdateSerial {
 
 BEGIN{$TYPEINFO{GetDefaultSOA} = ["function", ["map", "string", "string"]];}
 sub GetDefaultSOA {
-    my $fqdn = GetFQDN ();
+    my $self = shift;
+
+    my $fqdn = $self->GetFQDN ();
     $fqdn = "$fqdn.";
     my $adm_mail = "root.$fqdn";
     my %soa = (
@@ -122,13 +127,14 @@ sub GetDefaultSOA {
 	"retry" => "1H",
 	"server" => $fqdn,
 	"zone" => "@",
-	"serial" => UpdateSerial (""),
+	"serial" => $self->UpdateSerial (""),
     );
     return \%soa;
 }
 
 BEGIN{$TYPEINFO{UpdateSOA} = ["function", "boolean", ["map", "any", "any"]];}
 sub UpdateSOA {
+    my $self = shift;
     my $zonemap_ref = shift;
 
     my $ttl = $zonemap_ref->{"ttl"};
@@ -136,13 +142,13 @@ sub UpdateSOA {
     my $soa_ref = $zonemap_ref->{"soa"};
     y2milestone ("Updating SOA of $filename");
 
-    $filename = AbsoluteZoneFileName ($filename);
-    my $rz_ref = SCR::Read (".dns.zone", "$filename");
+    $filename = $self->AbsoluteZoneFileName ($filename);
+    my $rz_ref = SCR->Read (".dns.zone", "$filename");
     if (! defined ($rz_ref))
     {
 	# new zone file
 	$rz_ref = {
-	    "soa" => GetDefaultSOA (),
+	    "soa" => $self->GetDefaultSOA (),
 	    "TTL" => "2D",
 	};
     }
@@ -151,15 +157,16 @@ sub UpdateSOA {
     $rz_ref->{"TTL"} = $ttl if (defined ($ttl));
     $rz_ref->{"soa"} = $soa_ref if (defined ($soa_ref));
 
-    return SCR::Write (".dns.zone", [$filename, $rz_ref]);
+    return SCR->Write (".dns.zone", [$filename, $rz_ref]);
 }
 
 BEGIN { $TYPEINFO{ZoneRead} = ["function", [ "map", "any", "any" ], "string", "string" ]; }
 sub ZoneRead {
-    my $zone = $_[0];
-    my $file = $_[1];
+    my $self = shift;
+    my $zone = shift;
+    my $file = shift;
 
-    my $zonemap_ref = SCR::Read (".dns.zone", "/var/lib/named/$file");
+    my $zonemap_ref = SCR->Read (".dns.zone", "/var/lib/named/$file");
     if (! defined ($zonemap_ref))
     {
 	return return {};
@@ -207,14 +214,15 @@ sub ZoneRead {
 
 BEGIN { $TYPEINFO{ZoneFileWrite} = ["function", "boolean", [ "map", "any", "any"]];}
 sub ZoneFileWrite {
-    my %zone_map = %{$_[0]};
+    my $self = shift;
+    my %zone_map = %{+shift};
 
     my $zone_file = $zone_map{"file"} || "";
-    $zone_file = AbsoluteZoneFileName ($zone_file);
+    $zone_file = $self->AbsoluteZoneFileName ($zone_file);
     my $zone_name = $zone_map{"zone"} || "@";
     my $ttl = $zone_map{"ttl"} || "2D";
 
-    my %soa = %{GetDefaultSOA ()};
+    my %soa = %{$self->GetDefaultSOA ()};
     my %current_soa = %{$zone_map{"soa"}};
     while ((my $key, my $value) = each %current_soa)
     {
@@ -228,14 +236,15 @@ sub ZoneFileWrite {
 	"soa" => \%soa,
 	"records" => \@records,
     );
-    return SCR::Write (".dns.zone", [$zone_file, \%save]);
+    return SCR->Write (".dns.zone", [$zone_file, \%save]);
 }
 
 BEGIN{$TYPEINFO{UpdateZones}=["function",["list",["map","any","any"]]];}
 sub UpdateZones {
-    y2milestone ("Updaging zones");
-    my @zone_descr = @{$_[0]};
+    my $self = shift;
+    my @zone_descr = @{+shift};
 
+    y2milestone ("Updaging zones");
     my $ok = 1;
     foreach my $zone_descr (@zone_descr) {
 	my $zone_name = $zone_descr->{"zone"};
@@ -243,7 +252,7 @@ sub UpdateZones {
 	my @actions = @{$actions_ref};
 	my $tsig_key = $zone_descr->{"tsig_key"};
 	my $ttl = $zone_descr->{"ttl"} || "";
-	my $tsig_key_value = DnsTsigKeys::TSIGKeyName2TSIGKey ($tsig_key);
+	my $tsig_key_value = DnsTsigKeys->TSIGKeyName2TSIGKey ($tsig_key);
 
 	my @commands = (
 	    "server 127.0.0.1",
@@ -274,7 +283,7 @@ sub UpdateZones {
 	push @commands, "";
 	my $command = join ("\n", @commands);
 	y2milestone ("Running command $command");
-	my $xx = SCR::Execute (".target.bash_output",
+	my $xx = SCR->Execute (".target.bash_output",
 	    "echo '$command' | /usr/bin/nsupdate");
     }
     return $ok;

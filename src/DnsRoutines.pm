@@ -24,7 +24,8 @@ our %TYPEINFO;
 
 BEGIN{$TYPEINFO{NormalizeFilename} = ["function", "string", "string"];}
 sub NormalizeFilename {
-    my $filename = $_[0];
+    my $self = shift;
+    my $filename = shift;
 
     while ($filename ne "" && (substr ($filename, 0, 1) eq " "
 	|| substr ($filename, 0, 1) eq "\""))
