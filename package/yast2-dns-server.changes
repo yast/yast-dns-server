@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Oct 15 09:30:19 CEST 2004 - locilka@suse.cz
+
+- fixed bug #40761, used ACLs were deleted without additional
+  warnings.
+
+-------------------------------------------------------------------
 Thu Sep 30 13:01:32 CEST 2004 - locilka@suse.cz
 
 - fixed bug #46121, Configuration was broken by ini agent when the

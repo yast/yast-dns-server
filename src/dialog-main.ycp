@@ -916,6 +916,46 @@ boolean IsAclDefined (string new_name, list<string> acls) {
 }
 
 /**
+ * Returns zones where acl is used
+ */
+list<string> GetZonesWithAclUsed (string acl_name) {
+    list<string> zones_touched = [];
+
+    list<map<any,any> > zones = DnsServer::FetchZones ();
+    foreach (map<any,any> zone, zones, {
+	foreach (map<any,any> option, zone["options"]:[], {
+	    if (option["key"]:"" == "allow-transfer") {
+		foreach (string used_acl, splitstring (option["value"]:"", "; {}"), {
+		    if (used_acl == acl_name) {
+			zones_touched = add(zones_touched, zone["zone"]:"");
+		    }
+		});
+	    }
+	});
+    });
+
+    return toset(zones_touched);
+}
+
+/**
+ * Really remove used ACL? (dialog)
+ */
+boolean ReallyRemoveACL (string acl_name) {
+    list<string> zones_where_acl_used = GetZonesWithAclUsed(acl_name);
+
+    if (size(zones_where_acl_used) > 0) {
+	return Popup::YesNo (sformat(
+	    // A popup question
+	    _("This ACL is used by %1 zones.
+Are you sure you want to remove it?"),
+	    size(zones_where_acl_used)
+	));
+    } else {
+	return true;
+    }
+}
+
+/**
  * Handle events in a tab of a dialog
  */
 symbol HandleExpertAclPage (string key, map event) {
@@ -929,6 +969,10 @@ symbol HandleExpertAclPage (string key, map event) {
 	    a = substring (a, 1);
 	list<string> s = splitstring (a, " \t");
 	a = s[0]:"";
+
+	// Testing if ACL is used
+	if (!ReallyRemoveACL(a)) return nil;
+
 	list<map<any,any> > zones = DnsServer::FetchZones ();
 	zones = maplist (map<any,any> z, zones, {
 	    list<map> options = z["options"]:[];
