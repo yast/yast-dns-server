@@ -1448,10 +1448,12 @@ sub LdapInit {
     if (! (Mode->config () || Package->Installed ("perl-ldap")))
     {
 	my $installed = Package->Install ("perl-ldap");
-	if (! $installed && ! Package->LastOperationCanceled ())
+	if (! $installed)
 	{
 	    # error popup
-	    Report->Error (Message->CannotContinueWithoutPackagesInstalled());
+	    Report->Error (__("Installation of required packages failed.
+LDAP support will not be active."));
+
 	    $use_ldap = 0;
 	    return;
 	}
