@@ -46,9 +46,6 @@ Write	.sysconfig.named nil true
 Write	.sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY "yes" true
 Write	.sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY "yes" true
 Write	.sysconfig.network.config nil true
-Read	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS nil
-Write	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS "" true
-Write	.sysconfig.named nil true
 Execute	.target.bash "/etc/init.d/named stop" 0
 Write	.target.ycp "/var/lib/YaST2/dns_server" $[] true
 Return	true
