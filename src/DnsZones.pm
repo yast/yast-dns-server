@@ -140,9 +140,11 @@ sub UpdateSOA {
     my $rz_ref = SCR::Read (".dns.zone", "$filename");
     if (! defined ($rz_ref))
     {
-	# error report
-	Report::Error (sprintf (_("Failed to read zone file %s."), $filename));
-	return Boolean (0);
+	# new zone file
+	$rz_ref = {
+	    "soa" => GetDefaultSOA (),
+	    "TTL" => "2D",
+	};
     }
     my %soa = %{$rz_ref->{"soa"} || {}};
 

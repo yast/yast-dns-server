@@ -9,10 +9,9 @@ Write	.dns.named.value.options.directory ["\"/var/lib/named\""] true
 Write	.dns.named.value.options.notify ["no"] true
 Write	.dns.named nil true
 Dir	.dns.named.value: ["options", "zone \"localhost\" in"]
-Read	.dns.named.value.include 0
-Write	.dns.named.value.include [] true
 Read	.sysconfig.named.NAMED_CONF_INCLUDE_FILES 0
 Write	.sysconfig.named.NAMED_CONF_INCLUDE_FILES "" true
+Write	.dns.named.value."zone \"localhost\" in".type ["master"] true
 Dir	.dns.named.value."zone \"localhost\" in": ["file", "type"]
 Write	.dns.named.value."zone \"localhost\" in".file nil true
 Write	.dns.named.value."zone \"localhost\" in".type nil true
