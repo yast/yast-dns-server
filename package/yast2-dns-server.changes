@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Apr  2 16:04:04 CEST 2004 - jsrain@suse.de
+
+- changed license to GPL
+- 2.9.15
+
+-------------------------------------------------------------------
 Thu Apr  1 08:30:07 CEST 2004 - jsrain@suse.de
 
 - change zone serial number when zone is selected for editation
