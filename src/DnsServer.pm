@@ -13,9 +13,9 @@ use Data::Dumper;
 use Time::localtime;
 
 use Locale::gettext;
-use POSIX;     # Needed for setlocale()
+use POSIX ();     # Needed for setlocale()
 
-setlocale(LC_MESSAGES, "");
+POSIX::setlocale(LC_MESSAGES, "");
 textdomain("dns-server");
 
 #use io_routines;
