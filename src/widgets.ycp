@@ -18,6 +18,11 @@
     import "DnsServer";
     import "TablePopup";
 
+global define symbol chrootHandle (string id, map event);
+global define symbol zonesHandle (string key, map event);
+define symbol advMenubuttonHandle (string id, map event);
+
+
 // start service widget
 
 /**
@@ -77,6 +82,7 @@ global define map getStartWidget () ``{
  */
 global define void chrootInit (string id) ``{
     boolean ss = DnsServer::GetChrootJail();
+    chrootHandle (id, $[ "ID" : "start" ]);
     UI::ChangeWidget (`id (id), `Value, ss);
 }
 
@@ -97,6 +103,12 @@ global define void chrootStore (string id, map event) ``{
  * @return symbol always nil
  */
 global define symbol chrootHandle (string id, map event) ``{
+    if (event["ID"]:nil == "start")
+    {
+	boolean en = (boolean)UI::QueryWidget (`id ("start"), `Value);
+	UI::ChangeWidget (`id (id), `Enabled, en);
+	return nil;
+    }
     boolean start = (boolean)UI::QueryWidget (`id (id), `Value);
     if (start != DnsServer::GetChrootJail ())
 	DnsServer::SetModified ();
@@ -114,6 +126,8 @@ global define map getChrootWidget () ``{
 	"label" : _("&Run DNS Server in Chroot Jail"),
 	"help" : HELPS["chroot"]:"",
 	"init" : chrootInit,
+	"handle" : chrootHandle,
+	"handle_events" : [ "start", "chroot" ],
 	"store" : chrootStore,
     ];
 }
@@ -529,7 +543,7 @@ global define map getGlobalTableWidget () ``{
  * Initialize function of a widget
  * @param key any widget key of widget that is processed
  */
-global define void zonesInit (any key) ``{
+global define void zonesInit (string key) ``{
     integer index = -1;
     list items = maplist (map z, DnsServer::FetchZones(), ``{
 	index = index + 1;
@@ -544,6 +558,7 @@ global define void zonesInit (any key) ``{
     items = filter (any i, items, ``(i != `item ()));
     UI::ChangeWidget (`id (`zones), `Items, items);
     UI::SetFocus (`id (`zones));
+    zonesHandle (key, $[ "ID" : "start" ]);
 }
 
 /**
@@ -552,7 +567,16 @@ global define void zonesInit (any key) ``{
  * @param event map event that occured
  * @return symbol symbol for ws or nil
  */
-global define symbol zonesHandle (any key, map event) ``{
+global define symbol zonesHandle (string key, map event) ``{
+    if (event["ID"]:nil == "start")
+    {
+	boolean en = (boolean)UI::QueryWidget (`id ("start"), `Value);
+	UI::ChangeWidget (`id (`zones), `Enabled, en);
+	UI::ChangeWidget (`id (`add), `Enabled, en);
+	UI::ChangeWidget (`id (`edit), `Enabled, en);
+	UI::ChangeWidget (`id (`delete), `Enabled, en);
+	return nil;
+    }
     UI::SetFocus (`id (`zones));
     integer current = (integer)UI::QueryWidget (`id (`zones), `CurrentItem);
     if (event["ID"]:nil == `add || event["ID"]:nil == `edit
@@ -647,6 +671,7 @@ define void advMenubuttonInit (string id) ``{
 	    // menubutton item
 	    `item (`id (`show_log), _("&Display Log")),
 	]));
+    advMenubuttonHandle (id, $["ID" : "start"]);
 }
 
 /**
@@ -656,6 +681,12 @@ define void advMenubuttonInit (string id) ``{
  * @return symbol symbol for ws or nil
  */
 define symbol advMenubuttonHandle (string id, map event) ``{
+    if (event["ID"]:nil == "start")
+    {
+	boolean en = (boolean)UI::QueryWidget (`id ("start"), `Value);
+	UI::ChangeWidget (`id (`adv_menubutton), `Enabled, en);
+	return nil;
+    }
     symbol e = (symbol)(event["ID"]:nil);
     if (e == `show_log)
     {
@@ -687,7 +718,8 @@ define map getAdvancedMenubutton () ``{
 	"init" : advMenubuttonInit,
 	"help" : HELPS["adv_mbutton"]:"",
 	"handle" : advMenubuttonHandle,
-	"handle_events" : [ `global_options, `show_log, `firewall, `ddns ],
+	"handle_events" : [ `global_options, `show_log, `firewall, `ddns,
+	    "start" ],
 	"widget" : `custom, // support for non-displayed widgets would be better
 	"custom_widget" : `VBox (),
     ];

@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Mar 24 13:03:01 CET 2004 - jsrain@suse.cz
+
+- disabling possibility to change the settings if the DNS service
+  is disabled (#36799)
+- 2.9.11
+
+-------------------------------------------------------------------
 Mon Mar 22 14:21:36 CET 2004 - jsrain@suse.cz
 
 - updated .desktop file to provide autoinstallation support
