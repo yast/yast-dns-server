@@ -3,6 +3,7 @@ Mon Feb 28 11:59:59 CET 2005 - locilka@suse.cz
 
 - fixing TTL initialization in zone editor
 - fixing initializing SuSEfirewall, turning Progress off
+- 2.11.7
 
 -------------------------------------------------------------------
 Thu Feb 24 08:31:34 CET 2005 - locilka@suse.cz
