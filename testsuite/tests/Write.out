@@ -2,16 +2,18 @@ Dump	=======================
 Return	nil
 Dump	=======================
 Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
-Dir	.dns.named.value.options: ["directory", "notify"]
-Write	.dns.named.value.options."directory" "\"/var/lib/named\"" true
-Write	.dns.named.value.options."notify" "no" true
+Dir	.dns.named.value.options: ["directory", "notify", "xxx"]
+Write	.dns.named.value.options.xxx nil true
+Write	.dns.named.value.options.directory "\"/var/lib/named\"" true
+Write	.dns.named.value.options.notify "no" true
 Write	.dns.named nil true
-Write	.sysconfig.named.NAMED_RUN_CHROOTED "no" true
 Write	.dns.named.section."zone \"localhost\" in" "" true
 Dir	.dns.named.value."zone \"localhost\" in": ["file", "type"]
-Write	.dns.zone ["/var/lib/named/localhost.zone", $["TTL":"1W", "records":[$["key":"", "type":"A", "value":"127.0.0.1"], $["key":"", "type":"NS", "value":"@"], $["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":"2003080600", "server":"@", "zone":"@"]]] true
-Write	.dns.named.value."zone \"localhost\" in"."file" "\"localhost.zone\"" true
-Write	.dns.named.value."zone \"localhost\" in"."type" "master" true
+Write	.dns.zone ["/var/lib/named/localhost.zone", $["TTL":"1W", "records":[$["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":42, "server":"@", "zone":"@"]]] true
+Write	.dns.named.value."zone \"localhost\" in".localhost.zone "\"localhost.zone\"" true
+Write	.dns.named.value."zone \"localhost\" in".type "master" true
+Write	.dns.named nil true
+Write	.sysconfig.named.NAMED_RUN_CHROOTED "yes" true
 Write	.sysconfig.named nil true
 Execute	.target.bash "/etc/init.d/named stop" 0
 Read	.init.scripts.exists "named" true
@@ -19,13 +21,4 @@ Read	.init.scripts.exists "named" true
 Read	.init.scripts.exists "named" true
 Read	.init.scripts.runlevel "named" $["named":$["start":[], "stop":[]]]
 Read	.init.scripts.comment "named" $["named":$[]]
-Write	.sysconfig.SuSEfirewall2.FW_SERVICE_DNS "no" true
-Read	.sysconfig.SuSEfirewall2.FW_SERVICE_DNS "no"
-Read	.sysconfig.SuSEfirewall2.FW_SERVICE_DHCLIENT "no"
-Read	.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD "no"
-Read	.sysconfig.SuSEfirewall2.FW_SERVICE_SQUID "no"
-Read	.sysconfig.SuSEfirewall2.FW_SERVICE_SAMBA "no"
-Write	.sysconfig.SuSEfirewall2.FW_PROTECT_FROM_INTERNAL "yes" true
-Write	.sysconfig.SuSEfirewall2 nil true
-Execute	.target.bash "test -x /sbin/rcSuSEfirewall2 && /sbin/rcSuSEfirewall2 status && /sbin/rcSuSEfirewall2 restart" 0
 Return	true

@@ -18,9 +18,6 @@ ynclude_DATA =			\
 	widgets.ycp		\
 	options.ycp
 
-config_DATA =			\
-	dns-server.y2cc
-
 desktop_DATA =			\
 	dns-server.desktop
 
@@ -28,7 +25,7 @@ module_DATA =			\
 	DnsServer.pm		\
 	DnsServerUI.ycp
 
-EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(config_DATA) $(module_DATA) $(desktop_DATA)
+EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA)
 
 dns-server:
 	test -l dns-server || ln -s . dns-server
