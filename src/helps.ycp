@@ -130,7 +130,8 @@ through all network interfaces it listens to, check
 Set the entries of the SOA record.</p>")
 
     // help text 2/9 - TTL
-    + _("<p><b>$TTL</b> TODO</p>")
+    + _("<p><b>$TTL</b> specifies the time to live for all records in the
+zone that do not have an explicit TTL.</p>")
 
     // help text 3/9 - Primary source
     + _("<p><b>Primary Source</b> must contain fully qualified domain name
