@@ -19,6 +19,57 @@ our @EXPORT = qw(&NormalizeFilename);
 
 our %TYPEINFO;
 
+BEGIN{$TYPEINFO{CheckQuoting} = ["function", "boolean", "any"];}
+sub CheckQuoting {
+    my $class = shift;
+    my $string = shift;
+
+    # allowed quotes are only " (double quotes)
+
+    $string =~ s/\\\"//g;
+    $string =~ s/^ *\"/\"/;
+    $string =~ s/\" *$/\"/;
+
+    # starting and finishing quotes present, another inside
+    if (($string =~ /^\"/) && ($string =~ /\"$/) && ($string =~ /.\"./)) {
+	return 0;
+    # starting quote present, finishing is not
+    } elsif (($string =~ /^\"/) && ($string !~ /\"$/)) {
+	return 0;
+    # starting quote is not present, finishing is
+    } elsif (($string !~ /^\"/) && ($string =~ /\"$/)) {
+	return 0;
+    }
+
+    return 1;
+}
+
+BEGIN{$TYPEINFO{CheckBrackets} = ["function", "boolean", "any"];}
+sub CheckBrackets {
+    my $class = shift;
+    my $string = shift;
+
+    # allowed brackets are only {}
+
+    $string =~ s/\\\{//g;
+    $string =~ s/\\\}//g;
+    $string =~ s/^ *\{/\{/;
+    $string =~ s/\} *$/\}/;
+
+    # starting and finishing brackets present, another inside
+    if (($string =~ /^\{/) && ($string =~ /\}$/) && ($string =~ /.(\{|\})./)) {
+	return 0;
+    # starting bracket present, finishing is not
+    } elsif (($string =~ /^\{/) && ($string !~ /\}$/)) {
+	return 0;
+    # starting bracket is not present, finishing is
+    } elsif (($string !~ /^\{/) && ($string =~ /\}$/)) {
+	return 0;
+    }
+
+    return 1;
+}
+
 BEGIN{$TYPEINFO{NormalizeFilename} = ["function", "string", "string"];}
 sub NormalizeFilename {
     my $self = shift;

@@ -26,6 +26,7 @@ import "Report";
 import "ProductFeatures";
 import "CWMFirewallInterfaces";
 import "Message";
+import "DnsRoutines";
 
 /**
  * Dialog Expert Settings - Start Up
@@ -418,24 +419,208 @@ symbol HandleExpertForwardersPage (string key, map event) {
 }
 
 list<string> global_options_add_items = sort([
-    "hostname", "version", "directory", "named-xfer",
-    "dump-file", "memstatistics-file", "pid-file",
-    "statistics-file", "auth-nxdomain", "deallocate-on-exit",
-    "dialup", "fake-iquery", "fetch-glue", "has-old-clients",
-    "host-statistics", "host-statistics-max", "multiple-cnames",
-    "notify", "suppress-initial-notify", "recursion",
-    "rfc2308-type1", "use-id-pool", "treat-cr-as-space",
-    "also-notify", "forward", "forwarders", "check-names",
-    "allow-query", "allow-recursion", "allow-transfer",
-    "blackhole", "listen-on", "query-source", "lame-ttl",
-    "max-transfer-time-in", "max-ncache-ttl", "min-roots",
-    "serial-queries", "transfer-format", "transfers-in",
-    "transfers-out", "transfers-per-ns", "transfer-source",
-    "maintain-ixfr-base", "max-ixfr-log-size", "coresize",
-    "datasize", "files", "stacksize", "cleaning-interval",
-    "heartbeat-interval", "interface-interval",
-    "statistics-interval", "topology", "sortlist", "rrset-order",
-    "preferred-glue", "listen-on-v6",
+        "additional-from-auth",
+        "additional-from-cache",
+        "allow-query",
+        "allow-recursion",
+        "allow-transfer",
+        "also-notify",
+        "auth-nxdomain",
+        "blackhole",
+        "check-names",
+        "cleaning-interval",
+        "coresize",
+        "datasize",
+        "deallocate-on-exit",
+        "dialup",
+        "directory",
+        "dump-file",
+        "fake-iquery",
+        "fetch-glue",
+        "files",
+        "forward",
+        "forwarders",
+        "has-old-clients",
+        "heartbeat-interval",
+        "host-statistics",
+        "host-statistics-max",
+        "hostname",
+        "interface-interval",
+        "lame-ttl",
+        "listen-on",
+        "listen-on-v6",
+        "maintain-ixfr-base",
+        "match-mapped-addresses",
+        "max-cache-size",
+        "max-cache-ttl",
+        "max-ixfr-log-size",
+        "max-ncache-ttl",
+        "max-refresh-time",
+        "max-retry-time",
+        "max-transfer-idle-in",
+        "max-transfer-idle-out",
+        "max-transfer-time-in",
+        "max-transfer-time-out",
+        "memstatistics-file",
+        "min-refresh-time",
+        "min-retry-time",
+        "min-roots",
+        "minimal-responses",
+        "multiple-cnames",
+        "named-xfer",
+        "notify",
+        "pid-file",
+        "port",
+        "preferred-glue",
+        "provide-ixfr",
+        "query-source",
+        "random-device",
+        "recursion",
+        "recursive-clients",
+        "request-ixfr",
+        "rfc2308-type1",
+        "rrset-order",
+        "serial-queries",
+        "serial-query-rate",
+        "sig-validity-interval",
+        "sortlist",
+        "stacksize",
+        "statistics-file",
+        "statistics-interval",
+        "suppress-initial-notify",
+        "tcp-clients",
+        "tkey-dhkey",
+        "tkey-domain",
+        "topology",
+        "transfer-format",
+        "transfer-source",
+        "transfers-in",
+        "transfers-out",
+        "transfers-per-ns",
+        "treat-cr-as-space",
+        "use-id-pool",
+        "use-ixfr",
+        "version",
+        "zone-statistics"
+]);
+
+list<string> global_options_unique_items = sort([
+        "additional-from-auth",
+        "additional-from-cache",
+        "auth-nxdomain",
+        "cleaning-interval",
+        "coresize",
+        "datasize",
+        "deallocate-on-exit",
+        "dialup",
+        "directory",
+        "dump-file",
+        "fake-iquery",
+        "fetch-glue",
+        "files",
+        "forward",
+        "has-old-clients",
+        "heartbeat-interval",
+        "host-statistics",
+        "interface-interval",
+        "lame-ttl",
+        "maintain-ixfr-base",
+        "match-mapped-addresses",
+        "max-cache-size",
+        "max-cache-ttl",
+        "max-ixfr-log-size",
+        "max-ncache-ttl",
+        "max-refresh-time",
+        "max-retry-time",
+        "max-transfer-idle-in",
+        "max-transfer-idle-out",
+        "max-transfer-time-in",
+        "max-transfer-time-out",
+        "memstatistics-file",
+        "min-refresh-time",
+        "min-retry-time",
+        "min-roots",
+        "minimal-responses",
+        "multiple-cnames",
+        "named-xfer",
+        "notify",
+        "pid-file",
+        "port",
+        "provide-ixfr",
+        "random-device",
+        "recursion",
+        "recursive-clients",
+        "request-ixfr",
+        "rfc2308-type1",
+        "serial-queries",
+        "serial-query-rate",
+        "sig-validity-interval",
+        "stacksize",
+        "statistics-file",
+        "statistics-interval",
+        "tcp-clients",
+        "tkey-dhkey",
+        "tkey-domain",
+        "transfer-format",
+        "transfers-in",
+        "transfers-out",
+        "transfers-per-ns",
+        "treat-cr-as-space",
+        "use-id-pool",
+        "use-ixfr",
+        "version",
+        "zone-statistics"
+]);
+
+list<string> global_options_yesno_items = sort([
+	"zone-statistics",
+	"auth-nxdomain",
+	"deallocate-on-exit",
+	"fake-iquery",
+	"fetch-glue",
+	"has-old-clients",
+	"host-statistics",
+	"minimal-responses",
+	"multiple-cnames",
+	"recursion",
+	"rfc2308-type1",
+	"use-id-pool",
+	"maintain-ixfr-base",
+	"use-ixfr",
+	"provide-ixfr",
+	"request-ixfr",
+	"treat-cr-as-space",
+	"additional-from-auth",
+	"additional-from-cache",
+	"match-mapped-addresses"
+]);
+
+list<string> global_options_number_items = sort([
+	"max-transfer-time-in",
+	"max-transfer-time-out",
+	"max-transfer-idle-in",
+	"max-transfer-idle-out",
+	"tcp-clients",
+	"recursive-clients",
+	"serial-query-rate",
+	"serial-queries",
+	"transfers-in",
+	"transfers-out",
+	"transfers-per-ns",
+	"max-ixfr-log-size",
+	"cleaning-interval",
+	"heartbeat-interval",
+	"interface-interval",
+	"statistics-interval",
+	"lame-ttl",
+	"max-ncache-ttl",
+	"max-cache-ttl",
+	"sig-validity-interval",
+	"min-roots",
+	"min-refresh-time",
+	"max-refresh-time",
+	"min-retry-time",
+	"max-retry-time"
 ]);
 
 /**
@@ -554,6 +739,108 @@ void StoreExpertBasicOptionsPage (string key, map event) {
 }
 
 /**
+ * Return if the option must be unique in configuration or not
+ */
+boolean IsUniqueOption (string option) {
+    // global_options_unique_items is a list of known unique records
+    return contains(global_options_unique_items, option);
+}
+
+/**
+ * Returns if the option was set yet
+ */
+boolean OptionIsSetYet (string option) {
+    if (size(
+	// filters all records whith key = option
+	filter (map<string, any> option_record, options,
+	    ``(option_record["key"]:nil == option)
+	)
+    // options are list, size returns count of records
+    ) >0 ) {
+	return true;
+    }
+    return false;
+}
+
+/**
+ * Returns if the option must be "yes" or "no"
+ */
+boolean OptionsIsYesNoType(string option) {
+    return contains(global_options_yesno_items, option);
+}
+
+/**
+ * Returns if the option must be a number
+ */
+boolean OptionsIsNumberType(string option) {
+    return contains(global_options_number_items, option);
+}
+
+boolean CheckOptionValue (string option, string value) {
+    // any value should be set
+    if (value == nil || value == "") {
+	if (! Popup::YesNo(
+	    // TRANSLATORS: Popup question
+	    _("Are you sure you want to set this\noption without any value?")
+	)) {
+	    return false;
+	}
+    // it is a YES or NO type
+    } else if (OptionsIsYesNoType(option)) {
+	// it has not a yes/no value
+	if (! regexpmatch(value,"^ *[yY][eE][sS] *$") && !regexpmatch(value,"^ *[nN][oO] *$")) {
+	    if (! Popup::ContinueCancel(
+		sformat (
+		    // TRANSLATORS: Popup question. Please, do not translate 'yes' and 'no' strings. %1 is a name of the option, %2 is the value of the option.
+		    _("Option '%1' can only have 'yes' or 'no' value set.\nDo you really want to set it to '%2'?"),
+		    option,
+		    value
+		)
+	    )) {
+		return false;
+	    }
+	}
+    // it must be a number
+    } else if (OptionsIsNumberType(option)) {
+	// if has not a number value
+	if (! regexpmatch(value,"^ *[0123456789] *$")) {
+	    if (! Popup::ContinueCancel(
+		sformat (
+		    // TRANSLATORS: Popup question. %1 is a name of the option, %2 is the value of the option.
+		    _("Option '%1' can only be a number.\nDo you really want to set it to '%2'?"),
+		    option,
+		    value
+		)
+	    )) {
+		return false;
+	    }
+	}
+    } else if (! DnsRoutines::CheckQuoting(value)) {
+	if (! Popup::ContinueCancel(
+	    sformat (
+		// TRANSLATORS: Popup question. %1 is the value of the option.
+		_("Quotes in this option are not used well.\nDo you really want to set it to '%1'?"),
+		value
+	    )
+	)) {
+	    return false;
+	}
+    } else if (! DnsRoutines::CheckBrackets(value)) {
+	if (! Popup::ContinueCancel(
+	    sformat (
+		// TRANSLATORS: Popup question. %1 is the value of the option.
+		_("Brackets in this option are not used well.\nDo you really want to set it to '%1'?"),
+		value
+	    )
+	)) {
+	    return false;
+	}
+    }
+
+    return true;
+}
+
+/**
  * Handle events in a tab of a dialog
  */
 symbol HandleExpertBasicOptionsPage (string key, map event) {
@@ -570,6 +857,10 @@ symbol HandleExpertBasicOptionsPage (string key, map event) {
     }
     else if (ret == "delete_basic_option")
     {
+	if (! Confirm::DeleteSelected()) {
+	    return nil;
+	}
+
 	options[index] = nil;
 	options = filter (map<string,any> o, options, ``(o != nil));
 	RedrawOptionsTableWidget ();
@@ -577,6 +868,23 @@ symbol HandleExpertBasicOptionsPage (string key, map event) {
     }
     else if (ret == "add_basic_option" )
     {
+	// testing options for right values
+	if (! CheckOptionValue(current_key, current_value)) return nil;
+
+	// option is unique and was set yet
+	if (IsUniqueOption(current_key) && OptionIsSetYet(current_key)) {
+	    if (! Popup::ContinueCancel(
+		sformat(
+		    // Popup question, %1 is the name of the option
+		    _("Option '%1' should be set only once.\nDou you really want to add yet another one?"),
+		    current_key
+		)
+	    )) {
+		return nil;
+	    }
+	    y2warning("Added unique option '%1' more times", current_key);
+	}
+
 	options = add (options, $[
 	    "key" : current_key,
 	    "value" : current_value,
@@ -586,6 +894,9 @@ symbol HandleExpertBasicOptionsPage (string key, map event) {
     }
     else if (ret == "change_basic_option")
     {
+	// testing options for right values
+	if (! CheckOptionValue(current_key, current_value)) return nil;
+
 	options[index, "key"] = current_key;
 	options[index, "value"] = current_value;
 	RedrawOptionsTableWidget ();
