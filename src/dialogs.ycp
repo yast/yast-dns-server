@@ -16,6 +16,7 @@
     import "Popup";
     import "Label";
     import "CWM";
+    import "Wizard";
 
     /**
       * Read settings dialog

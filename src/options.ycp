@@ -11,6 +11,10 @@
 
     textdomain "dns-server";
 
+    import "Label";
+    import "CWM";
+    import "DnsServer";
+
     /**
       * Ask for zone type
       * @return string zone type
@@ -22,7 +26,7 @@
 	    // radio button, type of zone
 	    `Left (`RadioButton (`id ("slave"), _("&Slave"), false)),
 	    // radio button, type of zone
-	    Left (`RadioButton (`id ("stub"), _("S&tub"), false))
+	    `Left (`RadioButton (`id ("stub"), _("S&tub"), false))
 	);
 	term t = `HBox (`HSpacing (1), `VBox (
 	    // heading
@@ -158,7 +162,7 @@
 	), `HSpacing (1));
 	UI::OpenDialog (t);
 	UI::ChangeWidget (`id (`ip), `Value, orig["key"]:"");
-	UI::ChangeWidget (`id (`name), `Value, orig["CNAME", 0]:"");
+	UI::ChangeWidget (`id (`name), `Value, orig["PTR", 0]:"");
 	UI::SetFocus (`id (`alias));
 	any ret = nil;
 	while (ret == nil)
@@ -168,7 +172,7 @@
 	if (ret == `_tp_ok)
 	{
 	    orig["key"] = UI::QueryWidget (`id (`ip), `Value);
-	    orig["CNAME"] = [ UI::QueryWidget (`id (`name), `Value) ];
+	    orig["PTR"] = [ UI::QueryWidget (`id (`name), `Value) ];
 	    UI::CloseDialog ();
 	    return orig;
 	}
@@ -238,6 +242,7 @@
       */
     global define void globalPopupStore (any opt_id, any opt_key) ``{
 	settings["options", opt_key] = UI::QueryWidget (`id (opt_key), `Value);
+	modified = true;
     }
 
     /**
@@ -363,7 +368,74 @@
     global define void startServiceStore (any opt_id, any opt_key)``{
 	settings["start_service"]
 	    = UI::QueryWidget (`id ("__start_service"), `Value);
+	modified = true;
     }
+
+// run in chroot environment option
+
+    /**
+      * Summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      * @return string table entry summary
+      */
+    global define string ChrootSummary (any opt_id, any opt_key) ``{
+	return settings["chroot"]:false ? _("Yes") : _("No");
+    }
+
+    /**
+      * Initialization function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void ChrootInit (any opt_id, any opt_key) ``{
+	UI::ChangeWidget (`id ("__chroot"), `Value, settings["chroot"]:false);
+	UI::SetFocus (`id ("__chroot"));
+    }
+
+    /**
+      * Store function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void ChrootStore (any opt_id, any opt_key) ``{
+	settings["chroot"] = UI::QueryWidget (`id ("__chroot"), `Value);
+	modified = true;
+    }
+
+// save everything popup
+
+    /**
+      * Summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      * @return string table entry summary
+      */
+    global define string SaveAllSummary (any opt_id, any opt_key) ``{
+	return save_all ? _("Yes") : _("No");
+    }
+
+    /**
+      * Initialization function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void SaveAllInit (any opt_id, any opt_key) ``{
+	UI::ChangeWidget (`id ("__save_all"), `Value, save_all);
+	UI::SetFocus (`id ("__save_all"));
+    }
+
+    /**
+      * Store function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void SaveAllStore (any opt_id, any opt_key) ``{
+	save_all = UI::QueryWidget (`id ("__save_all"), `Value);
+
+    }
+
+// Ns/Mx popup
 
     /**
       * Summary function of a table entry
@@ -528,7 +600,7 @@
       * @param opt_key any option key
       * @return string table entry summary
       */
-    global define string MastersSummary (any opt_id, any iot_key) ``{
+    global define string MastersSummary (any opt_id, any opt_key) ``{
 	return current_zone["masters"]:"";
     }
 
@@ -610,7 +682,7 @@
 		    // text entry
 		    `TextEntry (`id ("refresh"), _("Re&fresh")),
 		    // text entry
-		    `TextEntry (`id ("retry"), _("&Retry")),
+		    `TextEntry (`id ("retry"), Label::RetryButton ()),
 		    // text entry
 		    `TextEntry (`id ("expiry"), _("E&xpiry")),
 		    // text entry
@@ -691,6 +763,32 @@
 		"popup" : $[
 		    "init" : ``(DnsServer::MastersInit ()),
 		    "store" : ``(DnsServer::MastersStore ()),
+		],
+	    ],
+	    "__chroot" : $[
+		"table" : $[
+		    // table cell, label
+		    "label" : _("Start DNS server in chroot jail"),
+		    "optional" : false,
+		    "summary" : ``(DnsServer::ChrootSummary ()),
+		],
+		"popup" : $[
+		    "widget" : `checkbox,
+		    "init" : ``(DnsServer::ChrootInit ()),
+		    "store" : ``(DnsServer::ChrootStore ()),
+		],
+	    ],
+	    "__save_all" : $[
+		"table" : $[
+		    // table cell, label
+		    "label" : _("Force saving all settings"),
+		    "optional" : false,
+		    "summary" : ``(DnsServer::SaveAllSummary ()),
+		],
+		"popup" : $[
+		    "widget" : `checkbox,
+		    "init" : ``(DnsServer::SaveAllInit ()),
+		    "store" : ``(DnsServer::SaveAllStore ()),
 		],
 	    ],
 	];

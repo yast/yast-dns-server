@@ -1,8 +1,11 @@
 Dump	=======================
 Execute	.target.bash_output "/bin/hostname -f" $[]
 Log	Hostname detection failed, using localhost
+Execute	.target.bash "rpm -q bind8" 0
+Execute	.target.bash "rpm -q bind9" 0
 Read	.init.scripts.exists "named" true
 Read	.init.scripts.runlevel "named" $["named":$["start":[], "stop":[]]]
+Read	.sysconfig.named.NAMED_RUN_CHROOTED 0
 Dir	.dns.named.section: []
 Dir	.dns.named.value.options: []
 Return	true
@@ -11,7 +14,7 @@ Execute	.target.bash_output "date '+%Y%m%d'" $[]
 Write	.dns.named.section.options "" true
 Write	.dns.named.section."zone \"localhost\" in" "" true
 Dir	.dns.named.value.options: []
-Write	.dns.zone ["/var/lib/named/localhost.zone", $["TTL":"1W", "records":[$["key":"", "type":"NS", "value":"@"], $["key":"zealot.suse.cz.", "type":"A", "value":"127.0.0.1"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1 W", "refresh":"2D", "retry":"4H", "serial":"00", "server":"zealot.suse.cz.", "zone":"localhost"]]] true
+Write	.dns.zone ["/var/lib/named/localhost.zone", $["TTL":"1W", "records":[$["key":"", "type":"A", "value":"127.0.0.1"], $["key":"", "type":"NS", "value":"@"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":"00", "server":"@", "zone":"@"]]] true
 Write	.dns.named.value."zone \"localhost\" in"."file" "\"localhost.zone\"" true
 Write	.dns.named.value."zone \"localhost\" in"."type" "master" true
 Dir	.dns.named.section: []
@@ -19,6 +22,8 @@ Dir	.dns.named.value.options: []
 Write	.dns.named.value.options."allow-query" "{ 127.0.0.1; }" true
 Write	.dns.named.value.options."directory" "\"/var/lib/named\"" true
 Write	.dns.named nil true
+Write	.sysconfig.named.NAMED_RUN_CHROOTED "no" true
+Write	.sysconfig.named nil true
 Execute	.target.bash "/etc/init.d/named stop" 0
 Read	.init.scripts.exists "named" true
 Read	.init.scripts.exists "named" true
