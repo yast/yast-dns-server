@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Apr  1 08:30:07 CEST 2004 - jsrain@suse.de
+
+- change zone serial number when zone is selected for editation
+  (so that it gets automatically increased, but user still can
+  override the increased serial with different one) (#37799)
+- 2.9.14
+
+-------------------------------------------------------------------
 Tue Mar 30 09:33:02 CEST 2004 - jsrain@suse.de
 
 - fixed deleting of DNS zones (zones weren't deleted)
