@@ -473,7 +473,7 @@ global define void globalTableInit (string id) ``{
  * @param widget any widget key of widget that is processed
  * @param event map event that occured
  */
-global define void globalTableStore (any widget, map event) ``{
+global define void globalTableStore (string widget, map event) ``{
     DnsServer::SetGlobalOptions (current_section);
 }
 
@@ -1051,13 +1051,28 @@ define void MasterTableInit (string key) ``{
  * @param key string widget id
  * @param event map event that caused storing process
  */
-define void MasterTableStore (string key, map event) ``{
+define symbol MasterTableStore (string key, map event) ``{
     current_zone["update_actions"] = maplist (map m, current_zone_upd_ops, ``{
 	m["zone"] = current_zone["zone"]:"";
 	return m;
     });
+    return nil;
 }
 
+/**
+ * Handle function of the widget
+ * @param key string widget id
+ * @param event map event that caused storing process
+ * @return symbol always nil
+ */
+global define symbol MasterTableHandle (string key, map event) ``{
+    map<string, any> widget = CWM::GetProcessedWidget ();
+    if (regexpmatch (current_zone["zone"]:"", "in-addr\\.arpa\\.?$"))
+	widget["add_items"] = [ "PTR", "NS" ];
+    else
+	widget["add_items"] = [ "A", "CNAME", "NS", "MX" ];
+    return TablePopup::TableHandle(widget, key, event);
+}
 
 /**
  * Get map of widget
@@ -1070,6 +1085,7 @@ global define map getMasterTableWidget () ``{
     ], $[
 	"init" : MasterTableInit,
 	"store" : MasterTableStore,
+	"handle" : MasterTableHandle,
 	"options" : DnsServerUI::popups,
 	"ids" : getMasterTableContents,
 	"id2key" : masterId2Key,
@@ -1081,6 +1097,7 @@ global define map getMasterTableWidget () ``{
 	],
 	"option_delete" : masterTableEntryDelete,
 	"add_items" : [ "A", "CNAME", "PTR", "NS", "MX" ],
+	"add_items_keep_order" : true,
 	"help" : HELPS["master_zone"]:"",
     ]);
     return ret;

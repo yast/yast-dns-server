@@ -3,7 +3,9 @@ Mon Mar 29 10:53:32 CEST 2004 - jsrain@suse.de
 
 - fixed log displaying (#37210)
 - fixed MX record editation (#37268)
-- fiexd adding of new global option (#37268)
+- fixed adding of new global option (#37268)
+- offer only relevant resource record types according to zone
+  direction (#37268)
 
 -------------------------------------------------------------------
 Wed Mar 24 13:03:01 CET 2004 - jsrain@suse.cz
