@@ -1621,7 +1621,7 @@ map<string,map<string,any> > new_widgets = $[
 
 	// LDAP Support
 	"get_use_ldap" : DnsServer::GetUseLdap,
-	"set_use_ldap" : DnsServer::SetUseLdapAndSave,
+	"set_use_ldap" : DnsServer::SetUseLdap,
 	// check box
 	"use_ldap_checkbox" : _("&LDAP Support Active"),
     ]),
