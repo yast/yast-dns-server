@@ -25,64 +25,6 @@
     }
 
     /**
-      * Remove quotes around a string
-      * @param orig string quoted string
-      * @return string unquoted string
-      */
-    global define string DeQuote (string orig) ``{
-	while (substring (orig, 0, 1) == " ")
-	    orig = substring (orig, 1);
-	while (substring (orig, size (orig) -1) == " ")
-	    orig = substring (orig, 0, size (orig) - 1);
-	if (substring (orig, 0, 1) == "\""
-	    && substring (orig, size (orig) - 2, 1) == "\"")
-	{
-	    orig = substring (orig, 1, size (orig) - 2);
-	}
-	return orig;
-    }
-
-    /**
-      * Add quotes around a string
-      * @param orig string unquotes string
-      * @return string quoted string
-      */
-    global define string Quote (string orig) ``{
-	return sformat ("\"%1\"", orig);
-    }
-
-    /**
-      * returns modified list where items index1 and index2 are swapped.
-      * if indices are out of bounds, unmodified list is returned.
-      * @param input list
-      * @param index1 index of the first element
-      * @param index2 index og the second element
-      * @return list modified list
-      */
-    global define list swapItems(list input, integer index1, integer index2) ``{
-	if (index1 >= size(input) || index2 >= size(input)
-	    || index1 < 0 || index2 < 0)
-	{
-	    return input;
-	}
-	list output = [];
-	integer pos = -1;
-	output = maplist(any e, input, ``{
-	    pos = pos + 1;
-	    if (pos == index1)
-	    {
-		return select(input, index2, $[]);
-	    }
-	    else if (pos == index2)
-	    {
-		return select(input, index1, $[]);
-	    }
-	    return e;
-	});
-	return output;
-    }
-
-    /**
       * Get zone type from the zone identification
       * @param zone string zone identification
       * @return symbol zone type
