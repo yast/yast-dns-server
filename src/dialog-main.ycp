@@ -1614,6 +1614,13 @@ map<string, map<string, any> > tabs = $[
     ],
 ];
 
+void SaveAndRestart () {
+    Wizard::CreateDialog ();
+    Wizard::RestoreHelp (HELPS["write"]:"");
+    DnsServer::Write ();
+    UI::CloseDialog ();
+}
+
 map<string,map<string,any> > new_widgets = $[
     "auto_start_up" : CWMServiceStart::CreateAutoStartWidget ($[
 	"get_service_auto_start" : DnsServer::GetStartService,
@@ -1639,7 +1646,7 @@ map<string,map<string,any> > new_widgets = $[
 	"start_now_button" : _("&Start DNS Server Now"),
 	// push button
 	"stop_now_button" : _("S&top DNS Server Now"),
-	"save_now_action" : DnsServer::Write,
+	"save_now_action" : SaveAndRestart,
 	// push button
 	"save_now_button" : _("Save Settings and Restart DNS Server &Now"),
 	"help" : sformat (CWMServiceStart::StartStopHelpTemplate (true),

@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Mon Sep 20 10:14:16 CEST 2004 - locilka@suse.cz
+
+- fixed bug #45581, "Save and Restart" the progress was kept instead
+  of returning to the main dialog
+- fixed bug #40610, forwarders file changed, added forwarders agent
+  into makefile and spec file
+- 2.10.10
+
+-------------------------------------------------------------------
 Mon Sep 13 17:12:33 CEST 2004 - locilka@suse.de
 
 - fixed testsuites
