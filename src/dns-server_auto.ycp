@@ -27,16 +27,17 @@ y2milestone("----------------------------------------");
 y2milestone("DnsServer auto started");
 
 import "DnsServer";
+import "DnsServerUI";
 
 any ret = nil;
 string func = "";
 map param = $[];
 
 /* Check arguments */
-if(size(Args()) > 0 && is(Args(0), string)) {
-    func = WFM::Args(0);
-    if(size(Args()) > 1 && is(Args(1), map))
-	param = WFM::Args(1);
+if(size(WFM::Args()) > 0 && is(WFM::Args(0), string)) {
+    func = (string)WFM::Args(0);
+    if(size(WFM::Args()) > 1 && is(WFM::Args(1), map))
+	param = (map)WFM::Args(1);
 }
 y2debug("func=%1", func);
 y2debug("param=%1", param);
@@ -52,7 +53,7 @@ else if (func == "Reset") {
 }
 /* Change configuration (run AutoSequence) */
 else if (func == "Change") {
-    ret = DnsServer::MainSequence();
+    ret = DnsServerUI::MainSequence();
 }
 /* Import configuration */
 else if (func == "Import") {
@@ -73,7 +74,7 @@ else if (func == "Read") {
 else if (func == "Write") {
     import "Progress";
     Progress::off();
-    DnsServer::write_only = true;
+    DnsServer::SetWriteOnly (true);
     ret = DnsServer::Write();
     Progress::on();
 }

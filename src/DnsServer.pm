@@ -35,7 +35,7 @@ my %logging = ();
 
 my $modified = 0;
 
-my $save_all = 1; #FIXME
+my $save_all = 0;
 
 my @files_to_delete = ();
 
@@ -77,6 +77,7 @@ sub AbsoluteZoneFileName {
 
 sub UpdateSerial {
     my $serial = $_[0];
+
     if (! defined ($serial))
     {
 	$serial = "0000000000";
@@ -142,10 +143,12 @@ sub ZoneRead {
     my $file = $_[1];
 
     my %zonemap = %{SCR::Read (".dns.zone", "/var/lib/named/$file")};
+    my %soa = %{$zonemap{"soa"} || {}};
+    $soa{"serial"} = UpdateSerial ($soa{"serial"} || "");
     my %ret = (
 	"zone" => $zone,
 	"ttl" => $zonemap{"TTL"} || "2W",
-	"soa" => $zonemap{"soa"} || {},
+	"soa" => \%soa,
     );
     my @original_records = @{$zonemap{"records"}};
     my %in_mx = ();
@@ -181,6 +184,16 @@ sub ZoneRead {
     return %ret;
 }
 
+BEGIN { $TYPEINFO{ZoneFileUpdate} = ["function", "boolean", [ "map", "any", "any" ]];}
+sub ZoneFileUpdate {
+    my %zone_map = %{$_[0]};
+    my @actions = @{$zone_map{"update_actions"}};
+    foreach my $action (@actions) {
+	
+	# TODO perform the action
+    }
+}
+
 BEGIN { $TYPEINFO{ZoneFileWrite} = ["function", "boolean", [ "map", "any", "any"]];}
 sub ZoneFileWrite {
     my %zone_map = %{$_[0]};
@@ -204,8 +217,6 @@ sub ZoneFileWrite {
     {
 	$soa{$key} = $value;
     }
-
-    $soa{"serial"} = UpdateSerial ($soa{"serial"});
 
     my @records = ();
 
@@ -247,7 +258,7 @@ BEGIN { $TYPEINFO{ZoneWrite} = ["function", "boolean", [ "map", "any", "any" ] ]
 sub ZoneWrite {
     my %zone_map = %{$_[0]};
 
-    if (! ($zone_map{"changed"} || $save_all))
+    if (! ($zone_map{"modified"} || $save_all))
     {
 	return 1;
     }
@@ -277,7 +288,14 @@ sub ZoneWrite {
     if ($zone_type eq "master")
     {
 	# write the zone file
-	ZoneFileWrite (\%zone_map);
+	if (! $zone_map{"soa_modified"})
+	{
+	    ZoneFileWrite (\%zone_map);
+	}
+	else
+	{
+	    ZoneFileUpdate (\%zone_map);
+	}
 	@save_options = ("type", "file");
 
 	# write existing keys
@@ -375,6 +393,7 @@ sub SaveGlobals {
 
 BEGIN { $TYPEINFO{StoreZone} = ["function", "boolean"]; }
 sub StoreZone {
+    $current_zone{"modified"} = 1;
     if ($current_zone_index == -1)
     {
 	push (@zones, \%current_zone);
@@ -451,7 +470,24 @@ sub SelectZone {
 
     if ($zone_index == -1)
     {
-	%current_zone = ();
+	my $serial =  UpdateSerial ("");
+	my %new_soa = (
+	    "expiry" => "6W",
+	    "mail" => "root",
+	    "minimum" => "1W",
+	    "refresh" => "2D",
+	    "retry" => "4H",
+	    "serial" => $serial,
+	    "server" => "@",
+	    "zone" => "@",
+	);
+	%current_zone = (
+	    "soa_modified" => 1,
+	    "modified" => 1,
+	    "type" => "master",
+	    "soa" => \%new_soa,
+	    "ttl" => "2W",
+	);
     }
     else
     {
@@ -467,13 +503,11 @@ sub SelectZone {
 BEGIN { $TYPEINFO{SetStartService} = [ "function", "void", "boolean" ];}
 sub SetStartService {
     $start_service = $_[0];
-y2error ("SS: $start_service");
     SetModified ();
 }
 
 BEGIN { $TYPEINFO{GetStartService} = [ "function", "boolean" ];}
 sub GetStartService {
-    y2error ("GetStartService: $start_service");
     return $start_service;
 }
 
@@ -485,6 +519,21 @@ sub SetModified {
 BEGIN { $TYPEINFO{WasModified} = ["function", "boolean" ]; }
 sub WasModified {
     return $modified;
+}
+
+BEGIN { $TYPEINFO{SetWriteOnly} = ["function", "void", "boolean" ]; }
+sub SetWriteOnly {
+    $write_only = $_[0];
+}
+
+BEGIN { $TYPEINFO{SetAdaptFirewall} = ["function", "void", "boolean" ]; }
+sub SetAdaptFirewall {
+    $adapt_firewall = $_[0];
+}
+
+BEGIN { $TYPEINFO{GetAdaptFirewall} = [ "function", "boolean" ];}
+sub GetAdaptFirewall {
+    return $adapt_firewall;
 }
 
 BEGIN {$TYPEINFO{FetchCurrentZone} = [ "function", ["map", "any", "any"] ]; }
@@ -545,7 +594,7 @@ BEGIN { $TYPEINFO{Read} = ["function", "boolean"]; }
 sub Read {
 # Check packages
 # TODO
-UpdateSerial ();
+
 # Information about the daemon
 
     $start_service = Service::Enabled ("named");
@@ -633,6 +682,7 @@ sub Write {
     
     #set daemon starting
     SCR::Write (".sysconfig.named.NAMED_RUN_CHROOTED", $chroot ? "yes" : "no");
+    SCR::Write (".sysconfig.named", undef);
 
     if ($start_service)
     {
@@ -669,7 +719,7 @@ sub Export {
 	"options" => \%options,
 	"logging" => \%logging,
     );
-    return %ret;
+    return \%ret;
 }
 BEGIN { $TYPEINFO{Import} = ["function", "void", [ "map", "any", "any" ] ]; }
 sub Import {
@@ -677,10 +727,10 @@ sub Import {
 
     $start_service = $settings{"start_service"} || 0;
     $chroot = $settings{"chroot"} || 1;
-    @allowed_interfaces = @{$settings{"allowed_interfaces"}} || ();
-    @zones = @{$settings{"zones"}} || (); 
-    %options = %{$settings{"options"}} || ();
-    %logging = %{$settings{"logging"}} || ();
+    @allowed_interfaces = @{$settings{"allowed_interfaces"} || []};
+    @zones = @{$settings{"zones"} || []}; 
+    %options = %{$settings{"options"} || {}};
+    %logging = %{$settings{"logging"} || {}};
 
     $modified = 1;
     $save_all = 1;

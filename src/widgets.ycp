@@ -53,7 +53,8 @@
       * @return list of items for the table
       */
     global define list getGlobalTableContents (map descr) ``{
-	list ret = maplist (`k, `v, settings["options"]:$[], ``(k));
+	map options = DnsServer::GetGlobalOptions ();
+	list ret = maplist (any k, any v, options, ``(k));
 	ret = merge (["__start_service", "__chroot", "__firewall",
 	    "__save_all", "__zones", "____sep"], ret);
 	return ret;
@@ -68,9 +69,9 @@
 	// message popup
 	if (! Popup::YesNo (_("Delete selected entry?")))
 	    return false;
-	settings["options"]
-	    = filter (`k, `v, settings["options"]:$[], ``(k != opt_id));
-	DnsServer::modified = true;
+// FIXME	settings["options"]
+//	    = filter (`k, `v, settings["options"]:$[], ``(k != opt_id));
+	DnsServer::SetModified ();
 	return true;
     }
 
@@ -82,8 +83,8 @@
     global define void globalTableStore (any widget, map event) ``{
 	if (event["ID"]:nil == `zones)
 	{
-	    all_zones = eval (settings["zones"]:[]);
-	    zones_modified = false;
+// FIXME	    all_zones = eval (settings["zones"]:[]);
+	    DnsServer::SetModified ();
 	}
     }
 
@@ -97,15 +98,15 @@
 	    "up_down" : false,
 	    "unique_keys" : true,
 	], $[
-	    "store" : ``(DnsServer::globalTableStore ()),
-	    "options" : DnsServer::popups,
-	    "ids" : ``(DnsServer::getGlobalTableContents ()),
+	    "store" : globalTableStore,
+	    "options" : DnsServerUI::popups,
+	    "ids" : getGlobalTableContents,
 	    "fallback" : $[
-		"init" : ``(DnsServer::globalPopupInit ()),
-		"store" : ``(DnsServer::globalPopupStore ()),
-		"summary" : ``(DnsServer::globalTableEntrySummary ()),
+//		"init" : globalPopupInit,
+//		"store" : globalPopupStore,
+// FIXME 3x		"summary" : globalTableEntrySummary,
 	    ],
-	    "option_delete" : ``(DnsServer::globalTableEntryDelete ()),
+	    "option_delete" : globalTableEntryDelete,
 	    "add_items" : [ "hostname", "version", "directory", "named-xfer",
 		"dump-file", "memstatistics-file", "pid-file",
 		"statistics-file", "auth-nxdomain", "deallocate-on-exit",
@@ -137,11 +138,11 @@
       */
     global define void zonesInit (any key) ``{
 	integer index = -1;
-	list items = maplist (`z, all_zones, ``{
+/* FIXME	list items = maplist (`z, all_zones, ``{
 	    index = index + 1;
 	    return `item (`id (index), z["zone"]:"", z["type"]:"master");
 	});
-	UI::ChangeWidget (`id (`zones), `Items, items);
+	UI::ChangeWidget (`id (`zones), `Items, items);*/
 	UI::SetFocus (`id (`zones));
     }
 
@@ -151,9 +152,9 @@
       * @param event map event that occured
       */
     global define void zonesStore (any key, map event) ``{
-	settings["zones"] = all_zones;
-	if (zones_modified)
-	    modified = true;
+// FIXME	settings["zones"] = all_zones;
+// FIXME	if (zones_modified)
+	    DnsServer::SetModified ();
     }
 
     /**
@@ -164,7 +165,7 @@
       */
     global define symbol zonesHandle (any key, map event) ``{
 	UI::SetFocus (`id (`zones));
-	integer current = UI::QueryWidget (`id (`zones), `CurrentItem);
+/* FIXME	integer current = UI::QueryWidget (`id (`zones), `CurrentItem);
         if (event["ID"]:nil == `add || event["ID"]:nil == `edit
 	    || event["ID"]:nil == `zones)
         {
@@ -209,7 +210,7 @@
 	    }
             return nil;
         }
-
+*/
     }
 
     /**
@@ -236,9 +237,9 @@
 		    `HStretch ()
 		)
 	    ),
-	    "init" : ``(DnsServer::zonesInit ()),
-	    "store" : ``(DnsServer::zonesStore ()),
-	    "handle" : ``(DnsServer::zonesHandle ()),
+	    "init" : zonesInit,
+	    "store" : zonesStore,
+	    "handle" : zonesHandle,
 	    "help" : HELPS["zones"]:"",
 	];
     }
@@ -252,7 +253,7 @@
       * @return any option key
       */
     global define any masterId2Key (map table, any opt_id) ``{
-	if (substring (opt_id, 0, 7) == "____sep")
+	if (is(opt_id, string) && substring ((string)opt_id, 0, 7) == "____sep")
 	    return "____sep";
 	else
 	    return opt_id;
@@ -265,12 +266,12 @@
       */
     global define list getMasterTableContents (map descr) ``{
 	list ret = [ "_zone", "____sep1", "__soa", "_NS"];
-        string zone = current_zone["zone"]:"";
+/* FIXME        string zone = current_zone["zone"]:"";
 	if (getZoneType (zone) == `normal)
 	    ret = add (ret, "_MX");
 	list hosts = maplist (`k, `v, current_zone["records"]:$[], ``(k));
 	ret = add (ret, "____sep2");
-	ret = merge (ret, hosts);
+	ret = merge (ret, hosts);*/
 	return ret;
     }
 
@@ -280,7 +281,8 @@
       * @param event map event that occured
       */
     global define void masterTableStore (any widget, map event) ``{
-        if (event["ID"]:nil == `next)
+	return;
+/* FIXME        if (event["ID"]:nil == `next)
 	{
 	    current_zone["changed"] = true;
 	    zones_modified = true;
@@ -288,7 +290,7 @@
 		all_zones = add (all_zones, current_zone);
 	    else
 		all_zones[current_id] = current_zone;
-	}
+	}*/
     }
 
     /**
@@ -298,6 +300,7 @@
       * @return symbol for wizard sequencer or nil
       */
     global define symbol masterTableHandle (any widget, map event) ``{
+	return nil; /* FIXME
         if (event["ID"]:nil == `_tp_table)
         {
             if (event["EventReason"]:"" == "Activated"
@@ -365,7 +368,7 @@
 	    current_zone["records"] = current_zone["records"]:$[];
 	    current_zone["records", new_name] = host;
 	    TablePopup::TableInit (
-		DnsServer::widgets["master_table"]:$[], widget);
+		DnsServerUI::widgets["master_table"]:$[], widget);
 	    return nil;
 	}
 	else if (event["ID"]:nil == `_tp_delete)
@@ -373,18 +376,18 @@
 	    current_zone["records"]
 		= remove (current_zone["records"]:$[], current);
 	    TablePopup::TableInit (
-		DnsServer::widgets["master_table"]:$[], widget);
+		DnsServerUI::widgets["master_table"]:$[], widget);
 	    return nil;
 	}
-	any retval = TablePopup::TableHandle (DnsServer::widgets["master_table"]:$[],
+	any retval = TablePopup::TableHandle (DnsServerUI::widgets["master_table"]:$[],
 	    widget, event);
 	if (event == `_tp_edit && current == "_zone")
 	{
 	    TablePopup::TableInit (
-		DnsServer::widgets["master_table"]:$[], widget);
+		DnsServerUI::widgets["master_table"]:$[], widget);
 	}
 	return retval;
-    }
+*/    }
 
     /**
       * Get map of widget
@@ -395,8 +398,8 @@
 	    "add_delete_buttons" : true,
 	    "up_down_buttons" : false
 	], $[
-            "init" : ``(TablePopup::TableInit (
-                DnsServer::widgets["master_table"]:$[])),
+/* FIXME           "init" : ``(TablePopup::TableInit (
+                DnsServerUI::widgets["master_table"]:$[])),
             "handle" : ``(DnsServer::masterTableHandle ()),
             "store" : ``(DnsServer::masterTableStore ()),
             "options" : DnsServer::popups,
@@ -411,7 +414,7 @@
 		"allow-transfer", "forward", "forwarders", "dialup", "notify",
 		"also-notify", "pubkey",
 	    ],
-	    "help" : HELPS["master_zone"]:"",
+	    "help" : HELPS["master_zone"]:"",*/
         ]);
         return ret;
     }
@@ -437,7 +440,7 @@
 	    "add_delete_buttons" : false,
 	    "up_down_buttons" : false
 	], $[
-            "store" : ``(DnsServer::masterTableStore ()),
+/*            "store" : ``(DnsServer::masterTableStore ()),
             "options" : DnsServer::popups,
             "ids" : ``(DnsServer::getSlaveTableContents ()),
             "fallback" : $[
@@ -448,7 +451,7 @@
             "add_items" : [ "check-names", "allow-update", "allow-query",
 		"allow-transfer", "forward", "forwarders", "dialup", "notify",
 		"also-notify", "pubkey",
-	    ],
+	    ],*/
         ]);
         return ret;
     }
@@ -467,7 +470,7 @@
 		"widget" : `push_button,
 		// push button
 		"label" : _("&Display Log"),
-		"handle" : ``(DnsServer::showLogPopup ()),
+		"handle" : showLogPopup,
 		"handle_events" : [ "log_button" ],
 		"help" : HELPS["log_button"]:"",
 	    ],
