@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Fri Feb 20 08:37:27 CET 2004 - jsrain@suse.de
+
+- fixed reading of zone files modified by nsupdate
+
+-------------------------------------------------------------------
 Thu Feb 19 13:28:23 CET 2004 - jsrain@suse.de
 
 - added Dynamic DNS support

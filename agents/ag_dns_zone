@@ -109,10 +109,14 @@ while ( <STDIN> )
 	    open (IN, "$file");
 	    while ( $line = <IN> )
 	    {
-		if ($line =~ /^\$TTL[ \t]*[0-9]+[A-Za-z]/) # TTL record
+		if ($line =~ /^\$TTL[ \t]*[0-9]+[A-Za-z]*.*$/) # TTL record
 		{
-		    ($ttl) = $line =~ m/^\$TTL[ \t]*([0-9]+[A-Za-z])/;
-		    $data{"TTL"} = $ttl;
+		    ($ttl) = $line =~ m/^\$TTL[ \t]*([0-9]+[A-Za-z]*).*$/;
+		    $data{"TTL"} = $ttl if (! defined ($data{"TTL"}));
+		}
+		elsif ($line =~ /^\$.*/) # probably $ORIGIN
+		{
+		    # ignore this line
 		}
 		elsif ($line =~ /^[^ \t]*[ \t]*IN[ \t]*SOA[ \t]*.*$/) # SOA record
 		{
