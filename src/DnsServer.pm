@@ -1366,7 +1366,7 @@ sub LdapInit {
     else
     {
 	my $reload_script = SCR->Read (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS") || "";
-	if ($reload_script)
+	if (! $reload_script)
 	{
 	    # yes-no popup
 	    $use_ldap = Popup->YesNo (__("Enable LDAP support?"));
