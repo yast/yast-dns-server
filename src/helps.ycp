@@ -22,30 +22,27 @@ Please wait...<br></p>") +
 
     /* Read dialog help 2/2 */
     _("<p><b><big>Aborting Initialization:</big></b><br>
-Safely abort the configuration utility by pressing <b>Abort</b> now.</p>
-"),
+Safely abort the configuration utility by pressing <b>Abort</b> now.</p>"),
 
     /* Write dialog help 1/2 */
     "write" : _("<p><b><big>Saving DNS Server Configuration</big></b><br>
-Please wait...<br></p>
-") +
+Please wait...<br></p>") +
 
     /* Write dialog help 2/2 */
     _("<p><b><big>Aborting Saving:</big></b><br>
 Abort the save procedure by pressing <b>Abort</b>.
-An additional dialog informs you whether it is safe to do so.</p>
-"),
+An additional dialog informs you whether it is safe to do so.</p>"),
 
     // main dialog
     // help 1/4
     "start" : _("<p><b><big>Start DNS Server</big></b><br>
-If you want to run DNS server every time your computer is started, set
+To run the DNS server every time your computer is started, set
 <b>Start DNS Server</b>.</p>"),
 
     // help 2/4
-    "chroot" : _("<p><b><big>Chroot jail</big></b><br>
-To run DNS server in chroot jail, set
-<b>Run DNS sevrer in chroot jail</b>. Starting any daemon in chroot jail
+    "chroot" : _("<p><b><big>Chroot Jail</big></b><br>
+To run the DNS server in chroot jail, set
+<b>Run DNS Server in Chroot Jail</b>. Starting any daemon in a chroot jail
 is more secure and strongly recommended."),
 
     // help 3/4
@@ -53,35 +50,33 @@ is more secure and strongly recommended."),
 To edit settings of a DNS zone, choose the appropriate
 entry of the table and click <B>Edit</B>.
 To add a new DNS zone, use <B>Add</B>. To remove
-a configured DNS zone, select it and click <B>Delete</B>.</P>
-"),
+a configured DNS zone, select it and click <B>Delete</B>.</P>"),
 
     // help 4/4
-    "adv_mbutton" : _("<p><b><big>Advanced functions</big></b><br>
+    "adv_mbutton" : _("<p><b><big>Advanced Functions</big></b><br>
 To edit global options,
 adjust firewall settings,
-manage the TSIG keys for dynamic updates of the zones
+manage the TSIG keys for dynamic updates of the zones,
 or display the log of the DNS server,
 use <b>Advanced</b>.</p>"),
 
     // zone dialog
     // help 1/5
     "zone_name" : _("<p><b><big>Zone Name</big></b><br>
-Enter the name od the of the zone (domain) to <b>Zone Name</b>.</p>"),
+Enter the name of the zone (domain) in <b>Zone Name</b>.</p>"),
 
     // help 2/5, alt. 1
-    "allow_ddns" : _("<p><b><big>Dynamic DNS zone updates</big></b><br>
+    "allow_ddns" : _("<p><b><big>Dynamic DNS Zone Updates</big></b><br>
 The zone can be updated automatically, usually because of dynamically
 assigned IP addresses by DHCP server. To allow DDNS updates, set
-<b>Allow Dynamic Updates</b> and the <b>TSIG key</b>
-to be used to authentication. The key must be the same for
-both DHCP and DNS server.</p>"),
+<b>Allow Dynamic Updates</b> and the <b>TSIG Key</b>
+to use for authentication. The key must be the same for
+both DHCP and DNS servers.</p>"),
 
     // help 3/5, only for alt. 1
     "master_zone" : _("<p><b><big>Editing a DNS Zone</big></b><br>
 To edit the zone settings, choose the appropriate
-entry of the table then click <b>Edit</b>.</p>
-")
+entry of the table then click <b>Edit</b>.</p>")
     // help 4/5, only for alt. 1
     + _("<p>To add a new record to the zone, click <b>Add</b>. To remove
 a record, select it and click <b>Delete</b>.</p>"),
@@ -94,34 +89,34 @@ To edit the SOA (Start of Authority) record of the zone, click
     // help 2/5 alt. 2
     "zone_masters" : _("<p><b><big>Master Servers</big></b><br>
 Set the IP addresses of the master name servers for this zone. Use <b>Add</b>
-to add a new master name server, select an existing and click <b>Delete</b>
+to add a new master name server. Select an existing one then click <b>Delete</b>
 to remove an exising one.</p>"),
 
     // help 1/2
     "zone_type" : _("<p><b><big>Zone Type</big></b><br>
 To make this name server the primary source of the data of the zone,
-select <b>Master</b>. To make secondary name server, select <b>Slave</b>
-or <b>Stub</b>, then the data of the zone will be mirrored from master
+select <b>Master</b>. To make it the secondary name server, select <b>Slave</b>
+or <b>Stub</b>, so the data of the zone will be mirrored from the master
 server.</p>"),
 
     // help 2/2
     "zone_direction" : _("<p><b><big>Zone Direction</big></b><br>
-DNS is used for both translating from domain names to IP addresses, and back.
-Select if this zone will be used to translating from domain names to IP
-addresses (select <b>Forward</b>), or from IP addresses to domain names
-(select <b>Reverse</b>.</p>"),
+DNS is used both for translating from domain names to IP addresses and back.
+Select if this zone will be used to translate from domain names to IP
+addresses (select <b>Forward</b>) or from IP addresses to domain names
+(select <b>Reverse</b>).</p>"),
 
     // firewall dialog
     // help text 1/2
     "iface_classes" : _("<p><b><big>Interface Classes</big></b><br>
-Select what through which interface classes the DNS server should be
-allowed to be accessed. The interface classes are defined in the
+Select through which interface classes access to the DNS server should be
+allowed. The interface classes are defined in the
 firewall configuration component.</p>"),
 
     // help text 2/2
     "adapt_firewall" : _("<p><b><big>Adapting Firewall Settings</big></b><br>
-To adapt the firewall settings so that the DNS server can be accessed
-through all network interfaces it listens to, check
+To adapt the firewall settings so the DNS server can be accessed
+through all network interfaces to which it listens, check
 <b>Adapt Firewall Settings</b>.</p>"),
 
     // soa dialog
@@ -134,42 +129,42 @@ Set the entries of the SOA record.</p>")
 zone that do not have an explicit TTL.</p>")
 
     // help text 3/9 - Primary source
-    + _("<p><b>Primary Source</b> must contain fully qualified domain name
+    + _("<p><b>Primary Source</b> must contain the fully qualified domain name
 of the primary name server.</p>")
 
     // help text 4/9 - Administrator's mail
-    + _("<p><b>Administrator's Mail</b> must contain email address of
+    + _("<p><b>Administrator's Mail</b> must contain the e-mail address of
 administrator responsible for the zone.</p>")
 
     // help text 5/9 - Serial
-    + _("<p><b>Serial</b> number is used for determining if zone has changed on
-master servers (so that slave servers do not have to synchronize always
-whole zone).</p>")
+    + _("<p><b>Serial</b> number is used for determining if the zone has changed on
+master servers (so slave servers do not always need to synchronize the
+entire zone).</p>")
 
     // help text 6/9 - Refresh
-    + _("<p><b>Refresh</b> means how often the zone will be synchronized from
+    + _("<p><b>Refresh</b> sets how often the zone should be synchronized from
 master name server to slave name servers.</p>")
 
     // help text 7/9 - Retry
-    + _("<p><b>Retry</b> means how ofter slave servers will try to synchronize
-the zone from master server if synchronization fails.</p>")
+    + _("<p><b>Retry</b> sets how often slave servers try to synchronize
+the zone from the master server if synchronization fails.</p>")
 
     // help text 8/9 - Expiry
-    + _("<p><b>Expiry</b> means the period after that the zone expires on slave
-servers and slave servers will not answer replies until it is synchronized.
+    + _("<p><b>Expiry</b> means the period after which the zone expires on slave
+servers and slave servers stop answering replies until it is synchronized.
 </p>")
 
     // help text 9/9 - Minimum
-    + _("<p><b>Minimum</b> means for how long the slave servers will cache
+    + _("<p><b>Minimum</b> sets for how long the slave servers should cache
 negative answers (name resolution failed).</p>"),
 
     // ddns keys dialog
     // help text 1/1
-    "ddns_keys" :  _("<p><b><big>TSIG Keys Management</big></b><br>
-Define TSIG keys used for dynamic zone updates here.
+    "ddns_keys" :  _("<p><b><big>TSIG Key Management</big></b><br>
+Define TSIG keys used for dynamic zone updates.
 To add a new TSIG key, use the 
-<b>File Name</b> text field or the <b>Browse</b> button, and click <b>Add</b>.
-To delete existing TSIG key, select it in the list, and click <b>Delete</b>.
+<b>File Name</b> text field or the <b>Browse</b> button then click <b>Add</b>.
+To delete an existing TSIG key, select it in the list and click <b>Delete</b>.
 </p>"),
 
 

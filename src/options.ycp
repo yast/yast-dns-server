@@ -120,7 +120,7 @@ global define string masterTableEntrySummary (any opt_id, string opt_key)``{
     integer index = (integer)opt_id;
     string addr = current_zone["records", index, "value"]:"A";
     // %1 is usually an IP address
-    return sformat (_("Unknown record type: %1"), addr);
+    return sformat (_("Unknown Record Type: %1"), addr);
 }
 
 /**
@@ -315,7 +315,7 @@ define map getAPopup () ``{
 	"table" : $[
 	    "summary" : ASummary,
 	    // combo box item, A is more technical description
-	    "label" : _("A - Domain Name Translation"),
+	    "label" : _("A -- Domain Name Translation"),
 	],
 	"popup" : $[
 	    "widget" : `custom,
@@ -347,7 +347,7 @@ define map getCNAMEPopup () {
 	"table" : $[
 	    "summary" : CNAMESummary,
 	    // combo box item, CNAME is more technical description
-	    "label" : _("CNAME - Alias for Domain Name"),
+	    "label" : _("CNAME -- Alias for Domain Name"),
 	],
 	"popup" : $[
 	    "widget" : `custom,
@@ -379,7 +379,7 @@ define map getPTRPopup () ``{
 	"table" : $[
 	    "summary" : PTRSummary,
 	    // combo box item, PTR is more technical description
-	    "label" : _("PTR - Reverse translation"),
+	    "label" : _("PTR -- Reverse Translation"),
 	],
 	"popup" : $[
 	    "widget" : `custom,
@@ -410,7 +410,7 @@ define map getNSPopup () ``{
 	"table" : $[
 	    "summary" : NSSummary,
 	    // combo box item, NS is more technical description
-	    "label" : _("NS - Name Server"),
+	    "label" : _("NS -- Name Server"),
 	],
 	"popup" : $[
 	    "widget" : `custom,
@@ -420,7 +420,7 @@ define map getNSPopup () ``{
 		`TextEntry (`id (`key), _("&Domain")),
 		`VSpacing (1),
 		// text entry
-		`TextEntry (`id (`value), _("&Name server")),
+		`TextEntry (`id (`value), _("&Name Server")),
 		`VSpacing (1)
 	    ), `HSpacing (1)),
 	],
@@ -437,7 +437,7 @@ global define string MXSummary (any opt_id, string key) ``{
     l = filter (string s, l, ``(s != ""));
     addr = mergestring (l, " ");
     // table entry, %1 is host name, %2 is integer
-    return sformat (_("Mail Relay %1, priority %2"), addr, prio);
+    return sformat (_("Mail Relay %1, Priority %2"), addr, prio);
 }
 
 global define void MXInit (any opt_id, string key) ``{
@@ -502,7 +502,7 @@ define map getMXPopup () ``{
 	    "init" : MXInit,
 	    "store" : MXStore,
 	    // combo box item, MX is more technical description
-	    "label" : _("MX - Mail Relay"),
+	    "label" : _("MX -- Mail Relay"),
 	],
 	"popup" : $[
 	    "widget" : `custom,

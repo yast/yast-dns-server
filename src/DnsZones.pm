@@ -144,7 +144,7 @@ sub UpdateSOA {
     if (! defined ($rz_ref))
     {
 	# error report
-	Report::Error (sprintf (_("Failed to read zone file %s"), $filename));
+	Report::Error (sprintf (_("Failed to read zone file %s."), $filename));
 	return Boolean (0);
     }
     my %soa = %{$rz_ref->{"soa"} || {}};
