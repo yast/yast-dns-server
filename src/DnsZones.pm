@@ -36,9 +36,6 @@ our %TYPEINFO;
 
 YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("Mode");
-YaST::YCP::Import ("Progress");
-YaST::YCP::Import ("Require");
-YaST::YCP::Import ("Service");
 YaST::YCP::Import ("DndTsigKeys");
 
 ##-------------------------------------------------------------------------
