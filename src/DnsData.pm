@@ -21,7 +21,7 @@ our @EXPORT_OK = qw(@tsig_keys $start_service $chroot @allowed_interfaces
 @zones @options @logging $ddns_file_name
 $modified $save_all @files_to_delete %current_zone $current_zone_index
 $adapt_firewall %firewall_settings $write_only @new_includes @deleted_includes
-@zones_update_actions);
+@zones_update_actions $firewall_support);
 
 # persistent variables
 
@@ -64,6 +64,8 @@ my @new_includes = ();
 my @deleted_includes = ();
 
 my @zones_update_actions = ();
+
+my $firewall_support = 1;
 
 1;
 

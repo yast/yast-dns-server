@@ -12,6 +12,8 @@
 
 textdomain "dns-server";
 
+import "ProductFeatures";
+
 /**
  * All helps are here
  */
@@ -174,10 +176,13 @@ To delete an existing TSIG key, select it in the list and click <b>Delete</b>.
 To start the DNS server every time your computer is booted, set
 <b>On</b>. Otherwise set <b>Off</b>.</p> ") +
 
+((ProductFeatures::ui_mode == "expert") ? 
     /* Expert Mode Configuration - Start Up 1/3 */
 _("<p><b><big>LDAP Support</big></b><br>
 To store the DNS zones in LDAP instead of native configuration files,
-set <b>LDAP Support Active</b>.</p>") +
+set <b>LDAP Support Active</b>.</p>")
+:
+"") +
 
     /* Expert Mode Configuration - Start Up 3/3 */
 _("<p><b><big>Switch On or Off</big></b><br>
@@ -421,25 +426,32 @@ domain name followed by a dot.
 host name followed by a dot.  It must be represented by an A record.</p>
 "),
 
-// Final step of the isntallation wizard - 1/4
+// Final step of the installation wizard - 1/5
 "installwizard_step3" : _("<p><b><big>Finish the Configuration</big></b>
 Check the entered settings before finishing the configuration.</p> 
 ") +
 
-// Final step of the isntallation wizard - 2/4
+// Final step of the installation wizard - 2/5
+_("<p>Select <b>Open Port in Firewall</b> to adapt the
+SuSEfirewall2 settings to allow all connections to your DNS Server.</p>") +
+
+// Final step of the installation wizard - 3/5
 _("<p><b><big>Booting</big></b><br>
 To start the DNS server every time your computer is booted, set
 <b>On</b>. Otherwise set <b>Off</b>.</p> ") +
 
-// Final step of the isntallation wizard - 3/4
+((ProductFeatures::ui_mode == "expert") ? 
+// Final step of the installation wizard - 4/5
 _("<p><b><big>LDAP Support</big></b><br>
 To store the DNS zones in LDAP instead of native configuration files,
-set <b>LDAP Support Active</b>.</p>") +
+set <b>LDAP Support Active</b>.</p>")
+:
+"") +
 
-// Final step of the isntallation wizard - 4/4
+// Final step of the installation wizard - 5/5
 _("<p><b><big>Expert Mode</big></b><br>
-To start the expert mode of the DNS server configuration, click
-<b>Start DNS Server Expert Configuration...</b>.</p>
+To enter the expert mode of the DNS server configuration, click
+<b>Enter DNS Server Expert Configuration...</b>.</p>
 "),
 
 // slave zone help text 1/2

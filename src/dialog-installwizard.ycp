@@ -18,23 +18,38 @@ import "Popup";
 import "Label";
 import "CWM";
 import "Wizard";
-
+import "ProductFeatures";
 
 /**
  * Dialog InstallWizard - Finish
  * @return term for InstallWizard_Finish_Dialog()
  */
 term InstallWizardFinishContent (string rt_contents) {
+    term ldap_support = ((ProductFeatures::ui_mode == "expert") ?
+	`VBox (
+	    `VSpacing ( 1 ),
+	    // check box
+	    `Left (`CheckBox (`id ("use_ldap"), `opt (`notify), _("&LDAP Support Active"))),
+	    `VSpacing ( 1 )
+	)
+	:
+	`VSpacing ( 1 )
+    );
+
     term dialog =
 	`Top (
 	    `VBox (
 		// Frame label (DNS starting)
 		`VBox (
+		    // CheckBox
+		    `Left( `CheckBox (`id("open_port_in_firewall"), _("Open Port in Firewall"), true)),
+		    ldap_support,
 		    // Label for Radiobuttons - DNS starting
 		    `Left ( `Label ( _("Start-up Behavior") ) ),
 		    `Left (
 			`RadioButtonGroup( `id ( "dns_server_type" ), `opt( `shrinkable ),
 			    `VBox (
+
 				// Radiobutton label - DNS starting
 				`Left( `RadioButton( `id (`on), _("O&n -- Start DNS Server Now and when Booting") ) ),
 				// Radiobutton label - DNS starting
@@ -44,16 +59,13 @@ term InstallWizardFinishContent (string rt_contents) {
 			)
 		    )
 		),
-		`VSpacing ( 1 ),
-		// check box
-		`Left (`CheckBox (`id ("use_ldap"), `opt (`notify), _("&LDAP Support Active"))),
-		`VSpacing ( 1 ),
+
 		`RichText ( `id ( "installation_overview" ),
 		    rt_contents
 		),
 		`VSpacing ( 2 ),
 		// Push Button - start expert configuration
-		`PushButton ( `id ( `expert ), _("Start DNS Server Expert Configuration...")),
+		`PushButton ( `id ( `expert ), _("Enter DNS Server Expert Configuration...")),
 		`VStretch()
 	    )
 	);
@@ -199,8 +211,13 @@ symbol runInstallWizardFinishDialog () {
     UI::ChangeWidget (`id ("dns_server_type"), `CurrentButton, auto_start
         ? `on
         : `off);
-    boolean use_ldap = DnsServer::GetUseLdap ();
-    UI::ChangeWidget (`id ("use_ldap"), `Value, use_ldap);
+
+    boolean use_ldap = false;
+    // only expert allows to store data in ldap
+    if (ProductFeatures::ui_mode == "expert") {
+	use_ldap = DnsServer::GetUseLdap ();
+	UI::ChangeWidget (`id ("use_ldap"), `Value, use_ldap);
+    }
 
     boolean ldap_changed = false;
     any ret = nil;
