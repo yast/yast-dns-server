@@ -232,13 +232,17 @@ while ( <STDIN> )
 		    $line = <IN>;
 		    ($soa{"serial"}) = $line =~ /^[ \t]*([0-9]+)[ \t]/ if $line =~ /^[ \t]*([0-9]+)[ \t]/;
 		    $line = <IN>;
-		    ($soa{"refresh"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/ if $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/;
+		    ($soa{"refresh"}) = $line =~ /^[ \t]*(([0-9]+[WDHMS]*)+)[ \t]/i
+			if $line =~ /^[ \t]*(([0-9]+[WDHMS]*)+)[ \t]/i;
 		    $line = <IN>;
-		    ($soa{"retry"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/ if $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/;
+		    ($soa{"retry"})   = $line =~ /^[ \t]*(([0-9]+[WDHMS]*)+)[ \t]/i
+			if $line =~ /^[ \t]*(([0-9]+[WDHMS]*)+)[ \t]/i;
 		    $line = <IN>;
-		    ($soa{"expiry"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/ if $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/;
+		    ($soa{"expiry"})  = $line =~ /^[ \t]*(([0-9]+[WDHMS]*)+)[ \t]/i
+			if $line =~ /^[ \t]*(([0-9]+[WDHMS]*)+)[ \t]/i;
 		    $line = <IN>;
-		    ($soa{"minimum"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/ if $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/;
+		    ($soa{"minimum"}) = $line =~ /^[ \t]*(([0-9]+[WDHMS]*)+)[ \t]/i
+			if $line =~ /^[ \t]*(([0-9]+[WDHMS]*)+)[ \t]/i;
 		    $data{"soa"} = \%soa;
 		    if ($comment ne "")
 		    {
