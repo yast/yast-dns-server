@@ -1531,6 +1531,12 @@ symbol HandleExpertZonesPage (string key, map event) {
 	DnsServer::StoreZone ();
 	zones = DnsServer::FetchZones ();
 	RedrawZonesListWidget ();
+
+	// fixing bug #45950, slave zone _MUST_ have master server
+	if (zone_type == "slave") {
+	    current_zone = DnsServer::FetchCurrentZone ();
+	    return `edit_zone;
+	}
     }
     else if (ret == "edit_zone")
     {
