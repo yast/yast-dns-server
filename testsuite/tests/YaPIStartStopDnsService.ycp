@@ -1,0 +1,18 @@
+{
+    // testedfiles: DnsServer.pm DNSD.pm
+
+    include "testsuite.ycp";
+
+    import "YaPI::DNSD";
+    import "Mode";
+
+    Mode::test = true;
+
+    DUMP ("==========================================================");
+    TEST (``(YaPI::DNSD::StartDnsService ($[])), [], nil);
+    DUMP ("==========================================================");
+    TEST (``(YaPI::DNSD::StopDnsService ($[])), [], nil);
+    DUMP ("==========================================================");
+    TEST (``(YaPI::DNSD::GetDnsServiceStatus ($[])), [], nil);
+    DUMP ("==========================================================");
+}

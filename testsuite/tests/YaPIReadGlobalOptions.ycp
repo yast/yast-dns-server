@@ -1,25 +1,11 @@
-/**
- * File:
- *  rw.ycp
- *
- * Module:
- *  DHCP server configurator
- *
- * Summary:
- *  Read and write testsuite
- *
- * Authors:
- *  Jiri Srain <jsrain@suse.cz>
- *
- * $Id$
- *
- */
-
 {
+    // testedfiles: DnsServer.pm DNSD.pm
+
     include "testsuite.ycp";
-    import "Progress";
-    import "DnsServer";
+
+    import "YaPI::DNSD";
     import "Mode";
+    import "Progress";
 
     Mode::test = true;
 
@@ -110,8 +96,7 @@
 	],
     ];
 
-    DUMP ("=======================");
-    TEST (``(DnsServer::Read ()), [READ, WRITE, EXEC], 0);
-    DUMP ("=======================");
-    TEST (``(DnsServer::Export ()), [READ, WRITE, EXEC], 0);
+    DUMP ("==========================================================");
+    TEST (``(YaPI::DNSD::ReadGlobalOptions ($[])), [READ, WRITE, EXEC], nil);
+    DUMP ("==========================================================");
 }

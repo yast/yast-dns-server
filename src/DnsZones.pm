@@ -17,10 +17,7 @@ use YaST::YCP qw(Boolean);
 use Data::Dumper;
 use Time::localtime;
 
-use Locale::gettext;
-use POSIX ();     # Needed for setlocale()
-
-POSIX::setlocale(LC_MESSAGES, "");
+use YaPI;
 textdomain("dns-server");
 
 #use io_routines;
@@ -28,14 +25,25 @@ textdomain("dns-server");
 
 our %TYPEINFO;
 
-# FIXME this should be defined only once for all modules
-#sub _ {
-#    return gettext ($_[0]);
-#}
+my $zone_base_config_dn = "";
 
 
 YaST::YCP::Import ("SCR");
 use DnsTsigKeys;
+use DnsData qw(@tsig_keys $start_service $chroot @allowed_interfaces
+@zones @options @logging $ddns_file_name
+$modified $save_all @files_to_delete %current_zone $current_zone_index
+$adapt_firewall %firewall_settings $write_only @new_includes @deleted_includes
+@zones_update_actions);
+
+use Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw($zone_base_config_dn);
+
+my @all_rec_types = ("mx", "ns", "a", "md", "cname", "ptr", "hinfo",
+    "minfo", "txt", "sig", "key", "aaa", "loc", "nxtr", "srv",
+    "naptr", "kx", "cert", "a6", "dname");
+
 
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
@@ -166,6 +174,8 @@ sub ZoneRead {
     my $zone = shift;
     my $file = shift;
 
+    y2milestone ("Reading zone $zone from $file");
+
     my $zonemap_ref = SCR->Read (".dns.zone", "/var/lib/named/$file");
     if (! defined ($zonemap_ref))
     {
@@ -223,7 +233,7 @@ sub ZoneFileWrite {
     my $ttl = $zone_map{"ttl"} || "2D";
 
     my %soa = %{$self->GetDefaultSOA ()};
-    my %current_soa = %{$zone_map{"soa"}};
+    my %current_soa = %{$zone_map{"soa"} || {}};
     while ((my $key, my $value) = each %current_soa)
     {
 	$soa{$key} = $value;
@@ -289,5 +299,345 @@ sub UpdateZones {
     return $ok;
 }
 
+# LDAP data
+
+BEGIN { $TYPEINFO{ZoneReadLdap} = ["function", [ "map", "any", "any" ], "string", "string" ]; }
+sub ZoneReadLdap {
+    my $self = shift;
+    my $zone = shift;
+    my $file = shift;
+
+    if ( $zone eq "0.0.127.in-addr.arpa" || $zone eq "localhost")
+    {
+	return $self->ZoneRead ($zone, $file);
+    }
+
+    y2milestone ("Reading zone $zone from LDAP");
+
+    my $zone_dn = "zoneName=$zone,$zone_base_config_dn";
+
+    # the search config map
+    my %ldap_query = (
+        "base_dn" => $zone_dn,
+        "scope" => 0,   # top level only
+        "map" => 0      # gimme a list (single entry)
+    );
+
+    my $found_ref = SCR->Read (".ldap.search", \%ldap_query);
+
+    if (! defined ($found_ref))
+    {
+	y2warning ("Zone $zone not found in LDAP, ignoring it");
+	return {};
+    }
+
+    my @found = @{ $found_ref };
+    my %zonemap = %{$found[0] || {}};
+
+    my $serial = $self->UpdateSerial ("");
+    my @soa_str_lst = @{$zonemap{"soarecord"}|| ["@ root $serial 3H 1H 1W 1D"]};
+
+    my $soa_str = $soa_str_lst[0];
+    my @soa_lst = split (" ", $soa_str);
+    @soa_lst = grep {
+	$_ ne ""
+    } @soa_lst;
+
+    my @rel_lst = @{$zonemap{"relativedomainname"}};
+
+    my %soa = (
+	"expiry" => $soa_lst[5],
+	"mail" => $soa_lst[1],
+	"minimum" => $soa_lst[6],
+	"refresh" => $soa_lst[3],
+	"retry" => $soa_lst[4],
+	"server" => $soa_lst[0],
+	"zone" => $rel_lst[0],
+	"serial" => $self->UpdateSerial ($soa_lst[2]),
+    );
+
+    my @ttl_lst = @{$zonemap{"dnsttl"} || []};
+    my $ttl = $ttl_lst[0];
+
+    my %ret = (
+	"zone" => $zone,
+	"ttl" => $ttl,
+	"soa" => \%soa,
+    );
+
+    # the search config map
+    %ldap_query = (
+        "base_dn" => $zone_dn,
+        "scope" => 2,   # all levels - getting all records
+        "map" => 0      # gimme a list (single entry)
+    );
+
+    $found_ref = SCR->Read (".ldap.search", \%ldap_query);
+
+    @found = @{$found_ref};
+
+    my @records = ();
+
+    foreach my $record_ref (@found)
+    {
+	my %record = %{$record_ref};
+	my @rel_dn = @{$record{"relativedomainname"}};
+	my $rel_dn = $rel_dn[0];
+
+	foreach my $rec_type (@all_rec_types)
+	{
+	    my $value_key = $rec_type . "record";
+	    my @values = @{$record{$value_key} || []};
+	    foreach my $value (@values)
+	    {
+		my %new_rec = (
+		    "key" => $rel_dn,
+		    "type" => uc ($rec_type),
+		    "value" => $value,
+		);
+		push @records, \%new_rec;
+	    }
+	}
+    }
+    $ret{"records"} = \@records;
+    return \%ret;
+}
+
+BEGIN { $TYPEINFO{ZoneFileWriteLdap} = ["function", "boolean", [ "map", "any", "any"]];}
+sub ZoneFileWriteLdap {
+    my $self = shift;
+    my %zone_map = %{+shift};
+
+    my $zone = $zone_map{"zone"};
+    my $zone_dn = "zoneName=$zone,$zone_base_config_dn";
+
+    y2milestone ("Saving zone $zone to LDAP");
+
+    my @records = @{$zone_map{"records"} || []};
+
+# create LDAP object
+
+    my %soa = %{$self->GetDefaultSOA ()};
+    my %current_soa = %{$zone_map{"soa"} || {}};
+    while ((my $key, my $value) = each %current_soa)
+    {
+	$soa{$key} = $value;
+    }
+    my @soa_lst = (
+	$soa{"server"},
+	$soa{"mail"},
+	$soa{"serial"},
+	DnsRoutines->NormalizeTime ($soa{"refresh"}),
+	DnsRoutines->NormalizeTime ($soa{"retry"}),
+	DnsRoutines->NormalizeTime ($soa{"expiry"}),
+	DnsRoutines->NormalizeTime ($soa{"minimum"}),
+    );
+    my $soa_record = join (" ", @soa_lst);
+
+    my %ldap_record = (
+	"objectclass" => ["dnszone"],
+	"zonename" => [$zone],
+	"relativedomainname" => ["@"],
+	"dnsttl" => [DnsRoutines->NormalizeTime ($zone_map{"ttl"} || "2D")],
+	"dnsclass" => ["IN"],
+	"soarecord" => $soa_record,
+    );
+
+    my @current_records = grep {
+	my %r = %{$_};
+	$r{"key"} eq "@" || $r{"key"} eq $zone . "."
+    } @records;
+
+    foreach my $rec_ref (@current_records) {
+	my $type = lc ($rec_ref->{"type"}) . "record";
+	my @cur_vals = @{$ldap_record{$type} || []};
+	push @cur_vals, $rec_ref->{"value"};
+	$ldap_record{$type} = \@cur_vals;
+    }
+
+    # the search config map - to choose add or modify
+    my %ldap_query = (
+        "base_dn" => $zone_dn,
+        "scope" => 0,   # top level only
+        "map" => 0,     # gimme a list (single entry)
+	"not_found_ok" => 1,
+    );
+
+    my %ldap_cmd = (
+	"dn" => $zone_dn,
+    );
+
+    my $found_ref = SCR->Read (".ldap.search", \%ldap_query);
+
+    if (scalar (@{$found_ref || []}) == 0)
+    {
+	y2milestone ("Creating new record");
+	SCR->Write (".ldap.add", \%ldap_cmd, \%ldap_record);
+    }
+    else
+    {
+	y2milestone ("Modifying existing record");
+	SCR->Write (".ldap.modify", \%ldap_cmd, \%ldap_record);
+    }
+
+    my @all_records = map {
+	my %r = %{$_};
+	$r{"key"}
+    } @records;
+    push @all_records, "@";
+    # the search config map
+    %ldap_query = (
+        "base_dn" => $zone_dn,
+        "scope" => 2,   # all levels - getting all records
+        "map" => 0,     # gimme a list (single entry)
+	"not_found_ok" => 1,
+    );
+
+    $found_ref = SCR->Read (".ldap.search", \%ldap_query) || [];
+
+    my @found = @{$found_ref};
+
+    @found = map {
+	my @l = @{$_->{"relativedomainname"}};
+	$l[0];
+    } @found;
+
+   #remove removed entries
+    my @deleted = grep {
+	my $current = $_;
+	my @equiv = grep {
+	    $_ eq $current;
+	} @all_records;
+	@equiv == 0;
+    } @found;
+
+    foreach my $d (@deleted)
+    {
+	y2milestone ("Removing all records regarding $d");
+	SCR->Write (".ldap.delete", {"dn" => "relativedomainname=$d,$zone_dn"});
+    }
+
+    # write all the other records
+    @all_records = grep {
+	! ($_ eq "@" || $_ eq $zone . ".")
+    } @all_records;
+
+    my %rec_keys = ();
+    foreach my $r (@all_records)
+    {
+	$rec_keys{$r} = 1;
+    }
+    foreach my $r (sort (keys (%rec_keys)))
+    {
+	my $rec_dn = "relativeDomainName=$r,$zone_dn";
+	my %ldap_record = (
+	    "objectclass" => ["dnszone"],
+	    "zonename" => [$zone],
+	    "relativedomainname" => [$r],
+	    "dnsttl" => [DnsRoutines->NormalizeTime ($zone_map{"ttl"} || "2D")],
+	    "dnsclass" => ["IN"],
+	);
+
+	@current_records = grep {
+	    my %r = %{$_};
+	    $r{"key"} eq $r;
+	} @records;
+
+	foreach my $rec_ref (@current_records) {
+	    my $type = lc ($rec_ref->{"type"}) . "record";
+	    my @cur_vals = @{$ldap_record{$type} || []};
+	    push @cur_vals, $rec_ref->{"value"};
+	    $ldap_record{$type} = \@cur_vals;
+	}
+
+	# the search config map - to choose add or modify
+	my %ldap_query = (
+	    "base_dn" => $rec_dn,
+	    "scope" => 0,   # top level only
+	    "map" => 0,     # gimme a list (single entry)
+	    "not_found_ok" => 1,
+	);
+
+	my %ldap_cmd = (
+	    "dn" => $rec_dn,
+	);
+
+	my $found_ref = SCR->Read (".ldap.search", \%ldap_query);
+
+	if (scalar (@{$found_ref || []}) == 0)
+	{
+	    SCR->Write (".ldap.add", \%ldap_cmd, \%ldap_record);
+	}
+	else
+	{
+	    SCR->Write (".ldap.modify", \%ldap_cmd, \%ldap_record);
+	}
+    }
+    return 1;
+}
+
+BEGIN { $TYPEINFO{ZonesDeleteLdap} = ["function", "boolean", [ "list", "string",]];}
+sub ZonesDeleteLdap {
+    my $self = shift;
+    my @current_zones = @{+shift};
+
+    my @current_zones_in_ldap = @{$self->ZonesListLdap ()};
+    my @zones_to_delete = grep {
+	my $tz = $_;
+	my @check_zones = grep {
+	    $tz eq $_;
+	} @current_zones;
+	@check_zones == 0;
+    } @current_zones_in_ldap;
+
+    foreach my $z (@zones_to_delete) {
+	y2milestone ("Removing zone $z from LDAP");
+	my %request = (
+	    "dn" => "zoneName=$z,$zone_base_config_dn",
+	    "subtree" => 1,
+	);
+	SCR->Write (".ldap.delete", \%request);
+    }
+}
+
+BEGIN{ $TYPEINFO{ZonesListLdap} = ["function", ["list", "string"]];}
+sub ZonesListLdap {
+    my $self = shift;
+
+    my %ldap_query = (
+        "base_dn" => $zone_base_config_dn,
+        "scope" => 1,   # top level only
+        "map" => 0,     # gimme a list (single entry)
+	"not_found_ok" => 1,
+    );
+
+    my $found = SCR->Read (".ldap.search", \%ldap_query);
+    my @found = @{$found || []};
+    @found = map {
+	$_->{"zonename"}[0];
+    } @found;
+    @found = grep {
+	defined ($_);
+    } @found;
+    return \@found;
+}
+
+BEGIN { $TYPEINFO{SetZoneBaseConfigDn} = ["function", "void", "string"];}
+sub SetZoneBaseConfigDn {
+    my $self = shift;
+    my $new_base_config_dn = shift;
+
+    y2milestone ("Setting base zone DN to $new_base_config_dn");
+    $zone_base_config_dn = $new_base_config_dn;
+}
+
+BEGIN { $TYPEINFO{GetZoneBaseConfigDn} = ["function", "string"];}
+sub GetZoneBaseConfigDn {
+    my $self = shift;
+
+    return $zone_base_config_dn;
+}
+
+1;
 
 # EOF

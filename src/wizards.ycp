@@ -11,10 +11,111 @@
 
     textdomain "dns-server";
 
+    import "Directory";
     import "Label";
     import "Popup";
     import "Sequencer";
     import "Wizard";
+
+    global define symbol TabSequence () {
+	map aliases = $[
+	    "main"		: ``(runExpertDialog ()),
+	    "zone_type_switch"	:[``(runZoneTypeSwitch ()), true],
+	    "master_zone_tab"	: ``(runMasterZoneTabDialog ()),
+	    "slave_zone_tab"	: ``(runSlaveZoneTabDialog ()),
+	    "stub_zone_tab"	: ``(runStubZoneTabDialog ()),
+	];
+
+	map sequence = $[
+	    "ws_start" : "main",
+	    "main" : $[
+		`abort : `abort,
+		`next : `next,
+		`edit_zone : "zone_type_switch",
+	    ],
+	    "zone_type_switch" : $[
+		`abort : `abort,
+		`master : "master_zone_tab",
+		`slave : "slave_zone_tab",
+		`stub : "stub_zone_tab",
+	    ],
+	    "master_zone_tab" : $[
+		`abort : `abort,
+		`next : "main",
+	    ],
+	    "slave_zone_tab" : $[
+		`abort : `abort,
+		`next : "main",
+	    ],
+	    "stub_zone_tab" : $[
+		`abort : `abort,
+		`next : "main",
+	    ],
+	];
+
+	symbol ret = Sequencer::Run(aliases, sequence);
+
+	return ret;
+
+    }
+
+    global define symbol InstallWizardSequence () {
+	map aliases = $[
+	    "forwarders"	: ``(runInstallWizardForwardersDialog ()),
+	    "zones"		: ``(runInstallWizardZonesDialog ()),
+	    "finish"		: ``(runInstallWizardFinishDialog ()),
+	    "tab_seq"		: ``(TabSequence ()),
+	    "zone_type_switch"	:[``(runZoneTypeSwitch ()), true],
+	    "master_zone_tab"	: ``(runMasterZoneTabDialog ()),
+	    "slave_zone_tab"	: ``(runSlaveZoneTabDialog ()),
+	    "stub_zone_tab"	: ``(runStubZoneTabDialog ()),
+	];
+
+	map sequence = $[
+	    "ws_start" : "forwarders",
+	    "forwarders" : $[
+		`next	: "zones",
+		`abort	: `abort,
+	    ],
+	    "zones" : $[
+		`next	: "finish",
+		`abort	: `abort,
+		`edit_zone : "zone_type_switch",
+	    ],
+	    "finish" : $[
+		`next	: `next,
+		`abort	: `abort,
+		`expert : "tab_seq",
+	    ],
+	    "tab_seq" : $[
+		`abort : `abort,
+		`next : `next,
+	    ],
+	    "zone_type_switch" : $[
+		`abort : `abort,
+		`master : "master_zone_tab",
+		`slave : "slave_zone_tab",
+		`stub : "stub_zone_tab",
+	    ],
+	    "master_zone_tab" : $[
+		`abort : `abort,
+		`next : "zones",
+	    ],
+	    "slave_zone_tab" : $[
+		`abort : `abort,
+		`next : "zones",
+	    ],
+	    "stub_zone_tab" : $[
+		`abort : `abort,
+		`next : "zones",
+	    ],
+	];
+
+	symbol ret = Sequencer::Run(aliases, sequence);
+
+	return ret;
+
+    }
 
     /**
       * Main workflow of the dns-server configuration
@@ -114,7 +215,9 @@
 
 	map aliases = $[
 	    "read"	: [ ``( ReadDialog() ), true ],
-	    "main"	:   ``( MainSequence() ),
+//	    "main"	:   ``( MainSequence() ),
+	    "main"	:   ``( TabSequence() ),
+	    "wizard"	:   ``( InstallWizardSequence() ),
 	    "write"	: [ ``( WriteDialog() ), true ]
 	];
 
@@ -128,6 +231,10 @@
 		`abort	: `abort,
 		`next	: "write"
 	    ],
+	    "wizard" : $[
+		`abort	: `abort,
+		`next	: "write"
+	    ],
 	    "write" : $[
 		`abort	: `abort,
 		`next	: `next
@@ -136,6 +243,11 @@
 
 	Wizard::CreateDialog();
 	Wizard::SetDesktopIcon("dns-server");
+
+	if ($[] == SCR::Read (.target.stat, Directory::vardir + "/dns_server"))
+	{
+	    sequence["read", `next] = "wizard";
+	}
 
 	symbol ret = Sequencer::Run(aliases, sequence);
 
@@ -150,7 +262,8 @@
     global define symbol DnsAutoSequence() ``{
 
 	map aliases = $[
-	    "main"	:   ``( MainSequence() ),
+	    "main"	:   ``( TabSequence() ),
+//	    "main"	:   ``( MainSequence() ),
 	];
 
 	map sequence = $[

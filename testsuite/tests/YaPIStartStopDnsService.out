@@ -1,0 +1,10 @@
+Dump	==========================================================
+Execute	.target.bash "/etc/init.d/named restart" 0
+Return	true
+Dump	==========================================================
+Execute	.target.bash "/etc/init.d/named stop" 0
+Return	true
+Dump	==========================================================
+Execute	.target.bash "/etc/init.d/named status" 0
+Return	true
+Dump	==========================================================

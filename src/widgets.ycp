@@ -531,7 +531,7 @@ global define map getGlobalTableWidget () ``{
 	    "datasize", "files", "stacksize", "cleaning-interval",
 	    "heartbeat-interval", "interface-interval",
 	    "statistics-interval", "topology", "sortlist", "rrset-order",
-	    "preferred-glue",
+	    "preferred-glue", "listen-on-v6",
 	],
     ]);
     return ret;
@@ -1356,11 +1356,11 @@ global define void AllowDdnsInit (string id) ``{
 	    _("TSIG &Key"),
 	    updater_keys));
     foreach (map m, current_zone["options"]:[], ``{
-	if (m["key"]:"" == "allow-update")
+	if (m["key"]:"" == "allow-update" && ! allowed)
 	{
-	    string key = regexpsub (
+	    key = regexpsub (
 		m["value"]:"",
-		"^.*key[ \t]\+[^ \t;]\+[ \t;]\+.*$",
+		"^.*key[ \t]+([^ \t;]+)[ \t;]+.*$",
 		"\\1");
 	    if (key != nil)
 	    {

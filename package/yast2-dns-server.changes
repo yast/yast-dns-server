@@ -1,4 +1,212 @@
 -------------------------------------------------------------------
+Mon May 31 10:17:20 CEST 2004 - jsrain@suse.cz
+
+- fixed errors in YaPI (typo in StartDnsService function name,
+  WriteZones wasn't working at all) (#41445)
+- added YaPI testsuites
+- 2.9.24
+
+-------------------------------------------------------------------
+Fri May 28 13:22:36 CEST 2004 - jsrain@suse.cz
+
+- add ldapdump script to sysconfig before restarting the DNS
+  server if switched to LDAP (#41360)
+- 2.9.23
+
+-------------------------------------------------------------------
+Fri May 28 08:18:54 CEST 2004 - jsrain@suse.cz
+
+- fixed removing a zone from LDAP (authenticate against LDAP server
+  earlier) (#41324)
+- 2.9.22
+
+-------------------------------------------------------------------
+Wed May 26 09:13:17 CEST 2004 - jsrain@suse.cz
+
+- add dots to the end of fields of zone resource records in order
+  to help users enter semantically correct data (#40688)
+- 2.9.21
+
+-------------------------------------------------------------------
+Tue May 25 15:06:03 CEST 2004 - jsrain@suse.cz
+
+- allow to enable zone transfer even if no custom ACL is defined
+  (only default ones are) (#41137)
+- value of PTR record can be only FQDN (#40688)
+- allow to set key of PTR record as FQDN (#41157)
+- fixed deleting zone from /etc/named.conf (#41159)
+
+-------------------------------------------------------------------
+Thu May 20 12:32:42 CEST 2004 - jsrain@suse.cz
+
+- highlight the selected entry of the left tree widget (#40782)
+- redirect to correct dialog page when main dialog reached from the
+  zone editation dialog (#40911)
+- disable the "Edit zone" button if no zone exists (#40907)
+- do not start if installation of required packages failed or
+  cancelled (#40908)
+- do not allow name server and mail server be specified as IP
+  address (#40688)
+- allow to specify priority of the MX resource record (#40914)
+- prevent from touching system when preparing autoinstallation
+  profile (#40479)
+- fixed quoting in YCP paths (#40867)
+- 2.9.20
+
+-------------------------------------------------------------------
+Wed May 19 08:21:24 CEST 2004 - jsrain@suse.cz
+
+- ensure that /etc/named.conf.include is recreated if at least one
+  include file is used (#40785)
+- ensure /etc/named.d exists before creating TSIG key (#40786)
+- added YaPI capabilities and version (#40796)
+- fixed checking for duplicate ACL entries (#40591)
+- add a dot to the end of NS and MX entry of a zone (#40688)
+
+-------------------------------------------------------------------
+Tue May 18 08:49:29 CEST 2004 - jsrain@suse.cz
+
+- display the left tree widget also in NCurses (#40569)
+- connecting to LDAP server using the Ldap module (in order to
+  prevent it from reconnecting) (#40577)
+- fixed behavior if recreating TSIG key (#40600)
+- limit allowed characters for ACL entry name (locilka) (#40694)
+- when deleting ACL entry remove it at all locations where it
+  is used (#40761)
+- fixed checking of values for NS and MX records (allow dot at the
+  end), automaticlaly add dot at the end of PTR records (#40688)
+
+-------------------------------------------------------------------
+Mon May 17 14:26:22 CEST 2004 - jsrain@suse.cz
+
+- display ACL data consistently (#40572)
+- made the combo box for options selection editable (#40689)
+- sort the basic options, added allow-ipv6 to the list (#40593)
+- added implicit ACLs to the list of displayed ALCs (#40592)
+- fixing syntax of ACL entries (#40698)
+- fixed adding new records to DNS zones when using LDAP (#40683)
+- correctly create ou=ldapconfig if called through YaPI (#40577)
+
+-------------------------------------------------------------------
+Fri May 14 13:40:04 CEST 2004 - visnov@suse.cz
+
+- ensure proper tab selection if validation failed (#40570)
+
+-------------------------------------------------------------------
+Thu May 13 13:21:04 CEST 2004 - jsrain@suse.cz
+
+- start new dialogs also during autoinstallation (#40488)
+- checking if perl-ldap is installed (if running with LDAP support
+  (#40510)
+- 2.9.19
+
+-------------------------------------------------------------------
+Wed May 12 15:12:45 CEST 2004 - jsrain@suse.cz
+
+- allow only a-zA-Z0-9_ for TSIG Key identifier (#40422)
+- creating ldapConfig in LDAP if missing (#40366)
+
+-------------------------------------------------------------------
+Tue May 11 13:25:44 CEST 2004 - visnov@suse.cz
+
+- use DumbTab, if available (#40250) 
+
+-------------------------------------------------------------------
+Tue May 11 11:31:35 CEST 2004 - jsrain@suse.cz
+
+- fixed syntax error (#40138)
+- create needed LDAP stuff when saving (and not during reading
+  process) (#39942)
+- do not discard changes when switching to/from LDAP (#40306)
+- added correct error reporting when switching to LDAP (#40321)
+
+-------------------------------------------------------------------
+Mon May 10 12:54:48 CEST 2004 - jsrain@suse.cz
+
+- merged texts from proofread
+- fixed calling of gettext from Perl modules (#40160)
+
+-------------------------------------------------------------------
+Thu May  6 12:39:09 CEST 2004 - jsrain@suse.cz
+
+- updated forwarders dialog (as requested by sigi) (#39983)
+- added basic checking for input data in the zone records editor
+  (thx locilka) (#39891)
+- added more helps for resource records editor (#39891)
+- added hints how to create a reverse zone to help (#40055)
+- 2.9.18
+
+-------------------------------------------------------------------
+Wed May  5 10:19:09 CEST 2004 - jsrain@suse.cz
+
+- fixed disabling of widgets if system log selected (#39923)
+- fixed valid characters for forwarders settings (locilka) (#39867)
+- fixed valid characters for name of new domain (locilka) (#39869)
+- fixed checking of valid characters of name server (locilka) (#39875)
+- fixed checking of input when generating a TSIG key (#39927)
+- check if a forwarder is alreadny included before adding it (#39866)
+- check if zone exists before creating it (#39868)
+- check if name server exists before adding it (#39873)
+- fixed valid characters of new mail server (locilka) (#39877)
+- fixed the range of mail relay priority (#39926)
+- check if the master name server is in correct form (locilka) (#39934)
+- check if mail server exists before adding it (#39873)
+- display TTL setting as IntField and combo box with units (#39880)
+- check the serial number of the zone (#39880)
+- warn if expiry time is shorter than refresh time (#39881)
+
+-------------------------------------------------------------------
+Tue May  4 09:00:24 CEST 2004 - jsrain@suse.cz
+
+- merged texts from proofread
+- fixed removing all scripts from NAMED_INITIALIZE_SCRIPTS
+  sysconfig variable (#39784)
+- fixed values in widgets when changing selected resource record
+  of a DNS zone (#39769)
+- properly put NS and MX resource records of the zone to correct
+  tabs if they begin with '@' (#39790)
+- fixed deleting of NS and MX records from zones if stored in LDAP
+  (#39790)
+- fixed allowing the zone transport (#39858)
+- start the installation wizard only once (#39859)
+
+-------------------------------------------------------------------
+Mon May  3 10:30:29 CEST 2004 - jsrain@suse.cz
+
+- check if dnszone.schema is included in /etc/openldap/slapd.conf
+  and add it if it is missing (#39589)
+
+-------------------------------------------------------------------
+Fri Apr 30 08:27:39 CEST 2004 - jsrain@suse.cz
+
+- fixed growing "logging" section of /etc/named.conf (#39650)
+- fixed crippling and losing system zones from /etc/named.conf
+- fixed saving of settings to LDAP (#39655)
+- fixed unfunctional buttons
+- added missing dialogs and helps
+- 2.9.17
+
+-------------------------------------------------------------------
+Thu Apr 29 13:39:20 CEST 2004 - jsrain@suse.cz
+
+- updated the user interface
+- fixed INI agent config file to prevent crash (#39597)
+- fixed hardcoded LDAP domain (#39605)
+- do not ask for LDAP password multiple times when started the
+  installation wizard
+- 2.9.16
+
+-------------------------------------------------------------------
+Mon Apr 26 10:53:35 CEST 2004 - jsrain@suse.cz
+
+- updated API to support LDAP
+
+-------------------------------------------------------------------
+Wed Apr 21 16:09:11 CEST 2004 - jsrain@suse.cz
+
+- first working version of LDAP support
+
+-------------------------------------------------------------------
 Fri Apr  2 16:04:04 CEST 2004 - jsrain@suse.de
 
 - changed license to GPL

@@ -16,7 +16,10 @@ ynclude_DATA =			\
 	dialogs.ycp		\
 	misc.ycp		\
 	widgets.ycp		\
-	options.ycp
+	options.ycp		\
+	dialog-masterzone.ycp	\
+	dialog-main.ycp		\
+	dialog-installwizard.ycp
 
 desktop_DATA =			\
 	dns-server.desktop
@@ -27,9 +30,15 @@ module_DATA =			\
 	DnsRoutines.pm		\
 	DnsZones.pm		\
 	DnsTsigKeys.pm		\
-	DnsServerUI.ycp
+	DnsServerUI.ycp		\
+	DnsFakeTabs.ycp
 
-EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA)
+YaPI_perldir = @moduledir@/YaPI
+
+YaPI_perl_DATA = \
+	DNSD.pm
+
+EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA) $(YaPI_perl_DATA)
 
 dns-server:
 	test -l dns-server || ln -s . dns-server

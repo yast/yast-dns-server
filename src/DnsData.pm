@@ -10,10 +10,7 @@ use strict;
 use ycp;
 use YaST::YCP qw(Boolean);
 
-use Locale::gettext;
-use POSIX ();     # Needed for setlocale()
-
-POSIX::setlocale(LC_MESSAGES, "");
+use YaPI;
 textdomain("dns-server");
 
 our %TYPEINFO;

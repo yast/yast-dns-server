@@ -129,7 +129,7 @@
 	"start_service":false,
 	"zones":[
 	    $[
-		"file":"localhost.zone",
+		"file":"example.com",
 		"records":[
 		    $[
 			"key" : "localhost",
@@ -159,7 +159,8 @@
 		],
 		"ttl":"1W",
 		"type":"master",
-		"zone":"localhost",
+		"zone":"example.com",
+		"modified" : true,
 	    ]
 	]])), [], 0);
     DUMP ("=======================");
