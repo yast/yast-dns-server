@@ -579,22 +579,26 @@ sub GetStartService {
     return Boolean($start_service);
 }
 
-BEGIN { $TYPEINFO{SetUseLdap} = [ "function", "void", "boolean", "boolean" ];}
+BEGIN { $TYPEINFO{SetUseLdap} = [ "function", "void", "boolean" ];}
 sub SetUseLdap {
     my $self = shift;
     $use_ldap = shift;
-    my $process_change = shift;
+
+    $save_all = 1;
+}
+
+BEGIN { $TYPEINFO{SetUseLdapAndSave} = [ "function", "void", "boolean" ];}
+sub SetUseLdapAndSave {
+    my $self = shift;
+    $use_ldap = shift;
 
     $save_all = 1;
 
-    if ($process_change)
-    {
-	$self->LdapStore ();
-	Progress->off ();
-	$self->Read ();
-	Progress->on ();
-	$self->SetModified ();
-    }
+    $self->LdapStore ();
+    Progress->off ();
+    $self->Read ();
+    Progress->on ();
+    $self->SetModified ();
 }
 
 BEGIN { $TYPEINFO{GetUseLdap} = [ "function", "boolean" ];}
