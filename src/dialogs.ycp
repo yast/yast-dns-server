@@ -137,6 +137,7 @@ define symbol runFirewallDialog () ``{
 
     if (! SuSEFirewall::start)
     {
+	// message popup
 	Popup::Message (_("Firewall is not configured"));
 	return `back;
     }

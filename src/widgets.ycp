@@ -153,10 +153,13 @@ define map getZoneDirectionWidget () ``{
     return $[
 	"widget" : `radio_buttons,
 	"items" : [
+            // radio button, type of zone
 	    ["forward", _("For&ward")],
+            // radio button, type of zone
 	    ["reverse", _("Re&verse")],
 	],
 	"vspacing" : 1,
+	// frame containing radio buttons group
 	"label" : _("Zone direction"),
 	"help" : HELPS["zone_direction"]:"",
 	"init" : zoneDirectionInit,
@@ -201,6 +204,7 @@ define map getZoneTypeWidget () ``{
 	    ["stub", _("S&tub")],
 	],
 	"vspacing" : 1,
+	// frame containing radio buttons group
 	"label" : _("Zone type"),
 	"help" : HELPS["zone_type"]:"",
 	"init" : zoneTypeInit,
@@ -236,6 +240,7 @@ global define void zoneNameStore (string id, map event) ``{
 global define map getZoneNameWidget () ``{
     return $[
 	"widget" : `textentry,
+	// text entry
 	"label" : _("Zone &name"),
 	"init" : zoneNameInit,
 	"store" : zoneNameStore,
@@ -297,7 +302,7 @@ global define void soaStore (string id, map event) ``{
 
 /**
  * Get the widget description map
- * @return list of items for the table
+ * @return map widget description map
  */
 define map getSoaWidget () ``{
     return $[
@@ -345,6 +350,10 @@ define map getSoaWidget () ``{
 
 // soa button
 
+/**
+ * Initialize the widget
+ * @param key any widget id
+ */
 define void soaButtonInit (string key) ``{
     // push button
     UI::ReplaceWidget (`_tp_table_repl, `PushButton (`id(key), _("Edit &SOA")));
@@ -371,7 +380,7 @@ rewrite the chanegs. Continue?")))
 
 /**
  * Get the widget description map
- * @return list of items for the table
+ * @return map widget description map
  */
 define map getSoaButton () ``{
     return $[
@@ -398,7 +407,7 @@ define symbol NsMxButtonHandle (string key, map event) ``{
 
 /**
  * Get the widget description map
- * @return list of items for the table
+ * @return map widget description map
  */
 define map  getNsMxButton () ``{
     return $[
@@ -425,11 +434,21 @@ global define list getGlobalTableContents (map descr) ``{
     });
 }
 
+/**
+ * Translate option id to option key
+ * @param descr map table description map
+ * @param id any option id
+ * @return string option key
+ */
 define string globalTableId2Key (map descr, any id) ``{
     integer iid = (integer)id;
     return current_section[iid, "key"]:"";
 }
 
+/**
+ * Initialize function of a widget
+ * @param id any widget key of widget that is processed
+ */
 global define void globalTableInit (string id) ``{
     current_section = DnsServer::GetGlobalOptions ();
     TablePopup::TableInitWrapper (id);
@@ -601,7 +620,7 @@ global define map getZoneListWidget () ``{
 
 /**
  * Initialize function of a widget
- * @param key any widget key of widget that is processed
+ * @param id string widget key of widget that is processed
  */
 define void advMenubuttonInit (string id) ``{
     UI::ReplaceWidget (`zones_rp, `MenuButton (`id (`adv_menubutton),
@@ -620,7 +639,7 @@ define void advMenubuttonInit (string id) ``{
 
 /**
  * handle function of a widget
- * @param key any widget key of widget that is processed
+ * @param id string widget key of widget that is processed
  * @param event map event that occured
  * @return symbol symbol for ws or nil
  */
@@ -666,7 +685,7 @@ define map getAdvancedMenubutton () ``{
 
 /**
  * handle function of a widget
- * @param key any widget key of widget that is processed
+ * @param id string widget key of widget that is processed
  * @param event map event that occured
  * @return symbol symbol for ws or nil
  */
@@ -717,7 +736,7 @@ global define symbol nsHandle (string id, map event) ``{
 
 /**
  * Initialize function of a widget
- * @param key any widget key of widget that is processed
+ * @param id string widget key of widget that is processed
  */
 global define void nsInit (string id) ``{
     string zone_name = current_zone["zone"]:"";
@@ -786,7 +805,7 @@ define map getNameServersWidget () ``{
 
 /**
  * handle function of a widget
- * @param key any widget key of widget that is processed
+ * @param id any widget key of widget that is processed
  * @param event map event that occured
  * @return symbol symbol for ws or nil
  */
@@ -795,7 +814,9 @@ global define symbol mxHandle (string id, map event) ``{
     {
 	string new = nil;
 	UI::OpenDialog (`VBox (
+	    // text entry
 	    `TextEntry (`id (`address), _("&Mail relay")),
+	    // int field
 	    `IntField (`id (`priority), _("&Priority"), 0, 100, 10),
 	    `HBox (
 		`HStretch (),
@@ -841,7 +862,7 @@ global define symbol mxHandle (string id, map event) ``{
 
 /**
  * Initialize function of a widget
- * @param key any widget key of widget that is processed
+ * @param id any widget key of widget that is processed
  */
 global define void mxInit (string id) ``{
     string zone_name = current_zone["zone"]:"";
@@ -894,6 +915,7 @@ define map getMailRelaysWidget () ``{
 	    ),
 	    `HBox (
 		`HStretch (),
+		// push button
 		`PushButton (`id (`priority), _("Set &priority")),
 		`HStretch ()
 	    ),
@@ -972,11 +994,20 @@ global define list getMasterTableContents (map descr) ``{
     return ret;
 }
 
+/**
+ * Initialize the widget
+ * @param key any widget id
+ */
 define void MasterTableInit (string key) ``{
     current_zone_upd_ops = current_zone["update_actions"]:[];
     TablePopup::TableInitWrapper (key);
 }
 
+/**
+ * Store settings of the widget
+ * @param key string widget id
+ * @param event map event that caused storing process
+ */
 define void MasterTableStore (string key, map event) ``{
     current_zone["update_actions"] = maplist (map m, current_zone_upd_ops, ``{
 	m["zone"] = current_zone["zone"]:"";
@@ -1014,11 +1045,18 @@ global define map getMasterTableWidget () ``{
 
 // list of zone masters
 
+/**
+ * Handle function of the widget
+ * @param key string widget id
+ * @param event map event that caused storing process
+ * @return symbol always nil
+ */
 global define symbol zoneMastersHandle (string key, map event) ``{
     if (event["ID"]:nil == `master_add)
     {
 	string new = nil;
 	UI::OpenDialog (`VBox (
+	    // text entry
 	    `TextEntry (`id (`address), _("&Master's Address")),
 	    `HBox (
 		`HStretch (),
@@ -1054,12 +1092,17 @@ global define symbol zoneMastersHandle (string key, map event) ``{
     }
     UI::ReplaceWidget (`masters_rp, `SelectionBox (
 	`id (`masters),
+	// selection box
 	_("Master name servers"),
 	current_zone_masters
     ));
     return nil;
 }
 
+/**
+ * Initialize the widget
+ * @param key any widget id
+ */
 global define void zoneMastersInit (string key) ``{
     string zm = current_zone["masters"]:"";
     integer i = findfirstof (zm, "{");
@@ -1077,17 +1120,27 @@ global define void zoneMastersInit (string key) ``{
     zoneMastersHandle (key, $[]);
 }
 
+/**
+ * Store settings of the widget
+ * @param key string widget id
+ * @param event map event that caused storing process
+ */
 global define void zoneMastersStore (string key, map event) ``{
     current_zone["masters"] = sformat ("{ %1; }",
 	mergestring (current_zone_masters, "; "));
 }
 
+/**
+ * Get the widget description map
+ * @return map widget description map
+ */
 define map getZoneMastersWidget () ``{
     return $[
 	"widget" : `custom,
 	"custom_widget" : `VBox (
 	    `ReplacePoint (`id (`masters_rp), `SelectionBox (
 		`id (`masters),
+		// selection box
 		_("Master name servers"),
 		[]
 	    )),
@@ -1134,6 +1187,10 @@ global define void IfacesStore (string id, map event) ``{
     DnsServer::SetAllowedInterfaces (ai);
 }
 
+/**
+ * Get the widget description map
+ * @return map widget description map
+ */
 define map getIfaceClassesWidget () ``{
     return $[
 	"widget" : `custom,
@@ -1143,8 +1200,10 @@ define map getIfaceClassesWidget () ``{
 	    // check box
 	    `Left (`CheckBox (`id(`int), _("Allow &Internal Interfaces"))),
 	    `VSpacing (1),
+	    // check box
 	    `Left (`CheckBox (`id(`ext), _("Allow &External Interfaces"))),
 	    `VSpacing (1),
+	    // check box
 	    `Left (`CheckBox (`id(`dmz), _("Allow &Demilitarized zone"))),
 	    `VSpacing (1)
 	)),
@@ -1177,6 +1236,10 @@ global define void FirewallStore (string id, map event) ``{
 }
 
 
+/**
+ * Get the widget description map
+ * @return map widget description map
+ */
 define map getAdaptFirewallWidget () ``{
     return $[
 	"widget" : `checkbox,
@@ -1280,6 +1343,10 @@ global define void AllowDdnsStore (string id, map event) ``{
     }
 }
 
+/**
+ * Get the widget description map
+ * @return map widget description map
+ */
 define map getAllowDdnsWidget () ``{
     return $[
 	"widget" : `custom,
@@ -1305,17 +1372,24 @@ define map getAllowDdnsWidget () ``{
 // get dynamic DNS keys management widget
 
 /**
- * Initialize the widget
- * @param id any widget id
+ * Redraw the table of DDNS keys
  */
-global define void DdnsKeysInit (string id) ``{
-    list<map<string,string> > keys = DnsTsigKeys::ListTSIGKeys ();
-    list items = maplist (map<string,string> k, keys, ``(
+define void DdnsKeysRedraw () ``{
+    list items = maplist (map<string,string> k, current_tsig_keys, ``(
 	`item (`id (k["key"]:""), k["key"]:"", k["filename"]:"")
     ));
     UI::ChangeWidget (`id (`k_delete), `Enabled, size(items) > 0);
     UI::ChangeWidget (`id (`keys), `Items, items);
     UI::SetFocus (`id (`keys));
+}
+
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
+global define void DdnsKeysInit (string id) ``{
+    current_tsig_keys = DnsTsigKeys::ListTSIGKeys ();
+    DdnsKeysRedraw ();
 }
 
 /**
@@ -1344,7 +1418,7 @@ global define symbol DdnsKeysHandle (string id, map event) ``{
 	    return nil;
 	}
 	boolean collision = false;
-	foreach (map<string,string> k, DnsTsigKeys::ListTSIGKeys (), ``{
+	foreach (map<string,string> k, current_tsig_keys, ``{
 	    if (contains (keys, k["key"]:""))
 		collision = true;
 	});
@@ -1358,21 +1432,24 @@ Old keys will be removed. Continue?")))
 		return nil;
 	    }
 	}
-	if (! DnsTsigKeys::AddTSIGKey (filename))
-	{
-	    // message popup
-	    Popup::Message (_("Adding new TSIG key failed"));
-	    return nil;
-	}
+	new_tsig_keys = add (new_tsig_keys, filename);
+	foreach (string k, keys, ``{
+	    current_tsig_keys = filter (map key, current_tsig_keys, ``(
+		key["key"]:nil != k
+	    ));
+	    current_tsig_keys = add (current_tsig_keys, $[
+		"key" : k,
+		"filename" : filename,
+	    ]);
+	});
     }
     else if (event["ID"]:nil == `k_delete)
     {
 	string key = (string)UI::QueryWidget (`id (`keys), `CurrentItem);
-	if (! DnsTsigKeys::DeleteTSIGKey (key))
-	{
-	    Report::Error (_("Error occured while removing TSIG key"));
-	    return nil;
-	}
+	current_tsig_keys = filter (map<string,string>k, current_tsig_keys, ``(
+	    k["key"]:nil != key
+	));
+	deleted_tsig_keys = add (deleted_tsig_keys, key);
     }
     else if (event["ID"]:nil == `k_create)
     {
@@ -1415,11 +1492,12 @@ Old keys will be removed. Continue?")))
 	UI::CloseDialog ();
 	if (ret != `ok)
 	    return nil;
+	// yes-no popup
 	if (! Popup::YesNo (_("The key will be created now. Continue?")))
 	    return nil;
 	SCR::Execute (.target.bash, sformat ("touch %1", filename));
     }
-    DdnsKeysInit (id);
+    DdnsKeysRedraw ();
     return nil;
 }
 
@@ -1429,19 +1507,35 @@ Old keys will be removed. Continue?")))
  * @param event map event that caused storing process
  */
 global define void DdnsKeysStore (string id, map event) ``{
+    foreach (string key, deleted_tsig_keys, ``{
+	DnsTsigKeys::DeleteTSIGKey (key);
+    });
+    foreach (string file, new_tsig_keys, ``{
+	DnsTsigKeys::AddTSIGKey (file);
+    });
     return;
 }
 
 
+/**
+ * Get the widget description map
+ * @return map widget description map
+ */
 define map getDdnsKeysWidget () ``{
     return $[
 	"widget" : `custom,
 	"custom_widget" : `VBox (
-	    `Table ( `id (`keys), `header (_("Key"), _("File"))),
+	    `Table ( `id (`keys), `header (
+		// table header
+		_("Key"),
+		// table header
+		_("File"))),
 	    `Left (`PushButton (`id (`k_delete), Label::DeleteButton ())),
 	    `VSpacing (1),
+	    // frane
 	    `Frame (_("Add new key"), `VBox (
 		`HBox (
+		    // text entry
 		    `TextEntry (`id (`k_new), _("&File Name")),
 		    `VBox (
 			`Label (" "),
@@ -1451,6 +1545,7 @@ define map getDdnsKeysWidget () ``{
 		`HBox (
 		    `PushButton (`id (`k_add), Label::AddButton ()),
 		    `HStretch (),
+		    // push button
 		    `PushButton (`id (`k_create), _("Create &new key"))
 		)
 	    ))
