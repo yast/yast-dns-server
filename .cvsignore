@@ -17,3 +17,4 @@ mkinstalldirs
 stamp-h
 dns-server.pot
 autom4te.cache
+Makefile.am.common
