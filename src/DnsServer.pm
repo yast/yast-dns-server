@@ -29,8 +29,8 @@ sub _ {
 
 YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("Mode");
+YaST::YCP::Import ("Package");
 YaST::YCP::Import ("Progress");
-YaST::YCP::Import ("Require");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("DnsZones");
 YaST::YCP::Import ("DnsTSIGKeys");
@@ -582,6 +582,15 @@ sub StartDnsService {
 }   
 
 ##------------------------------------
+
+BEGIN { $TYPEINFO{AutoPackages} = ["function", ["map","any","any"]];}
+sub AutoPackages {
+    return {
+	"install" => ["bind"],
+	"remote" => [],
+    }
+}
+
 BEGIN { $TYPEINFO{Read} = ["function", "boolean"]; }
 sub Read {
 
@@ -615,14 +624,10 @@ sub Read {
     sleep ($sl);
 
     # Check packages
-    if (! (Mode::config () || Require::AreAllPackagesInstalled (["bind"])))
+    if (! (Mode::config () || Package::Installed ("bind")))
     {
-	my $installed = Require::RequireAndConflictTarget (["bind"], [],
-	# richtext, %1 is name of package
-	    _("For running DNS server, a DNS daemon is required.
-YaST2 will install package %1.
-"));
-	if (! $installed && ! Require::LastOperationCanceled ())
+	my $installed = Package::Install ("bind");
+	if (! $installed && ! Package::LastOperationCanceled ())
 	{
 	    # error popup
 	    Report::Error (_("Installing required packages failed."));

@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Mar  9 09:21:10 CET 2004 - jsrain@suse.de
+
+- Require -> Package
+- added AutoPackages suport
+
+-------------------------------------------------------------------
 Mon Mar  8 18:17:05 CET 2004 - jsrain@suse.de
 
 - setting icon
