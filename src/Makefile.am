@@ -19,7 +19,8 @@ ynclude_DATA =			\
 	options.ycp		\
 	dialog-masterzone.ycp	\
 	dialog-main.ycp		\
-	dialog-installwizard.ycp
+	dialog-installwizard.ycp	\
+	cmdline.ycp
 
 desktop_DATA =			\
 	dns-server.desktop

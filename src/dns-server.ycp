@@ -26,8 +26,13 @@
     /* main ui function */
     any ret = nil;
 
-    ret = DnsServerUI::DnsSequence();
-    y2debug("ret=%1", ret);
+    // there are some arguments - starting commandline
+    if (size(WFM::Args())>0) {
+	include "dns-server/cmdline.ycp";
+    } else {
+	ret = DnsServerUI::DnsSequence();
+	y2debug("ret=%1", ret);
+    }
 
     /* Finish */
     y2milestone("DnsServer module finished");

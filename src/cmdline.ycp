@@ -1,0 +1,513 @@
+/**
+ * Copyright 2004, Novell, Inc.  All rights reserved.
+ *
+ * File:	dns-server/cmdline.ycp
+ * Package:	DNS Server Configuration
+ * Summary:	Command Line for YaST2 DNS Server
+ * Authors:	Lukas Ocilka <locilka@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+    textdomain "dns-server";
+
+    import "CommandLine";
+    import "String";
+    import "DnsServer";
+    import "DnsData";
+
+    // Wizard Screen function formats and prints unifyied commandline screen
+    void ScreenWizard (string header, string content) {
+	CommandLine::Print("");
+	CommandLine::Print(String::UnderlinedHeader(header, 0));
+	CommandLine::Print("");
+	if (content!="") {
+	    CommandLine::Print(content);
+	    CommandLine::Print("");
+	}
+    }
+
+    // Function prints commandline error about missing parameter
+    void Missing (string missing_parameter) {
+	CommandLine::Error(sformat(
+	    // TRANSLATORS: command line error message, %1 is a missing required parameter
+	    _("Parameter '%1' is required"), missing_parameter
+	));
+    }
+
+    // Function prints commandline error about unknown value for option
+    void UnknownValue (string cmdline_parameter) {
+	CommandLine::Error(sformat(
+	    // TRANSLATORS: command line error message, %1 is a parameter name
+	    _("Unknown value for parameter '%1'"), cmdline_parameter
+	));
+    }
+
+    // Function for handling commandline 'startup'
+    boolean DNSHandlerStartup (map options) {
+	// both cannot be together
+	if (options["atboot"]:nil!=nil && options["manual"]:nil!=nil) {
+	    ScreenWizard(_("Start-Up Settings"), "");
+	    CommandLine::Error(_("Only one parameter is allowed"));
+	// start at boot
+	} else if (options["atboot"]:nil!=nil) {
+	    ScreenWizard(
+		_("Start-Up Settings"),
+		_("Enabling DNS-Server at the boot process")
+	    );
+	    DnsServer::SetStartService(true);
+	    return true;
+	// start manually
+	} else if (options["manual"]:nil!=nil) {
+	    ScreenWizard(
+		_("Start-Up Settings"),
+		_("Removing DNS-Server from the boot process")
+	    );
+	    DnsServer::SetStartService(false);
+	    return true;
+	// show current state
+	} else if (options["show"]:nil!=nil) {
+	    string content = "";
+	    if (DnsServer::GetStartService()) {
+		content = _("DNS Server is enabled at the boot process");
+	    } else {
+		content = _("DNS Server needs manual starting");
+	    }
+	    ScreenWizard(_("Start-Up Settings"), content);
+	    return false;
+	}
+
+	return false;
+    }
+
+    // Function returns list of DNS forwarders got from GlobalOptions
+    list <string> GetForwarders () {
+	list <string> forwarders = [];
+
+	list<map<string,any> > options = DnsServer::GetGlobalOptions();
+	foreach (map<string,any> o, options, {
+	    if (o["key"]:"" == "forwarders") {
+		// "{ $IP; $IP; $IP; }"
+		string fwds = (string) o["value"]:"";
+		forwarders = filter(string ip, splitstring(fwds, "{}; "), {
+		    return ip!="";
+		});
+		break;
+	    }
+	});
+
+	return forwarders;
+    }
+
+    // Functions sets GlobalOptions filling forwarders
+    void SetForwarders (list <string> forwarders) {
+	string fwds = "{ " + mergestring (forwarders, "; ") + "; }";
+
+	list<map<string,any> > options = DnsServer::GetGlobalOptions();
+	map <string,any> forwarders_option = $["key":"forwarders", "value":fwds];
+
+	// counter of list item ID
+	integer list_item = 0;
+	// any forwarders found
+	boolean forwarders_found = false;
+	foreach (map<string,any> o, options, {
+	    // yes, here are forwarders
+	    if (o["key"]:"" == "forwarders") {
+		forwarders_found = true;
+		break;
+	    }
+	    list_item = list_item + 1;
+	});
+
+	// any forwarders already has
+	if (forwarders_found) {
+	    // there are any to set up
+	    if (size(forwarders)>0) {
+		options[list_item] = forwarders_option;
+	    // remove all of them
+	    } else {
+		options = remove(options, list_item);
+	    }
+	// hasn't any forwarders
+	} else {
+	    // add them to the end
+	    if (size(forwarders)>0) {
+		options = add (options, forwarders_option);
+	    }
+	}
+
+	DnsServer::SetGlobalOptions(options);
+    }
+
+    // Function for handling commandline 'forwarders'
+    boolean DNSHandlerForwarders (map options) {
+	list <string> forwarders = GetForwarders();
+
+	// show current settings
+	if (options["show"]:nil!=nil) {
+	    list <list <string> > table_items = [];
+	    foreach (string ip, forwarders, {
+		table_items = add (table_items, [ip]);
+	    });
+	    ScreenWizard(
+		_("Forwarders Settings"),
+		String::TextTable([_("Forwarder IP")], table_items, $[])
+	    );
+	    return false;
+	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
+	    CommandLine::Error(_("Only one action parameter is allowed"));
+	} else if (options["add"]:nil!=nil) {
+	    string ip = (string) options["ip"]:"";
+	    if (ip=="") {
+		Missing("ip");
+		return false;
+	    }
+	    forwarders = toset( add(forwarders, ip) );
+	    SetForwarders(forwarders);
+	    return true;
+	} else if (options["remove"]:nil!=nil) {
+	    string ip = (string) options["ip"]:"";
+	    if (ip=="") {
+		Missing("ip");
+		return false;
+	    }
+	    forwarders = filter(string item, forwarders, { return item!=ip; });
+	    SetForwarders(forwarders);
+	    return true;
+	}
+    }
+
+//[
+//    $["key":"category", "value":"default { log_file; }"],
+//    $["key":"category", "value":"queries { log_file; }"],
+//    $["key":"channel", "value":"log_file { file \"/var/log/named\" size 100M versions 5; }"]
+//]
+
+//[
+//    $["key":"category", "value":"default { default_syslog; }"],
+//    $["key":"category", "value":"queries { default_syslog; }"],
+//    $["key":"category", "value":"xfer-in { default_syslog; }"],
+//    $["key":"category", "value":"xfer-out { default_syslog; }"]
+//]
+
+    // Function returns 'syslog' or 'file'
+    string GetLogType () {
+	list <map <string, any> > logging = DnsServer::GetLoggingOptions();
+	boolean file_used = false;
+	foreach (map <string, any> logitem, logging, {
+	    if (logitem["key"]:""=="category" && regexpmatch((string) logitem["value"]:"","\\{ *log_file; *\\}")) {
+		file_used = true;
+		break;
+	    }
+	});
+
+	return (file_used ? "file":"syslog");
+    }
+
+    // Function returns map $[ file : $file, size : $size, versions : $versions ]
+    map <string, string> GetLogFile () {
+	list <map <string, any> > logging = DnsServer::GetLoggingOptions();
+
+	map <string, string> logfile = $[ "file" : "", "size" : "", "versions" : "" ];
+	foreach (map <string, any> logitem, logging, {
+	    if (logitem["key"]:""=="channel" && regexpmatch (logitem["value"]:"", "^[ \t]*log_file[ \t]*\\{")) {
+		// }:-> (to be in pair)
+
+		// preparing logto to be simply parsable
+		string logto = (string) logitem["value"]:"";
+		integer index = findfirstof (logto, "{");
+		logto = substring (logto, index + 1);
+		index = findlastof (logto, "}");
+		logto = substring (logto, 0, index);
+		
+		string fn = regexpsub (logto, "file[ \t]+\"([^\"]+)\"", "\\1");
+		string sz = regexpsub (logto, "size[ \t]+([0123456789kKmMgG]+)","\\1");
+		string vc = tostring(tointeger(regexpsub (logto, "versions[ \t]+([^ \t]+)","\\1")));
+
+		if (fn!=nil && sz!=nil && vc!=nil) {
+		    logfile["file"]	= fn;
+		    logfile["size"]	= sz;
+		    logfile["versions"]	= vc;
+		}
+	    }
+	});
+
+	return logfile;
+    }
+
+    void SetLogTo (map <string, string> settings) {
+	// $[
+	//    "type"		: "file",
+	//    "file"		: options["file"]:"",
+	//    "maxsize"		: options["maxsize"]:"0",
+	//    "maxversions"	: options["maxversions"]:"0"
+	// ]
+	list <map <string, any> > logging = DnsServer::GetLoggingOptions();
+
+	if (settings["type"]:nil=="syslog") {
+	    // remove channel "log_file"
+	    integer item_counter = 0;
+	    foreach (map <string, any> logitem, logging, {
+		if (logitem["key"]:""=="channel" && regexpmatch (logitem["value"]:"", "^[ \t]*log_file[ \t]*\\{")) {
+		    // }:-| (to be in pair)
+		    logging = remove(logging, item_counter);
+		    break;
+		}
+		item_counter = item_counter + 1;
+	    });
+	    // replace "log_file" in categories with "default_syslog"
+	    item_counter = 0;
+	    foreach (map <string, any> logitem, logging, {
+		if (logitem["key"]:""=="category" && regexpmatch (logitem["value"]:"", "log_file;")) {
+		    logging[item_counter,"value"] = regexpsub(
+			logging[item_counter,"value"]:"",
+			"^[\t ]*([^\t ]+)[\t ]*\\{",
+			"\\1 { default_syslog; }"
+		    );
+		    // }8-O (to be in pair)
+		}
+		item_counter = item_counter + 1;
+	    });
+	} else if (settings["type"]:nil=="file") {
+	    // remove channel "log_file" if exists
+	    integer item_counter = 0;
+	    foreach (map <string, any> logitem, logging, {
+		if (logitem["key"]:""=="channel" && regexpmatch (logitem["value"]:"", "^[ \t]*log_file[ \t]*\\{")) {
+		    // }:-| (to be in pair)
+		    logging = remove(logging, item_counter);
+		    break;
+		}
+		item_counter = item_counter + 1;
+	    });
+	    // added new channel "log_file"
+	    logging = add (logging, $[
+		"key" : "channel",
+		"value" :
+		    sformat (
+			"log_file { file \"%1\" size %2 versions %3; }",
+			settings["file"]:"", settings["maxsize"]:"0", settings["maxversions"]:"0"
+		    )
+	    ]);
+	    // replace "default_syslog" in categories with "log_file"
+	    item_counter = 0;
+	    foreach (map <string, any> logitem, logging, {
+		if (logitem["key"]:""=="category" && regexpmatch (logitem["value"]:"", "default_syslog;")) {
+		    logging[item_counter,"value"] = regexpsub(
+			logging[item_counter,"value"]:"",
+			"^[\t ]*([^\t ]+)[\t ]*\\{",
+			"\\1 { log_file; }"
+		    );
+		    // }8-O (to be in pair)
+		}
+		item_counter = item_counter + 1;
+	    });
+	} else {
+	    // unknown logging
+	    y2error("Unknown logging type '%1'", settings["type"]:nil);
+	    return;
+	}
+	DnsServer::SetLoggingOptions(logging);
+    }
+
+    // Function returns map $[ queries : (yes|no), updates : (yes|no), transfers : (yes|no) ]
+    map <string, string> GetLoggingAdditionals () {
+	list <map <string, any> > logging = DnsServer::GetLoggingOptions();
+	map <string, string> addlog = $[ "queries" : "no", "updates" : "no", "transfers" : "no" ];
+
+	foreach (map <string, any> logitem, logging, {
+	    if (logitem["key"]:""=="category") {
+		if (regexpmatch((string) logitem["value"]:"","^[\t ]*queries[\t ]*\\{")) {
+		    // }8->
+		    addlog["queries"] = "yes";
+		}
+		if (regexpmatch((string) logitem["value"]:"","^[\t ]*xfer-in[\t ]*\\{")) {
+		    // };->
+		    addlog["updates"] = "yes";
+		}
+		if (regexpmatch((string) logitem["value"]:"","^[\t ]*xfer-out[\t ]*\\{")) {
+		    // }:->
+		    addlog["transfers"] = "yes";
+		}
+	    }
+	});
+
+	return addlog;
+    }
+
+    void DNSHandlerLoggingShow () {
+	list <list <string> > table_items = [];
+	string log_type = GetLogType();
+	if (log_type=="syslog") {
+	    table_items = add (table_items, [
+		_("Logging destination"),
+		_("System Log")
+	    ]);
+	} else if (log_type=="file") {
+	    table_items = add (table_items, [
+		_("Logging destination"),
+		_("File")
+	    ]);
+	    map <string, string> file_settings = GetLogFile();
+	    table_items = add (table_items, [
+		_("File name"), file_settings["file"]:""
+	    ]);
+	    table_items = add (table_items, [
+		_("Maximal size"), file_settings["size"]:""
+	    ]);
+	    table_items = add (table_items, [
+		_("Maximum versions"), file_settings["versions"]:""
+	    ]);
+	}
+
+	map <string, string> logadds = GetLoggingAdditionals();
+	// $[ "queries" : "no", "updates" : "no", "transfers" : "no" ]
+	list <list <string> > tabadds_items = [];
+	tabadds_items = add (tabadds_items, [
+	    _("Log named queries"), logadds["queries"]:""
+	]);
+	tabadds_items = add (tabadds_items, [
+	    _("Log zone updates"), logadds["updates"]:""
+	]);
+	tabadds_items = add (tabadds_items, [
+	    _("Log zone transfers"), logadds["transfers"]:""
+	]);
+
+	ScreenWizard(
+	    _("Logging settings"),
+	    String::TextTable(
+	        [
+		    _("Setting"),
+		    _("Value")
+		],
+		table_items,
+		$[]
+	    )
+	    + "\n\n" +
+	    String::TextTable(
+		[
+		    _("Logging Rule"),
+		    _("Value")
+		],
+		tabadds_items,
+		$[]
+	    )
+	);
+    }
+
+    // Function for handling logging settings
+    boolean DNSHandlerLogging (map options) {
+	// show current settings
+	if (options["show"]:nil!=nil) {
+	    DNSHandlerLoggingShow();
+	} else if (options["destination"]:nil!=nil) {
+	    // logging to syslog
+	    if (options["destination"]:nil=="syslog") {
+		SetLogTo($[ "type" : "syslog" ]);
+		return true;
+	    // logging to file
+	    } else if (options["destination"]:nil=="file") {
+		// parameter 'file' must be set
+		if (options["file"]:nil==nil) {
+		    Missing("file");
+		    return false;
+		}
+		// using default values for undefined 'maxsize' or 'maxversions'
+		SetLogTo($[
+		    "type"		: "file",
+		    "file"		: options["file"]:"",
+		    "maxsize"		: options["maxsize"]:"0",
+		    "maxversions"	: options["maxversions"]:"0"
+		]);
+		return true;
+	    // unknown value
+	    } else {
+		UnknownValue("destination");
+		return false;
+	    }
+	}
+    }
+
+    map cmdline = $[
+	"id" : "dns-server",
+	"help" : _("DNS Server Configuration"),
+	"initialize" : DnsServer::Read,
+	"finish" : DnsServer::Write,
+	"actions" : $[
+	    "startup" : $[
+		"handler" : DNSHandlerStartup,
+		"help" : _("Start-up settings"),
+		"example" : "startup show; startup atboot; startup manual",
+	    ],
+	    "forwarders" : $[
+		"handler" : DNSHandlerForwarders,
+		"help" : _("DNS forwarders"),
+		"example" : "forwarders show; forwarders add ip=125.11.235.1; forwarders remove ip=44.82.1.12",
+	    ],
+	    "logging" : $[
+		"handler" : DNSHandlerLogging,
+		"help" : _("Logging settings"),
+	    ],
+	],
+	"options" : $[
+	    "show" : $[
+		"help" : _("Show current settings"),
+	    ],
+	    "atboot" : $[
+		"help" : _("Start DNS-Server at the boot process"),
+	    ],
+	    "manual" : $[
+		"help" : _("Start DNS-Server manually"),
+	    ],
+	    "add" : $[
+		"help" : _("Add a new record"),
+	    ],
+	    "remove" : $[
+		"help" : _("Remove a record"),
+	    ],
+	    "ip" : $[
+		"type" : "ip4",
+		"help" : _("IPv4 address"),
+	    ],
+	    "destination" : $[
+		"type" : "string",
+		"help" : _("Logging destination (syslog|file)"),
+	    ],
+	    "set" : $[
+		"help" : _("Set option"),
+	    ],
+	    "file" : $[
+		"type" : "string",
+		"help" : _("File name for logging (full path)"),
+	    ],
+	    "maxsize" : $[
+		"type" : "string",
+		"help" : _("Maximal log size [0-9]+(KMG)*"),
+	    ],
+	    "maxversions" : $[
+		"type" : "string",
+		"help" : _("Maximum of versions for rotation, '0' means no rotation"),
+	    ],
+	],
+	"mappings" : $[
+	    "startup" : [
+		"show", "atboot", "manual",
+	    ],
+	    "forwarders" : [
+		"show", "add", "remove",
+		"ip",
+	    ],
+	    "logging" : [
+		"show", "destination", "set",
+		"file", "maxsize", "maxversions",
+	    ],
+	],
+    ];
+
+    y2milestone("----------------------------------------");
+    y2milestone(sformat("Starting CommandLine with parameters %1", WFM::Args()));
+    CommandLine::Run(cmdline);
+    y2milestone("----------------------------------------");
+
+/* EOF */
+}
