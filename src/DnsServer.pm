@@ -166,7 +166,7 @@ sub ZoneRead {
 #    $soa{"serial"} = UpdateSerial ($soa{"serial"} || "");
     my %ret = (
 	"zone" => $zone,
-	"ttl" => $zonemap{"TTL"} || "2W",
+	"ttl" => $zonemap{"TTL"} || "2D",
 	"soa" => \%soa,
     );
     my @original_records = @{$zonemap{"records"}};
@@ -289,16 +289,16 @@ sub ZoneFileWrite {
     my $zone_file = $zone_map{"file"} || "";
     $zone_file = AbsoluteZoneFileName ($zone_file);
     my $zone_name = $zone_map{"zone"} || "@";
-    my $ttl = $zone_map{"ttl"} || "2W";
+    my $ttl = $zone_map{"ttl"} || "2D";
 
     my %soa = (
-	"zone" => "@",
-	"expiry" => "6W",
+	"expiry" => "1W",
 	"mail" => "root",
-	"minimum" => "1W",
-	"refresh" => "2D",
-	"retry" => "4H",
+	"minimum" => "1D",
+	"refresh" => "3H",
+	"retry" => "1H",
 	"server" => "@",
+	"zone" => "@",
 	"serial" => UpdateSerial (""),
     );
     my %current_soa = %{$zone_map{"soa"}};
@@ -701,11 +701,11 @@ sub SelectZone {
     {
 	my $serial =  UpdateSerial ("");
 	my %new_soa = (
-	    "expiry" => "6W",
+	    "expiry" => "1W",
 	    "mail" => "root",
-	    "minimum" => "1W",
-	    "refresh" => "2D",
-	    "retry" => "4H",
+	    "minimum" => "1D",
+	    "refresh" => "3H",
+	    "retry" => "1H",
 	    "serial" => $serial,
 	    "server" => "@",
 	    "zone" => "@",
@@ -715,7 +715,7 @@ sub SelectZone {
 	    "modified" => 1,
 	    "type" => "master",
 	    "soa" => \%new_soa,
-	    "ttl" => "2W",
+	    "ttl" => "2D",
 	);
     }
     else
