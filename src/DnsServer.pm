@@ -32,7 +32,6 @@ YaST::YCP::Import ("Service");
 YaST::YCP::Import ("SuSEFirewall");
 YaST::YCP::Import ("Message");
 YaST::YCP::Import ("ProductFeatures");
-YaST::YCP::Import ("SuSEFirewall");
 YaST::YCP::Import ("CWMTsigKeys");
 
 use DnsZones;
@@ -1033,7 +1032,9 @@ sub Read {
 
     Progress->NextStage ();
     
-    SuSEFirewall::Read();
+    my $current_progress = Progress->set(0);
+    SuSEFirewall->Read();
+    Progress->set($current_progress);
 
     Progress->NextStage ();
 
