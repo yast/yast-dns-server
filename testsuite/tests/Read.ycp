@@ -47,6 +47,7 @@
 		"UI_MODE" : "expert",
 		"ENABLE_AUTOLOGIN" : "0",
 		"EVMS_CONFIG" : "0",
+		"INCOMPLETE_TRANSLATION_TRESHOLD" : "95",
 	    ],
 	],
 	"sysconfig" : $[
@@ -104,6 +105,7 @@
 		"UI_MODE" : "expert",
 		"ENABLE_AUTOLOGIN" : "0",
 		"EVMS_CONFIG" : "0",
+		"INCOMPLETE_TRANSLATION_TRESHOLD" : "95",
 	    ],
 	],
 	// Runlevel
