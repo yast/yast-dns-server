@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Fri Feb 13 11:23:48 CET 2004 - jsrain@suse.de
+
+- adapted user interface to new backend
+- other UI updates
+- updated helps
+- backend fixes
+- testsuite fixes
+- 2.9.3
+
+-------------------------------------------------------------------
 Tue Feb 10 16:25:57 CET 2004 - jsrain@suse.de
 
 - fixed testsuite

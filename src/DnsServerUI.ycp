@@ -28,6 +28,7 @@
     define list<map> current_section = [];
     define list<string> current_zone_ns = [];
     define list<string> current_zone_mx = [];
+    define list<string> current_zone_masters = [];
 
 
     global define map createNewZone(string zone_type) ``{return $[];}

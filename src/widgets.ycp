@@ -158,7 +158,7 @@ define map getZoneDirectionWidget () ``{
 	],
 	"vspacing" : 1,
 	"label" : _("Zone direction"),
-	"help" : HELPS["zone_direction"]:"TODO",
+	"help" : HELPS["zone_direction"]:"",
 	"init" : zoneDirectionInit,
 	"store" : zoneDirectionStore,
     ];
@@ -202,7 +202,7 @@ define map getZoneTypeWidget () ``{
 	],
 	"vspacing" : 1,
 	"label" : _("Zone type"),
-	"help" : HELPS["zone_type"]:"TODO",
+	"help" : HELPS["zone_type"]:"",
 	"init" : zoneTypeInit,
 	"store" : zoneTypeStore,
     ];
@@ -239,6 +239,7 @@ global define map getZoneNameWidget () ``{
 	"label" : _("Zone &name"),
 	"init" : zoneNameInit,
 	"store" : zoneNameStore,
+	"help" : HELPS["zone_name"]:"",
     ];
 }
 
@@ -338,6 +339,7 @@ define map getSoaButton () ``{
 	"label" : _("Edit &SOA"),
 	"handle" : soaButtonHandle,
 	"handle_events" : [ "soa_button" ],
+	"help" : HELPS["soa_button"]:"",
     ];
 }
 
@@ -507,11 +509,8 @@ global define symbol zonesHandle (any key, map event) ``{
 	// yes-no popup
 	if (Popup::YesNo (_("Delete selected zone?")))
 	{
-/*		all_zones[current] = nil;
-		all_zones = filter (`k, all_zones, ``(k != nil));*/
-//                DnsServer::RemoveZoneIndex(current, false);
-		zonesInit (key);
-//		zones_modified = true;
+	    DnsServer::RemoveZone (current, false);
+	    zonesInit (key);
 	}
     }
     return nil;
@@ -604,9 +603,11 @@ define symbol advMenubuttonHandle (string id, map event) ``{
 define map getAdvancedMenubutton () ``{
     return $[
 	"init" : advMenubuttonInit,
-	"help" : "TODO",
+	"help" : HELPS["adv_mbutton"]:"",
 	"handle" : advMenubuttonHandle,
 	"handle_events" : [ `global_options, `show_log ],
+	"widget" : `text_entry, // FIXME support for non-displayed widgets
+	"label" : "&x",
     ];
 }
 
@@ -785,7 +786,6 @@ global define symbol mxHandle (string id, map event) ``{
 	_("&Mail relays"),
 	current_zone_mx));
     return nil;
-    return nil;
 }
 
 /**
@@ -922,42 +922,98 @@ global define map getMasterTableWidget () ``{
     return ret;
 }
 
-// slave table
+// list of zone masters
 
-    /**
-      * Function for getting contents of the slave table
-      * @param descr map description map of the table
-      * @return list items for the table
-      */
-    global define list getSlaveTableContents (map descr) ``{
-	list ret = [ "masters"];
-	return ret;
+global define symbol zoneMastersHandle (string key, map event) ``{
+    if (event["ID"]:nil == `master_add)
+    {
+	string new = nil;
+	UI::OpenDialog (`VBox (
+	    `TextEntry (`id (`address), _("&Master's Address")),
+	    `HBox (
+		`HStretch (),
+		`PushButton (`id (`ok), Label::OKButton ()),
+		`PushButton (`id (`cancel), Label::CancelButton ()),
+		`HStretch ()
+	    )
+	));
+	any ret = nil;
+	while (ret == nil)
+	{
+	    ret = UI::UserInput ();
+	    if (ret == `ok)
+		new = (string)UI::QueryWidget (`id (`address), `Value);
+	}
+	UI::CloseDialog ();
+	if (new == nil)
+	    return nil;
+	current_zone_masters = add (current_zone_masters, new);
     }
+    else if (event["ID"]:nil == `master_delete)
+    {
+	string selected = (string)
+	    UI::QueryWidget (`id (`masters), `CurrentItem);
+	if (selected == nil)
+	{
+	    // popup message
+	    Popup::Message (_("No name server selected"));
+	    return nil;
+	}
+	current_zone_masters = filter (string s, current_zone_masters, ``(
+	    s != selected));
+    }
+    UI::ReplaceWidget (`masters_rp, `SelectionBox (
+	`id (`masters),
+	_("Master name servers"),
+	current_zone_masters
+    ));
+    return nil;
+}
 
-    /**
-      * Get map of widget
-      * @return map of widget
-      */
-    global define map getSlaveTableWidget () ``{
-        map ret = TablePopup::CreateTableDescr ($[
-	    "add_delete_buttons" : false,
-	    "up_down_buttons" : false
-	], $[
-/*            "store" : ``(DnsServer::masterTableStore ()),
-            "options" : DnsServer::popups,
-            "ids" : ``(DnsServer::getSlaveTableContents ()),
-            "fallback" : $[
-                "init" : ``(DnsServer::masterPopupInit ()),
-                "store" : ``(DnsServer::masterPopupStore ()),
-                "summary" : ``(DnsServer::masterTableEntrySummary ()),
-            ],
-            "add_items" : [ "check-names", "allow-update", "allow-query",
-		"allow-transfer", "forward", "forwarders", "dialup", "notify",
-		"also-notify", "pubkey",
-	    ],*/
-        ]);
-        return ret;
-    }
+global define void zoneMastersInit (string key) ``{
+    string zm = current_zone["masters"]:"";
+    integer i = findfirstof (zm, "{");
+    if (i != nil)
+	zm = substring (zm, i + 1);
+    i = findfirstof (zm, "}");
+    if (i != nil)
+	zm = substring (zm, 0, i);
+    current_zone_masters = splitstring (zm, ";");
+    current_zone_masters = maplist (string m, current_zone_masters, ``(
+	mergestring (splitstring (m, " "), "")
+    ));
+    current_zone_masters = filter (string m, current_zone_masters, ``(
+	m != ""));
+    zoneMastersHandle (key, $[]);
+}
+
+global define void zoneMastersStore (string key, map event) ``{
+    current_zone["masters"] = sformat ("{ %1; }",
+	mergestring (current_zone_masters, "; "));
+}
+
+define map getZoneMastersWidget () ``{
+    return $[
+	"widget" : `custom,
+	"custom_widget" : `VBox (
+	    `ReplacePoint (`id (`masters_rp), `SelectionBox (
+		`id (`masters),
+		_("Master name servers"),
+		[]
+	    )),
+	    `HBox (
+		`PushButton (`id (`master_add), Label::AddButton ()),
+		`PushButton (`id (`master_delete), Label::DeleteButton ()),
+		`HStretch ()
+	    )
+	),
+	"init" : zoneMastersInit,
+	"handle" : zoneMastersHandle,
+	"handle_events" : [`master_add, `master_delete],
+	"store" : zoneMastersStore,
+	"help" : HELPS["zone_masters"]:"",
+    ];
+}
 
 
 
@@ -972,7 +1028,6 @@ global define map getMasterTableWidget () ``{
 	    "global_table" : getGlobalTableWidget (),
 	    "zones" : getZoneListWidget (),
 	    "master_table" : getMasterTableWidget (),
-	    "slave_table" : getSlaveTableWidget (),
 	    "start" : getStartWidget (),
 	    "chroot" : getChrootWidget (),
 	    "zone_direction" : getZoneDirectionWidget (),
@@ -983,7 +1038,8 @@ global define map getMasterTableWidget () ``{
 	    "advanced_mbutton" : getAdvancedMenubutton (),
 	    "ns_widget" : getNameServersWidget (),
 	    "mx_widget" : getMailRelaysWidget (),
-	    "ns_mx_button" : getNsMxButton (),
+//	    "ns_mx_button" : getNsMxButton (),
+	    "zone_masters" : getZoneMastersWidget (),
 	];
     }
 

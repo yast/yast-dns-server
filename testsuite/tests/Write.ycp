@@ -130,11 +130,22 @@
 	"zones":[
 	    $[
 		"file":"localhost.zone",
-		"records":$[
-		    "localhost2":$[
-			"A":["127.0.0.2"],
-			"MX":[]
-		    ]
+		"records":[
+		    $[
+			"key" : "localhost",
+			"type" : "A",
+			"value" : "127.0.0.1",
+		    ],
+		    $[
+			"key" : "localhost",
+			"type" : "NS",
+			"value" : "127.0.0.1",
+		    ],
+		    $[
+			"key" : "localhost2",
+			"type" : "A",
+			"value" : "127.0.0.2",
+		    ],
 		],
 		"soa":$[
 		    "expiry":"6W",
@@ -149,11 +160,6 @@
 		"ttl":"1W",
 		"type":"master",
 		"zone":"localhost",
-		"zone_rec":$[
-		    "A":["127.0.0.1"],
-		    "MX":[],
-		    "NS":["@"]
-		]
 	    ]
 	]])), [], 0);
     DUMP ("=======================");
