@@ -20,4 +20,13 @@ Read	.init.scripts.exists "named" true
 Read	.init.scripts.exists "named" true
 Read	.init.scripts.runlevel "named" $["named":$["start":[], "stop":[]]]
 Read	.init.scripts.comment "named" $["named":$[]]
+Write	.sysconfig.SuSEfirewall2.FW_SERVICE_DNS "no" true
+Read	.sysconfig.SuSEfirewall2.FW_SERVICE_DNS "no"
+Read	.sysconfig.SuSEfirewall2.FW_SERVICE_DHCLIENT "no"
+Read	.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD "no"
+Read	.sysconfig.SuSEfirewall2.FW_SERVICE_SQUID "no"
+Read	.sysconfig.SuSEfirewall2.FW_SERVICE_SAMBA "no"
+Write	.sysconfig.SuSEfirewall2.FW_PROTECT_FROM_INTERNAL "yes" true
+Write	.sysconfig.SuSEfirewall2 nil true
+Execute	.target.bash "test -x /sbin/rcSuSEfirewall2 && /sbin/rcSuSEfirewall2 status && /sbin/rcSuSEfirewall2 restart" 0
 Return	true

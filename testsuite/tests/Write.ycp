@@ -25,6 +25,8 @@
 
     Progress::off ();
 
+    DnsServer::adapt_firewall = true;
+
     map READ = $[
 	// Runlevel
         "init": $[
@@ -91,6 +93,15 @@
 		    "server":"@",
 		    "zone":"@"
 		]
+	    ],
+	],
+	"sysconfig" : $[
+	    "SuSEfirewall2" : $[
+		"FW_SERVICE_DNS" : "no",
+		"FW_SERVICE_DHCLIENT" : "no",
+		"FW_SERVICE_DHCPD" : "no",
+		"FW_SERVICE_SQUID" : "no",
+		"FW_SERVICE_SAMBA" : "no",
 	    ],
 	],
     ];

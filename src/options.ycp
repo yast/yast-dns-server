@@ -403,6 +403,38 @@
 	modified = true;
     }
 
+// adapt firewall
+
+    /**
+      * Summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      * @return string table entry summary
+      */
+    global define string FirewallSummary (any opt_id, any opt_key) ``{
+	return adapt_firewall ? _("Yes") : _("No");
+    }
+
+    /**
+      * Initialization function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void FirewallInit (any opt_id, any opt_key) ``{
+	UI::ChangeWidget (`id ("__firewall"), `Value, adapt_firewall);
+	UI::SetFocus (`id ("__firewall"));
+    }
+
+    /**
+      * Store function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void FirewallStore (any opt_id, any opt_key) ``{
+	adapt_firewall = UI::QueryWidget (`id ("__firewall"), `Value);
+	modified = true;
+    }
+
 // save everything popup
 
     /**
@@ -795,6 +827,19 @@
 		    "widget" : `checkbox,
 		    "init" : ``(DnsServer::ChrootInit ()),
 		    "store" : ``(DnsServer::ChrootStore ()),
+		],
+	    ],
+	    "__firewall" : $[
+		"table" : $[
+		    // table cell, label
+		    "label" : _("Adapt Firewall"),
+		    "optional" : false,
+		    "summary" : ``(DnsServer::FirewallSummary ()),
+		],
+		"popup" : $[
+		    "widget" : `checkbox,
+		    "init" : ``(DnsServer::FirewallInit ()),
+		    "store" : ``(DnsServer::FirewallStore ()),
 		],
 	    ],
 	    "__save_all" : $[
