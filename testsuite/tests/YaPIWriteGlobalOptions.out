@@ -1,7 +1,25 @@
+Read	.target.size "/etc/install.inf" nil
+Read	.etc.install_inf.Sourcemounted nil
+Read	.etc.install_inf.AutoYaST nil
+Read	.etc.install_inf.Repair nil
+Read	.etc.install_inf.Demo nil
+Read	.etc.install_inf.Textmode nil
+Read	.etc.install_inf.Manual nil
+Read	.target.string "/proc/cmdline" nil
+Read	.etc.install_inf.Console nil
+Read	.etc.install_inf.Braille nil
+Read	.etc.install_inf.VNC nil
+Read	.etc.install_inf.UseSSH nil
+Read	.etc.install_inf.InstMode nil
+Read	.target.tmpdir nil
+Log	Failed to set temporary directory: nil
 Dump	==========================================================
+Execute	.target.bash "rpm -q bind" 0
 Execute	.target.bash "/etc/init.d/named status" 0
 Execute	.target.bash "/etc/init.d/named stop" 0
 Execute	.target.bash "/etc/init.d/named restart" 0
+Read	.init.scripts.exists "named" true
+Read	.init.scripts.runlevel "named" $["named":$["start":[], "stop":[]]]
 Read	.sysconfig.named.NAMED_RUN_CHROOTED nil
 Read	.sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY "yes"
 Read	.sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY "yes"
@@ -44,6 +62,11 @@ Read	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS nil
 Write	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS "" true
 Write	.sysconfig.named nil true
 Execute	.target.bash "/etc/init.d/named stop" 0
+Read	.init.scripts.exists "named" true
+Read	.init.scripts.exists "named" true
+Read	.init.scripts.exists "named" true
+Read	.init.scripts.runlevel "named" $["named":$["start":[], "stop":[]]]
+Read	.init.scripts.comment "named" $["named":$[]]
 Write	.target.ycp "/var/lib/YaST2/dns_server" $[] true
 Return	true
 Dump	==========================================================
