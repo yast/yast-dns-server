@@ -24,10 +24,8 @@ Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
 Dir	.dns.named.value.options: ["directory", "notify"]
 Write	.dns.named.value.options."forwarders" nil true
 Write	.dns.named.value.options."directory" ["\"/var/lib/named\""] true
-Write	.dns.named-forwarders ["/etc/named.d/named-forwarders.conf", ""] true
-Read	.sysconfig.named.NAMED_CONF_INCLUDE_FILES nil
-Write	.sysconfig.named.NAMED_CONF_INCLUDE_FILES "/etc/named.d/named-forwarders.conf" true
-Write	.dns.named.value.options."include" ["\"/etc/named.d/named-forwarders.conf\""] true
+Write	.dns.named-forwarders ["/etc/named.d/forwarders.conf", ""] true
+Write	.dns.named.value.options."include" ["\"/etc/named.d/forwarders.conf\""] true
 Write	.dns.named.value.options."notify" ["no"] true
 Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
 Write	.dns.named nil true
