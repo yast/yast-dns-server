@@ -98,8 +98,7 @@ global define symbol runMainDialog () ``{
     Wizard::SetContentsButtons (caption, contents, help,
 	Label::BackButton (), Label::FinishButton ());
     Wizard::HideBackButton();
-    Wizard::ReplaceAbortButton (
-	`PushButton (`id (`abort), Label::CancelButton ()));
+    Wizard::SetAbortButton(`abort, Label::CancelButton() );
 
     return CWM::Run (w,
 	$[`abort : ReallyExit ]);
