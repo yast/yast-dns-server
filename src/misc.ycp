@@ -51,7 +51,8 @@
       * @return integer version of BIND (8 or 9), nil if both or none if can't
       *  ask
       */
-    global define integer getBindVersion (boolean ask) ``{
+// obsolete - only bind9 is in distribution
+/*    global define integer getBindVersion (boolean ask) ``{
 	boolean bind8 = Require::IsPackageInstalledTarget ("bind8");
 	boolean bind9 = Require::IsPackageInstalledTarget ("bind9");
 	if ((bind8 && ! bind9) || Mode::test)
@@ -129,7 +130,7 @@ Packages %2 will be removed.</p>
 	}
 	return retval;
     }
-
+*/
     /**
       * Read the zone file
       * @param zone string the zone name

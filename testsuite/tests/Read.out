@@ -1,8 +1,8 @@
 Dump	=======================
 Execute	.target.bash_output "/bin/hostname -f" $["exit":1, "stderr":"", "stdout":""]
 Log	Hostname detection failed, using localhost
-Execute	.target.bash "rpm -q bind8" 0
-Execute	.target.bash "rpm -q bind9" 0
+Execute	.target.bash "rpm -q bind" 0
+Execute	.target.bash "rpm -q bind-utils" 0
 Read	.init.scripts.exists "named" true
 Read	.init.scripts.runlevel "named" $["named":$["start":[], "stop":[]]]
 Read	.sysconfig.named.NAMED_RUN_CHROOTED 0

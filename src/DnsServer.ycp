@@ -138,12 +138,29 @@
 	hostname = getLocalHostName ();
 
 	// determine used BIND version
-	version = getBindVersion (interactive_read);
+/*	version = getBindVersion (interactive_read);
 	if (version == nil)
 	{
 	    // warning report
 	    Report::Warning (_("Neither bind8 nor bind9 installed"));
+	}*/
+
+	version = 9;
+	if (! Require::AreAllPackagesInstalled (["bind", "bind-utils"])
+	    || Mode::config)
+	{
+	    boolean install_ok = Require::RequireAndConflictTarget (
+		["bind", "bind-utils"], [],
+		// richtext, %1 is name of package
+		_("For configuring DNS server, bind must be installed.
+YaST2 will install packages %1."));
+	    if (! install_ok && ! Require::LastOperationCanceled ())
+	    {
+		// error popup
+		Report::Error (_("Installing required packages failed."));
+	    }
 	}
+
 
 	settings["start_service"] = Runlevel::ServiceEnabled ("named");
 	settings["chroot"]
