@@ -142,6 +142,18 @@ sub ZoneWrite {
 	y2milestone ("Zone file $zone_file moved to $new_zone_file");
 	$zone_file = $new_zone_file;
     }
+    elsif (!$allow_update && $zone_file =~ /^dyn\/(.+)/) {
+	my $new_zone_file = $1;
+	$new_zone_file = "master/$new_zone_file";
+	while (SCR->Read (".target.size", "/var/lib/named/$new_zone_file") > 0)
+	{
+	    $new_zone_file = "$new_zone_file" . "X";
+	}
+	SCR->Execute (".target.bash", "test -f /var/lib/named/$zone_file && /bin/mv /var/lib/named/$zone_file /var/lib/named/$new_zone_file");
+	SCR->Execute (".target.bash", "test -f /var/lib/named/".$zone_file.".jnl && /bin/rm /var/lib/named/".$zone_file.".jnl");
+	y2milestone ("Zone file $zone_file moved to $new_zone_file");
+	$zone_file = $new_zone_file;
+    }
     elsif ($zone_map{"is_new"})
     {
 	while (SCR->Read (".target.size", "/var/lib/named/$zone_file") > 0)

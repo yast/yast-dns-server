@@ -196,11 +196,12 @@ void InitZoneBasicsTab () {
     if (ProductFeatures::ui_mode == "expert") {
 	UI::ChangeWidget (`id ("allow_ddns"), `Value, allowed);
 	UI::ChangeWidget (`id ("ddns_key"), `Enabled, allowed);
+
+	if (allowed) {
+    	    UI::ChangeWidget (`id ("ddns_key"), `Value, key);
+	}
     }
-    if (allowed)
-    {
-        UI::ChangeWidget (`id ("ddns_key"), `Value, key);
-    }
+
     ZoneAclInit ();
 }
 
@@ -364,6 +365,8 @@ symbol HandleNsListTab (map event) {
 
     if (ret == "add_ns")
     {
+	string zn = current_zone["zone"]:"" + ".";
+
 	string new_ns = (string)
 	    UI::QueryWidget (`id ("add_name_server"), `Value);
 	string check_ns = new_ns;
@@ -383,6 +386,10 @@ symbol HandleNsListTab (map event) {
 	{
 	    new_ns = new_ns + ".";
 	}
+	else if (regexpmatch (new_ns, "^[^.]*$"))
+	{
+	    new_ns = sformat ("%1.%2", new_ns, zn);
+	}
 	if (contains (current_zone_ns, new_ns))
 	{
 	    UI::SetFocus (`id ("add_name_server") );
@@ -390,8 +397,7 @@ symbol HandleNsListTab (map event) {
 	    Popup::Error (_("Specified name server already exists."));
 	    return nil;
 	}
-
-	string zn = current_zone["zone"]:"" + ".";
+	
 	HandleNsupdate($["type":"NS", "key":zn, "value":new_ns],"add");
 
 	current_zone_ns = add (current_zone_ns, new_ns);
@@ -555,9 +561,14 @@ symbol HandleMxListTab (map event) {
 	}
 
 	// absolute hostname
-	if (regexpmatch (new_mx, "\\..*[^.]$"))
+	if (regexpmatch (new_mx, "\\..*[^.]$")) {
 	    new_mx = new_mx + ".";
+	}
 	// relative hostname
+	else if (regexpmatch (new_mx, "^[^.]*$"))
+	{
+	    new_mx = sformat ("%1.%2", new_mx, zn);
+	}
 
 	list<string> mx_list_check = filter (string mx, current_zone_mx, {
 	    list<string> split = splitstring (mx, " \t");

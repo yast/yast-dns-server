@@ -18,6 +18,28 @@ sub tabToFile ($)
     return $ret;
 }
 
+sub TruncateOrigin {
+    my $truncate = shift;
+    my $origin   = shift;
+
+    if ($origin ne ".") {
+	$origin =~ s/\\./\\\./g;
+	$truncate =~ s/\.?$origin$//;
+    }
+
+    return $truncate;
+}
+
+sub AddZoneName {
+    my $addhere  = shift;
+    my $zonename = shift;
+
+    if (($addhere !~ /\.$/) && ($zonename ne "\@")) {
+	$addhere .= ".".$zonename.".";
+    }
+
+    return $addhere;
+}
 
 while ( <STDIN> )
 {
@@ -41,12 +63,22 @@ while ( <STDIN> )
 		print OUT "\$TTL $data{\"TTL\"}\n";
 	    }
 	    # write the ORIGIN record now
+	    if (exists $data{"soa"}) {
+		my %soa = %{$data{"soa"}};
+		if ($soa{"zone"} eq "\@") {
+		    delete $data{"ORIGIN"};
+		} else {
+		    $data{"ORIGIN"} = ".";
+		}
+	    }
 	    if (exists ($data{"ORIGIN"}))
 	    {
 		print OUT "\$ORIGIN $data{\"ORIGIN\"}\n";
 	    }
+	    
 
 	    # write the SOA record now
+	    my $domain_name = ".";
 	    if (exists ($data{"soa"}))
 	    {
 		my %soa = %{$data{"soa"}};
@@ -67,7 +99,9 @@ while ( <STDIN> )
 		print OUT "\t\t\t\t$refresh\t; refresh\n";
 		print OUT "\t\t\t\t$retry\t; retry\n";
 		print OUT "\t\t\t\t$expiry\t; expiry\n";
-		print OUT "\t\t\t\t$minimum\t; minimum\n";		
+		print OUT "\t\t\t\t$minimum\t; minimum\n";
+
+		$domain_name = $soa{"zone"};
 	    }
 	    print OUT "\n";
 
@@ -77,6 +111,8 @@ while ( <STDIN> )
 	    {
 		@records = @{$data{"records"}};
 	    }
+	    my $current_origin = ((exists $data{"ORIGIN"}) ? $data{"ORIGIN"}:$domain_name);
+	    if ($current_origin eq ".") { $current_origin = $domain_name; }
 	    foreach $ref (@records) {
 		%record = %{$ref};
 		if ((exists ($record{"comment"})) && ($record{"comment"} ne ""))
@@ -91,12 +127,20 @@ while ( <STDIN> )
 		}
 		elsif ($record{"type"} eq "ORIGIN")
 		{
+		    $current_origin = $value;
 		    print OUT "\$ORIGIN $value\n";
 		}
 		else
 		{
-		    $key = tabToFile ($record{"key"});
-		    $type = tabToFile ("IN " . $type);
+		    # normal record
+		    $key = tabToFile (TruncateOrigin($record{"key"}, $current_origin));
+		    # MX and NS records should be FQDN
+		    if ($type !~ /^(MX|NS)$/i) {
+			$value = TruncateOrigin($value, $current_origin);
+		    } else {
+			$value = AddZoneName($value, $domain_name);
+		    }
+		    $type = tabToFile ("IN ".$type);
 		    print OUT "$key\t$type\t$value\n";
 		}
 	    }
@@ -130,6 +174,7 @@ while ( <STDIN> )
 	    }
 	    my $current_origin = ".";
 	    my $previous_key = "";
+	    my $zone = ".";
 	    while ( $line = <IN> )
 	    {
 
@@ -191,6 +236,7 @@ while ( <STDIN> )
 			$soa{"comment"} = $comment;
 			$comment = "";
 		    }
+		    $zone = $soa{"zone"};
 		}
 		elsif ($line =~ /^[^ \t]*[ \t]*[0-9]*[ \t]*(IN)?[ \t]*[A-Za-z]+[ \t]*[^ \t;\n][^;\n]*.*$/) #normal record
 		{
@@ -213,6 +259,13 @@ while ( <STDIN> )
 		    }
 		    if (($current_origin ne ".") && ($rec{"key"} !~ /\.$/) && ($rec{"type"} =~ /^(cname|a|ptr)$/i)) {
 			$rec{"key"} = $rec{"key"}.".".$current_origin;
+		    }
+		    if (($rec{"key"} !~ /\.$/) && ($rec{"type"} =~ /^(ns|mx)$/i)) {
+			if ($current_origin ne ".") {
+			    $rec{"key"} = $rec{"key"}.".".$current_origin;
+			} elsif ($rec{"key"} eq $zone) {
+			    $rec{"key"} .= ".";
+			}
 		    }
 
 		    if ($line =~ /^[^;]*;.*$/)
