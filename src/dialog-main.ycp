@@ -25,6 +25,7 @@ import "Mode";
 import "Report";
 import "ProductFeatures";
 import "CWMFirewallInterfaces";
+import "Message";
 
 /**
  * Dialog Expert Settings - Start Up
@@ -134,7 +135,7 @@ symbol HandleExpertStartUpPage (string key, map event) {
 	boolean status = DnsServer::StartDnsService ();
 	if (! status)
 	    // error report
-	    Report::Error (_("Starting the DNS daemon failed."));
+	    Report::Error (Message::CannotStartService("named"));
 	else
 	{
 	    sleep (500);
@@ -145,7 +146,7 @@ symbol HandleExpertStartUpPage (string key, map event) {
 	boolean status = DnsServer::StopDnsService ();
 	if (! status)
 		// error report
-		Report::Error (_("Stopping the DNS daemon failed."));
+		Report::Error (Message::CannotStopService("named"));
 	else
 	{
 	    sleep (500);
@@ -624,8 +625,7 @@ term Expert_Logging_Dialog () {
 				    `VBox (
 					`VWeight ( 25,
 					    `HBox (
-						// Textentry - log to filename
-						`TextEntry ( `id ( "logfile_path" ), _("&File Name") ),
+						`TextEntry ( `id ( "logfile_path" ), Label::FileName() ),
 						`VBox (
 						    `VStretch (),
 						    // Pushbutton - browse filesystem for logfile
@@ -1061,8 +1061,7 @@ term ExpertKeysDialog () {
 				    `HBox (
 					// Table header item - new server key - name
 					`TextEntry ( `id ( "new_key_name" ), `opt ( `hstretch ), _("&Key ID") ),
-					// Table header item - new server key - value
-					`TextEntry ( `id ( "new_key_file" ), `opt ( `hstretch ), _("&File Name") ),
+					`TextEntry ( `id ( "new_key_file" ), `opt ( `hstretch ), Label::FileName() ),
 					`VBox (
 					    `Label (" "),
 					    `PushButton ( `id ( "browse_key_file" ), Label::BrowseButton ())
