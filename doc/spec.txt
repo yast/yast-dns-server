@@ -1,0 +1,20 @@
+YaST2 DNS server component specification
+
+Author: Jiri Srain <jsrain@suse.cz>
+
+Features
+========
+
+- Global options setting ("options" section of /etc/named.conf file)
+- Options of other sections of /etc/named.conf files setting (eg. logging)
+  - not currently implemented - TODO
+- Zones (both master (primary) and slave (secondary), normal and reverse)
+  setting, also stub zones setting is possible
+- For every zone:
+  - $TTL record
+  - SOA record
+  - NS, MX, A, PTR and CNAME records (only those that are relevant for
+    appropriate zone type)
+- Log viewing
+
+
