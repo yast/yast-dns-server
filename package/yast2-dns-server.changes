@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Mar 17 09:57:28 CET 2004 - jsrain@suse.cz
+
+- added checking if some zone is selected for being edited or
+  deleted
+
+-------------------------------------------------------------------
 Thu Mar 11 13:12:48 CET 2004 - jsrain@suse.de
 
 - adapted to include files listed in syscofnig only
