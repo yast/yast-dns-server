@@ -504,6 +504,16 @@ sub SelectZone {
     return $ret;
 }
 
+#BEGIN{ $TYPEINFO{ListZones}=["function",["list",["map","string","string"]]];}
+#sub ListZones {
+#    return map {
+#	{
+#	    "zone" => $_->{"zone"},
+#	    "type" => $_->{"type"},
+#	}
+#    } @zones;
+#}
+
 ##------------------------------------
 # Functions for accessing the data
 
@@ -515,7 +525,18 @@ sub SetStartService {
 
 BEGIN { $TYPEINFO{GetStartService} = [ "function", "boolean" ];}
 sub GetStartService {
-    return $start_service;
+    return Boolean($start_service);
+}
+
+BEGIN { $TYPEINFO{SetChrootJail} = [ "function", "void", "boolean" ];}
+sub SetChrootJail {
+    $chroot = $_[0];
+    SetModified ();
+}
+
+BEGIN { $TYPEINFO{GetChrootJail} = [ "function", "boolean" ];}
+sub GetChrootJail {
+    return Boolean($chroot);
 }
 
 BEGIN { $TYPEINFO{SetModified} = ["function", "void" ]; }
@@ -543,12 +564,12 @@ sub GetAdaptFirewall {
     return $adapt_firewall;
 }
 
-BEGIN {$TYPEINFO{FetchCurrentZone} = [ "function", ["map", "any", "any"] ]; }
+BEGIN {$TYPEINFO{FetchCurrentZone} = [ "function", ["map", "string", "any"] ]; }
 sub FetchCurrentZone {
     return \%current_zone;
 }
 
-BEGIN {$TYPEINFO{StoreCurrentZone} = [ "function", "boolean", ["map", "any", "any"] ]; }
+BEGIN {$TYPEINFO{StoreCurrentZone} = [ "function", "boolean", ["map", "string", "any"] ]; }
 sub StoreCurrentZone {
     %current_zone = %{$_[0]};
     return 1;
@@ -556,7 +577,7 @@ sub StoreCurrentZone {
 
 BEGIN {$TYPEINFO{FetchZones} = [ "function", ["list", ["map", "any", "any"] ] ]; }
 sub FetchZones {
-    return \@zones;
+    return @zones;
 }
 
 BEGIN {$TYPEINFO{StoreZones} = [ "function", "void", [ "list", ["map", "any", "any"] ] ]; }

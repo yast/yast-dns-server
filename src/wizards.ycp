@@ -25,9 +25,14 @@
 
 	map aliases = $[
 	    "main"		: ``(runMainDialog ()),
-	    "zones"		: ``(runZonesDialog ()),
+	    "global_options"	: ``(runGlobalOptionsDialog ()),
+	    "new_zone"		: ``(runNewZoneDialog ()),
+	    "zone_type_switch"	:[``(runZoneTypeSwitch ()), true],
 	    "master_zone"	: ``(runMasterZoneDialog ()),
+	    "soa"		: ``(runSoaDialog ()),
 	    "slave_zone"	: ``(runSlaveZoneDialog ()),
+	    "stub_zone"		: ``(runStubZoneDialog ()),
+	    "store_zone"	:[``(runZoneStore ()), true],
 	];
 
 	map sequence = $[
@@ -35,23 +40,47 @@
 	    "main" : $[
 		`abort : `abort,
 		`next : `next,
-		`zones : "zones",
+		`add : "new_zone",
+		`edit : "zone_type_switch",
+		`global_options : "global_options",
 	    ],
-	    "zones" : $[
+	    "global_options" : $[
 		`abort : `abort,
 		`next : "main",
-		`edit_master : "master_zone",
-		`edit_slave : "slave_zone",
+	    ],
+	    "new_zone" : $[
+		`abort : `abort,
+		`next : "zone_type_switch",
+	    ],
+	    "zone_type_switch" : $[
+		`abort : `abort,
+		`master : "master_zone",
+		`slave : "slave_zone",
+		`stub : "stub_zone",
 	    ],
 	    "master_zone" : $[
 		`abort : `abort,
-		`next : "zones",
+		`next : "store_zone",
+		`soa : "soa",
 		`again : "master_zone",
+	    ],
+	    "soa" : $[
+		`abort : `abort,
+		`next : "master_zone",
 	    ],
 	    "slave_zone" : $[
 		`abort : `abort,
-		`next : "zones",
+		`next : "store_zone",
 		`again : "slave_zone",
+	    ],
+	    "stub_zone" : $[
+		`abort : `abort,
+		`next : "store_zone",
+		`again : "stub_zone",
+	    ],
+	    "store_zone" : $[
+		`abort : `abort,
+		`next : "main",
 	    ],
 	];
 

@@ -16,43 +16,6 @@
     import "DnsServer";
 
     /**
-      * Ask for zone type
-      * @return string zone type
-      */
-    global define string askForZoneType () ``{
-	term buttons = `VBox (
-	    // radio button, type of zone
-	    `Left (`RadioButton (`id ("master"), _("&Master"), true)),
-	    // radio button, type of zone
-	    `Left (`RadioButton (`id ("slave"), _("&Slave"), false)),
-	    // radio button, type of zone
-	    `Left (`RadioButton (`id ("stub"), _("S&tub"), false))
-	);
-	term t = `HBox (`HSpacing (1), `VBox (
-	    // heading
-	    `Heading (_("Select the New Zone Type")),
-	    `VSpacing (1),
-	    `RadioButtonGroup (`id (`rt), buttons),
-	    `VSpacing (1),
-	    CWM::OkCancelBox (),
-	    `VSpacing (1)
-	), `HSpacing (1));
-	UI::OpenDialog (t);
-	UI::SetFocus (`id ("master"));
-	symbol ret = nil;
-	while (ret == nil)
-	    ret = (symbol)UI::UserInput ();
-	if (ret == `_tp_ok)
-	{
-	    string selected = (string)UI::QueryWidget (`id (`rt), `CurrentButton);
-	    UI::CloseDialog ();
-	    return selected;
-	}
-	UI::CloseDialog ();
-	return nil;
-    }
-
-    /**
       * Ask for type of new record to the zone file
       * @param type symbol type of zone
       * @return symbol type of new record or nil if canceled
@@ -230,9 +193,9 @@
       * @param opt_key any option key
       */
     global define void globalPopupInit (any opt_id, string opt_key) ``{
-// FIXME
-//	UI::ChangeWidget (`id (opt_key), `Value,
-//	    settings["options", opt_key]:"");
+	integer oid = (integer)opt_id;
+	UI::ChangeWidget (`id (oid), `Value,
+	    current_section[oid, "value"]:"");
 	UI::SetFocus (`id (opt_key));
     }
 
@@ -242,8 +205,8 @@
       * @param opt_key any option key
       */
     global define void globalPopupStore (any opt_id, string opt_key) ``{
-// FIXME
-//	settings["options", opt_key] = UI::QueryWidget (`id (opt_key), `Value);
+	integer oid = (integer)opt_id;
+	current_section[oid, "value"] = UI::QueryWidget (`id (opt_key), `Value);
 	DnsServer::SetModified ();
     }
 
@@ -253,10 +216,10 @@
       * @param opt_key any option key
       * @return string table entry summary
       */
-    global define string globalTableEntrySummary (any opt_id, string opt_key) ``{
-// FIXME
-//	return sformat ("%1", settings["options", opt_key]:"");
-	return "XXX";
+    global define string globalTableEntrySummary (any opt_id, string opt_key)``{
+	integer oid = (integer)opt_id;
+	return sformat ("%1", current_section[oid, "value"]:"");
+	return "";
     }
 
 // master domain table fallback handlers
@@ -270,7 +233,7 @@
 	UI::SetFocus (`id (opt_key));
 	if (substring (opt_key, 0, 2) == "__")
 	{
-
+	    return;
 	}
 	else if (substring (opt_key, 0, 1) == "_")
 	{
@@ -289,10 +252,11 @@
     global define void masterPopupStore (any opt_id, string opt_key) ``{
 	if (substring (opt_key, 0, 2) == "__")
 	{
-
+	    return;
 	}
 	else if (substring (opt_key, 0, 1) == "_")
 	{
+	    return;
 // FIXME
 //	    current_zone[substring (opt_key, 1)]
 //		= UI::QueryWidget (`id (opt_key), `Value);
@@ -315,6 +279,7 @@
 	}
 	else if (substring (opt_key, 0, 1) == "_")
 	{
+	    return "";
 // FIXME	    return sformat ("%1", current_zone[substring (opt_key, 1)]:"");
 	}
 /* FIXME	map host = current_zone["records", opt_key]:$[];
@@ -334,80 +299,6 @@
     }
 
 
-// start seervice option
-
-    /**
-      * Summary function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      * @return string table entry summary
-      */
-    global define string startServiceSummary (any opt_id, string opt_key) ``{
-	if (DnsServer::GetStartService())
-	{
-	    // table cell
-	    return _("Yes");
-	}
-	else
-	{
-	    // table cell
-	    return _("No");
-	}
-    }
-
-    /**
-      * Initialization function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void startServiceInit (any opt_id, string opt_key) ``{
-	UI::ChangeWidget (`id ("__start_service"), `Value,
-	    DnsServer::GetStartService());
-	UI::SetFocus (`id (opt_key));
-    }
-
-    /**
-      * Store function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void startServiceStore (any opt_id, string opt_key)``{
-	DnsServer::SetStartService(
-	    (boolean)UI::QueryWidget (`id ("__start_service"), `Value)
-	);
-    }
-
-// run in chroot environment option
-
-    /**
-      * Summary function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      * @return string table entry summary
-      */
-/*    global define string ChrootSummary (any opt_id, string opt_key) ``{
-	return settings["chroot"]:false ? _("Yes") : _("No");
-    }
-
-    /**
-      * Initialization function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-/*    global define void ChrootInit (any opt_id, string opt_key) ``{
-	UI::ChangeWidget (`id ("__chroot"), `Value, settings["chroot"]:false);
-	UI::SetFocus (`id ("__chroot"));
-    }
-
-    /**
-      * Store function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-/*    global define void ChrootStore (any opt_id, string opt_key) ``{
-	settings["chroot"] = UI::QueryWidget (`id ("__chroot"), `Value);
-	DnsServer::SetModified ();
-    }
 
 // adapt firewall
 
@@ -599,38 +490,6 @@
 	    = addr_items;
     }
 
-// soa popup
-
-    /**
-      * Initialization function of a popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-/*    global define void soaInit (any opt_id, string opt_key) ``{
-	foreach (`r,
-	    [ "refresh", "retry", "expiry", "minimum", "server", "mail"],
-	``{
-	    UI::ChangeWidget (`id (r), `Value, current_zone["soa", r]:"");
-	});
-	UI::ChangeWidget (`id ("ttl"), `Value, current_zone["ttl"]:"");
-	UI::SetFocus (`id ("ttl"));
-    }
-
-    /**
-      * Store function of a popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-/*    global define void soaStore (any opt_id, string opt_key) ``{
-	current_zone["soa"] = current_zone["soa"]:$[];
-	foreach (`r,
-	    [ "refresh", "retry", "expiry", "minimum", "server", "mail"],
-	``{
-	    current_zone["soa", r] = UI::QueryWidget (`id (r), `Value);
-	});
-	current_zone["ttl"] = UI::QueryWidget (`id ("ttl"), `Value);
-    }
-
 // master popup
 
     /**
@@ -703,95 +562,8 @@
 	    ),
 	];
 
-	map soa_popup = $[
-	    "widget" : `custom,
-//	    "init" : ``(DnsServer::soaInit ()),
-//	    "store" : ``(DnsServer::soaStore ()),
-	    "custom_widget" : /*`VBox (
-		`HBox (
-		    `HWeight (1, `TextEntry (`id ("ttl"), _("$&TTL"))),
-		    `HWeight (1, `TextEntry (`id ("refresh"), _("Re&fresh")))
-		),
-		`HBox (
-		    `HWeight (1, `HStretch ()),
-		    `HWeight (1, `TextEntry (`id ("retry"), _("Re&try")))
-		)),*/
-
-		`HBox (
-		`VBox (
-		    `VWeight (1,
-			// text entry
-			`TextEntry (`id ("ttl"), _("$TT&L"))),
-		    `VWeight (1, `VStretch ()),
-		    `VWeight (1,
-			// text entry
-			`TextEntry (`id ("server"), _("Primary &Source"))),
-		    `VWeight (1,
-			// text entry
-			`TextEntry (`id ("mail"), _("&Administrator's Mail")))
-		),
-		`HSpacing (1),
-		`VBox (
-		    `VWeight (1,
-			// text entry
-			`TextEntry (`id ("refresh"), _("Re&fresh"))),
-		    `VWeight (1,
-			// text entry
-			`TextEntry (`id ("retry"), _("Re&try"))),
-		    `VWeight (1,
-			// text entry
-			`TextEntry (`id ("expiry"), _("E&xpiration"))),
-		    `VWeight (1,
-			// text entry
-			`TextEntry (`id ("minimum"), _("Mi&nimum")))
-		)
-	    ),
-	];
 
 	return $[
-	    "__start_service" : $[
-		"table" : $[
-		    // table cell, label
-		    "label" : _("Start DNS Server at Boot"),
-		    "summary" : startServiceSummary,
-		    "optional" : false,
-		],
-		"popup" : $[
-		    "widget" : `checkbox,
-		    "init" : startServiceInit,
-		    "store" : startServiceStore,
-		],
-	    ],
-	    "__zones" : $[
-		"table" : $[
-		    // table cell
-		    "label" : _("DNS Zones"),
-		    "handle" : `zones,
-		    "optional" : false,
-		],
-            ],
-	    "_zone" : $[
-		"table" : $[
-		    // table cell, label
-		    "label" : _("Zone Name"),
-		    "optional" : false,
-		]
-	    ],
-	    "__soa" : $[
-		"table" : $[
-		    // table cell, label
-		    "label" : _("SOA"),
-		    "optional" : false,
-		],
-		"popup" : soa_popup,
-	    ],
-	    "_ttl" : $[
-		"table" : $[
-		    // table cell, label
-		    "label" : _("Time to Live"),
-		    "optional" : false,
-		]
-	    ],
 /*	    "_NS" : $[
 		"table" : $[
 		    // table cell, label
@@ -820,19 +592,6 @@
 		"popup" : $[
 		    "init" : ``(DnsServer::MastersInit ()),
 		    "store" : ``(DnsServer::MastersStore ()),
-		],
-	    ],
-	    "__chroot" : $[
-		"table" : $[
-		    // table cell, label
-		    "label" : _("Start DNS Server in chroot Jail"),
-		    "optional" : false,
-		    "summary" : ``(DnsServer::ChrootSummary ()),
-		],
-		"popup" : $[
-		    "widget" : `checkbox,
-		    "init" : ``(DnsServer::ChrootInit ()),
-		    "store" : ``(DnsServer::ChrootStore ()),
 		],
 	    ],
 	    "__firewall" : $[
