@@ -362,6 +362,8 @@ Packages %2 will be removed.</p>
 	else if (zone_type == "slave" || zone_type == "stub")
 	{
 	    save_options = ["masters"];
+	    if (! regexpmatch (zone["masters"]:"", "\\{.*;\\}"))
+		zone["masters"] = sformat ("{%1;}", zone["masters"]:"");
 	    SCR::Write (add (base, "masters"),zone["masters"]:"");
 	}
 	else if (zone["type"]:"master" == "hint")

@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Sep 10 15:24:31 CEST 2003 - jsrain@suse.de
+
+- fixed saving of slave zone (#30388)
+
+-------------------------------------------------------------------
 Fri Sep  5 08:33:33 CEST 2003 - jsrain@suse.de
 
 - merged texts from proofread

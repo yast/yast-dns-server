@@ -213,6 +213,9 @@ YaST2 will install packages %1.
 	    {
 		zd["masters"] = SCR::Read (add (add (.dns.named.value, z),
 		    "masters"));
+		if (regexpmatch (zd["masters"]:"", "\\{.*;\\}"))
+		    zd["masters"]
+			= regexpsub (zd["masters"]:"", "\\{(.*);\\}", "\\1");
 	    }
 	    else
 	    {
