@@ -18,5 +18,5 @@ Read	.dns.zone "/var/lib/named/localhost.zone" $["TTL":"1W", "records":[$["key":
 Dir	.dns.named.value."zone \"localhost\" in": ["file", "type"]
 Read	.dns.named.value."zone \"localhost\" in"."file" ["\"localhost.zone\""]
 Read	.dns.named.value."zone \"localhost\" in"."type" ["master"]
-Return	[$["file":"localhost.zone", "options":[$["key":"file", "value":"\"localhost.zone\""], $["key":"type", "value":"master"]], "records":[$["key":"localhost.", "type":"NS", "value":"@"], $["key":"localhost.", "type":"A", "value":"127.0.0.1"], $["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":"42", "server":"@", "zone":"@"], "this_zone_had_NS_record_at_start":"1", "ttl":"1W", "type":"master", "zone":"localhost"]]
+Return	[$["file":"localhost.zone", "options":[$["key":"file", "value":"\"localhost.zone\""], $["key":"type", "value":"master"]], "records":[$["key":"localhost.", "type":"NS", "value":"@"], $["key":"localhost.", "type":"A", "value":"127.0.0.1"], $["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":"42", "server":"@", "zone":"@"], "ttl":"1W", "type":"master", "zone":"localhost"]]
 Dump	==========================================================
