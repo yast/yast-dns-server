@@ -116,7 +116,13 @@ symbol runInstallWizardZonesDialog () {
 	}
 	else
 	{
-	    HandleExpertZonesPage ("zones", event);
+	    symbol handle_ret = HandleExpertZonesPage ("zones", event);
+	    // fixing bug #45950, slave zone _MUST_ have master server
+	    // fixing bug #67005, DNS Server Wizard - It's possible to create slave zone without master
+	    if (handle_ret == `edit_zone) {
+		ret = `edit_zone;
+		break;
+	    }
 	}
     }
 
