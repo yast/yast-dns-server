@@ -106,7 +106,7 @@
     global define boolean Read() ``{
 
 	/* DnsServer read dialog caption */
-	string caption = _("Initializing DNS server configuration");
+	string caption = _("Initializing DNS Server Configuration");
 
 	integer steps = 30;
 
@@ -228,7 +228,7 @@
      global define boolean Write() ``{
 
 	/* DnsServer read dialog caption */
-	string caption = _("Saving DNS server configuration");
+	string caption = _("Saving DNS Server Configuration");
 
 	integer zones = size (settings["zones"]:[]);
 	if (zones < 1)
@@ -245,11 +245,11 @@
 		_("Restart DHCP server"),
 	    ], [
 		// progress step
-		_("Saving the zone files"),
+		_("Saving the zone files..."),
 		// progress step
 		_("Saving main configuration file..."),
 		// progress step
-		_("Restarting DHCP server"),
+		_("Restarting DHCP server..."),
 	    ],
 	    ""
 	);
@@ -306,8 +306,9 @@
 		// yes-no popup
 		if (UI::YesNoPopup (_("Warning!
 
-An error occured during starting of DNS server.
-Display the log and continue with configuration?")))
+An error occurred while starting the DNS server.
+Display the log and continue with configuration?
+")))
 		{
 		    showLogPopup (nil);
 		    return nil;
@@ -373,9 +374,9 @@ Display the log and continue with configuration?")))
 	];
 	string start_string = settings["start_service"]:false
 	    // summary string
-	    ? _("Start DNS server when booting the system")
+	    ? _("The DNS server starts when booting the system.")
 	    // summary string
-	    : _("Do not start DNS server when booting the system");
+	    : _("The DNS server does not start when booting the system.");
 	list(list(string)) zones = maplist (`z, settings["zones"]:[], ``(
 	    [z["zone"]:"", z["type"]:""]
 	));
@@ -386,7 +387,7 @@ Display the log and continue with configuration?")))
 		: z[0]:""
 	));
 	// summary string, %1 is list of DNS zones (their names)
-	string zones_string = sformat (_("Configured zones: %1"),
+	string zones_string = sformat (_("Configured Zones: %1"),
 	    mergestring (zones_disp, ", "));
 	list ret = [ start_string, zones_string ];
 	return ret;

@@ -46,7 +46,7 @@
 	];
 
 	// dialog caption
-	string caption = _("DNS server configuration");
+	string caption = _("DNS Server Configuration");
 	// label
 	term contents = `Label(_("Initializing ..."));
 

@@ -70,7 +70,8 @@
 	UI::OpenDialog (`VBox (
 	    // label
 	    `Label (_("No DNS daemon is installed.
-Select version of DNS daenon to install")),
+Select the version of the DNS daemon to install.
+")),
 	    `VSpacing (1),
 	    `RadioButtonGroup (`id (`version), `VBox (
 		// radio button
@@ -112,8 +113,9 @@ Select version of DNS daenon to install")),
 	string message = "";
 	if (size (del) > 0)
 	    // rich text
-	    message = _("<p>Packages %1 will be installed,
-packages %2 will be removed.</p>");
+	    message = _("<p>Packages %1 will be installed.
+Packages %2 will be removed.</p>
+");
 	else
 	    // ruch text
 	    message = _("<p>Packages %1 will be installed.</p>");
@@ -123,7 +125,7 @@ packages %2 will be removed.</p>");
 	if (retval == nil)
 	{
 	    // error report
-	    Report::Error (_("Failed to install required packages"));
+	    Report::Error (_("Failed to install required packages."));
 	}
 	return retval;
     }

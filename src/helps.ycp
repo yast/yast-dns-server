@@ -17,38 +17,45 @@
     global map HELPS = $[
 
 	/* Read dialog help 1/2 */
-	"read" : _("<p><b><big>Initializing DNS server configuration</big></b>
+	"read" : _("<p><b><big>Initializing DNS Server Configuration</big></b>
 <br>
-Please wait for a while...<br></p>") +
+Please wait...<br></p>
+") +
 
 	/* Read dialog help 2/2 */
-	_("<p><b><big>Aborting the initialization:</big></b><br>
-Safely abort the configuration utility by pressing the <b>Abort</b> now.</p>"),
+	_("<p><b><big>Aborting Initialization:</big></b><br>
+Safely abort the configuration utility by pressing <b>Abort</b> now.</p>
+"),
 
 	/* Write dialog help 1/2 */
-	"write" : _("<p><b><big>Saving DNS server configuration</big></b><br>
-Please wait for a while...<br></p>") +
+	"write" : _("<p><b><big>Saving DNS Server Configuration</big></b><br>
+Please wait...<br></p>
+") +
 
 	/* Write dialog help 2/2 */
-	_("<p><b><big>Aborting the saving:</big></b><br>
-You can abort the saving by pressing the <b>Abort</b> button.
-An additional dialog will inform you whether it is safe to do so or not.</p>"),
+	_("<p><b><big>Aborting Saving:</big></b><br>
+Abort the save procedure by pressing <b>Abort</b>.
+An additional dialog informs you whether it is safe to do so.</p>
+"),
 
 	// help 1/1
-	"log_button" : _("<p><b><big>Displaying a log</big></b><br>
-To display the DNS server log, click the <b>Display log</b> button.</p>"),
+	"log_button" : _("<p><b><big>Displaying a Log</big></b><br>
+To display the DNS server log, click <b>Display Log</b>.</p>
+"),
 
 	// help 1/1
-	"zones" : _("<p><b><big>Editing DNS zones</big></b><br>
+	"zones" : _("<p><b><big>Editing DNS Zones</big></b><br>
 To edit settings of a DNS zone, choose the appropriate
 entry of the table and click <B>Edit</B>.
 To add a new DNS zone, use <B>Add</B>. To remove
-a configured DNS zone, select it and click <B>Delete</B>.</P>"),
+a configured DNS zone, select it and click <B>Delete</B>.</P>
+"),
 
 	// help 1/2
-	"master_zone" : _("<p><b><big>Editing DNS zone</big></b><br>
+	"master_zone" : _("<p><b><big>Editing a DNS Zone</big></b><br>
 To edit the zone settings, choose the appropriate
-entry of the table then click <b>Edit</b>.</p>")
+entry of the table then click <b>Edit</b>.</p>
+")
 	// help 2/2
 	+ _("<p>To add a new record to the zone, click <b>Add</b>. To remove
 a record, select it and click <b>Delete</b>.</p>"),

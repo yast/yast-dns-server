@@ -56,7 +56,7 @@
 	), `HSpacing (1));
 
 	// dialog caption
-	string caption = _("DNS server configuration");
+	string caption = _("DNS Server Configuration");
 
 	string help = CWM::MergeHelps (w);
 	contents = CWM::PrepareDialog (contents, w);
@@ -84,7 +84,7 @@ All changes will be lost.")))]);
 	    `VSpacing (1)
 	), `HSpacing (1));
 	// dialog caption
-	string caption = _("Zones configuration");
+	string caption = _("Zones Configuration");
 
 	return CWM::ShowAndRun (["zones"], DnsServer::widgets,
 	    contents, caption, Label::BackButton (), Label::OKButton (),
@@ -106,7 +106,7 @@ All changes will be lost.")))]);
 	    `VSpacing (1)
 	), `HSpacing (1));
 	// dialog caption
-	string caption = _("DNS master zone configuration");
+	string caption = _("DNS Master Zone Configuration");
 
 	return CWM::ShowAndRun (["master_table"], DnsServer::widgets,
 	    contents, caption, Label::BackButton (), Label::OKButton (),
@@ -127,7 +127,7 @@ All changes will be lost.")))]);
 	    `VSpacing (1)
 	), `HSpacing (1));
 	// dialog caption
-	string caption = _("DNS slave zone configuration");
+	string caption = _("DNS Slave Zone Configuration");
 
 	return CWM::ShowAndRun (["slave_table"], DnsServer::widgets,
 	    contents, caption, Label::BackButton (), Label::OKButton (),
