@@ -21,7 +21,7 @@ use strict;
 use YaPI;
 textdomain("dns-server");
 
-use YaST::YCP qw( sformat y2milestone );
+use YaST::YCP qw( sformat y2milestone y2error y2warning );
 YaST::YCP::Import ("DnsServer");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("Progress");
@@ -120,6 +120,27 @@ sub CheckZone {
     # TRANSLATORS: Popup error message, Trying to get information from zone which doesn't exist,
     #   %1 is the zone name
     Report->Error(sformat(__("DNS zone '%1' does not exist."), $zone));
+    return 0;
+}
+
+sub ZoneIsMaster {
+    my $class = shift;
+    my $zone  = shift || '';
+
+    if (!$zone) {
+	y2error("Zone must be defined");
+	return 0;
+    }
+
+    my $zones = $class->GetZones();
+    foreach my $known_zone (keys %{$zones}) {
+	return 1 if ($zone eq $known_zone && $zones->{$known_zone}->{'type'} eq 'master');
+    }
+
+    # TRANSLATORS: Popup error message, Trying manage records in zone which is not 'master' type
+    #   only 'master' zone records can be managed
+    #   %1 is the zone name
+    Report->Error(sformat(__("DNS zone '%1' is not type 'master'."), $zone));
     return 0;
 }
 
@@ -456,6 +477,8 @@ Section '%1' must be in range from %2 to %3 seconds."), $key, 0, 10800));
 	    return 0;
 	}	
     }
+
+    return 1;
 }
 
 sub CheckBINDTimeFormat {
@@ -1269,6 +1292,7 @@ sub AddZoneRR {
     my $value = lc(shift) || '';
 
     return 0 if (!$class->CheckZone($zone));
+    return 0 if (!$class->ZoneIsMaster($zone));
 
     if (!$type) {
 	# TRANSLATORS: Popup error message, Trying to add record without defined type
@@ -1332,8 +1356,10 @@ sub RemoveZoneRR {
     my $type  = uc(shift) || '';
     my $key   = lc(shift) || '';
     my $value = lc(shift) || '';
+    my $prio  = ''; # used for MX records
 
     return 0 if (!$class->CheckZone($zone));
+    return 0 if (!$class->ZoneIsMaster($zone));
 
     if (!$type) {
 	# TRANSLATORS: Popup error message, Trying to remove record without defined type
@@ -1351,6 +1377,16 @@ sub RemoveZoneRR {
 	return 0;
     }
 
+    $value =~ s/(^[\t ]+|[\t ]+$)//g;
+    if ($type eq 'MX') {
+	$value =~ s/^(\d+)[\t ]+([^\t ]*)$/$2/g;
+	if ($1 ne '') {
+	    $prio = $1;
+	} else {
+	    y2error("Unknown MX recod '".$key."/".$type."/".$value."'");
+	}
+    }
+
     my $zones = DnsServer->FetchZones();
     my @new_records;
     my $new_zone = {};
@@ -1359,8 +1395,25 @@ sub RemoveZoneRR {
 	if ($_->{'zone'} eq $zone) {
 	    my $record_found = 0;
 	    foreach (@{$_->{'records'}}) {
-		# replacing all spaces with one space char (MX servers are affected)
-		$_->{'value'} =~ s/[\t ]+/ /g;
+		# for backup
+		my $this_record = {
+		    'key'   => $_->{'key'},
+		    'type'  => $_->{'type'},
+		    'value' => $_->{'value'},
+		};
+
+		$_->{'prio'} = '';
+
+		if ($_->{'type'} eq 'MX') {
+		    # replacing all spaces with one space char (MX servers are affected)
+		    $_->{'value'} =~ s/(^[\t ]+|[\t ]+$)//g;
+		    $_->{'value'} =~ s/^(\d+)[\t ]+([^\t ]*)$/$2/g;
+		    if ($1 ne '') {
+			$_->{'prio'}  = $1;
+		    } else {
+			y2error("Unknown MX recod '".$_->{'key'}."/".$_->{'type'}."/".$_->{'value'}."'");
+		    }
+		}
 		
 		# lowering all values, types are allways uppercased
 		$_->{'type'}  = uc($_->{'type'});
@@ -1369,19 +1422,36 @@ sub RemoveZoneRR {
 		
 		# matching
 		if ($_->{'type'} eq $type) {
-		    if ($_->{'key'} eq $key && $_->{'value'} eq $value) {
+		
+		    # non-MX record non-realtive
+		    if ($_->{'type'} ne 'MX' &&
+			    $_->{'key'} eq $key && $_->{'value'} eq $value) {
 			# gottcha!
 			$record_found = 1;
 			next;
-		    # relative names used
+		    # MX record non-realtive
+		    } elsif ($_->{'type'} eq 'MX' &&
+			    $_->{'key'} eq $key && $_->{'prio'}.' '.$_->{'value'} eq $prio.' '.$value) {
+			# gottcha!
+			$record_found = 1;
+			next;
+		    # relative record
 		    } else {
 			# transform all relative names to their absolute form
-			$_->{'key'}   = $class->GetFullHostname($_->{'key'});
-			$key          = $class->GetFullHostname($key);
-			$_->{'value'} = $class->GetFullHostname($_->{'value'});
-			$value        = $class->GetFullHostname($value);
+			$_->{'key'}   = $class->GetFullHostname($zone, $_->{'key'});
+			$key          = $class->GetFullHostname($zone, $key);
+			$_->{'value'} = $class->GetFullHostname($zone, $_->{'value'});
+			$value        = $class->GetFullHostname($zone, $value);
 			
-			if ($_->{'key'} eq $key && $_->{'value'} eq $value) {
+			# non-MX record realtive
+			if ($_->{'type'} ne 'MX' &&
+				$_->{'key'} eq $key && $_->{'value'} eq $value) {
+			    # gottcha!
+			    $record_found = 1;
+			    next;
+			# MX record realtive
+			} elsif ($_->{'type'} eq 'MX' &&
+				$_->{'key'} eq $key && $_->{'prio'}.' '.$_->{'value'} eq $prio.' '.$value) {
 			    # gottcha!
 			    $record_found = 1;
 			    next;
@@ -1389,7 +1459,7 @@ sub RemoveZoneRR {
 		    }
 		}
 
-		push @new_records, $_;
+		push @new_records, $this_record;
 	    }
 	    if (!$record_found) {
 		# such record doesn't exist
@@ -1464,6 +1534,7 @@ sub GetZoneSOA {
     my $zone  = shift || '';
 
     return {} if (!$class->CheckZone($zone));
+    return {} if (!$class->ZoneIsMaster($zone));
 
     my $return = {};
 
@@ -1492,6 +1563,7 @@ sub SetZoneSOA {
     my $SOA   = shift || {};
 
     return 0 if (!$class->CheckZone($zone));
+    return 0 if (!$class->ZoneIsMaster($zone));
 
     my $zones = DnsServer->FetchZones();
     my $zone_index = 0;
@@ -1503,7 +1575,6 @@ sub SetZoneSOA {
 		# changing current SOA with new values
 		if (defined $SOA->{$key}) {
 		    return 0 if (!$class->CheckSOARecord($key,$SOA->{$key}));
-		
 		    $new_SOA->{$key} = $SOA->{$key};
 		}
 	    }
@@ -1535,6 +1606,10 @@ sub GetReverseZoneNameForIP {
 	if ($zones->{$zone}->{'type'} eq 'master' && $zone =~ /\.in-addr\.arpa$/) {
 	    push @reversezones, $zone;
 	}
+    }
+
+    if (scalar(@reversezones)==0) {
+	return '';
     }
 
     my $arpaaddr = 'in-addr.arpa';
@@ -1570,12 +1645,18 @@ sub AddHost {
     my $key   = shift || '';
     my $value = shift || '';
 
-    my $reversezone = $class->GetReverseZoneNameForIP($value);
+    if (!$value) {
+	# TRANSLATORS: Popup error message
+	Report->Error(__("Host's IP cannot be empty."));
+	return 0;
+    }
+
+    my $reversezone = $class->GetReverseZoneNameForIP($value) || '';
     if (!$reversezone) {
 	# TRANSLATORS: Popup error message, No reverse zone for %1 record found,
 	#   %2 is the hostname, %1 is the IPv4
 	Report->Error(sformat(__("There is no reverse zone for '%1' administered by your DNS server.
-Host name '%2' cannot be added.")), $value, $key);
+Host name '%2' cannot be added."), $value, $key));
 	return 0;
     }
 
@@ -1598,7 +1679,13 @@ sub RemoveHost {
     my $key   = shift || '';
     my $value = shift || '';
 
-    my $reversezone = $class->GetReverseZoneNameForIP($value);
+    if (!$value) {
+	# TRANSLATORS: Popup error message
+	Report->Error(__("Host's IP cannot be empty."));
+	return 0;
+    }
+
+    my $reversezone = $class->GetReverseZoneNameForIP($value) || '';
     return 0 if (!$class->RemoveZoneRR($zone,'A',$key,$value));
     if ($reversezone) {
 	# hostname MUST be in absolute form (in the reverse zone)
