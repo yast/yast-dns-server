@@ -732,7 +732,7 @@ sub SetUseLdap {
 
     if ($use_ldap) {
 	# trying init LDAP if use_ldap selected
-	my $success = $self->LdapInit ();
+	my $success = $self->LdapInit (1);
 
 	if (!$success) {
 	    return Boolean(0);
@@ -1447,7 +1447,7 @@ sub Import {
     {
 	# Initialize LDAP if needed
 	$self->InitYapiConfigOptions ({"use_ldap" => $use_ldap});
-	$self->LdapInit ([], 1);
+	$self->LdapInit (1);
 	$self->CleanYapiConfigOptions ();
     }
 
@@ -1517,7 +1517,7 @@ sub Summary {
 BEGIN { $TYPEINFO{LdapInit} = ["function", "void", "boolean" ]; }
 sub LdapInit {
     my $self = shift;
-    my $report_errors = shift;
+    my $report_errors = shift || 0;
 
     $ldap_available = 0;
     $use_ldap = 0;
@@ -1555,6 +1555,8 @@ sub LdapInit {
 	}
 	return;
     }
+    y2milestone("Trying LDAP server: ".$server.":".$port);
+    
     $ldap_domain = $ldap_data_ref->{"ldap_domain"} || "";
     if ($ldap_domain eq "")
     {
@@ -1566,6 +1568,8 @@ sub LdapInit {
 	}
 	return;
     }
+    y2milestone("Trying LDAP domain: ".$ldap_domain);
+
     $ldap_server = $server;
     $ldap_port = $port;
 
@@ -1716,7 +1720,7 @@ sub LdapPrepareToWrite {
     }
 
     # connect to the LDAP server
-    my $ret = Ldap->LDAPInit ();
+    my $ret = Ldap->LDAPInit (1);
     if ($ret ne "")
     {
 	Ldap->LDAPErrorMessage ("init", $ret);
