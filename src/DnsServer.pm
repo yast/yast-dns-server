@@ -295,6 +295,9 @@ sub SaveGlobals {
     } @old_zones;
     y2milestone ("Deleting zones @del_zones");
     foreach my $z (@del_zones) {
+	$z =~ /^zone[ \t]+\"([^ \t]+)\".*/;
+	$z = $1;
+	$z = "\"zone \\\"$z\\\" in\"";
 	SCR->Write (".dns.named.section.$z", undef);
     }
 
