@@ -138,7 +138,7 @@ define symbol runFirewallDialog () ``{
     if (! SuSEFirewall::start)
     {
 	// message popup
-	Popup::Message (_("Firewall is not configured"));
+	Popup::Message (_("Firewall is not configured."));
 	return `back;
     }
 
@@ -153,7 +153,7 @@ define symbol runFirewallDialog () ``{
     ), `HStretch ());
 
     // dialog caption
-    string caption = _("Firewall settings");
+    string caption = _("Firewall Settings");
 
     return CWM::ShowAndRun (w, DnsServerUI::widgets,
 	contents, caption, Label::BackButton (), Label::OKButton (),
@@ -176,7 +176,7 @@ define symbol runDDNSDialog () ``{
     ), `HSpacing (2));
 
     // dialog caption
-    string caption = _("TSIG keys management");
+    string caption = _("TSIG Key Management");
 
     return CWM::ShowAndRun (w, DnsServerUI::widgets,
 	contents, caption, Label::BackButton (), Label::OKButton (),

@@ -60,7 +60,7 @@ global define map getStartWidget () ``{
     return $[
 	"widget" : `checkbox,
 	// check box
-	"label" : _("&Start DNS server"),
+	"label" : _("&Start DNS Server"),
 	"help" : HELPS["start"]:"",
 	"init" : startInit,
 	"handle" : startHandle,
@@ -111,7 +111,7 @@ global define map getChrootWidget () ``{
     return $[
 	"widget" : `checkbox,
 	// check box
-	"label" : _("&Run DNS sevrer in chroot jail"),
+	"label" : _("&Run DNS Server in Chroot Jail"),
 	"help" : HELPS["chroot"]:"",
 	"init" : chrootInit,
 	"store" : chrootStore,
@@ -160,7 +160,7 @@ define map getZoneDirectionWidget () ``{
 	],
 	"vspacing" : 1,
 	// frame containing radio buttons group
-	"label" : _("Zone direction"),
+	"label" : _("Zone Direction"),
 	"help" : HELPS["zone_direction"]:"",
 	"init" : zoneDirectionInit,
 	"store" : zoneDirectionStore,
@@ -205,7 +205,7 @@ define map getZoneTypeWidget () ``{
 	],
 	"vspacing" : 1,
 	// frame containing radio buttons group
-	"label" : _("Zone type"),
+	"label" : _("Zone Type"),
 	"help" : HELPS["zone_type"]:"",
 	"init" : zoneTypeInit,
 	"store" : zoneTypeStore,
@@ -241,7 +241,7 @@ global define map getZoneNameWidget () ``{
     return $[
 	"widget" : `textentry,
 	// text entry
-	"label" : _("Zone &name"),
+	"label" : _("Zone &Name"),
 	"init" : zoneNameInit,
 	"store" : zoneNameStore,
 	"help" : HELPS["zone_name"]:"",
@@ -413,7 +413,7 @@ define map  getNsMxButton () ``{
     return $[
 	"widget" : `push_button,
 	// push button
-	"label" : _("Edit &NS and &MX records"),
+	"label" : _("Edit &NS and MX Records"),
 	"handle" : NsMxButtonHandle,
 	"handle_events" : [ "ns_mx_button" ],
     ];
@@ -627,13 +627,13 @@ define void advMenubuttonInit (string id) ``{
 	// menu button
 	_("Ad&vanced"), [
 	    // menubutton item
-	    `item (`id (`global_options), _("&Edit global options")),
+	    `item (`id (`global_options), _("&Edit Global Options")),
 	    // menubutton item
-	    `item (`id (`firewall), _("&Firewall configuration")),
+	    `item (`id (`firewall), _("&Firewall Configuration")),
 	    // menubutton item
-	    `item (`id (`ddns), _("Manage &TSIG keys")),
+	    `item (`id (`ddns), _("Manage &TSIG Keys")),
 	    // menubutton item
-	    `item (`id (`show_log), _("&Display log")),
+	    `item (`id (`show_log), _("&Display Log")),
 	]));
 }
 
@@ -694,7 +694,7 @@ global define symbol nsHandle (string id, map event) ``{
     {
 	string new = nil;
 	UI::OpenDialog (`VBox (
-	    `TextEntry (`id (`address), _("&Name server")),
+	    `TextEntry (`id (`address), _("&Name Server")),
 	    `HBox (
 		`HStretch (),
 		`PushButton (`id (`ok), Label::OKButton ()),
@@ -721,7 +721,7 @@ global define symbol nsHandle (string id, map event) ``{
 	if (selected == nil)
 	{
 	    // popup message
-	    Popup::Message (_("No name server selected"));
+	    Popup::Message (_("No name server selected."));
 	    return nil;
 	}
 	current_zone_ns = filter (string s, current_zone_ns, ``(
@@ -729,7 +729,7 @@ global define symbol nsHandle (string id, map event) ``{
     }
     UI::ReplaceWidget (`ns_addresses_rp, `SelectionBox (`id (`ns_addresses),
 	// selection box label
-	_("&Name servers"),
+	_("&Name Servers"),
 	current_zone_ns));
     return nil;
 }
@@ -783,7 +783,7 @@ define map getNameServersWidget () ``{
 	    `ReplacePoint (`id (`ns_addresses_rp),
 		`SelectionBox (`id (`ns_addresses),
 		    // selection box label
-		    _("&Name servers"), [])
+		    _("&Name Servers"), [])
 	    ),
 	    `HBox (
 		`HStretch (),
@@ -815,7 +815,7 @@ global define symbol mxHandle (string id, map event) ``{
 	string new = nil;
 	UI::OpenDialog (`VBox (
 	    // text entry
-	    `TextEntry (`id (`address), _("&Mail relay")),
+	    `TextEntry (`id (`address), _("&Mail Relay")),
 	    // int field
 	    `IntField (`id (`priority), _("&Priority"), 0, 100, 10),
 	    `HBox (
@@ -847,7 +847,7 @@ global define symbol mxHandle (string id, map event) ``{
 	if (selected == nil)
 	{
 	    // popup message
-	    Popup::Message (_("No name server selected"));
+	    Popup::Message (_("No name server selected."));
 	    return nil;
 	}
 	current_zone_mx = filter (string s, current_zone_mx, ``(
@@ -855,7 +855,7 @@ global define symbol mxHandle (string id, map event) ``{
     }
     UI::ReplaceWidget (`mx_addresses_rp, `SelectionBox (`id (`mx_addresses),
 	// selection box label
-	_("&Mail relays"),
+	_("&Mail Relays"),
 	current_zone_mx));
     return nil;
 }
@@ -911,12 +911,12 @@ define map getMailRelaysWidget () ``{
 		`SelectionBox (`id (`mx_addresses),
 		    `opt (`notify, `immediate),
 		    // selection box label
-		    _("&Mail relays"), [])
+		    _("&Mail Relays"), [])
 	    ),
 	    `HBox (
 		`HStretch (),
 		// push button
-		`PushButton (`id (`priority), _("Set &priority")),
+		`PushButton (`id (`priority), _("Set &Priority")),
 		`HStretch ()
 	    ),
 	    `HBox (
@@ -1084,7 +1084,7 @@ global define symbol zoneMastersHandle (string key, map event) ``{
 	if (selected == nil)
 	{
 	    // popup message
-	    Popup::Message (_("No name server selected"));
+	    Popup::Message (_("No name server selected."));
 	    return nil;
 	}
 	current_zone_masters = filter (string s, current_zone_masters, ``(
@@ -1093,7 +1093,7 @@ global define symbol zoneMastersHandle (string key, map event) ``{
     UI::ReplaceWidget (`masters_rp, `SelectionBox (
 	`id (`masters),
 	// selection box
-	_("Master name servers"),
+	_("Master Name servers"),
 	current_zone_masters
     ));
     return nil;
@@ -1141,7 +1141,7 @@ define map getZoneMastersWidget () ``{
 	    `ReplacePoint (`id (`masters_rp), `SelectionBox (
 		`id (`masters),
 		// selection box
-		_("Master name servers"),
+		_("Master Name servers"),
 		[]
 	    )),
 	    `HBox (
@@ -1195,7 +1195,7 @@ define map getIfaceClassesWidget () ``{
     return $[
 	"widget" : `custom,
 	// frame
-	"custom_widget" : `Frame (_("Interface classes"), `VBox (
+	"custom_widget" : `Frame (_("Interface Classes"), `VBox (
 	    `VSpacing (1),
 	    // check box
 	    `Left (`CheckBox (`id(`int), _("Allow &Internal Interfaces"))),
@@ -1204,7 +1204,7 @@ define map getIfaceClassesWidget () ``{
 	    `Left (`CheckBox (`id(`ext), _("Allow &External Interfaces"))),
 	    `VSpacing (1),
 	    // check box
-	    `Left (`CheckBox (`id(`dmz), _("Allow &Demilitarized zone"))),
+	    `Left (`CheckBox (`id(`dmz), _("Allow &Demilitarized Zone"))),
 	    `VSpacing (1)
 	)),
 	"init" : IfacesInit,
@@ -1244,7 +1244,7 @@ define map getAdaptFirewallWidget () ``{
     return $[
 	"widget" : `checkbox,
 	// check box
-	"label" : _("Adapt &Firewall settings"),
+	"label" : _("Adapt &Firewall Settings"),
 	"init" : FirewallInit,
 	"store" : FirewallStore,
 	"help" : HELPS["adapt_firewall"]:"",
@@ -1292,7 +1292,7 @@ global define void AllowDdnsInit (string id) ``{
 	    `id ("ddns_key"),
 	    `opt (`hstretch),
 	    // combo box
-	    _("TSIG &key"),
+	    _("TSIG &Key"),
 	    updater_keys));
     foreach (map m, current_zone["options"]:[], ``{
 	if (m["key"]:"" == "allow-update")
@@ -1359,7 +1359,7 @@ define map getAllowDdnsWidget () ``{
 	    ),
 	    `ReplacePoint (`id (`ddns_key_rp),
 		// combo box
-		`ComboBox (`id ("ddns_key"), `opt(`hstretch), _("TSIG &key"))
+		`ComboBox (`id ("ddns_key"), `opt(`hstretch), _("TSIG &Key"))
 	    )
 	),
 	"help" : HELPS["allow_ddns"]:"",
@@ -1405,7 +1405,7 @@ global define symbol DdnsKeysHandle (string id, map event) ``{
     {
 	filename = UI::AskForExistingFile (filename, "",
 	    // popup headline
-	    _("Select file with authentication key"));
+	    _("Select File with Authentication Key"));
 	if (filename != nil)
 	    UI::ChangeWidget (`id (`k_new), `Value, filename);
     }
@@ -1415,7 +1415,7 @@ global define symbol DdnsKeysHandle (string id, map event) ``{
 	if (size (keys) == 0)
 	{
 	    // message popup
-	    Popup::Message (_("Specified file does not contain any TSIG key"));
+	    Popup::Message (_("The specified file does not contain any TSIG key."));
 	    return nil;
 	}
 	boolean collision = false;
@@ -1426,8 +1426,8 @@ global define symbol DdnsKeysHandle (string id, map event) ``{
 	if (collision)
 	{
 	    // yes-no popup
-	    if (!Popup::YesNo (_("Specified file contains TSIG key with the same
-identifier, as some of already present keys.
+	    if (!Popup::YesNo (_("The specified file contains a TSIG key with the same
+identifier as some of already present keys.
 Old keys will be removed. Continue?")))
 	    {
 		return nil;
@@ -1465,7 +1465,7 @@ Old keys will be removed. Continue?")))
 		)
 	    ),
 	    // text entry
-	    `TextEntry (`id (`key_id), _("Key identifier")),
+	    `TextEntry (`id (`key_id), _("Key Identifier")),
 	    `HBox (
 		`HStretch (),
 		`PushButton (`id (`ok), Label::OKButton ()),
@@ -1483,7 +1483,7 @@ Old keys will be removed. Continue?")))
 		    UI::QueryWidget (`id (`filename), `Value);
 	        filename = (string)UI::AskForSaveFileName (filename, "",
 		    // popup headline
-	            _("Select file for creatint the authentication key"));
+	            _("Select File for Creating the Authentication Key"));
 	        if (filename != nil)
 		    UI::ChangeWidget (`id (`filename), `Value, filename);
 		ret = nil;
@@ -1538,7 +1538,7 @@ define map getDdnsKeysWidget () ``{
 	    `Left (`PushButton (`id (`k_delete), Label::DeleteButton ())),
 	    `VSpacing (1),
 	    // frane
-	    `Frame (_("Add new key"), `VBox (
+	    `Frame (_("Add New Key"), `VBox (
 		`HBox (
 		    // text entry
 		    `TextEntry (`id (`k_new), _("&File Name")),
@@ -1551,7 +1551,7 @@ define map getDdnsKeysWidget () ``{
 		    `PushButton (`id (`k_add), Label::AddButton ()),
 		    `HStretch (),
 		    // push button
-		    `PushButton (`id (`k_create), _("Create &new key"))
+		    `PushButton (`id (`k_create), _("Create &New Key"))
 		)
 	    ))
 	),

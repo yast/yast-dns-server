@@ -209,7 +209,7 @@ sub AdaptFirewall {
     if (! $ret)
     {
         # error report
-        Report::Error (_("Error while setting firewall settings occured"));
+        Report::Error (_("Error occurred while setting firewall settings."));
     }
     return $ret;
 }
