@@ -58,7 +58,11 @@
 
     Mode::SetMode("test");
 
-    Progress::off ();
+    // avoid reading SuSEFirewall sysconfig
+    import "SuSEFirewall";
+    SuSEFirewall::SuSEFirewall_variables = [];
+
+    boolean progress_orig = Progress::set (false);
 
     map READ = $[
 	"passwd" : $[ "passwd" : $[ "pluslines" : [] ] ],

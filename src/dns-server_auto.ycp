@@ -78,17 +78,17 @@ else if (func == "SetModified") {
 /* Read current state */
 else if (func == "Read") {
     import "Progress";
-    Progress::off();
+    boolean progress_orig = Progress::set (false);
     ret = DnsServer::Read();
-    Progress::on();
+    Progress::set (progress_orig);
 }
 /* Write givven settings */
 else if (func == "Write") {
     import "Progress";
-    Progress::off();
+    boolean progress_orig = Progress::set (false);
     DnsServer::SetWriteOnly (true);
     ret = DnsServer::Write();
-    Progress::on();
+    Progress::set (progress_orig);
 }
 /* Unknown function */
 else {

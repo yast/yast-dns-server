@@ -316,9 +316,9 @@ sub AdaptFirewall {
     }
     if (! Mode->test ())
     {
-        Progress->off ();
+        my $progress_orig = Progress->set (0);
         $ret = SuSEFirewall->Write () && $ret;
-        Progress->on ();
+        Progress->set ($progress_orig);
     }
     if ($start_service)
     {
@@ -1399,9 +1399,9 @@ sub Write {
     Progress->NextStage ();
     
     # Firewall has it's own Progress
-    Progress->off();
+    my $progress_orig = Progress->set (0);
     SuSEFirewall::Write();
-    Progress->on();
+    Progress->set ($progress_orig);
 
     Progress->NextStage ();
     sleep ($sl);

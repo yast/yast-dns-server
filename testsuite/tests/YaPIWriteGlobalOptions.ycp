@@ -55,7 +55,7 @@
 
     Mode::SetMode("test");
 
-    Progress::off ();
+    boolean progress_orig = Progress::set (false);
 
     map READ = $[
 	"passwd" : $[ "passwd" : $[ "pluslines" : [] ] ],
