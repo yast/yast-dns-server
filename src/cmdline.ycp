@@ -528,6 +528,10 @@
 		(integer) options["priority"]:nil
 	    );
 	} else if (options["remove"]:nil!=nil) {
+	    if (options["priority"]:nil==nil) {
+		Missing("priority");
+		return false;
+	    }
 	    DnsServerAPI::RemoveZoneMailServer(
 		(string) options["zone"]:nil,
 		(string) options["mx"]:nil,
@@ -723,46 +727,100 @@
 		"handler" : DNSHandlerLogging,
 		// TRANSLATORS: commandline short help for command
 		"help" : _("Logging Settings"),
+		"example" : [
+		    "logging show",
+		    "logging set updates=no transfers=yes",
+		    "logging destination=syslog",
+		    "logging destination=file maxsize=0 file=/var/log/named.log maxversions=0",
+		],
 	    ],
 	    "zones" : $[
 		"handler" : DNSHandlerZones,
 		// TRANSLATORS: commandline short help for command
 		"help" : _("DNS Zones"),
+		"example" : [
+		    "zones show",
+		    "zones add name=example.org zonetype=master",
+		    "zones add name=example.com zonetype=slave masterserver=192.168.0.1",
+		    "zones remove name=example.org",
+		    "zones set name=example.com masterserver=192.168.10.1",
+		],
 	    ],
 	    "acls" : $[
 		"handler" : DNSHandlerACLs,
 		// TRANSLATORS: commandline short help for command
 		"help" : _("Access Control Lists"),
+		"examples" : [
+		    "acls show"
+		],
 	    ],
 	    "transport" : $[
 		"handler" : DNSHandlerTransport,
 		// TRANSLATORS: commandline short help for command
 		"help" : _("Zone Transport Rules"),
+		"examples" : [
+		    "transport show",
+		    "transport show zone=example.com",
+		    "transport zone=master.com enable=localnets",
+		],
 	    ],
 	    "nameserver" : $[
 		"handler" : DNSHandlerNameServers,
 		// TRANSLATORS: commandline short help for command, base cmdline command
 		"help" : _("Zone Name Servers"),
+		"example" : [
+		    "nameserver show",
+		    "nameserver show zone=example.com",
+		    "nameserver add zone=example.com ns=ns1",
+		    "nameserver add zone=example.com ns=ns2.example.com.",
+		    "nameserver remove zone=example.com ns=ns2",
+		],
 	    ],
 	    "mailserver" : $[
 		"handler" : DNSHandlerMailServers,
 		// TRANSLATORS: commandline short help for command, base cmdline command
 		"help" : _("Zone Mail Servers"),
+		"example" : [
+		    "mailserver show",
+		    "mailserver show zone=example.org",
+		    "mailserver add zone=example.org mx=mx1 priority=100",
+		    "mailserver add zone=example.org mx=mx2.example.com. priority=99",
+		    "mailserver remove zone=example.org mx=mx2.example.com. priority=99",
+		],
 	    ],
 	    "soa" : $[
 		"handler" : DNSHandlerSOA,
 		// TRANSLATORS: commandline short help for command, base cmdline command
 		"help" : _("Start of Authority (SOA)"),
+		"example" : [
+		    "soa show zone=example.org",
+		    "soa set zone=example.org serial=2006081623 ttl=2D3H20S",
+		    "soa set zone=example.org serial=2006081624 expiry=1W retry=180",
+		],
 	    ],
 	    "dnsrecord" : $[
 		"handler" : DNSHandlerResourceRecords,
 		// TRANSLATORS: commandline short help for command, base cmdline command
 		"help" : _("Zone Resource Records such as A, CNAME, NS, MX or PTR"),
+		"example" : [
+		    "dnsrecord show",
+		    "dnsrecord show zone=example.org",
+		    "dnsrecord show zone=example.org type=A",
+		    "dnsrecord add zone=example.org query=office.example.org. type=NS value=ns3",
+		    "dnsrecord add zone=example.org query=ns3 type=CNAME value=server3.anywhere.net.",
+		    "dnsrecord remove zone=example.org query=office type=A value=192.168.32.1",
+		],
 	    ],
 	    "host" : $[
 		"handler" : DNSHandlerHostRecords,
 		// TRANSLATORS: commandline short help for command, base cmdline command
 		"help" : _("Handles 'A' and correspondent 'PTR' record at once"),
+		"example" : [
+		    "host show",
+		    "host show zone=example.org",
+		    "host add zone=master.com hostname=examplehost.example.org. ip=192.168.0.201",
+		    "host remove zone=master.com hostname=examplehost ip=192.168.0.201",
+		],
 	    ],
 	],
 	"options" : $[
