@@ -1389,6 +1389,7 @@ define void DdnsKeysRedraw () ``{
  */
 global define void DdnsKeysInit (string id) ``{
     current_tsig_keys = DnsTsigKeys::ListTSIGKeys ();
+    UI::ChangeWidget (`id (`k_new), `Value, "/etc");
     DdnsKeysRedraw ();
 }
 
@@ -1442,6 +1443,7 @@ Old keys will be removed. Continue?")))
 		"filename" : filename,
 	    ]);
 	});
+        UI::ChangeWidget (`id (`k_new), `Value, "/etc");
     }
     else if (event["ID"]:nil == `k_delete)
     {
@@ -1495,7 +1497,10 @@ Old keys will be removed. Continue?")))
 	// yes-no popup
 	if (! Popup::YesNo (_("The key will be created now. Continue?")))
 	    return nil;
-	SCR::Execute (.target.bash, sformat ("touch %1", filename));
+	SCR::Execute (.target.bash, sformat (
+	    "/usr/bin/genDDNSkey --force  -f %1 -n %2", filename, key));
+	UI::ChangeWidget (`id (`k_new), `Value, filename);
+	return DdnsKeysHandle (id, $["ID" : `k_add]);
     }
     DdnsKeysRedraw ();
     return nil;
