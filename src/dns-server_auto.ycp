@@ -70,6 +70,10 @@ else if (func == "Packages") {
 else if (func == "GetModified") {
     ret = DnsServer::WasModified();
 }
+else if (func == "SetModified") {
+    DnsServer::SetModified();
+    ret = true;
+}
 /* Read current state */
 else if (func == "Read") {
     import "Progress";
