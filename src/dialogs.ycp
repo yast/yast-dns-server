@@ -202,12 +202,12 @@ global define symbol runSoaDialog () ``{
 global define symbol runSlaveStubZoneDialog (symbol type) ``{
     y2milestone ("Running slave/stub zone editation dialog: %1", type);
 
-    list<string> w = [ "zone_name", "slave_table" ];
+    list<string> w = [ "zone_name", "zone_masters" ];
     term contents = `HBox (`HSpacing (1), `VBox (
 	`VSpacing (1),
 	`HBox (`HSpacing (2), "zone_name", `HSpacing (2)),
 	`VSpacing (1),
-	"slave_table",
+	`HBox (`HSpacing (2), "zone_masters", `HSpacing (2)),
 	`VSpacing (1)
     ), `HSpacing (1));
     // dialog caption
@@ -257,6 +257,7 @@ define symbol runZoneTypeSwitch () ``{
 
 define symbol runZoneStore () ``{
     DnsServer::StoreCurrentZone (current_zone);
+    DnsServer::StoreZone ();
     return `next;
 }
 

@@ -200,7 +200,7 @@ sub ZoneRead {
 BEGIN { $TYPEINFO{ZoneFileUpdate} = ["function", "boolean", [ "map", "any", "any" ]];}
 sub ZoneFileUpdate {
     my %zone_map = %{$_[0]};
-    my @actions = @{$zone_map{"update_actions"}};
+    my @actions = @{$zone_map{"update_actions"} || []};
     foreach my $action (@actions) {
 	
 	# TODO perform the action
@@ -210,6 +210,8 @@ sub ZoneFileUpdate {
 BEGIN { $TYPEINFO{ZoneFileWrite} = ["function", "boolean", [ "map", "any", "any"]];}
 sub ZoneFileWrite {
     my %zone_map = %{$_[0]};
+
+print Dumper (\%zone_map);
 
     my $zone_file = $zone_map{"file"} || "";
     $zone_file = AbsoluteZoneFileName ($zone_file);
@@ -442,17 +444,10 @@ sub FindZone {
     return $found_index;
 }
 
-BEGIN { $TYPEINFO{RemoveZone} = ["function", "boolean", "string", "boolean"]; }
+BEGIN { $TYPEINFO{RemoveZone} = ["function", "boolean", "integer", "boolean"]; }
 sub RemoveZone {
-    my $zone_name = $_[0];
+    my $zone_index = $_[0];
     my $delete_file = $_[1];
-
-    my $zone_index = FindZone ($zone_name);
-    if ($zone_index == -1)
-    {
-	y2error ("Zone $zone_name not found");
-	return 0;
-    }
 
     if ($delete_file)
     {
@@ -513,6 +508,7 @@ sub SelectZone {
     {
 	%current_zone = %{$zones[$zone_index]};
     }
+    $current_zone_index = $zone_index;
 
     return $ret;
 }
@@ -585,7 +581,6 @@ sub FetchCurrentZone {
 BEGIN {$TYPEINFO{StoreCurrentZone} = [ "function", "boolean", ["map", "string", "any"] ]; }
 sub StoreCurrentZone {
     %current_zone = %{$_[0]};
-    SetModified ();
     return 1;
 }
 
@@ -677,6 +672,11 @@ sub Read {
 	$path_el = "\"$path_el\"";
 	my $zonetype = SCR::Read (".dns.named.value.$path_el.type");
 	my $filename = SCR::Read (".dns.named.value.$path_el.file");
+	if (! defined $filename)
+	{
+	    $filename = $zonetype eq "master" ? "master" : "slave";
+	    $filename = "$filename/$zonename";
+	}
 	if ($filename =~ /^\".*\"$/)
 	{
 	    $filename =~ s/^\"(.*)\"$/$1/;
@@ -688,7 +688,8 @@ sub Read {
 	}
 	elsif ($zonetype eq "slave" || $zonetype eq "stub")
 	{
-	    $zd{"masters"} = SCR::Read (".dns.named.value.$_.masters");
+	    $zd{"masters"} = SCR::Read (".dns.named.value.$path_el.masters")
+		|| "";
 	    if ($zd{"masters"} =~ /\{.*;\}/)
 	    {
 		$zd{"masters"} =~ s/\{(.*);\}/$1/
