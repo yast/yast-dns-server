@@ -20,6 +20,52 @@ import "DnsFakeTabs";
 import "DnsRoutines";
 import "ProductFeatures";
 
+string ToRelativeName (string absolute_name, string zone_name) {
+    if (absolute_name == nil || zone_name == nil) {
+	return nil;
+    }
+
+    string remove_this_to_be_relative = "." + zone_name + ".";
+    string relative_name = regexpsub(absolute_name, "(.*)" + remove_this_to_be_relative, "\\1");
+    if ((relative_name != nil) && (! regexpmatch(relative_name, "\\."))) {
+	return relative_name;
+    }
+
+    return absolute_name;
+}
+
+boolean HandleNsupdate (map update_record, string operation) {
+    if (! regexpmatch(operation,"^\(add\|delete\)$")) {
+	y2error("allowed operation is 'add' or 'remove', not %1", operation);
+	return false;
+    }
+    if (update_record["type"]:"" == "" || update_record["key"]:"" == "") {
+	y2error("$[key:?] and $[type:?] is not defined");
+	return false;
+    }
+
+    string _current_zone_ = "." + current_zone["zone"]:"" + ".";
+
+    // relative hostnames are converted to absolute
+    if (regexpmatch(tolower(update_record["type"]:""),"^\(a\|ns\|mx\|cname\)$")) {
+	if (regexpmatch (update_record["key"]:"", ".*[^.]$"))
+	    update_record["key"] = update_record["key"]:"" + _current_zone_;
+    }
+    if (regexpmatch(tolower(update_record["type"]:""),"^\(ns\|mx\|cname\)$")) {
+	if (regexpmatch (update_record["value"]:"", ".*[^.]$"))
+	    update_record["value"] = update_record["value"]:"" + _current_zone_;
+    }
+
+    current_zone["update_actions"] = add (current_zone["update_actions"]:[], $[
+	"operation"	: operation,
+	"type"		: update_record["type"]:"",
+	"key"		: update_record["key"]:"",
+	"value"		: update_record["value"]:"",
+    ]);
+
+    return true;
+}
+
 /**
  * Dialog Tab - Zone Editor - Basics
  * @return term for Get_ZoneEditorTab()
@@ -315,6 +361,7 @@ void StoreNsListTab () {
  */
 symbol HandleNsListTab (map event) {
     any ret = event["ID"]:nil;
+
     if (ret == "add_ns")
     {
 	string new_ns = (string)
@@ -331,7 +378,7 @@ symbol HandleNsListTab (map event) {
 	    Popup::Error (Hostname::ValidDomain ());
 	    return nil;
 	}
-	string zn = current_zone["zone"]:"";
+	// absolute hostname
 	if (regexpmatch (new_ns, "\\..*[^.]$"))
 	{
 	    new_ns = new_ns + ".";
@@ -344,6 +391,9 @@ symbol HandleNsListTab (map event) {
 	    return nil;
 	}
 
+	string zn = current_zone["zone"]:"" + ".";
+	HandleNsupdate($["type":"NS", "key":zn, "value":new_ns],"add");
+
 	current_zone_ns = add (current_zone_ns, new_ns);
 	RedrawNsListWidget ();
     }
@@ -354,6 +404,9 @@ symbol HandleNsListTab (map event) {
 	current_zone_ns
 	    = filter (string ns, current_zone_ns, ``(ns != selected));
 	RedrawNsListWidget ();
+
+	string zn = current_zone["zone"]:"" + ".";
+	HandleNsupdate($["type":"NS", "key":zn, "value":selected],"delete");
     }
     return nil;
 }
@@ -474,11 +527,19 @@ void StoreMxListTab () {
  */
 symbol HandleMxListTab (map event) {
     any ret = event["ID"]:nil;
+
     if (ret == "add_mx")
     {
 	string new_mx = (string)
 	    UI::QueryWidget (`id ("add_mail_server"), `Value);
 	integer prio = (integer)UI::QueryWidget (`id ("add_priority"), `Value);
+	// maximal priority is 65535
+	if (prio > 65535) {
+	    prio = 65535;
+	    UI::ChangeWidget (`id ("add_priority"), `Value, 65535);
+	}
+
+	string zn = current_zone["zone"]:"" + ".";
 
 	string check_mx = new_mx;
 	if (regexpmatch (check_mx, "^.*\\.$"))
@@ -493,9 +554,10 @@ symbol HandleMxListTab (map event) {
 	    return nil;
 	}
 
-	string zn = current_zone["zone"]:"";
+	// absolute hostname
 	if (regexpmatch (new_mx, "\\..*[^.]$"))
 	    new_mx = new_mx + ".";
+	// relative hostname
 
 	list<string> mx_list_check = filter (string mx, current_zone_mx, {
 	    list<string> split = splitstring (mx, " \t");
@@ -511,18 +573,26 @@ symbol HandleMxListTab (map event) {
 	    return nil;
 	}
 
+	new_mx = sformat ("%1 %2", prio, new_mx);
+	
+	HandleNsupdate($["type":"MX", "key":zn, "value":new_mx],"add");
+
 	current_zone_mx
-	    = add (current_zone_mx, sformat ("%1 %2", prio, new_mx));
+	    = add (current_zone_mx, new_mx);
 	RedrawMxListWidget ();
     }
     else if (ret == "delete_mx")
     {
 	integer selected = (integer)
 	    UI::QueryWidget (`id ("mail_server_list"), `CurrentItem);
+	string selected_value = current_zone_mx[selected]:"";
 	current_zone_mx[selected] = nil;
 	current_zone_mx
 	    = filter (string mx, current_zone_mx, ``(mx != nil));
 	RedrawMxListWidget ();
+	
+	string zn = current_zone["zone"]:"" + ".";
+	HandleNsupdate($["type":"MX", "key":zn, "value":selected_value],"delete");
     }
     return nil;
 }
@@ -556,7 +626,7 @@ term GetMasterZoneEditorTabSOASettings () {
 			`VSpacing ( 1 ),
 			`HBox (
 			    // Textentry - setting TTL for zone
-			    `IntField ( `id ( "zone_settings_ttl" ), `opt ( `hstretch ), _("TT&L"), 0, 9999999, 0 ),
+			    `IntField ( `id ( "zone_settings_ttl_value" ), `opt ( `hstretch ), _("TT&L"), 0, 9999999, 0 ),
 			    `ComboBox ( `id ( "zone_settings_ttl_units" ), _("&Unit"), dns_units )
 			),
 			`VStretch ()
@@ -614,7 +684,7 @@ void InitSoaTab () {
     UI::ChangeWidget (`id ("zone_settings_serial"), `Value,
 	current_zone["soa", "serial"]:"");
 
-    UI::ChangeWidget (`id ("zone_settings_ttl"), `Value, tointeger (
+    UI::ChangeWidget (`id ("zone_settings_ttl_value"), `Value, tointeger (
 	filterchars (sformat ("%1", current_zone["ttl"]:(any)""),
 	"0123456789")));
     UI::ChangeWidget (`id ("zone_settings_refresh_value"), `Value, tointeger (
@@ -644,7 +714,10 @@ void InitSoaTab () {
  * Store settings of a tab of a dialog
  */
 void StoreSoaTab () {
-    current_zone["ttl"] = UI::QueryWidget (`id ("zone_settings_ttl"), `Value);
+    current_zone["ttl"] = sformat ("%1%2",
+	UI::QueryWidget (`id ("zone_settings_ttl_value"), `Value),
+	UI::QueryWidget (`id ("zone_settings_ttl_units"), `Value));
+
     current_zone["soa"] = current_zone["soa"]:$[];
     current_zone["soa", "serial"]
 	= UI::QueryWidget (`id ("zone_settings_serial"), `Value);
@@ -660,6 +733,21 @@ void StoreSoaTab () {
     current_zone["soa", "minimum"] = sformat ("%1%2",
 	UI::QueryWidget (`id ("zone_settings_minimum_value"), `Value),
 	UI::QueryWidget (`id ("zone_settings_minimum_units"), `Value));
+
+    string zn = current_zone["zone"]:"" + ".";
+    current_zone["update_actions"] = add(current_zone["update_actions"]:[], $[
+	"operation"	: "add",
+	"type"		: "SOA",
+	"key"		: zn,
+	"value"		: (string)
+	    current_zone["soa", "server"]:"."		+ " " +
+	    current_zone["soa", "mail"]:"root."		+ " " +
+	    current_zone["soa", "serial"]:"1111111111"	+ " " +
+	    current_zone["soa", "refresh"]:"3h"		+ " " +
+	    current_zone["soa", "retry"]:"1h"		+ " " +
+	    current_zone["soa", "expiry"]:"1w"		+ " " +
+	    current_zone["soa", "minimum"]:"1d"		+ " ",
+    ]);
 }
 
 /**
@@ -808,9 +896,9 @@ void RedrawZonesTable () {
     list items = maplist (integer r, ret, {
 	return `item (
 	    `id (r),
-	    current_zone["records", r, "key"]:"",
+	    ToRelativeName(current_zone["records", r, "key"]:"", zone_name),
 	    current_zone["records", r, "type"]:"",
-	    current_zone["records", r, "value"]:""
+	    ToRelativeName(current_zone["records", r, "value"]:"", zone_name)
 	);
     });
     integer r = (integer)
@@ -824,11 +912,11 @@ void RedrawZonesTable () {
 	r = (integer)
 	    UI::QueryWidget (`id ("records_list"), `CurrentItem );
 	UI::ChangeWidget (`id ("add_record_name"), `Value,
-	    current_zone["records", r, "key"]:"");
+	    ToRelativeName(current_zone["records", r, "key"]:"", zone_name));
 	UI::ChangeWidget (`id ("add_record_type"), `Value,
 	    current_zone["records", r, "type"]:"");
 	UI::ChangeWidget (`id ("add_record_val"), `Value,
-	    current_zone["records", r, "value"]:"");
+	    ToRelativeName(current_zone["records", r, "value"]:"", zone_name));
     }
 }
 
@@ -1005,11 +1093,11 @@ symbol HandleZoneRecordsTab (map event) {
     if (ret == "records_list")
     {
 	UI::ChangeWidget (`id ("add_record_name"), `Value,
-	    current_zone["records", r, "key"]:"");
+	    ToRelativeName(current_zone["records", r, "key"]:"", current_zone["zone"]:""));
 	UI::ChangeWidget (`id ("add_record_type"), `Value,
 	    current_zone["records", r, "type"]:"");
 	UI::ChangeWidget (`id ("add_record_val"), `Value,
-	    current_zone["records", r, "value"]:"");
+	    ToRelativeName(current_zone["records", r, "value"]:"", current_zone["zone"]:""));
     }
     else if (ret == "change_record")
     {
@@ -1038,6 +1126,14 @@ symbol HandleZoneRecordsTab (map event) {
 		{
 		    val = "0 " + val;
 		}
+		else
+		{
+		    integer prio = tointeger( regexpsub (val, "^[ \t]*([0-9]+)[ \t]+[^ \t].*$", "\\1") );
+		    if (prio > 65535) {
+			val = "65535 " + regexpsub (val, "^[ \t]*[0-9]+[ \t]+([^ \t].*)$", "\\1");
+			y2milestone("MX Priority decrased to maximal 65535 from %1", prio);
+		    }
+		}
 	    }
 	    if (tolower (type) == "ns" || tolower (type) == "mx"
 		|| tolower (type) == "cname")
@@ -1049,10 +1145,14 @@ symbol HandleZoneRecordsTab (map event) {
 		key = key + ".";
 	}
 
+	HandleNsupdate(current_zone["records", r]:$[],"delete");
+
 	current_zone["records", r, "key"] = key;
 	current_zone["records", r, "type"] = type;
 	current_zone["records", r, "value"] = val;
 	RedrawZonesTable ();
+
+	HandleNsupdate(current_zone["records", r]:$[],"add");
     }
     else if (ret == "add_record")
     {
@@ -1081,6 +1181,14 @@ symbol HandleZoneRecordsTab (map event) {
 		{
 		    val = "0 " + val;
 		}
+		else
+		{
+		    integer prio = tointeger( regexpsub (val, "^[ \t]*([0-9]+)[ \t]+[^ \t].*$", "\\1") );
+		    if (prio > 65535) {
+			val = "65535 " + regexpsub (val, "^[ \t]*[0-9]+[ \t]+([^ \t].*)$", "\\1");
+			y2milestone("MX Priority decrased to maximal 65535 from %1", prio);
+		    }
+		}
 	    }
 	    if (tolower (type) == "ns" || tolower (type) == "mx"
 		|| tolower (type) == "cname")
@@ -1099,9 +1207,13 @@ symbol HandleZoneRecordsTab (map event) {
 	];
 	current_zone["records"] = add (current_zone["records"]:[], rec);
 	RedrawZonesTable ();
+
+	HandleNsupdate(rec,"add");
     }
     else if (ret == "delete_record")
     {
+	HandleNsupdate(current_zone["records", r]:$[],"delete");
+
 	current_zone["records", r] = nil;
 	current_zone["records"] = filter (any r, current_zone["records"]:[], ``(
 	    r != nil

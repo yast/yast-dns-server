@@ -169,6 +169,12 @@ sub ZoneWrite {
     };
 
     my @tsig_keys = ();
+    
+    # dynamic update needs zone with at least one NS defined
+    my $this_zone_had_NS_record_at_start = 0;
+    if (defined $zone_map{"this_zone_had_NS_record_at_start"}) {
+	$this_zone_had_NS_record_at_start = $zone_map{"this_zone_had_NS_record_at_start"};
+    }
 
     foreach my $o (@{$zone_map{"options"}}) {
 	my $key = $o->{"key"};
@@ -189,12 +195,17 @@ sub ZoneWrite {
 	{
 	    DnsZones->ZoneFileWriteLdap (\%zone_map);
 	}
-	elsif (@tsig_keys == 0 || ! $allow_update)
+	# normal file-write - if has_no_keys or is_new or not-dynamically-updated or had not any NS when editing started
+	elsif (@tsig_keys == 0 || $zone_map{"is_new"} || ! $allow_update || ! $this_zone_had_NS_record_at_start)
 	{
+	    if ($allow_update && ! $this_zone_had_NS_record_at_start) {
+		y2milestone("Zone $zone_name has no NS records defined yet now, dynamic updated would not work!");
+	    }
 	    DnsZones->ZoneFileWrite (\%zone_map);
 	}
 	else
 	{
+	# dynamic updates, needs at least one NS server
 	    y2milestone ("Updating zone $zone_name dynamically");
 	    if ($zone_map{"soa_modified"})
 	    {
@@ -1214,7 +1225,7 @@ sub Write {
 
     if (0 != @zones_update_actions)
     {
-	if ($ret->{"exit"} != 0)
+	if ($ret != 0)
 	{
 	    $ok = 0;
 	}
@@ -1730,7 +1741,7 @@ sub LdapStore {
     my $self = shift;
 
     my $reload_script = SCR->Read (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS") || "";
-    my @reload_scripts = split / /, $reload_script;
+    my @reload_scripts = split / /, ((defined $reload_script) ? $reload_script:"");
 
     if ($use_ldap)
     {
@@ -1761,7 +1772,7 @@ sub EnsureNamedConfIncludeIsRecreated {
 #    }
 
     my $reload_script = SCR->Read (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS") || "";
-    my @reload_scripts = split / /, $reload_script;
+    my @reload_scripts = split / /, ((defined $reload_script) ? $reload_script:"");
 
     my $already_present
 	= scalar (grep (/createNamedConfInclude/, @reload_scripts)) > 0;

@@ -3,6 +3,7 @@
 # Package:      Configuration of DNS Server
 # Summary:      Input and output functions for DNS zones
 # Authors:      Jiri Srain <jsrain@suse.cz>
+#		Lukas Ocilka <locilka@suse.cz>
 #
 # $Id$
 #
@@ -16,6 +17,7 @@ use ycp;
 use YaST::YCP qw(Boolean);
 use Data::Dumper;
 use Time::localtime;
+use DnsRoutines;
 
 use YaPI;
 textdomain("dns-server");
@@ -157,7 +159,7 @@ sub UpdateSOA {
 	# new zone file
 	$rz_ref = {
 	    "soa" => $self->GetDefaultSOA (),
-	    "TTL" => "2D",
+	    "TTL" => "172800",
 	};
     }
     my %soa = %{$rz_ref->{"soa"} || {}};
@@ -185,7 +187,7 @@ sub ZoneRead {
     my %soa = %{$zonemap{"soa"} || {}};
     my %ret = (
 	"zone" => $zone,
-	"ttl" => $zonemap{"TTL"} || "2D",
+	"ttl" => $zonemap{"TTL"} || "172800",
 	"soa" => \%soa,
     );
     my @original_records = @{$zonemap{"records"} || []};
@@ -196,6 +198,11 @@ sub ZoneRead {
     my $previous_key = "$zone.";
 
     my @records = ();
+
+    # used for ddns updated (needs ns record)
+    my $zone_has_ns_record = 0;
+    my $search_for_record_key = $zone.".";
+
     foreach my $r (@original_records) {
 	my %r = %{$r};
 	my $key = $r{"key"} || "";
@@ -215,6 +222,13 @@ sub ZoneRead {
 	    "type" => $type,
 	    "value" => $value,
 	};
+
+	# dynamic update needs zone with at least one NS defined
+	if ((uc($type) eq "NS") && ($key =~ /$search_for_record_key$/ || $key eq "") && ($value)) {
+	    $zone_has_ns_record = 1;
+	}
+	
+	$ret{"this_zone_had_NS_record_at_start"} = $zone_has_ns_record;
     }
 
     $ret{"records"} = \@records;
@@ -249,45 +263,105 @@ sub ZoneFileWrite {
     return SCR->Write (".dns.zone", [$zone_file, \%save]);
 }
 
+# This function is a light hack fo NSUPDATE.
+# It doesn't touch any commands which aren't add or delete NS record.
+# Tt also doesn't touch nsupdates which are editing NS records but are not-right
+# for the current zone name.
+# This light hack is here because nsupdate needs at least one NS record working for it's updates
+# and it would never delete the last record, even user would add another after the removing. So,
+# he would have two NS records - the last old one and the new one.
+BEGIN{$TYPEINFO{GetSortedUpdateCommands}=["function",["list",["map","any","any"]],[["list",["map","any","any"]],"string"]];}
+sub GetSortedUpdateCommands {
+    my $class = shift;
+    my @all_actions = @{+shift};
+    my $zone_name = shift;
+    my @actions = ();
+
+    # $NS_servers->{/server name/} = integer;
+    # (..-1) = remove, 0 = do nothing, (+1..) = add
+    my $NS_servers = {};
+    foreach my $command (@all_actions) {
+	if (uc($command->{"type"}) ne "NS") {
+	    # pushing all non NS commands
+	    push @actions, $command;
+	} else {
+	    my $command_for_zone = $command->{"key"};
+	    $command_for_zone =~ s/^[^\.]+\.(.*)\.$/$1/;
+	    if ($command_for_zone eq $zone_name) {
+		# pushing all NS records for another domain or subdomain
+		push @actions, $command;
+	    } else {
+		# all NS records for THIS domain for the later check
+		if (lc($command->{"operation"}) eq "add") {
+		    ++$NS_servers->{$command->{"value"}};
+		} else {			#  "delete"
+		    --$NS_servers->{$command->{"value"}};
+		}
+	    }
+	}
+    }
+
+    # at first adding, then removing
+    foreach my $one_server (sort {$NS_servers->{$b} <=> $NS_servers->{$a}} (keys %{$NS_servers})) {
+	if ($NS_servers->{$one_server} > 0) {
+	    push @actions, { "operation" => "add", "type" => "NS", "key" => $zone_name.".", "value" => $one_server };
+	} elsif ($NS_servers->{$one_server} < 0) {
+	    push @actions, { "operation" => "delete", "type" => "NS", "key" => $zone_name.".", "value" => $one_server };
+	}
+    }
+
+    return \@actions;
+}
+
 BEGIN{$TYPEINFO{UpdateZones}=["function",["list",["map","any","any"]]];}
 sub UpdateZones {
     my $self = shift;
     my @zone_descr = @{+shift};
 
-    y2milestone ("Updaging zones");
+    y2milestone ("Updating zones");
     my $ok = 1;
     foreach my $zone_descr (@zone_descr) {
 	my $zone_name = $zone_descr->{"zone"};
-	my $actions_ref = $zone_descr->{"actions"};
-	my @actions = @{$actions_ref};
+	my @actions = ();
+	# Undefined "actions" would kill the Perl!
+	if (defined $zone_descr->{"actions"}) {
+	    my $actions_ref = $zone_descr->{"actions"};
+	    @actions = @{$actions_ref};
+	}
 	my $tsig_key = $zone_descr->{"tsig_key"};
-	my $ttl = $zone_descr->{"ttl"} || "";
 	my $tsig_key_value = DnsTsigKeys->TSIGKeyName2TSIGKey ($tsig_key);
 
 	my @commands = (
 	    "server 127.0.0.1",
 	    "key $tsig_key $tsig_key_value",
 	);
+
+	my @static_actions;
+	foreach my $command (@actions) {
+	    if (substr ($command->{"key"}, length ($command->{"key"}) -1, 1) ne ".") {
+		$command->{"key"} .= ".".$zone_name;
+	    }
+	    if (substr ($command->{"key"}, length ($command->{"key"}) -1, 1) ne ".") {
+		$command->{"key"} .= ".";
+	    }
+	    push @static_actions, $command;
+	}
+
+	@static_actions = @{$self->GetSortedUpdateCommands(\@static_actions,$zone_name)};
+
 	my @uc = map {
 	    my $a = $_;
 	    my $operation = $a->{"operation"};
 	    my $type = $a->{"type"};
 	    my $key = $a->{"key"};
 	    my $value = $a->{"value"};
+	    my $ttl = $zone_descr->{"ttl"} || "172800";
 	    if ($operation ne "add")
 	    {
 		$ttl = "";
 	    }
-	    if (substr ($key, length ($key) -1, 1) ne ".")
-	    {
-		$key = "$key.$zone_name";
-	    }
-	    if (substr ($key, length ($key) -1, 1) ne ".")
-	    {
-		$key = "$key.";
-	    }
-	    "update $operation $key $ttl $type $value";
-	} @actions;
+	    "update $operation $key ".($ttl ? DnsRoutines->NormalizeTime($ttl):"")." $type $value";
+	} @static_actions;
 	push @commands, @uc;
 	push @commands, "";
 	push @commands, "";

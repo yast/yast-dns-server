@@ -128,8 +128,11 @@ while ( <STDIN> )
 		ycp::Return (undef);
 		next;
 	    }
+	    my $current_origin = ".";
+	    my $previous_key = "";
 	    while ( $line = <IN> )
 	    {
+
 		if ($line =~ /^\$TTL[ \t]*[0-9]+[A-Za-z]*.*$/) # TTL record
 		{
 		    ($ttl) = $line =~ m/^\$TTL[ \t]*([0-9]+[A-Za-z]*).*$/;
@@ -146,8 +149,9 @@ while ( <STDIN> )
 			push (@records, \%rec);
 		    }
 		}
-		elsif ($line =~ /^\$ORIGIN[ \t]+([^ \t]+)[ \t]*$/) # ORIGIN rec.
+		elsif ($line =~ /^\$ORIGIN[ \t]+([^ \t\n]+)[ \t\n]*$/) # ORIGIN rec.
 		{
+		    $current_origin = $1;
 		    $origin = $1;
 		    if (! defined ($data{"ORIGIN"}))
 		    {
@@ -193,6 +197,23 @@ while ( <STDIN> )
 		    my %rec = ();
 		    my $in = "";
 		    ($rec{"key"}, $in, $rec{"type"}, $rec{"value"}) = $line =~ /^([^ \t]*)[ \t]*[0-9]*[ \t]*(IN)?[ \t]*([A-Za-z]+)[ \t]*([^;\n]+).*$/;
+
+		    # undefined key takes the key from the previous line
+		    if (!$rec{"key"}) {
+			$rec{"key"} = $previous_key;
+		    } else {
+		    # defined key sets the "previous_key" for the next line
+			$previous_key = $rec{"key"};
+		    }
+		    
+		    # creating absolute names from name and origin
+		    #  apply only other origins     not-finishing with dot      for named types
+		    if (($current_origin ne ".") && ($rec{"value"} !~ /\.$/) && ($rec{"type"} =~ /^(ns|mx|cname)$/i)) {
+			$rec{"value"} = $rec{"value"}.".".$current_origin;
+		    }
+		    if (($current_origin ne ".") && ($rec{"key"} !~ /\.$/) && ($rec{"type"} =~ /^(cname|a|ptr)$/i)) {
+			$rec{"key"} = $rec{"key"}.".".$current_origin;
+		    }
 
 		    if ($line =~ /^[^;]*;.*$/)
 		    {
