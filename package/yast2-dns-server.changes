@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Fri Feb  4 09:48:46 CET 2005 - locilka@suse.cz
+
+- added informative comments for translators where were missing
+
+-------------------------------------------------------------------
 Mon Jan 24 09:22:21 CET 2005 - locilka@suse.cz
 
 - fixed testsuite (new PamSettings)
