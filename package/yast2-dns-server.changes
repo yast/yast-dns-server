@@ -2,6 +2,9 @@
 Tue Mar 30 09:33:02 CEST 2004 - jsrain@suse.de
 
 - fixed deleting of DNS zones (zones weren't deleted)
+- fixed editing of multiple zones within one run of the module
+  (the later edited replaced settings of the previously edited)
+  (#37268)
 
 -------------------------------------------------------------------
 Mon Mar 29 10:53:32 CEST 2004 - jsrain@suse.de

@@ -336,14 +336,16 @@ sub StoreZone {
     my $self = shift;
 
     $current_zone{"modified"} = 1;
+    my %tmp_current_zone = %current_zone;
     if ($current_zone_index == -1)
     {
-	push (@zones, \%current_zone);
+	push (@zones, \%tmp_current_zone);
     }
     else
     {
-	$zones[$current_zone_index] = \%current_zone;
+	$zones[$current_zone_index] = \%tmp_current_zone;
     }
+
     return Boolean(1);
 }
 
@@ -423,6 +425,7 @@ sub SelectZone {
 	%current_zone = %{$zones[$zone_index]};
     }
     $current_zone_index = $zone_index;
+    y2milestone ("Selected zone with index $current_zone_index");
 
     return $ret;
 }
