@@ -45,14 +45,7 @@
 	    ]
 	];
 
-	// dialog caption
-	string caption = _("DNS Server Configuration");
-	// label
-	term contents = `Label(_("Initializing ..."));
-
 	Wizard::CreateDialog();
-	Wizard::SetContentsButtons(caption, contents, "",
-	    Label::BackButton(), Label::NextButton());
 
 	any ret = WizardSequencer(aliases, sequence);
 
