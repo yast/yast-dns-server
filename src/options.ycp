@@ -9,11 +9,47 @@
 
 {
 
-    textdomain "dns-server";
+textdomain "dns-server";
 
-    import "Label";
-    import "CWM";
-    import "DnsServer";
+import "Label";
+import "CWM";
+import "DnsServer";
+
+// global table fallback handlers
+
+/**
+ * Fallback initialization function of a table entry / popup
+ * @param opt_id any option id
+ * @param opt_key any option key
+ */
+global define void globalPopupInit (any opt_id, string opt_key) ``{
+    integer oid = (integer)opt_id;
+    UI::ChangeWidget (`id (opt_key), `Value,
+	current_section[oid, "value"]:"");
+    UI::SetFocus (`id (opt_key));
+}
+
+/**
+ * Fallback store function of a table entry / popup
+ * @param opt_id any option id
+ * @param opt_key any option key
+ */
+global define void globalPopupStore (any opt_id, string opt_key) ``{
+    integer oid = (integer)opt_id;
+    current_section[oid, "value"] = UI::QueryWidget (`id (opt_key), `Value);
+    DnsServer::SetModified ();
+}
+
+/**
+ * Fallback summary function of a table entry / popup
+ * @param opt_id any option id
+ * @param opt_key any option key
+ * @return string table entry summary
+ */
+global define string globalTableEntrySummary (any opt_id, string opt_key)``{
+    integer oid = (integer)opt_id;
+    return sformat ("%1", current_section[oid, "value"]:"");
+}
 
     /**
       * Ask for type of new record to the zone file
@@ -53,251 +89,73 @@
 	return nil;
     }
 
-    /**
-      * A record editation popup
-      * @param orig map original A record
-      * @return map updated A record or nil if canceled
-      */
-    global define map editA (map orig) ``{
-	term t = `HBox (`HSpacing (1), `VBox (
-	    // heading
-	    `Heading (_("Edit the DNS Zone Record")),
-	    `HSpacing (50),
-	    `VSpacing (1),
-	    // text entry
-	    `TextEntry (`id (`name), _("&Host name")),
-	    `VSpacing (2),
-	    // text entry
-	    `TextEntry (`id (`ip), _("&IP Addresses")),
-	    `VSpacing (1),
-	    // text entry
-	    `TextEntry (`id (`mx), _("&Mail Servers")),
-	    `VSpacing (1),
-	    CWM::OkCancelBox (),
-	    `VSpacing (1)
-	), `HSpacing (1));
-	UI::OpenDialog (t);
-	UI::ChangeWidget (`id (`name), `Value, orig["key"]:"");
-	UI::ChangeWidget (`id (`ip), `Value, mergestring (orig["A"]:[], ", "));
-	UI::ChangeWidget (`id (`mx), `Value, mergestring (orig["MX"]:[], ", "));
-	UI::SetFocus (`id (`name));
-	any ret = nil;
-	while (ret == nil)
-	{
-	    ret = UI::UserInput ();
-	}
-	if (ret == `_tp_ok)
-	{
-	    string addresses = (string)UI::QueryWidget (`id (`ip), `Value);
-	    list l = splitstring (addresses, ",");
-// FIXME	    l = maplist (`e, l, ``(DeQuote (e)));
-	    orig["A"] = l;
-	    string mx = (string)UI::QueryWidget (`id (`mx), `Value);
-	    l = splitstring (mx, ",");
-// FIXME	    l = maplist (`e, l, ``(DeQuote (e)));
-	    orig["MX"] = l;
-	    orig["key"] = UI::QueryWidget (`id (`name), `Value);
-	    UI::CloseDialog ();
-	    return orig;
-	}
-	UI::CloseDialog ();
-	return nil;
-    }
 
-    /**
-      * PTR record editation popup
-      * @param orig map original PTR record
-      * @return map updated PTR record or nil if canceled
-      */
-    global define map editPTR (map orig) ``{
-	term t = `HBox (`HSpacing (1), `VBox (
-	    `Heading (_("Edit the DNS Zone Record")),
-	    `HSpacing (30),
-	    `VSpacing (1),
-	    // text entry
-	    `TextEntry (`id (`ip), _("&IP Address")),
-	    `VSpacing (1),
-	    // text entry
-	    `TextEntry (`id (`name), _("&Host name")),
-	    `VSpacing (1),
-	    CWM::OkCancelBox (),
-	    `VSpacing (1)
-	), `HSpacing (1));
-	UI::OpenDialog (t);
-	UI::ChangeWidget (`id (`ip), `Value, orig["key"]:"");
-	UI::ChangeWidget (`id (`name), `Value, orig["PTR", 0]:"");
-	UI::SetFocus (`id (`alias));
-	any ret = nil;
-	while (ret == nil)
-	{
-	    ret = UI::UserInput ();
-	}
-	if (ret == `_tp_ok)
-	{
-	    orig["key"] = UI::QueryWidget (`id (`ip), `Value);
-	    orig["PTR"] = [ UI::QueryWidget (`id (`name), `Value) ];
-	    UI::CloseDialog ();
-	    return orig;
-	}
-	UI::CloseDialog ();
-	return nil;
-    }
-
-    /**
-      * CNAME record editation popup
-      * @param orig map original CNAME record
-      * @return map updated CNAME record or nil if canceled
-      */
-    global define map editCNAME (map orig) ``{
-	term t = `HBox (`HSpacing (1), `VBox (
-	    // heading
-	    `Heading (_("Edit the DNS Zone Record")),
-	    `HSpacing (30),
-	    `VSpacing (1),
-	    // text entry
-	    `TextEntry (`id (`alias), _("&Alias")),
-	    `VSpacing (1),
-	    // text entry
-	    `TextEntry (`id (`name), _("&Base Host Name")),
-	    `VSpacing (1),
-	    CWM::OkCancelBox (),
-	    `VSpacing (1)
-	), `HSpacing (1));
-	UI::OpenDialog (t);
-	UI::ChangeWidget (`id (`alias), `Value, orig["key"]:"");
-	UI::ChangeWidget (`id (`name), `Value, orig["CNAME", 0]:"");
-	UI::SetFocus (`id (`alias));
-	any ret = nil;
-	while (ret == nil)
-	{
-	    ret = UI::UserInput ();
-	}
-	if (ret == `_tp_ok)
-	{
-	    orig["key"] = UI::QueryWidget (`id (`alias), `Value);
-	    orig["CNAME"] = [ UI::QueryWidget (`id (`name), `Value) ];
-	    UI::CloseDialog ();
-	    return orig;
-	}
-	UI::CloseDialog ();
-	return nil;
-    }
-
-
-// global table fallback handlers
-
-
-    /**
-      * Fallback initialization function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void globalPopupInit (any opt_id, string opt_key) ``{
-	integer oid = (integer)opt_id;
-	UI::ChangeWidget (`id (oid), `Value,
-	    current_section[oid, "value"]:"");
-	UI::SetFocus (`id (opt_key));
-    }
-
-    /**
-      * Fallback store function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void globalPopupStore (any opt_id, string opt_key) ``{
-	integer oid = (integer)opt_id;
-	current_section[oid, "value"] = UI::QueryWidget (`id (opt_key), `Value);
-	DnsServer::SetModified ();
-    }
-
-    /**
-      * Fallback summary function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      * @return string table entry summary
-      */
-    global define string globalTableEntrySummary (any opt_id, string opt_key)``{
-	integer oid = (integer)opt_id;
-	return sformat ("%1", current_section[oid, "value"]:"");
-	return "";
-    }
 
 // master domain table fallback handlers
 
-    /**
-      * Fallback initialization function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void masterPopupInit (any opt_id, string opt_key) ``{
-	UI::SetFocus (`id (opt_key));
-	if (substring (opt_key, 0, 2) == "__")
-	{
-	    return;
-	}
-	else if (substring (opt_key, 0, 1) == "_")
-	{
-// FIXME
-//	    UI::ChangeWidget (`id (opt_key), `Value,
-//		current_zone[substring (opt_key, 1)]:"");
-	    return;
-	}
-    }
+/**
+ * Fallback initialization function of a table entry / popup
+ * @param opt_id any option id
+ * @param opt_key any option key
+ */
+global define void masterPopupInit (any opt_id, string opt_key) ``{
+    integer index = (integer)opt_id;
+    string key = current_zone["records", index, "key"]:"";
+    string value = current_zone["records", index, "value"]:"";
+    UI::ChangeWidget (`key, `Value, key);
+    UI::ChangeWidget (`value, `Value, value);
+    UI::SetFocus (`key);
+}
 
-    /**
-      * Fallback store function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      */
-    global define void masterPopupStore (any opt_id, string opt_key) ``{
-	if (substring (opt_key, 0, 2) == "__")
-	{
-	    return;
-	}
-	else if (substring (opt_key, 0, 1) == "_")
-	{
-	    return;
-// FIXME
-//	    current_zone[substring (opt_key, 1)]
-//		= UI::QueryWidget (`id (opt_key), `Value);
-//	    return;
-	}
-// FIXME
-//        settings["options", opt_key] = UI::QueryWidget (`id (opt_key), `Value);
+/**
+ * Fallback store function of a table entry / popup
+ * @param opt_id any option id
+ * @param opt_key any option key
+ */
+global define void masterPopupStore (any opt_id, string opt_key) ``{
+    integer index = (integer)opt_id;
+    string key = (string)UI::QueryWidget (`key, `Value);
+    string value = (string)UI::QueryWidget (`value, `Value);
+    if (index != nil)
+    {
+	current_zone["records", index, "value"] = value;
+	current_zone["records", index, "key"] = key;
     }
-
-     /**
-      * Fallback summary function of a table entry / popup
-      * @param opt_id any option id
-      * @param opt_key any option key
-      * @return string table entry summary
-      */
-   global define string masterTableEntrySummary (any opt_id, string opt_key) ``{
-	if (substring (opt_key, 0, 2) == "__")
-	{
-	    return "";
-	}
-	else if (substring (opt_key, 0, 1) == "_")
-	{
-	    return "";
-// FIXME	    return sformat ("%1", current_zone[substring (opt_key, 1)]:"");
-	}
-/* FIXME	map host = current_zone["records", opt_key]:$[];
-	if (host["A"]:[] != [])
-	    // table entry, %1 is IP address
-	    return sformat (_("Host %1"),
-		mergestring (host["A"]:[], ", "));
-	else if (host["CNAME"]:[] != [])
-	    // table entry, %1 is host name
-	    return sformat (_("Alias for %1"), host["CNAME", 0]:"");
-	else if (host["PTR"]:[] != [])
-	    // table entry, %1 is host name
-	    return sformat (_("Pointer to %1"), host["PTR", 0]:"");
-	else
-	    // table entry
-	    return _("Unknown record type");*/
+    else
+    {
+	map new_rec = $[
+	    "key" : key,
+	    "value" : value,
+	    "type" : opt_key,
+	];
+	current_zone["records"] = add (current_zone["records"]:[], new_rec);
     }
+}
 
+/**
+ * Fallback summary function of a table entry / popup
+ * @param opt_id any option id
+ * @param opt_key any option key
+ * @return string table entry summary
+ */
+global define string masterTableEntrySummary (any opt_id, string opt_key)``{
+    integer index = (integer)opt_id;
+    string addr = current_zone["records", index, "value"]:"A";
+    // %1 is usually an IP address
+    return sformat (_("Unknown record type: %1"), addr);
+}
+
+/**
+ * Fallback function for determining the first column of the table
+ * in order not to depend on the option key
+ * @param opt_id any option id
+ * @param opt_key any option key
+ * @return string the table entry
+ */
+global define string masterTableLabelFunc (any opt_id, string opt_key) ``{
+    integer index = (integer)opt_id;
+    return current_zone["records", index, "key"]:"";
+}
 
 
 // adapt firewall
@@ -522,12 +380,7 @@
     }
 
 
-    /**
-      * Initialize all poups
-      * @return map description of all popups/options
-      */
-    global define map InitPopups () ``{
-	map ns_mx_popup = $[
+/*	map ns_mx_popup = $[
 	    "widget" : `custom,
 //	    "init" : ``(DnsServer::NsMxInit ()),
 //	    "handle" : ``(DnsServer::NsMxHandle ()),
@@ -561,10 +414,10 @@
 		)
 	    ),
 	];
+*/
 
-
-	return $[
-/*	    "_NS" : $[
+/*	return $[
+	    "_NS" : $[
 		"table" : $[
 		    // table cell, label
 		    "label" : _("Domain Name Servers"),
@@ -619,8 +472,230 @@
 		    "init" : ``(DnsServer::SaveAllInit ()),
 		    "store" : ``(DnsServer::SaveAllStore ()),
 		],
-	    ],*/
+	    ],
 	];
+    }*/
+
+
+// A popup
+
+global define string ASummary (any opt_id, string key) ``{
+    integer index = (integer)opt_id;
+    string addr = current_zone["records", index, "value"]:"A";
+    // table entry, %1 is IP address
+    return sformat (_("Host %1"), addr);
+}
+
+define map getAPopup () ``{
+    return $[
+	"table" : $[
+	    "summary" : ASummary,
+	    // combo box item
+	    "label" : _("Domain Name Translation"),
+	],
+	"popup" : $[
+	    "widget" : `custom,
+	    "custom_widget" :`HBox (`HSpacing (1), `VBox (
+		`HSpacing (50),
+		// text entry
+		`TextEntry (`id (`key), _("&Host name")),
+		`VSpacing (2),
+		// text entry
+		`TextEntry (`id (`value), _("&IP Addresses")),
+		`VSpacing (1)
+	    ), `HSpacing (1)),
+	],
+    ];
+}
+
+
+// CNAME popup
+
+global define string CNAMESummary (any opt_id, string key) ``{
+    integer index = (integer)opt_id;
+    string addr = current_zone["records", index, "value"]:"A";
+    // table entry, %1 is host name
+    return sformat (_("Alias for %1"), addr);
+}
+
+define map getCNAMEPopup () {
+    return $[
+	"table" : $[
+	    "summary" : CNAMESummary,
+	    // combo box item
+	    "label" : _("Alias for Domain Name"),
+	],
+	"popup" : $[
+	    "widget" : `custom,
+	    "custom_widget" : `HBox (`HSpacing (1), `VBox (
+		`HSpacing (30),
+		// text entry
+		`TextEntry (`id (`alias), _("&Alias")),
+		`VSpacing (1),
+		// text entry
+		`TextEntry (`id (`name), _("&Base Host Name")),
+		`VSpacing (1)
+	    ), `HSpacing (1)),
+	],
+    ];
+}
+
+
+// PTR popup
+
+global define string PTRSummary (any opt_id, string key) ``{
+    integer index = (integer)opt_id;
+    string addr = current_zone["records", index, "value"]:"A";
+    // table entry, %1 is host name
+    return sformat (_("Pointer to %1"), addr);
+}
+
+define map getPTRPopup () ``{
+    return $[
+	"table" : $[
+	    "summary" : PTRSummary,
+	    // combo box item
+	    "label" : _("Reverse translation"),
+	],
+	"popup" : $[
+	    "widget" : `custom,
+	    "custom_widget" : `HBox (`HSpacing (1), `VBox (
+		`HSpacing (30),
+		// text entry
+		`TextEntry (`id (`key), _("&IP Address")),
+		`VSpacing (1),
+		// text entry
+		`TextEntry (`id (`value), _("&Host name")),
+		`VSpacing (1)
+	    ), `HSpacing (1)),
+	],
+    ];
+}
+
+
+
+global define string NSSummary (any opt_id, string key) ``{
+    integer index = (integer)opt_id;
+    string addr = current_zone["records", index, "value"]:"A";
+    // table entry, %1 is host name
+    return sformat (_("Name Server %1"), addr);
+}
+
+define map getNSPopup () ``{
+    return $[
+	"table" : $[
+	    "summary" : NSSummary,
+	    // combo box item
+	    "label" : _("Name Server"),
+	],
+	"popup" : $[
+	    "widget" : `custom,
+	    "custom_widget" : `HBox (`HSpacing (1), `VBox (
+		`HSpacing (30),
+		// text entry
+		`TextEntry (`id (`alias), _("&Domain")),
+		`VSpacing (1),
+		// text entry
+		`TextEntry (`id (`name), _("&Name server")),
+		`VSpacing (1)
+	    ), `HSpacing (1)),
+	],
+    ];
+}
+
+global define string MXSummary (any opt_id, string key) ``{
+    integer index = (integer)opt_id;
+    string addr = current_zone["records", index, "value"]:"A";
+    list<string> l = splitstring (addr, " ");
+    l = filter (string s, l, ``(s != ""));
+    string prio = l[0]:"";
+    l[0] = "";
+    l = filter (string s, l, ``(s != ""));
+    addr = mergestring (l, " ");
+    // table entry, %1 is host name, %2 is integer
+    return sformat (_("Mail Relay %1, priority %2"), addr, prio);
+}
+
+global define void MXInit (any opt_id, string key) ``{
+    integer index = (integer)opt_id;
+    string key = current_zone["records", index, "key"]:"";
+    string value = current_zone["records", index, "value"]:"";
+    list<string> l = splitstring (value, " ");
+    l = filter (string s, l, ``(s != ""));
+    string prio = l[0]:"";
+    l[0] = "";
+    l = filter (string s, l, ``(s != ""));
+    value = mergestring (l, " ");
+    UI::ChangeWidget (`key, `Value, key);
+    UI::ChangeWidget (`value, `Value, value);
+    UI::ChangeWidget (`prio, `Value, tointeger (prio));
+    UI::SetFocus (`key);
+}
+
+global define void MXStore (any opt_id, string opt_key) ``{
+    integer index = (integer)opt_id;
+    string key = (string)UI::QueryWidget (`key, `Value);
+    string value = (string)UI::QueryWidget (`value, `Value);
+    integer prio = (integer)UI::QueryWidget (`prio, `Value);
+    value = sformat ("%1 %2", prio, value);
+    if (index != nil)
+    {
+	current_zone["records", index, "value"] = value;
+	current_zone["records", index, "key"] = key;
     }
+    else
+    {
+	map new_rec = $[
+	    "key" : key,
+	    "value" : value,
+	    "type" : opt_key,
+	];
+	current_zone["records"] = add (current_zone["records"]:[], new_rec);
+    }
+}
+
+define map getMXPopup () ``{
+    return $[
+	"table" : $[
+	    "summary" : MXSummary,
+	    "init" : MXInit,
+	    "store" : MXStore,
+	    // combo box item
+	    "label" : _("Mail Relay"),
+	],
+	"popup" : $[
+	    "widget" : `custom,
+	    "custom_widget" : `HBox (`HSpacing (1), `VBox (
+		`HSpacing (30),
+		// text entry
+		`TextEntry (`id (`alias), _("&Domain Name")),
+		`VSpacing (1),
+		// text entry
+		`TextEntry (`id (`name), _("&Mail Relay")),
+		`VSpacing (1),
+		// int field
+		`IntField (`id (`prio), _("&Priority")),
+		`VSpacing (1)
+	    ), `HSpacing (1)),
+	],
+    ];
+}
+
+/**
+ * Initialize all poups
+ * @return map description of all popups/options
+ */
+global define map InitPopups () ``{
+    return $[
+	"A" : getAPopup (),
+	"CNAME" : getCNAMEPopup (),
+	"PTR" : getPTRPopup (),
+	"NS" : getNSPopup (),
+	"MX" : getMXPopup (),
+
+    ];
+}
+
+// EOF
 
 }

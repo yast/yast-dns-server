@@ -65,46 +65,45 @@ All changes will be lost."));
     global define symbol WriteDialog() ``{
 	Wizard::RestoreHelp (HELPS["write"]:"");
 	boolean ret = DnsServer::Write();
-//	if (! ret && cfg_restart_wanted)
-//	    return `back;
+	// yes-no popup
+	if (! ret && Popup::YesNo (_("Saving the configuration failed. Change the settings?")))
+	    return `back;
 	return ret ? `next : `abort;
     }
 
-    /**
-      * Run main dialog
-      * @return symbol for wizard sequencer
-      */
-    global define symbol runMainDialog () ``{
-	y2milestone ("Running main dialog");
+/**
+ * Run main dialog
+ * @return symbol for wizard sequencer
+ */
+global define symbol runMainDialog () ``{
+    y2milestone ("Running main dialog");
 
-	list<map> w = CWM::CreateWidgets (["start", "chroot", "zones", "advanced_mbutton", "log_button"],
-	    DnsServerUI::widgets);
-	term contents = `HBox (`HSpacing (1), `VBox (
-	    `VSpacing (1),
-	    `Left ("start"),
-	    `VSpacing (1),
-	    `Left ("chroot"),
-	    `VSpacing (1),
-	    "zones",
-	    `VSpacing (1),
-	    "log_button",
-	    `VSpacing (1)
-	), `HSpacing (1));
+    list<map> w = CWM::CreateWidgets (["start", "chroot", "zones", "advanced_mbutton", "log_button"],
+	DnsServerUI::widgets);
+    term contents = `HBox (`HSpacing (1), `VBox (
+	`VSpacing (1),
+	`Left ("start"),
+	`VSpacing (1),
+	`Left ("chroot"),
+	`VSpacing (1),
+	"zones",
+	`VSpacing (1)
+    ), `HSpacing (1));
 
-	// dialog caption
-	string caption = _("DNS Server Configuration");
+    // dialog caption
+    string caption = _("DNS Server Configuration");
 
-	string help = CWM::MergeHelps (w);
-	contents = CWM::PrepareDialog (contents, w);
-	Wizard::SetContentsButtons (caption, contents, help,
-	    Label::BackButton (), Label::FinishButton ());
-	Wizard::ReplaceBackButton(`VSpacing (0));
-	Wizard::ReplaceAbortButton (
-	    `PushButton (`id (`abort), Label::CancelButton ()));
+    string help = CWM::MergeHelps (w);
+    contents = CWM::PrepareDialog (contents, w);
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::FinishButton ());
+    Wizard::ReplaceBackButton(`VSpacing (0));
+    Wizard::ReplaceAbortButton (
+	`PushButton (`id (`abort), Label::CancelButton ()));
 
-	return CWM::Run (w,
-	     $[`abort : ReallyExit ]);
-    }
+    return CWM::Run (w,
+	$[`abort : ReallyExit ]);
+}
 
 define symbol runGlobalOptionsDialog () ``{
     y2milestone ("Running global options dialog");
@@ -151,94 +150,76 @@ define symbol runNewZoneDialog () ``{
 	$[`abort : ReallyAbortAlways]);
 }
 
-    /**
-      * Run list of zones dialog
-      * @return symbol for wizard sequencer
-      */
-    global define symbol runZonesDialog () ``{
-	term contents = `HBox (`HSpacing (1), `VBox (
-	    `VSpacing (1),
-	    "zones",
-	    `VSpacing (1)
-	), `HSpacing (1));
+/**
+ * Run master zone edit dialog
+ * @return symbol for wizard sequencer
+ */
+global define symbol runMasterZoneDialog () ``{
+    y2milestone ("Running master zone editation dialog");
+
+    list<string> w = [ "zone_name", "master_table", "soa_button" ];
+    term contents = `HBox (`HSpacing (1), `VBox (
+	`VSpacing (1),
+	`HBox (`HSpacing (2), "zone_name", `HSpacing (2)),
+	`VSpacing (1),
+	"master_table",
+	`VSpacing (1),
+	"soa_button"
+    ), `HSpacing (1));
+    // dialog caption
+    string caption = _("DNS Master Zone Configuration");
+
+    return CWM::ShowAndRun (w, DnsServerUI::widgets,
+	contents, caption, Label::BackButton (), Label::OKButton (),
+	$[`abort : ReallyAbortAlways]);
+}
+
+/**
+ * Run SOA record edit dialog
+ * @return symbol for wizard sequencer
+ */
+global define symbol runSoaDialog () ``{
+    y2milestone ("Running SOA editation dialog");
+
+    list<string> w = [ "soa" ];
+    term contents = `HBox (`HSpacing (1), `VBox (
+	`VSpacing (1),
+	"soa",
+	`VSpacing (1)
+    ), `HSpacing (1));
+    // dialog caption
+    string caption = _("SOA Record Configuration");
+
+    return CWM::ShowAndRun (w, DnsServerUI::widgets,
+	contents, caption, Label::BackButton (), Label::OKButton (),
+	$[`abort : ReallyAbortAlways]);
+}
+
+/**
+ * Run slave or stub zone edit dialog
+ * @return symbol for wizard sequencer
+ */
+global define symbol runSlaveStubZoneDialog (symbol type) ``{
+    y2milestone ("Running slave/stub zone editation dialog: %1", type);
+
+    list<string> w = [ "zone_name", "slave_table" ];
+    term contents = `HBox (`HSpacing (1), `VBox (
+	`VSpacing (1),
+	`HBox (`HSpacing (2), "zone_name", `HSpacing (2)),
+	`VSpacing (1),
+	"slave_table",
+	`VSpacing (1)
+    ), `HSpacing (1));
+    // dialog caption
+    string caption = _("DNS Slave Zone Configuration");
+    if (type == `stub)
 	// dialog caption
-	string caption = _("Zones Configuration");
+	caption = _("DNS Stub Zone Configuration");
 
-	return CWM::ShowAndRun (["zones"], DnsServerUI::widgets,
-	    contents, caption, Label::BackButton (), Label::OKButton (),
-	     $[`abort : ReallyAbort]);
-    }
-
-    /**
-      * Run master zone edit dialog
-      * @return symbol for wizard sequencer
-      */
-    global define symbol runMasterZoneDialog () ``{
-	y2milestone ("Running master zone editation dialog");
-
-	list<string> w = [ "zone_name", "master_table", "soa_button" ];
-	term contents = `HBox (`HSpacing (1), `VBox (
-	    `VSpacing (1),
-	    `HBox (`HSpacing (2), "zone_name", `HSpacing (2)),
-	    `VSpacing (1),
-	    "master_table",
-	    `VSpacing (1),
-	    "soa_button"
-	), `HSpacing (1));
-	// dialog caption
-	string caption = _("DNS Master Zone Configuration");
-
-	return CWM::ShowAndRun (w, DnsServerUI::widgets,
-	    contents, caption, Label::BackButton (), Label::OKButton (),
-	     $[`abort : ReallyAbortAlways]);
-    }
-
-    /**
-      * Run master zone edit dialog
-      * @return symbol for wizard sequencer
-      */
-    global define symbol runSoaDialog () ``{
-	y2milestone ("Running SOA editation dialog");
-
-	list<string> w = [ "soa" ];
-	term contents = `HBox (`HSpacing (1), `VBox (
-	    `VSpacing (1),
-	    "soa",
-	    `VSpacing (1)
-	), `HSpacing (1));
-	// dialog caption
-	string caption = _("SOA Record Configuration");
-
-	return CWM::ShowAndRun (w, DnsServerUI::widgets,
-	    contents, caption, Label::BackButton (), Label::OKButton (),
-	     $[`abort : ReallyAbortAlways]);
-    }
-
-    /**
-      * Run slave or stub zone edit dialog
-      * @return symbol for wizard sequencer
-      */
-    global define symbol runSlaveStubZoneDialog (symbol type) ``{
-	y2milestone ("Running slave/stub zone editation dialog: %1", type);
-
-	list<string> w = [ "zone_name", "slave_table" ];
-	term contents = `HBox (`HSpacing (1), `VBox (
-	    `VSpacing (1),
-	    `HBox (`HSpacing (2), "zone_name", `HSpacing (2)),
-	    `VSpacing (1),
-	    "slave_table",
-	    `VSpacing (1)
-	), `HSpacing (1));
-	// dialog caption
-	string caption = _("DNS Slave Zone Configuration");
-	if (type == `stub)
-	    // dialog caption
-	    caption = _("DNS Stub Zone Configuration");
-
-	return CWM::ShowAndRun (w, DnsServerUI::widgets,
-	    contents, caption, Label::BackButton (), Label::OKButton (),
-	     $[`abort : ReallyAbortAlways]);
-    }
+    return CWM::ShowAndRun (w, DnsServerUI::widgets,
+	contents, caption, Label::BackButton (), Label::OKButton (),
+	$[`abort : ReallyAbortAlways]);
+}
 
 /**
  * Run slave zone edit dialog
