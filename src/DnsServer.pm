@@ -1745,7 +1745,8 @@ sub LdapPrepareToWrite {
     Ldap->SetGUI(YaST::YCP::Boolean(0)); 
     if(! Ldap->CheckBaseConfig($ldap_config_dn))
     { 
-	Ldap->SetGUI(YaST::YCP::Boolean(1)); 
+	Ldap->SetGUI(YaST::YCP::Boolean(1));
+	# TRANSLATORS: Popup error message, %1 is an LDAP object whose creation failed
 	Report->Error (sformat (__("Error occurred while creating %1."),
 	    $ldap_config_dn));
     } 

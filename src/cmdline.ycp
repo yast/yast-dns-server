@@ -48,12 +48,16 @@
     boolean DNSHandlerStartup (map options) {
 	// both cannot be together
 	if (options["atboot"]:nil!=nil && options["manual"]:nil!=nil) {
+	    // TRANSLATORS: commandline section header
 	    ScreenWizard(_("Start-Up Settings"), "");
+	    // TRANSLATORS: commandline error message
 	    CommandLine::Error(_("Only one parameter is allowed"));
 	// start at boot
 	} else if (options["atboot"]:nil!=nil) {
 	    ScreenWizard(
+		// TRANSLATORS: commandline section header
 		_("Start-Up Settings"),
+		// TRANSLATORS: commandline progress information
 		_("Enabling DNS-Server at the boot process")
 	    );
 	    DnsServer::SetStartService(true);
@@ -61,7 +65,9 @@
 	// start manually
 	} else if (options["manual"]:nil!=nil) {
 	    ScreenWizard(
+		// TRANSLATORS: commandline section header
 		_("Start-Up Settings"),
+		// TRANSLATORS: commandline progress information
 		_("Removing DNS-Server from the boot process")
 	    );
 	    DnsServer::SetStartService(false);
@@ -70,10 +76,13 @@
 	} else if (options["show"]:nil!=nil) {
 	    string content = "";
 	    if (DnsServer::GetStartService()) {
+		// TRANSLATORS: commandline DNS service status information
 		content = _("DNS Server is enabled at the boot process");
 	    } else {
+		// TRANSLATORS: commandline DNS service status information
 		content = _("DNS Server needs manual starting");
 	    }
+	    // TRANSLATORS: commandline section header
 	    ScreenWizard(_("Start-Up Settings"), content);
 	    return false;
 	}
@@ -151,11 +160,14 @@
 		table_items = add (table_items, [ip]);
 	    });
 	    ScreenWizard(
+		// TRANSLATORS: commandline section header
 		_("Forwarders Settings"),
+		// TRANSLATORS: commandline table header item
 		String::TextTable([_("Forwarder IP")], table_items, $[])
 	    );
 	    return false;
 	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
+	    // TRANSLATORS: commandline error message
 	    CommandLine::Error(_("Only one action parameter is allowed"));
 	} else if (options["add"]:nil!=nil) {
 	    string ip = (string) options["ip"]:"";
@@ -340,22 +352,29 @@
 	string log_type = GetLogType();
 	if (log_type=="syslog") {
 	    table_items = add (table_items, [
+		// TRANSLATORS: commandline table item
 		_("Logging destination"),
+		// TRANSLATORS: commandline table item
 		_("System Log")
 	    ]);
 	} else if (log_type=="file") {
 	    table_items = add (table_items, [
+		// TRANSLATORS: commandline table item
 		_("Logging destination"),
+		// TRANSLATORS: commandline table item
 		_("File")
 	    ]);
 	    map <string, string> file_settings = GetLogFile();
 	    table_items = add (table_items, [
+		// TRANSLATORS: commandline table item
 		_("File name"), file_settings["file"]:""
 	    ]);
 	    table_items = add (table_items, [
+		// TRANSLATORS: commandline table item
 		_("Maximal size"), file_settings["size"]:""
 	    ]);
 	    table_items = add (table_items, [
+		// TRANSLATORS: commandline table item
 		_("Maximum versions"), file_settings["versions"]:""
 	    ]);
 	}
@@ -364,20 +383,26 @@
 	// $[ "queries" : "no", "updates" : "no", "transfers" : "no" ]
 	list <list <string> > tabadds_items = [];
 	tabadds_items = add (tabadds_items, [
+	    // TRANSLATORS: commandline table item
 	    _("Log named queries"), logadds["queries"]:""
 	]);
 	tabadds_items = add (tabadds_items, [
+	    // TRANSLATORS: commandline table item
 	    _("Log zone updates"), logadds["updates"]:""
 	]);
 	tabadds_items = add (tabadds_items, [
+	    // TRANSLATORS: commandline table item
 	    _("Log zone transfers"), logadds["transfers"]:""
 	]);
 
 	ScreenWizard(
+	    // TRANSLATORS: commandline section header
 	    _("Logging settings"),
 	    String::TextTable(
 	        [
+		    // TRANSLATORS: commandline table header item
 		    _("Setting"),
+		    // TRANSLATORS: commandline table header item
 		    _("Value")
 		],
 		table_items,
@@ -386,7 +411,9 @@
 	    + "\n\n" +
 	    String::TextTable(
 		[
+		    // TRANSLATORS: commandline table header item
 		    _("Logging Rule"),
+		    // TRANSLATORS: commandline table header item
 		    _("Value")
 		],
 		tabadds_items,
@@ -430,62 +457,77 @@
 
     map cmdline = $[
 	"id" : "dns-server",
+	// TRANSLATORS: commandline general name of the module in help
 	"help" : _("DNS Server Configuration"),
 	"initialize" : DnsServer::Read,
 	"finish" : DnsServer::Write,
 	"actions" : $[
 	    "startup" : $[
 		"handler" : DNSHandlerStartup,
+		
 		"help" : _("Start-up settings"),
-		"example" : "startup show; startup atboot; startup manual",
+		"example" : [ "startup show", "startup atboot; startup manual" ],
 	    ],
 	    "forwarders" : $[
 		"handler" : DNSHandlerForwarders,
+		// TRANSLATORS: commandline short help for command
 		"help" : _("DNS forwarders"),
-		"example" : "forwarders show; forwarders add ip=125.11.235.1; forwarders remove ip=44.82.1.12",
+		"example" : [ "forwarders show", "forwarders add ip=125.11.235.1", "forwarders remove ip=44.82.1.12" ],
 	    ],
 	    "logging" : $[
 		"handler" : DNSHandlerLogging,
+		// TRANSLATORS: commandline short help for command
 		"help" : _("Logging settings"),
 	    ],
 	],
 	"options" : $[
 	    "show" : $[
+		// TRANSLATORS: commandline short help for command
 		"help" : _("Show current settings"),
 	    ],
 	    "atboot" : $[
+		// TRANSLATORS: commandline short help for command
 		"help" : _("Start DNS-Server at the boot process"),
 	    ],
 	    "manual" : $[
+		// TRANSLATORS: commandline short help for command
 		"help" : _("Start DNS-Server manually"),
 	    ],
 	    "add" : $[
+		// TRANSLATORS: commandline short help for command
 		"help" : _("Add a new record"),
 	    ],
 	    "remove" : $[
+		// TRANSLATORS: commandline short help for command
 		"help" : _("Remove a record"),
 	    ],
 	    "ip" : $[
 		"type" : "ip4",
+		// TRANSLATORS: commandline short help for command
 		"help" : _("IPv4 address"),
 	    ],
 	    "destination" : $[
 		"type" : "string",
+		// TRANSLATORS: commandline short help for command
 		"help" : _("Logging destination (syslog|file)"),
 	    ],
 	    "set" : $[
+		// TRANSLATORS: commandline short help for command
 		"help" : _("Set option"),
 	    ],
 	    "file" : $[
 		"type" : "string",
+		// TRANSLATORS: commandline short help for command
 		"help" : _("File name for logging (full path)"),
 	    ],
 	    "maxsize" : $[
 		"type" : "string",
+		// TRANSLATORS: commandline short help for command
 		"help" : _("Maximal log size [0-9]+(KMG)*"),
 	    ],
 	    "maxversions" : $[
 		"type" : "string",
+		// TRANSLATORS: commandline short help for command
 		"help" : _("Maximum of versions for rotation, '0' means no rotation"),
 	    ],
 	],
