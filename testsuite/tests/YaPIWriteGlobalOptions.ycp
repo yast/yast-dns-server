@@ -1,4 +1,18 @@
+/**
+ * File:	YaPIWriteGlobalOptions.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Testsuite for writting global options for dns-server
+ * Authors:	Jiri Srain <jsrain@suse.cz>, Lukas Ocilka <locilka@suse.cz>
+ * Copyright:	Copyright 2004, Novell, Inc.  All rights reserved.
+ *
+ * $Id$
+ *
+ * Testsuite for writting global options for dns-server
+ */
+
 {
+    // testedfiles: DnsServer.pm DNSD.pm
+
     include "testsuite.ycp";
 
     import "YaPI::DNSD";
