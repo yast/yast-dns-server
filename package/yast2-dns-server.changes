@@ -8,6 +8,7 @@ Thu Feb 24 08:31:34 CET 2005 - locilka@suse.cz
 - added Perldoc documentation for DnsServerAPI module
 - fixed syntax of YCP, importing modules, <p></p> in helps and
   shortcuts
+- 2.11.6
 
 -------------------------------------------------------------------
 Mon Feb 21 10:40:13 CET 2005 - locilka@suse.cz
