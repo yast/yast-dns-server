@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Mar 10 10:09:33 CET 2004 - jsrain@suse.de
+
+- added missing import (#35519)
+- added more resistency against missign configuration files
+
+-------------------------------------------------------------------
 Wed Mar 10 02:08:34 CET 2004 - sh@suse.de
 
 - V 2.9.8
