@@ -23,10 +23,10 @@
     /**
       * Handle function of the log button
       * @param key any key of the widget
-      * @param event any event that occured
+      * @param event map event that occured
       * @return value for wizard sequencer, always nil
       */
-    global define any showLogPopup (any key, any event) ``{
+    global define any showLogPopup (any key, map event) ``{
 	LogView::Display ($[
 	    "file" : "/var/log/messages",
 	    "grep" : "named",
@@ -75,10 +75,10 @@
     /**
       * Store function of a widget
       * @param widget any widget key of widget that is processed
-      * @param event any event that occured
+      * @param event map event that occured
       */
-    global define void globalTableStore (any widget, any event) ``{
-	if (event == `zones)
+    global define void globalTableStore (any widget, map event) ``{
+	if (event["ID"]:nil == `zones)
 	{
 	    all_zones = eval (settings["zones"]:[]);
 	    zones_modified = false;
@@ -149,10 +149,10 @@
 
     /**
       * Store function of a widget
-      * @param key any widget key of widget that is processed
-      * @param event any event that occured
+      * @param key map widget key of widget that is processed
+      * @param event map event that occured
       */
-    global define void zonesStore (any key, any event) ``{
+    global define void zonesStore (any key, map event) ``{
 	settings["zones"] = all_zones;
 	if (zones_modified)
 	    modified = true;
@@ -161,15 +161,15 @@
     /**
       * Handle function of a widget
       * @param key any widget key of widget that is processed
-      * @param event any event that occured
+      * @param event map event that occured
       * @return symbol symbol for WS or nil
       */
-    global define symbol zonesHandle (any key, any event) ``{
+    global define symbol zonesHandle (any key, map event) ``{
 	UI::SetFocus (`id (`zones));
 	integer current = UI::QueryWidget (`id (`zones), `CurrentItem);
-        if (event == `add || event == `edit)
+        if (event["ID"]:nil == `add || event["ID"]:nil == `edit)
         {
-            if (event == `add)
+            if (event["ID"]:nil == `add)
             {
 		string zone_type = askForZoneType ();
                 current_zone = createNewZone (zone_type);
@@ -198,7 +198,7 @@
 	    }
             return `edit;
         }
-        else if (event == `delete)
+        else if (event["ID"]:nil == `delete)
         {
             current_list = filter (`k, `v, current_list, ``(k != current));
             zonesInit ();
@@ -272,10 +272,10 @@
     /**
       * Store function of a widget
       * @param widget any widget key of widget that is processed
-      * @param event any event that occured
+      * @param event map event that occured
       */
-    global define void masterTableStore (any widget, any event) ``{
-        if (event == `next)
+    global define void masterTableStore (any widget, map event) ``{
+        if (event["ID"]:nil == `next)
 	{
 	    current_zone["changed"] = true;
 	    zones_modified = true;
@@ -289,18 +289,19 @@
     /**
       * Handle function of a widget
       * @param widget any widget key of widget that is processed
-      * @param event any event that occured
+      * @param event map event that occured
       * @return symbol for wizard sequencer or nil
       */
-    global define symbol masterTableHandle (any widget, any event) ``{
+    global define symbol masterTableHandle (any widget, map event) ``{
 	string current = UI::QueryWidget (`id (`_tp_table), `CurrentItem);
-	if ((event == `_tp_add)
-	    || (event == `_tp_edit && substring (current, 0, 1) != "_"))
+	if ((event["ID"]:nil == `_tp_add)
+	    || (event["ID"]:nil == `_tp_edit
+		&& substring (current, 0, 1) != "_"))
 	{
 	    map host = $[];
 	    map ret = nil;
 	    symbol type = nil;
-	    if (event == `_tp_add)
+	    if (event["ID"]:nil == `_tp_add)
 	    {
 		current = "";
 		string zone = current_zone["zone"]:"";
@@ -352,7 +353,7 @@
 	    CWM::TableInit (DnsServer::widgets["master_table"]:$[], widget);
 	    return nil;
 	}
-	else if (event == `_tp_delete)
+	else if (event["ID"]:nil == `_tp_delete)
 	{
 	    current_zone["records"]
 		= remove (current_zone["records"]:$[], current);
