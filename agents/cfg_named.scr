@@ -12,5 +12,5 @@
 .sysconfig.named
 
 `ag_ini(
-    SysConfigFile("/etc/sysconfig/named")
+    `SysConfigFile("/etc/sysconfig/named")
 )
