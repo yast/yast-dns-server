@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Aug  6 11:19:16 CEST 2004 - locilka@suse.cz
+
+- added "open port in firewall" support
+- adapted for new CWM widgets
+- 2.10.2
+
+-------------------------------------------------------------------
 Wed Aug  4 16:50:19 CEST 2004 - locilka@suse.de
 
 - added expert/simple functionality
