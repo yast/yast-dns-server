@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Mon Feb 21 10:40:13 CET 2005 - locilka@suse.cz
+
+- added global functional DnsServerAPI Perl module
+- added full commandline support
+
+-------------------------------------------------------------------
+Thu Feb 17 13:10:46 CET 2005 - locilka@suse.cz
+
+- Zone-Agent has been learned to understand all types of DNS time.
+  Such as 1W44M, 11h33S, 86399...
+
+-------------------------------------------------------------------
 Thu Feb 10 10:01:08 CET 2005 - locilka@suse.cz
 
 - merged proofed texts

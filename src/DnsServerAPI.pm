@@ -21,7 +21,7 @@ use strict;
 use YaPI;
 textdomain("dns-server");
 
-use YaST::YCP qw( sformat );
+use YaST::YCP qw( sformat y2milestone );
 YaST::YCP::Import ("DnsServer");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("Progress");
@@ -52,7 +52,7 @@ my $OPTIONS = {
 # Function returns list of strings created from BIND option '{ ... }';
 # '{ a; b; c; }' -> ['a', 'b', 'c']
 sub GetListFromRecord {
-    my $record = shift;
+    my $record = shift || '';
     $record =~ s/(^[\t ]*\{[\t ]*|[\t ]*\}[\t ]*$)//g;
     $record =~ s/( +|;$)//g;
 
@@ -93,7 +93,8 @@ sub CheckIPv4 {
     my $ipv4  = shift || '';
 
     if (!IP->Check4($ipv4)) {
-	# TRANSLATORS: Popup error message during parameters validation, %1 is a string which is needed to be an IPv4
+	# TRANSLATORS: Popup error message during parameters validation,
+	#   %1 is a string which is needed to be an IPv4
 	Report->Error(sformat(__("String '%1' is not valid IPv4 address."), $ipv4)."\n\n".IP->Valid4());
 	return 0;
     }
@@ -116,7 +117,8 @@ sub CheckZone {
 	return 1 if ($zone eq $known_zone);
     }
     
-    # TRANSLATORS: Popup error message, Trying to get information from zone which doesn't exist, %1 is the zone name
+    # TRANSLATORS: Popup error message, Trying to get information from zone which doesn't exist,
+    #   %1 is the zone name
     Report->Error(sformat(__("DNS zone '%1' does not exist."), $zone));
     return 0;
 }
@@ -132,7 +134,8 @@ sub CheckZoneType {
     }
 
     if ($type !~ /^(master|slave)$/) {
-	# TRANSLATORS: Popup error message, Calling function with unsupported DNZ zone type, %1 is the zone type
+	# TRANSLATORS: Popup error message, Calling function with unsupported DNZ zone type,
+	#   %1 is the zone type
 	Report->Error(sformat(__("Zone type '%1' is not supported."), $type));
 	return 0;
     }
@@ -155,7 +158,8 @@ sub CheckTransportACL {
 	return 1 if ($acl eq $known_acl);
     }
 
-    # TRANSLATORS:  Popup error message, Calling function with unknown ACL, %1 is the ACL's name
+    # TRANSLATORS:  Popup error message, Calling function with unknown ACL,
+    #   %1 is the ACL's name
     Report->Error(sformat(__("ACL named '%1' does not exist."), $acl));
     return 0;
 }
@@ -166,7 +170,7 @@ sub CheckHostname {
 
     if (!$hostname) {
 	# TRANSLATORS:  Popup error message, Calling function with undefined parameter
-	Report->Error(__("Hostname must be defined."));
+	Report->Error(__("Host name must be defined."));
 	return 0;
     }
 
@@ -178,13 +182,13 @@ sub CheckHostname {
 		return 1;
 	    } else {
 		# Popup error message, wrong FQDN format
-		Report->Error(__("Wrong format of fully qualified hostname."));
+		Report->Error(__("Wrong format of fully qualified host name."));
 		return 0;
 	    }
 	# DNS FQDN which doesn't finish with a dot!
 	} else {
 	    # Popup error message, FQDN hostname must finish with a dot
-	    Report->Error(__("Fully qualified hostname must be finished with a dot."));
+	    Report->Error(__("Fully qualified host name must be finished with a dot."));
 	    return 0;
 	}
     # Relative name
@@ -192,8 +196,9 @@ sub CheckHostname {
 	if (Hostname->Check($hostname)) {
 	    return 1;
 	} else {
-	    # TRANSLATORS: Popup error message, wrong hostname, allowed syntax is described two lines below using a pre-defined text
-	    Report->Error(__("Wrong format of hostname.")."\n\n".Hostname->ValidHost());
+	    # TRANSLATORS: Popup error message, wrong hostname, allowed syntax is described
+	    #   two lines below using a pre-defined text
+	    Report->Error(__("Wrong format of host name.")."\n\n".Hostname->ValidHost());
 	    return 0;
 	}
     }
@@ -215,13 +220,106 @@ sub CheckMXPriority {
 It must be a number between 0 and 65535 included."));
 	return 0;
     }
+
+    return 1;
+}
+
+sub CheckHostameInZone {
+    my $class    = shift;
+    my $hostname = shift || '';
+    my $zone     = shift || '';
+
+    # hostname is not relative
+    if ($hostname =~ /\.$/) {
+	# hostname does not end with the zone name (A, NS, MX ...)
+	# hostname is not the same as the zone (domain NS, domain MX...)
+	if ($hostname !~ /\.$zone\.$/ && $hostname !~ /^$zone\.$/) {
+	    # TRANSLATORS: Popup error message, Wrong hostname which should be part of the zone,
+	    #   %1 is the hostname, %2 is the zone name
+	    Report->Error(sformat(__("Host name '%1' is not part of the zone '%2'.
+
+Host name must be relative to the zone or must end with the zone name
+followed by a dot.
+Such as 'dhcp1' or 'dhcp1.example.org.' for the zone 'dhcp.org'."), $hostname, $zone));
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+sub CheckReverseIPv4 {
+    my $class  = shift;
+    my $reverseip = lc(shift) || '';
+
+    # 1 integer
+    if ($reverseip =~ /^(\d+)$/) {
+	return 1 if ($1>=0 && $1<256);
+    # 2 integers
+    } elsif ($reverseip =~ /^(\d+)\.(\d+).(\d+)$/) {
+	return 1 if ($1>=0 && $1<256 && $2>=0 && $2<256);
+    # 3 integers
+    } elsif ($reverseip =~ /^(\d+)\.(\d+).(\d+)$/) {
+	return 1 if ($1>=0 && $1<256 && $2>=0 && $2<256 && $3>=0 && $3<256);
+    # 4 integers
+    } elsif ($reverseip =~ /^(\d+)\.(\d+).(\d+).(\d+)$/) {
+	return 1 if ($1>=0 && $1<256 && $2>=0 && $2<256 && $3>=0 && $3<256 && $4>=0 && $4<256);
+    # full format
+    } elsif ($reverseip =~ /^(\d+)\.(\d+).(\d+).(\d+)\.in-addr\.arpa\.$/) {
+	return 1 if ($1>=0 && $1<256 && $2>=0 && $2<256 && $3>=0 && $3<256 && $4>=0 && $4<256);
+    }
+
+    # TRANSLATORS: Popup error message, Wrong reverse IPv4,
+    #   %1 is the reveresed IPv4
+    Report->Error(sformat(__("Wrong format of reverse IPv4 address '%1'.
+
+Valid reverse IPv4 consists of four integers in range 0-255
+separated by a dot followed by string '.in-addr.arpa.'.
+
+Such as '1.32.168.192.in-addr.arpa.' for '192.168.32.1' IPv4 address."), $reverseip));
+    return 0;
+}
+
+sub CheckHostnameRelativity {
+    my $class    = shift;
+    my $hostname = shift || '';
+    my $zone     = shift || '';
+
+    # ending with a dot - it isn't relative
+    if ($hostname =~ /\.$/) {
+	return 1;
+    }
+
+    if ($zone =~ /\.in-addr\.arpa$/) {
+	# TRANSLATORS: Popup error message, user can't use hostname %1 because it doesn't make
+	#   sense to e relative to zone %2 (%2 is a reverse zone name like '32.200.192.in-addr.arpa')
+	Report->Error(sformat(__("Relative host name '%1' cannot be used with zone '%2'.
+Use fully qualified host name finished with a dot instead.
+Such as 'host.example.org.'"), $hostname, $zone));
+	return 0;
+    }
+
+    return 1;
+}
+
+sub GetFullHostname {
+    my $class    = shift;
+    my $zone     = shift || '';
+    my $hostname = shift || '';
+
+    # record is realtive and is not IPv4
+    if ($hostname !~ /\.$/ && !IP->Check4($hostname)) {
+	$hostname .= '.'.$zone.'.';
+    }
+
+    return $hostname;
 }
 
 sub CheckResourceRecord {
     my $class  = shift;
-    my $record = shift;
+    my $record = shift || {};
 
-    foreach my $key ('type', 'key', 'value') {
+    foreach my $key ('type', 'key', 'value', 'zone') {
 	$record->{$key} = '' if (not defined $record->{$key});
     }
     $record->{'type'} = uc($record->{'type'});
@@ -232,25 +330,33 @@ sub CheckResourceRecord {
 
     if ($record->{'type'} eq 'A') {
 	return 0 if (!$class->CheckHostname($record->{'key'}));
+	return 0 if (!$class->CheckHostameInZone($record->{'key'},$record->{'zone'}));
 	return 0 if (!$class->CheckIPv4($record->{'value'}));
 	return 1;
     } elsif ($record->{'type'} eq 'CNAME') {
 	return 0 if (!$class->CheckHostname($record->{'key'}));
+	return 0 if (!$class->CheckHostameInZone($record->{'key'},$record->{'zone'}));
 	return 0 if (!$class->CheckHostname($record->{'value'}));
 	return 1;
     } elsif ($record->{'type'} eq 'PTR') {
-	return 0 if (!$class->CheckIPv4($record->{'key'}));
+	return 0 if (!$class->CheckReverseIPv4($record->{'key'}));
+	return 0 if (!$class->CheckHostameInZone($record->{'key'},$record->{'zone'}));
 	return 0 if (!$class->CheckHostname($record->{'value'}));
 	return 1;
     } elsif ($record->{'type'} eq 'NS') {
 	return 0 if (!$class->CheckHostname($record->{'key'}));
+	return 0 if (!$class->CheckHostameInZone($record->{'key'},$record->{'zone'}));
+	return 0 if (!$class->CheckHostnameRelativity($record->{'value'},$record->{'zone'}));
 	return 0 if (!$class->CheckHostname($record->{'value'}));
 	return 1;
     } elsif ($record->{'type'} eq 'MX') {
 	return 0 if (!$class->CheckHostname($record->{'key'}));
+	return 0 if (!$class->CheckHostameInZone($record->{'key'},$record->{'zone'}));
+	return 0 if (!$class->CheckHostnameRelativity($record->{'value'},$record->{'zone'}));
+	# format: 'priority server.name'
 	if ($record->{'value'} =~ /^[\t ]*([^\t ]+)[\t ]+(.*)$/) {
-	    return 0 if (!$class->CheckHostname($1));
-	    return 0 if (!$class->CheckMXPriority($2));
+	    return 0 if (!$class->CheckHostname($2));
+	    return 0 if (!$class->CheckMXPriority($1));
 	    return 1;
 	} else {
 	    # Popup error message, Checking MX (Mail eXchange) record format
@@ -264,12 +370,161 @@ Use 'priority server-name'."));
     return 1;
 }
 
+BEGIN{$TYPEINFO{TimeToSeconds} = ["function", "integer", "string"]};
+sub TimeToSeconds {
+    my $class        = shift;
+    my $originaltime = shift || '';
+
+    my $time      = $originaltime;
+    my $totaltime = 0;
+    while ($time =~ s/^(\d+)([WDHMS])//i) {
+	if ($2 eq 'W' || $2 eq 'w') {
+	    $totaltime += $1 * 604800;
+	} elsif ($2 eq 'D' || $2 eq 'd') {
+	    $totaltime += $1 * 86400;
+	} elsif ($2 eq 'H' || $2 eq 'h') {
+	    $totaltime += $1 * 3600;
+	} elsif ($2 eq 'M' || $2 eq 'm') {
+	    $totaltime += $1 * 60;
+	} elsif ($2 eq 'S' || $2 eq 's') {
+	    $totaltime += $1;
+	}
+    }
+    if ($time =~ s/^\d+$//) {
+	$totaltime += $time;
+    }
+    if ($time ne '') {
+	y2error("Wrong time format '".$originaltime."', unable to parse.");
+	return undef;
+    }
+
+    return $totaltime;
+}
+
+BEGIN{$TYPEINFO{SecondsToHighestTimeUnit} = ["function", "string", "integer"]};
+sub SecondsToHighestTimeUnit {
+    my $class   = shift;
+    my $seconds = shift || 0;
+
+    if ($seconds <= 0) {
+	return $seconds;
+    }
+
+    my $units = {
+	'W' => 604800,
+	'D' => 86400,
+	'H' => 3600,
+	'M' => 60,
+	'S' => 1,
+    };
+
+    foreach my $unit ('W', 'D', 'H', 'M', 'S') {
+	if ($seconds % $units->{$unit} == 0) {
+	    return (($seconds / $units->{$unit}).$unit);
+	}
+    }
+}
+
+sub CheckBINDTimeValue {
+    my $class = shift;
+    my $key   = shift || '';
+    my $time  = shift || '';
+
+    # translate bind time to seconds
+    $time = $class->TimeToSeconds($time) || do {
+	# undef returned
+	return 0 if ($time eq undef);
+    };
+
+    if ($key eq 'ttl') {
+	# RFC 2181
+	if ($time < 0 || $time > 2147483647) {
+	    # TRANSLATORS: Popup error message, Checking time value for specific SOA section (key),
+	    #   %1 is the section name, %2 is the minimal value, %3 si the maximal value of the section
+	    Report->Error(sformat(__("Wrong SOA record.
+Section '%1' must be in range from %2 to %3 seconds."), $key, 0, 2147483647));
+	    return 0;
+	}
+	return 1;
+    } elsif ($key eq 'minimum') {
+	# RFC 2308, BIND 9 specific
+	if ($time < 0 || $time > 10800) {
+	    # TRANSLATORS: Popup error message, Checking time value for specific SOA section (key),
+	    #   %1 is the section name, %2 is the minimal value, %3 si the maximal value of the section
+	    Report->Error(sformat(__("Wrong SOA record.
+Section '%1' must be in range from %2 to %3 seconds."), $key, 0, 10800));
+	    return 0;
+	}	
+    }
+}
+
+sub CheckBINDTimeFormat {
+    my $class = shift;
+    my $key   = shift || '';
+    my $time  = shift || '';
+
+    # must be defined (non-empty string)
+    if ($time ne '' && (
+	# number with suffix and combinations, case insensitive
+	$time =~ /^(\d+W)?(\d+D)?(\d+H)?(\d+M)?(\d+S)?$/i
+	||
+	# only number
+	$time =~ /^\d+$/
+    )) {
+	return 1;
+    }
+
+    # TRANSLATORS: Popup error message, Checking special BIND time format consisting of numbers
+    #   and defined suffies, also only number (as seconds) is allowed, %1 is a section name
+    #   like 'ttl' or 'refresh'
+    Report->Error(sformat(__("Wrong SOA record.
+    Section '%1' must be a BIND time type.
+BIND time type consists of numbers and case insensitive
+suffixes W, D, H, M and S. Time in seconds is allowed without suffix.
+Such as 12H15m, 86400 or 1W30M."), $key));
+    return 0;
+}
+
+sub CheckBINDTime {
+    my $class = shift;
+    my $key   = shift || '';
+    my $time  = shift || '';
+
+    return 0 if (!$class->CheckBINDTimeFormat($key,$time));
+    return 0 if (!$class->CheckBINDTimeValue ($key,$time));
+    return 1;
+}
+
+sub CheckSOARecord {
+    my $class = shift;
+    my $key   = shift || '';
+    my $value = shift || '';
+
+    # only number
+    if ($key eq 'serial') {
+	# 32 bit unsigned integer
+	my $max_serial = 4294967295;
+	if ($value !~ /^\d+$/ || $value > $max_serial) {
+	    # TRANSLATORS: Popup error message, Checking SOA record,
+	    #   %1 is a part of SOA, %2 is typically 0, %3 is some huge number
+	    Report->Error(sformat(__("Wrong SOA record.
+Section '%1' must be a number between %2 and %3 included."), 'serial', 0, $max_serial));
+	    return 0;
+	}
+	return 1;
+    # BIND time type
+    } else {
+	return 0 if (!$class->CheckBINDTime($key,$value));
+	return 1;
+    }
+}
+
 # Function returns quoted string by a double-quote >>"<<
 # 'A"b"Cd42' -> '"A\"b\"Cd42"'
 sub QuoteString {
     my $class = shift;
     
-    my $string = shift;
+    my $string = shift || '';
     my $quote  = '"';
 
     $string =~ s/\\/\\\\/g;
@@ -282,7 +537,7 @@ sub QuoteString {
 sub UnquoteString {
     my $class = shift;
     
-    my $string = shift;
+    my $string = shift || '';
     my $quote  = '"';
 
     $string =~ s/^$quote//;
@@ -327,6 +582,17 @@ sub Read {
     return $ret;
 }
 
+BEGIN{$TYPEINFO{Write} = ["function", "boolean"]};
+sub Write {
+    my $class = shift;
+    
+    my $progress_orig = Progress->set (0);
+    my $ret = DnsServer->Write ();
+    Progress->set ($progress_orig);
+
+    return $ret;
+}
+
 BEGIN{$TYPEINFO{GetForwarders} = ["function", ["list", "string"]]};
 sub GetForwarders {
     my $class = shift;
@@ -348,7 +614,7 @@ sub GetForwarders {
 BEGIN{$TYPEINFO{AddForwarder} = ["function", "boolean", "string"]};
 sub AddForwarder {
     my $class = shift;
-    my $new_one = shift;
+    my $new_one = shift || '';
 
     return 0 if (!$class->CheckIPv4($new_one));
 
@@ -378,7 +644,7 @@ sub AddForwarder {
 BEGIN{$TYPEINFO{RemoveForwarder} = ["function", "boolean", "string"]};
 sub RemoveForwarder {
     my $class = shift;
-    my $remove_this = shift;
+    my $remove_this = shift || '';
 
     my $forwarders = $class->GetForwarders();
     if (grep { /^$remove_this$/ } @{$forwarders}) {
@@ -476,7 +742,7 @@ sub GetLoggingChannel {
 BEGIN{$TYPEINFO{SetLoggingChannel} = ["function", "boolean", ["map", "string", "string"]]};
 sub SetLoggingChannel {
     my $class = shift;
-    my $channel = shift;
+    my $channel = shift || {};
 
 #   $channel_params = {
 #	'destination' => '', (file|syslog)
@@ -580,7 +846,7 @@ sub SetLoggingCategories {
     my $logging_channel = '';
     # we need the destination to be set for each category
     my $channel = $class->GetLoggingChannel();
-    if ($channel->{'file'}) {
+    if ($channel->{'destination'} eq 'file') {
 	$logging_channel = $SETTINGS->{'logging_channel_file'};
     } else {
 	$logging_channel = $SETTINGS->{'logging_channel_syslog'};
@@ -645,7 +911,7 @@ sub RemoveNamedOption {
     y2error("NOT IMPLEMENTED YET - SLES FUNCTIONALITY");
 }
 
-BEGIN{$TYPEINFO{RemoveNamedOption} = ["function", ["map", "string", ["map", "string", "string"]]]};
+BEGIN{$TYPEINFO{GetACLs} = ["function", ["map", "string", ["map", "string", "string"]]]};
 sub GetACLs {
     my $class = shift;
 
@@ -693,7 +959,7 @@ sub GetZones {
 BEGIN{$TYPEINFO{GetZoneMasterServers} = ["function", ["list", "string"], "string"]};
 sub GetZoneMasterServers {
     my $class = shift;
-    my $zone  = shift;
+    my $zone  = shift || '';
 
     return 0 if (!$class->CheckZone($zone));
 
@@ -705,9 +971,11 @@ sub GetZoneMasterServers {
 		@masters = GetListFromRecord($_->{'masters'});
 		last;
 	    } else {
-		# TRANSLATORS: Popup error message, Trying to get 'master server' for zone which is not 'slave' type, %1 is name of the zone, %2 is type of the zone
+		# TRANSLATORS: Popup error message, Trying to get 'master server' for zone which is not 'slave' type,
+		#   'master' servers haven't any 'masterservers', they ARE masterservers
+		#   %1 is name of the zone, %2 is type of the zone
 		Report->Error(sformat(__("Only 'slave' zones have their 'master server' defined.
-Zone '%1' is type '%2'."),$_->{'type'}));
+Zone '%1' is type '%2'."), $_->{'zone'}, $_->{'type'}));
 	    }
 	}
     }
@@ -718,7 +986,7 @@ Zone '%1' is type '%2'."),$_->{'type'}));
 BEGIN{$TYPEINFO{SetZoneMasterServers} = ["function", "boolean", "string", ["list", "string"]]};
 sub SetZoneMasterServers {
     my $class   = shift;
-    my $zone    = shift;
+    my $zone    = shift || '';
     my $masters = shift;
 
     return 0 if (!$class->CheckZone($zone));
@@ -732,9 +1000,10 @@ sub SetZoneMasterServers {
 		@{$zones}[$zone_counter] = $_;
 		last;
 	    } else {
-		# TRANSLATORS: Popup error message, Trying to set 'master server' for zone which is not 'slave' type, %1 is name of the zone, %2 is type of the zone
+		# TRANSLATORS: Popup error message, Trying to set 'master server' for zone which is not 'slave' type,
+		#   %1 is name of the zone, %2 is type of the zone
 		Report->Error(sformat(__("Only 'slave' zones have their 'master server' defined.
-Zone '%1' is type '%2'."),$_->{'type'}));
+Zone '%1' is type '%2'."), $_->{'zone'}, $_->{'type'}));
 	    }
 	}
 	++$zone_counter;
@@ -747,9 +1016,9 @@ BEGIN{$TYPEINFO{AddZone} = ["function", "boolean", "string", "string", ["map", "
 sub AddZone {
     my $class   = shift;
 
-    my $zone    = shift;
-    my $type    = shift;
-    my $options = shift;
+    my $zone    = shift || '';
+    my $type    = shift || '';
+    my $options = shift || {};
 
 
     # zone name must be defined
@@ -795,7 +1064,7 @@ sub AddZone {
 BEGIN{$TYPEINFO{RemoveZone} = ["function", "boolean", "string"]};
 sub RemoveZone {
     my $class = shift;
-    my $zone = shift;
+    my $zone = shift || '';
 
     return 0 if (!$class->CheckZone($zone));
 
@@ -814,7 +1083,7 @@ sub RemoveZone {
 BEGIN{$TYPEINFO{GetZoneTransportACLs} = ["function", ["list", "string"], "string"]};
 sub GetZoneTransportACLs {
     my $class = shift;
-    my $zone  = shift;
+    my $zone  = shift || '';
 
     return 0 if (!$class->CheckZone($zone));
     
@@ -835,9 +1104,10 @@ sub GetZoneTransportACLs {
     return \@used_acls;
 }
 
+# hidden function
 sub SetZoneTransportACLs {
     my $class = shift;
-    my $zone  = shift;
+    my $zone  = shift || '';
     my $acls  = shift;
 
     return 0 if (!$class->CheckZone($zone));
@@ -871,8 +1141,8 @@ sub SetZoneTransportACLs {
 BEGIN{$TYPEINFO{AddZoneTransportACL} = ["function", "boolean", "string", "string"]};
 sub AddZoneTransportACL {
     my $class = shift;
-    my $zone  = shift;
-    my $acl   = shift;
+    my $zone  = shift || '';
+    my $acl   = shift || '';
 
     return 0 if (!$class->CheckZone($zone));
     return 0 if (!$class->CheckTransportACL($acl));
@@ -884,8 +1154,8 @@ sub AddZoneTransportACL {
 BEGIN{$TYPEINFO{RemoveZoneTransportACL} = ["function", "boolean", "string", "string"]};
 sub RemoveZoneTransportACL {
     my $class = shift;
-    my $zone  = shift;
-    my $acl   = shift;
+    my $zone  = shift || '';
+    my $acl   = shift || '';
 
     return if (!$class->CheckZone($zone));
     return 0 if (!$class->CheckTransportACL($acl));
@@ -897,12 +1167,10 @@ sub RemoveZoneTransportACL {
 
 sub GetZoneRecords {
     my $class = shift;
-    my $zone  = shift;
+    my $zone  = shift || '';
     my $types = shift; # none means all types
 
     return 0 if (!$class->CheckZone($zone));
-
-    # FIXME: param checking
 
     my $check_types = 0;
     $check_types = 1 if (scalar(@{$types})>0);
@@ -915,7 +1183,7 @@ sub GetZoneRecords {
 		if ($check_types) {
 		    # skipping record if type doesn't match
 		    my $type = $_->{'type'};
-		    next if (grep { !/^$type$/ } @{$types});
+		    next if (!DnsServer->contains($types, $type));
 		}
 		push @records, $_;
 	    }
@@ -929,7 +1197,7 @@ sub GetZoneRecords {
 BEGIN{$TYPEINFO{GetZoneNameServers} = ["function", ["list", "string"], "string"]};
 sub GetZoneNameServers {
     my $class = shift;
-    my $zone  = shift;
+    my $zone  = shift || '';
 
     return 0 if (!$class->CheckZone($zone));
 
@@ -946,7 +1214,7 @@ sub GetZoneNameServers {
 BEGIN{$TYPEINFO{GetZoneMailServers} = ["function", ["list", ["map", "string", "string"]], "string"]};
 sub GetZoneMailServers {
     my $class = shift;
-    my $zone  = shift;
+    my $zone  = shift || '';
 
     return 0 if (!$class->CheckZone($zone));
 
@@ -956,9 +1224,12 @@ sub GetZoneMailServers {
 	# xyz.com. (ending with a dot) - getting MX servers only for the whole domain
 	if ($_->{'key'} eq $zone.'.') {
 	    if ($_->{'value'} =~ /[\t ]*(\d+)[\t ]+([^\t ]+)$/) {
-		push @mailservers, { $2 => $1 };
+		push @mailservers, {
+		    'name'	=> $2,
+		    'priority'	=> $1
+		};
 	    } else {
-		# FIXME: unknown MX server type !'prio hostname'
+		y2error("Unknown MX server '".$_->{'value'}."'");
 	    }
 	}
     }
@@ -969,7 +1240,7 @@ sub GetZoneMailServers {
 BEGIN{$TYPEINFO{GetZoneRRs} = ["function", ["list", ["map", "string", "string"]], "string"]};
 sub GetZoneRRs {
     my $class = shift;
-    my $zone  = shift;
+    my $zone  = shift || '';
 
     return 0 if (!$class->CheckZone($zone));
 
@@ -980,6 +1251,8 @@ sub GetZoneRRs {
 	next if ($_->{'type'} eq 'NS' && $_->{'key'} eq $zone.'.');
 	# filtering zone MX
 	next if ($_->{'type'} eq 'MX' && $_->{'key'} eq $zone.'.');
+	# filtering zone ORIGIN
+	next if ($_->{'type'} eq 'ORIGIN');
 	push @records, $_;
     }
 
@@ -990,10 +1263,10 @@ BEGIN{$TYPEINFO{AddZoneRR} = ["function","boolean","string","string","string","s
 sub AddZoneRR {
     my $class = shift;
 
-    my $zone  = shift;
+    my $zone  = shift || '';
     my $type  = uc(shift) || '';
-    my $key   = shift || '';
-    my $value = shift || '';
+    my $key   = lc(shift) || '';
+    my $value = lc(shift) || '';
 
     return 0 if (!$class->CheckZone($zone));
 
@@ -1016,7 +1289,9 @@ sub AddZoneRR {
     # replacing all spaces with one space char (MX servers are affected)
     $value =~ s/[\t ]+/ /g;
 
-    return 0 if (!$class->CheckResourceRecord({ 'type' => $type, 'key' => $key, 'value' => $value }));
+    return 0 if (!$class->CheckResourceRecord({
+	'type' => $type, 'key' => $key, 'value' => $value, 'zone' => $zone
+    }));
 
     my $zones = DnsServer->FetchZones();
     my @new_records;
@@ -1028,7 +1303,7 @@ sub AddZoneRR {
 		# replacing all spaces with one space char (MX servers are affected)
 		$_->{'value'} =~ s/[\t ]+/ /g;
 		if ($_->{'type'} eq $type && $_->{'key'} eq $key && $_->{'value'} eq $value) {
-		    # the same record exists already
+		    # the same record exists already, just return true
 		    return 1;
 		}
 	    }
@@ -1036,6 +1311,7 @@ sub AddZoneRR {
 	    push @new_records, { 'type' => $type, 'key' => $key, 'value' => $value };
 	    $new_zone = @{$zones}[$zone_index];
 	    $new_zone->{'records'} = \@new_records;
+	    $new_zone->{'modified'} = 1;
 	    last;
 	}
 	++$zone_index;
@@ -1050,10 +1326,12 @@ BEGIN{$TYPEINFO{RemoveZoneRR} = ["function","boolean","string","string","string"
 sub RemoveZoneRR {
     my $class = shift;
 
-    my $zone  = shift;
-    my $type  = shift;
-    my $key   = shift;
-    my $value = shift;
+    my $zone  = shift || '';
+
+    # lowering all values, types are allways uppercased
+    my $type  = uc(shift) || '';
+    my $key   = lc(shift) || '';
+    my $value = lc(shift) || '';
 
     return 0 if (!$class->CheckZone($zone));
 
@@ -1083,12 +1361,35 @@ sub RemoveZoneRR {
 	    foreach (@{$_->{'records'}}) {
 		# replacing all spaces with one space char (MX servers are affected)
 		$_->{'value'} =~ s/[\t ]+/ /g;
-		if ($_->{'type'} eq $type && $_->{'key'} eq $key && $_->{'value'} eq $value) {
-		    # gottcha!
-		    $record_found = 1;
-		} else {
-		    push @new_records, $_;
+		
+		# lowering all values, types are allways uppercased
+		$_->{'type'}  = uc($_->{'type'});
+		$_->{'key'}   = lc($_->{'key'});
+		$_->{'value'} = lc($_->{'value'});
+		
+		# matching
+		if ($_->{'type'} eq $type) {
+		    if ($_->{'key'} eq $key && $_->{'value'} eq $value) {
+			# gottcha!
+			$record_found = 1;
+			next;
+		    # relative names used
+		    } else {
+			# transform all relative names to their absolute form
+			$_->{'key'}   = $class->GetFullHostname($_->{'key'});
+			$key          = $class->GetFullHostname($key);
+			$_->{'value'} = $class->GetFullHostname($_->{'value'});
+			$value        = $class->GetFullHostname($value);
+			
+			if ($_->{'key'} eq $key && $_->{'value'} eq $value) {
+			    # gottcha!
+			    $record_found = 1;
+			    next;
+			}
+		    }
 		}
+
+		push @new_records, $_;
 	    }
 	    if (!$record_found) {
 		# such record doesn't exist
@@ -1096,6 +1397,7 @@ sub RemoveZoneRR {
 	    }
 	    $new_zone = @{$zones}[$zone_index];
 	    $new_zone->{'records'} = \@new_records;
+	    $new_zone->{'modified'} = 1;
 	    last;
 	}
 	++$zone_index;
@@ -1110,7 +1412,7 @@ BEGIN{$TYPEINFO{AddZoneNameServer} = ["function","boolean","string","string"]};
 sub AddZoneNameServer {
     my $class = shift;
 
-    my $zone   = shift;
+    my $zone   = shift || '';
     my $server = shift || '';
 
     # zone checking is done in AddZoneRR() function
@@ -1122,7 +1424,7 @@ BEGIN{$TYPEINFO{RemoveZoneNameServer} = ["function","boolean","string","string"]
 sub RemoveZoneNameServer {
     my $class = shift;
 
-    my $zone   = shift;
+    my $zone   = shift || '';
     my $server = shift || '';
 
     # zone checking is done in RemoveZoneRR() function
@@ -1134,7 +1436,7 @@ BEGIN{$TYPEINFO{AddZoneMailServer} = ["function","boolean","string","string","in
 sub AddZoneMailServer {
     my $class = shift;
 
-    my $zone   = shift;
+    my $zone   = shift || '';
     my $server = shift || '';
     my $prio   = shift || '';
 
@@ -1147,7 +1449,7 @@ BEGIN{$TYPEINFO{RemoveZoneMailServer} = ["function","boolean","string","string",
 sub RemoveZoneMailServer {
     my $class = shift;
 
-    my $zone   = shift;
+    my $zone   = shift || '';
     my $server = shift || '';
     my $prio   = shift || '';
 
@@ -1159,9 +1461,9 @@ sub RemoveZoneMailServer {
 BEGIN{$TYPEINFO{GetZoneSOA} = ["function",["map","string","string"],"string"]};
 sub GetZoneSOA {
     my $class = shift;
-    my $zone  = shift;
+    my $zone  = shift || '';
 
-    return 0 if (!$class->CheckZone($zone));
+    return {} if (!$class->CheckZone($zone));
 
     my $return = {};
 
@@ -1169,7 +1471,12 @@ sub GetZoneSOA {
     foreach (@{$zones}) {
 	if ($_->{'zone'} eq $zone) {
 	    foreach my $key ('minimum', 'expiry', 'serial', 'retry', 'refresh', 'mail', 'server') {
-		$return->{$key} = $_->{'soa'}->{$key};
+		if (defined $_->{'soa'}->{$key}) {
+		    $return->{$key} = $_->{'soa'}->{$key};
+		}
+	    }
+	    if (defined $_->{'ttl'}) {
+		$return->{'ttl'} = $_->{'ttl'};
 	    }
 	    last;
 	}
@@ -1181,8 +1488,8 @@ sub GetZoneSOA {
 BEGIN{$TYPEINFO{SetZoneSOA} = ["function","boolean","string",["map","string","string"]]};
 sub SetZoneSOA {
     my $class = shift;
-    my $zone  = shift;
-    my $SOA   = shift;
+    my $zone  = shift || '';
+    my $SOA   = shift || {};
 
     return 0 if (!$class->CheckZone($zone));
 
@@ -1195,17 +1502,161 @@ sub SetZoneSOA {
 	    foreach my $key ('minimum', 'expiry', 'serial', 'retry', 'refresh', 'mail', 'server') {
 		# changing current SOA with new values
 		if (defined $SOA->{$key}) {
+		    return 0 if (!$class->CheckSOARecord($key,$SOA->{$key}));
+		
 		    $new_SOA->{$key} = $SOA->{$key};
 		}
 	    }
 	    $new_zone = $_;
+	    # ttl is defined in another place
+	    if (defined $SOA->{'ttl'}) {
+		$new_zone->{'ttl'} = $SOA->{'ttl'};
+	    }
 	    $new_zone->{'soa'} = $new_SOA;
+	    $new_zone->{'modified'} = 1;
 	    last;
 	}
 	++$zone_index;
     }
     @{$zones}[$zone_index] = $new_zone;
     DnsServer->StoreZones($zones);
+
+    return 1;
+}
+
+BEGIN{$TYPEINFO{GetReverseZoneNameForIP} = ["function","string","string"]};
+sub GetReverseZoneNameForIP {
+    my $class = shift;
+    my $ip    = shift || '';
+
+    my $zones = $class->GetZones();
+    my @reversezones = ();
+    foreach my $zone (keys %{$zones}) {
+	if ($zones->{$zone}->{'type'} eq 'master' && $zone =~ /\.in-addr\.arpa$/) {
+	    push @reversezones, $zone;
+	}
+    }
+
+    my $arpaaddr = 'in-addr.arpa';
+    my $matchingzone = '';
+    foreach my $part (split(/\./, $ip)) {
+	$arpaaddr = $part.'.'.$arpaaddr;
+	foreach my $zone (@reversezones) {
+	    $matchingzone = $zone if ($arpaaddr eq $zone);
+	}
+    }
+
+    return $matchingzone;
+}
+
+BEGIN{$TYPEINFO{GetReverseIPforIPv4} = ["function","string","string"]};
+sub GetReverseIPforIPv4 {
+    my $class = shift;
+    my $ipv4  = shift || '';
+
+    my $reverseip = 'in-addr.arpa.';
+    foreach my $part (split(/\./, $ipv4)) {
+	$reverseip = $part.'.'.$reverseip;
+    }
+
+    return $reverseip;
+}
+
+# Adds an A host and its PTR ONLY if reverse zone exists
+BEGIN{$TYPEINFO{AddHost} = ["function","boolean","string","string","string"]};
+sub AddHost {
+    my $class = shift;
+    my $zone  = shift || '';
+    my $key   = shift || '';
+    my $value = shift || '';
+
+    my $reversezone = $class->GetReverseZoneNameForIP($value);
+    if (!$reversezone) {
+	# TRANSLATORS: Popup error message, No reverse zone for %1 record found,
+	#   %2 is the hostname, %1 is the IPv4
+	Report->Error(sformat(__("There is no reverse zone for '%1' administered by your DNS server.
+Host name '%2' cannot be added.")), $value, $key);
+	return 0;
+    }
+
+    my $reverseip = $class->GetReverseIPforIPv4($value);
+
+    # hostname MUST be in absolute form (for the reverse zone)
+    if ($key !~ /\.$/) {
+	$key .= '.'.$zone.'.';
+    }
+    return 0 if (!$class->AddZoneRR($zone,'A',$key,$value));
+    return 0 if (!$class->AddZoneRR($reversezone,'PTR',$reverseip,$key));
+    return 1;
+}
+
+# Removes an A host and also its PTR if reverse zone exists
+BEGIN{$TYPEINFO{RemoveHost} = ["function","boolean","string","string","string"]};
+sub RemoveHost {
+    my $class = shift;
+    my $zone  = shift || '';
+    my $key   = shift || '';
+    my $value = shift || '';
+
+    my $reversezone = $class->GetReverseZoneNameForIP($value);
+    return 0 if (!$class->RemoveZoneRR($zone,'A',$key,$value));
+    if ($reversezone) {
+	# hostname MUST be in absolute form (in the reverse zone)
+	if ($key !~ /\.$/) {
+	    $key .= '.'.$zone.'.';
+	}
+	my $reverseip = $class->GetReverseIPforIPv4($value);
+	return 0 if (!$class->RemoveZoneRR($reversezone,'PTR',$reverseip,$key));
+    }
+
+    return 1;
+}
+
+BEGIN{$TYPEINFO{GetZoneHosts} = ["function", ["list", ["map", "string", "string"]], "string"]};
+sub GetZoneHosts {
+    my $class      = shift;
+    my $zone_only  = shift || '';
+
+
+    my $zones = $class->GetZones();
+
+    my $ptr_records = {};
+    my @types = ('PTR');
+    foreach my $zone (keys %{$zones}) {
+	next if ($zones->{$zone}->{'type'} ne 'master');
+	next if ($zone !~ /\.in-addr\.arpa$/);
+	foreach my $record (@{$class->GetZoneRecords($zone, \@types)}) {
+	    $record->{'value'} = $class->GetFullHostname($zone, $record->{'value'});
+	    $record->{'key'}   = $class->GetFullHostname($zone, $record->{'key'});
+	    # hostname/reverse_ip
+	    $ptr_records->{$record->{'value'}.'/'.$record->{'key'}} = 1;
+	}
+    }
+    
+    my @hosts = ();
+    @types = ('A');
+    foreach my $zone (keys %{$zones}) {
+	next if ($zone_only && $zone_only ne $zone);
+	next if ($zones->{$zone}->{'type'} ne 'master');
+	next if ($zone =~ /\.in-addr\.arpa$/);
+	
+	foreach my $record (@{$class->GetZoneRecords($zone, \@types)}) {
+	    $record->{'key'}        = $class->GetFullHostname($zone, $record->{'key'});
+	    $record->{'value'}      = $class->GetFullHostname($zone, $record->{'value'});
+	    $record->{'reverse_ip'} = $class->GetReverseIPforIPv4($record->{'value'});
+
+	    # hostname/reverse_ip
+	    if (defined $ptr_records->{$record->{'key'}.'/'.$record->{'reverse_ip'}}) {
+		push @hosts, {
+		    'zone',    => $zone,
+		    'hostname' => $record->{'key'},
+		    'ip'       => $record->{'value'}
+		};
+	    }
+	}
+    }
+
+    return \@hosts;
 }
 
 1;

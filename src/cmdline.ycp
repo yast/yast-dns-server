@@ -15,6 +15,7 @@
     import "CommandLine";
     import "String";
     import "DnsServer";
+    import "DnsServerAPI";
     import "DnsData";
 
     // Wizard Screen function formats and prints unifyied commandline screen
@@ -90,73 +91,12 @@
 	return false;
     }
 
-    // Function returns list of DNS forwarders got from GlobalOptions
-    list <string> GetForwarders () {
-	list <string> forwarders = [];
-
-	list<map<string,any> > options = DnsServer::GetGlobalOptions();
-	foreach (map<string,any> o, options, {
-	    if (o["key"]:"" == "forwarders") {
-		// "{ $IP; $IP; $IP; }"
-		string fwds = (string) o["value"]:"";
-		forwarders = filter(string ip, splitstring(fwds, "{}; "), {
-		    return ip!="";
-		});
-		break;
-	    }
-	});
-
-	return forwarders;
-    }
-
-    // Functions sets GlobalOptions filling forwarders
-    void SetForwarders (list <string> forwarders) {
-	string fwds = "{ " + mergestring (forwarders, "; ") + "; }";
-
-	list<map<string,any> > options = DnsServer::GetGlobalOptions();
-	map <string,any> forwarders_option = $["key":"forwarders", "value":fwds];
-
-	// counter of list item ID
-	integer list_item = 0;
-	// any forwarders found
-	boolean forwarders_found = false;
-	foreach (map<string,any> o, options, {
-	    // yes, here are forwarders
-	    if (o["key"]:"" == "forwarders") {
-		forwarders_found = true;
-		break;
-	    }
-	    list_item = list_item + 1;
-	});
-
-	// any forwarders already has
-	if (forwarders_found) {
-	    // there are any to set up
-	    if (size(forwarders)>0) {
-		options[list_item] = forwarders_option;
-	    // remove all of them
-	    } else {
-		options = remove(options, list_item);
-	    }
-	// hasn't any forwarders
-	} else {
-	    // add them to the end
-	    if (size(forwarders)>0) {
-		options = add (options, forwarders_option);
-	    }
-	}
-
-	DnsServer::SetGlobalOptions(options);
-    }
-
     // Function for handling commandline 'forwarders'
     boolean DNSHandlerForwarders (map options) {
-	list <string> forwarders = GetForwarders();
-
 	// show current settings
 	if (options["show"]:nil!=nil) {
 	    list <list <string> > table_items = [];
-	    foreach (string ip, forwarders, {
+	    foreach (string ip, DnsServerAPI::GetForwarders(), {
 		table_items = add (table_items, [ip]);
 	    });
 	    ScreenWizard(
@@ -169,83 +109,23 @@
 	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
 	    // TRANSLATORS: commandline error message
 	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    return false;
 	} else if (options["add"]:nil!=nil) {
 	    string ip = (string) options["ip"]:"";
 	    if (ip=="") {
 		Missing("ip");
 		return false;
 	    }
-	    forwarders = toset( add(forwarders, ip) );
-	    SetForwarders(forwarders);
-	    return true;
+	    return DnsServerAPI::AddForwarder(ip);
 	} else if (options["remove"]:nil!=nil) {
 	    string ip = (string) options["ip"]:"";
 	    if (ip=="") {
 		Missing("ip");
 		return false;
 	    }
-	    forwarders = filter(string item, forwarders, { return item!=ip; });
-	    SetForwarders(forwarders);
-	    return true;
+	    return DnsServerAPI::RemoveForwarder(ip);
 	}
-    }
-
-//[
-//    $["key":"category", "value":"default { log_file; }"],
-//    $["key":"category", "value":"queries { log_file; }"],
-//    $["key":"channel", "value":"log_file { file \"/var/log/named\" size 100M versions 5; }"]
-//]
-
-//[
-//    $["key":"category", "value":"default { default_syslog; }"],
-//    $["key":"category", "value":"queries { default_syslog; }"],
-//    $["key":"category", "value":"xfer-in { default_syslog; }"],
-//    $["key":"category", "value":"xfer-out { default_syslog; }"]
-//]
-
-    // Function returns 'syslog' or 'file'
-    string GetLogType () {
-	list <map <string, any> > logging = DnsServer::GetLoggingOptions();
-	boolean file_used = false;
-	foreach (map <string, any> logitem, logging, {
-	    if (logitem["key"]:""=="category" && regexpmatch((string) logitem["value"]:"","\\{ *log_file; *\\}")) {
-		file_used = true;
-		break;
-	    }
-	});
-
-	return (file_used ? "file":"syslog");
-    }
-
-    // Function returns map $[ file : $file, size : $size, versions : $versions ]
-    map <string, string> GetLogFile () {
-	list <map <string, any> > logging = DnsServer::GetLoggingOptions();
-
-	map <string, string> logfile = $[ "file" : "", "size" : "", "versions" : "" ];
-	foreach (map <string, any> logitem, logging, {
-	    if (logitem["key"]:""=="channel" && regexpmatch (logitem["value"]:"", "^[ \t]*log_file[ \t]*\\{")) {
-		// }:-> (to be in pair)
-
-		// preparing logto to be simply parsable
-		string logto = (string) logitem["value"]:"";
-		integer index = findfirstof (logto, "{");
-		logto = substring (logto, index + 1);
-		index = findlastof (logto, "}");
-		logto = substring (logto, 0, index);
-		
-		string fn = regexpsub (logto, "file[ \t]+\"([^\"]+)\"", "\\1");
-		string sz = regexpsub (logto, "size[ \t]+([0123456789kKmMgG]+)","\\1");
-		string vc = tostring(tointeger(regexpsub (logto, "versions[ \t]+([^ \t]+)","\\1")));
-
-		if (fn!=nil && sz!=nil && vc!=nil) {
-		    logfile["file"]	= fn;
-		    logfile["size"]	= sz;
-		    logfile["versions"]	= vc;
-		}
-	    }
-	});
-
-	return logfile;
+	return false;
     }
 
     void SetLogTo (map <string, string> settings) {
@@ -255,93 +135,32 @@
 	//    "maxsize"		: options["maxsize"]:"0",
 	//    "maxversions"	: options["maxversions"]:"0"
 	// ]
-	list <map <string, any> > logging = DnsServer::GetLoggingOptions();
 
 	if (settings["type"]:nil=="syslog") {
-	    // remove channel "log_file"
-	    integer item_counter = 0;
-	    foreach (map <string, any> logitem, logging, {
-		if (logitem["key"]:""=="channel" && regexpmatch (logitem["value"]:"", "^[ \t]*log_file[ \t]*\\{")) {
-		    // }:-| (to be in pair)
-		    logging = remove(logging, item_counter);
-		    break;
-		}
-		item_counter = item_counter + 1;
-	    });
-	    // replace "log_file" in categories with "default_syslog"
-	    item_counter = 0;
-	    foreach (map <string, any> logitem, logging, {
-		if (logitem["key"]:""=="category" && regexpmatch (logitem["value"]:"", "log_file;")) {
-		    logging[item_counter,"value"] = regexpsub(
-			logging[item_counter,"value"]:"",
-			"^[\t ]*([^\t ]+)[\t ]*\\{",
-			"\\1 { default_syslog; }"
-		    );
-		    // }8-O (to be in pair)
-		}
-		item_counter = item_counter + 1;
-	    });
-	} else if (settings["type"]:nil=="file") {
-	    // remove channel "log_file" if exists
-	    integer item_counter = 0;
-	    foreach (map <string, any> logitem, logging, {
-		if (logitem["key"]:""=="channel" && regexpmatch (logitem["value"]:"", "^[ \t]*log_file[ \t]*\\{")) {
-		    // }:-| (to be in pair)
-		    logging = remove(logging, item_counter);
-		    break;
-		}
-		item_counter = item_counter + 1;
-	    });
-	    // added new channel "log_file"
-	    logging = add (logging, $[
-		"key" : "channel",
-		"value" :
-		    sformat (
-			"log_file { file \"%1\" size %2 versions %3; }",
-			settings["file"]:"", settings["maxsize"]:"0", settings["maxversions"]:"0"
-		    )
+	    DnsServerAPI::SetLoggingChannel($[
+		"destination" : "syslog"
 	    ]);
-	    // replace "default_syslog" in categories with "log_file"
-	    item_counter = 0;
-	    foreach (map <string, any> logitem, logging, {
-		if (logitem["key"]:""=="category" && regexpmatch (logitem["value"]:"", "default_syslog;")) {
-		    logging[item_counter,"value"] = regexpsub(
-			logging[item_counter,"value"]:"",
-			"^[\t ]*([^\t ]+)[\t ]*\\{",
-			"\\1 { log_file; }"
-		    );
-		    // }8-O (to be in pair)
-		}
-		item_counter = item_counter + 1;
-	    });
+	} else if (settings["type"]:nil=="file") {
+	    DnsServerAPI::SetLoggingChannel($[
+		"destination" : "file",
+		"filename"    : settings["file"]:"",
+		"size"        : settings["maxsize"]:"",
+		"versions"    : settings["maxversions"]:"",
+	    ]);
 	} else {
 	    // unknown logging
 	    y2error("Unknown logging type '%1'", settings["type"]:nil);
 	    return;
 	}
-	DnsServer::SetLoggingOptions(logging);
     }
 
     // Function returns map $[ queries : (yes|no), updates : (yes|no), transfers : (yes|no) ]
     map <string, string> GetLoggingAdditionals () {
-	list <map <string, any> > logging = DnsServer::GetLoggingOptions();
-	map <string, string> addlog = $[ "queries" : "no", "updates" : "no", "transfers" : "no" ];
+	list <string> categories = DnsServerAPI::GetLoggingCategories();
+	map <string, string> addlog = $[ "default" : "no", "xfer-in" : "no", "xfer-out" : "no" ];
 
-	foreach (map <string, any> logitem, logging, {
-	    if (logitem["key"]:""=="category") {
-		if (regexpmatch((string) logitem["value"]:"","^[\t ]*queries[\t ]*\\{")) {
-		    // }8->
-		    addlog["queries"] = "yes";
-		}
-		if (regexpmatch((string) logitem["value"]:"","^[\t ]*xfer-in[\t ]*\\{")) {
-		    // };->
-		    addlog["updates"] = "yes";
-		}
-		if (regexpmatch((string) logitem["value"]:"","^[\t ]*xfer-out[\t ]*\\{")) {
-		    // }:->
-		    addlog["transfers"] = "yes";
-		}
-	    }
+	foreach (string category, categories, {
+	    addlog[category] = "yes";
 	});
 
 	return addlog;
@@ -349,33 +168,35 @@
 
     void DNSHandlerLoggingShow () {
 	list <list <string> > table_items = [];
-	string log_type = GetLogType();
-	if (log_type=="syslog") {
+
+	map <string, string> logging_channel = DnsServerAPI::GetLoggingChannel();
+
+	if (logging_channel["destination"]:"syslog" == "syslog") {
 	    table_items = add (table_items, [
 		// TRANSLATORS: commandline table item
 		_("Logging Destination"),
 		// TRANSLATORS: commandline table item
 		_("System Log")
 	    ]);
-	} else if (log_type=="file") {
+	} else if (logging_channel["destination"]:"file" == "file") {
 	    table_items = add (table_items, [
 		// TRANSLATORS: commandline table item
 		_("Logging Destination"),
 		// TRANSLATORS: commandline table item
 		_("File")
 	    ]);
-	    map <string, string> file_settings = GetLogFile();
+
 	    table_items = add (table_items, [
 		// TRANSLATORS: commandline table item
-		_("File name"), file_settings["file"]:""
+		_("File Name"), logging_channel["filename"]:""
 	    ]);
 	    table_items = add (table_items, [
 		// TRANSLATORS: commandline table item
-		_("Maximum Size"), file_settings["size"]:""
+		_("Maximum Size"), logging_channel["size"]:""
 	    ]);
 	    table_items = add (table_items, [
 		// TRANSLATORS: commandline table item
-		_("Maximum Versions"), file_settings["versions"]:""
+		_("Maximum Versions"), logging_channel["versions"]:""
 	    ]);
 	}
 
@@ -384,15 +205,15 @@
 	list <list <string> > tabadds_items = [];
 	tabadds_items = add (tabadds_items, [
 	    // TRANSLATORS: commandline table item
-	    _("Log named Queries"), logadds["queries"]:""
+	    _("Log named Queries"), logadds["default"]:""
 	]);
 	tabadds_items = add (tabadds_items, [
 	    // TRANSLATORS: commandline table item
-	    _("Log Zone Updates"), logadds["updates"]:""
+	    _("Log Zone Updates"), logadds["xfer-in"]:""
 	]);
 	tabadds_items = add (tabadds_items, [
 	    // TRANSLATORS: commandline table item
-	    _("Log Zone Transfers"), logadds["transfers"]:""
+	    _("Log Zone Transfers"), logadds["xfer-out"]:""
 	]);
 
 	ScreenWizard(
@@ -430,28 +251,445 @@
 	} else if (options["destination"]:nil!=nil) {
 	    // logging to syslog
 	    if (options["destination"]:nil=="syslog") {
-		SetLogTo($[ "type" : "syslog" ]);
-		return true;
+		return DnsServerAPI::SetLoggingChannel($[
+		    "destination" : "syslog"
+		]);
 	    // logging to file
 	    } else if (options["destination"]:nil=="file") {
-		// parameter 'file' must be set
-		if (options["file"]:nil==nil) {
-		    Missing("file");
-		    return false;
-		}
-		// using default values for undefined 'maxsize' or 'maxversions'
-		SetLogTo($[
-		    "type"		: "file",
-		    "file"		: options["file"]:"",
-		    "maxsize"		: options["maxsize"]:"0",
-		    "maxversions"	: options["maxversions"]:"0"
+		return DnsServerAPI::SetLoggingChannel($[
+		    "destination" : "file",
+		    "filename"    : options["file"]:"",
+		    "size"        : options["maxsize"]:"",
+		    "versions"    : options["maxversions"]:"",
 		]);
-		return true;
 	    // unknown value
 	    } else {
 		UnknownValue("destination");
 		return false;
 	    }
+	} else if (options["set"]:nil!=nil) {
+	    map <string, string> category_mapping = $[
+		"queries"   : "default",
+		"updates"   : "xfer-in",
+		"transfers" : "xfer-out",
+	    ];
+
+	    list <string> current_categories = DnsServerAPI::GetLoggingCategories();
+	    foreach (string category, ["queries","updates","transfers"], {
+		if (options[category]:nil!=nil) {
+		    boolean enable = (tolower((string) options[category]:nil)=="yes");
+		    if (enable) {
+			y2milestone("Enabling %1", category);
+			current_categories = toset(add(current_categories, category_mapping[category]:""));
+		    } else {
+			y2milestone("Disabling %1", category);
+			current_categories = filter(string current, current_categories, {
+			    return category_mapping[category]:"" != current;
+			});
+		    }
+		}
+	    });
+	    return DnsServerAPI::SetLoggingCategories(current_categories);
+	}
+	return false;
+    }
+
+    boolean DNSHandlerZonesShow () {
+	list <list <string> > table_items = [];
+	foreach (string zone_name, map <string, string> zone, DnsServerAPI::GetZones(), {
+	    list <string> masterservers = [];
+	    if (zone["type"]:nil=="slave") {
+		masterservers = DnsServerAPI::GetZoneMasterServers(zone_name);
+	    }
+	    table_items = add (table_items, [
+		zone_name, zone["type"]:nil, mergestring(masterservers, ", ")
+	    ]);
+	});
+	
+	ScreenWizard(
+	    // TRANSLATORS: commandline section header, 
+	    _("DNS Zones"),
+	    // TRANSLATORS: commandline table header item
+	    String::TextTable([
+		// TRANSLATORS: commandline table header item
+		_("Name"),
+		// TRANSLATORS: commandline table header item
+		_("Type"),
+		// TRANSLATORS: commandline table header item
+		_("Master Server")
+	    ], table_items, $[])
+	);
+
+	return false;
+    }
+
+    // Function for handling DNS zones in general
+    boolean DNSHandlerZones (map options) {
+	if (options["show"]:nil!=nil) {
+	    return DNSHandlerZonesShow();
+	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
+	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    return false;
+	} else if (options["add"]:nil!=nil) {
+	    return DnsServerAPI::AddZone(
+		(string) options["name"]:nil,
+		(string) options["zonetype"]:nil,
+		$["masterserver":(string) options["masterserver"]:nil]
+	    );
+	} else if (options["remove"]:nil!=nil) {
+	    return DnsServerAPI::RemoveZone((string) options["name"]:nil);
+	} else if (options["set"]:nil!=nil) {
+	    return DnsServerAPI::SetZoneMasterServers(
+		(string) options["name"]:nil,
+		[(string) options["masterserver"]:nil]
+	    );
+	}
+	return false;
+    }
+
+    boolean DNSHandlerACLsShow () {
+	list <list <string> > table_items = [];
+	foreach (string name, map <string, string> acl_values, DnsServerAPI::GetACLs(), {
+	    table_items = add (table_items, [
+		name,
+		(acl_values["default"]:"no"=="yes" ?
+		    // TRANSLATORS: table item - ACL type
+		    _("Predefined")
+		    :
+		    // TRANSLATORS: table item - ACL type
+		    _("User-Defined")
+		),
+		acl_values["value"]:""
+	    ]);
+	});
+	
+	ScreenWizard(
+	    // TRANSLATORS: commandline section header
+	    _("ACLs"),
+	    // TRANSLATORS: commandline table header item
+	    String::TextTable([
+		// TRANSLATORS: commandline table header item
+		_("Name"),
+		// TRANSLATORS: commandline table header item
+		_("Type"),
+		// TRANSLATORS: commandline table header item
+		_("Value")
+	    ], table_items, $[])
+	);
+	
+	return false;
+    }
+
+    boolean DNSHandlerACLs (map options) {
+	if (options["show"]:nil!=nil) {
+	    DNSHandlerACLsShow();
+	    return false;
+	}
+	return false;
+    }
+
+    boolean DNSHandlerTransportShow (string only_for_zone) {
+	list <list <string> > table_items = [];
+	foreach (string zone_name, map <string, string> zone, DnsServerAPI::GetZones(), {
+	    # skipping all zones which arent requested
+	    if (only_for_zone!=nil && only_for_zone!=zone_name) return;
+	    foreach (string acl, DnsServerAPI::GetZoneTransportACLs(zone_name), {
+		table_items = add (
+		    table_items,
+		    [ zone_name, acl ]
+		);
+	    });
+	});
+	
+	ScreenWizard(
+	    // TRANSLATORS: commandline section header
+	    _("Zone Transport"),
+	    // TRANSLATORS: commandline table header item
+	    String::TextTable([
+		// TRANSLATORS: commandline table header item
+		_("Zone"),
+		// TRANSLATORS: commandline table header item
+		_("Enabled ACL"),
+	    ], table_items, $[])
+	);
+	
+	return true;
+    }
+
+    boolean DNSHandlerTransport (map options) {
+	if (options["show"]:nil!=nil) {
+	    DNSHandlerTransportShow((string) options["zone"]:nil);
+	    return false;
+	} else if (options["enable"]:nil!=nil && options["disable"]:nil!=nil) {
+	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    return false;
+	} else if (options["enable"]:nil!=nil) {
+	    return DnsServerAPI::AddZoneTransportACL(
+		(string) options["zone"]:nil,
+		(string) options["enable"]:nil
+	    );
+	} else if (options["disable"]:nil!=nil) {
+	    return DnsServerAPI::RemoveZoneTransportACL(
+		(string) options["zone"]:nil,
+		(string) options["disable"]:nil
+	    );
+	}
+	return false;
+    }
+
+    boolean DNSHandlerNameServersShow (string only_for_zone) {
+	list <list <string> > table_items = [];
+	foreach (string zone_name, map <string, string> zone, DnsServerAPI::GetZones(), {
+	    # skipping all zones which arent requested
+	    if (only_for_zone!=nil && only_for_zone!=zone_name) return;
+	    foreach (string nameserver, DnsServerAPI::GetZoneNameServers(zone_name), {
+		table_items = add (
+		    table_items,
+		    [ zone_name, nameserver ]
+		);
+	    });
+	});
+	
+	ScreenWizard(
+	    // TRANSLATORS: commandline section header
+	    _("Name Servers"),
+	    // TRANSLATORS: commandline table header item
+	    String::TextTable([
+		// TRANSLATORS: commandline table header item
+		_("Zone"),
+		// TRANSLATORS: commandline table header item
+		_("Name Server"),
+	    ], table_items, $[])
+	);
+	return true;
+    }
+
+    boolean DNSHandlerNameServers (map options) {
+	if (options["show"]:nil!=nil) {
+	    DNSHandlerNameServersShow((string) options["zone"]:nil);
+	    return false;
+	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
+	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    return false;
+	} else if (options["add"]:nil!=nil) {
+	    DnsServerAPI::AddZoneNameServer(
+		(string) options["zone"]:nil,
+		(string) options["ns"]:nil
+	    );
+	} else if (options["remove"]:nil!=nil) {
+	    DnsServerAPI::RemoveZoneNameServer(
+		(string) options["zone"]:nil,
+		(string) options["ns"]:nil
+	    );
+	}
+	return false;
+    }
+
+    boolean DNSHandlerMailServersShow (string only_for_zone) {
+	list <list <string> > table_items = [];
+	foreach (string zone_name, map <string, string> zone, DnsServerAPI::GetZones(), {
+	    # skipping all zones which arent requested
+	    if (only_for_zone!=nil && only_for_zone!=zone_name) return;
+	    foreach (map <string, string> mailserver, DnsServerAPI::GetZoneMailServers(zone_name), {
+		table_items = add (
+		    table_items,
+		    [ zone_name, mailserver["name"]:"", mailserver["priority"]:"" ]
+		);
+	    });
+	});
+	
+	ScreenWizard(
+	    // TRANSLATORS: commandline section header
+	    _("Mail Servers"),
+	    // TRANSLATORS: commandline table header item
+	    String::TextTable([
+		// TRANSLATORS: commandline table header item
+		_("Zone"),
+		// TRANSLATORS: commandline table header item
+		_("Mail Server"),
+		// TRANSLATORS: commandline table header item
+		_("Priority")
+	    ], table_items, $[])
+	);
+	return true;
+    }
+
+    boolean DNSHandlerMailServers (map options) {
+	if (options["show"]:nil!=nil) {
+	    DNSHandlerMailServersShow((string) options["zone"]:nil);
+	    return false;
+	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
+	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    return false;
+	} else if (options["add"]:nil!=nil) {
+	    DnsServerAPI::AddZoneMailServer(
+		(string) options["zone"]:nil,
+		(string) options["mx"]:nil,
+		(integer) options["priority"]:nil
+	    );
+	} else if (options["remove"]:nil!=nil) {
+	    DnsServerAPI::RemoveZoneMailServer(
+		(string) options["zone"]:nil,
+		(string) options["mx"]:nil,
+		(integer) options["priority"]:nil
+	    );
+	}
+	return false;
+    }
+
+    boolean DNSHandlerSOAShow (string only_for_zone) {
+	list <list <string> > table_items = [];
+
+	if (only_for_zone==nil || only_for_zone=="") {
+	    Missing("zone");
+	    return false;
+	}
+
+	map <string, string> zone_soa = DnsServerAPI::GetZoneSOA(only_for_zone);
+	foreach (string param, ["serial", "ttl", "refresh", "retry", "expiry", "minimum"], {
+	    table_items = add (table_items,[
+		param,
+		zone_soa[param]:""
+	    ]);
+	});
+
+	ScreenWizard(
+	    // TRANSLATORS: commandline section header
+	    _("Start of Authority (SOA)"),
+	    // TRANSLATORS: commandline table header item
+	    String::TextTable([
+		// TRANSLATORS: commandline table header item
+		_("Key"),
+		// TRANSLATORS: commandline table header item
+		_("Value"),
+	    ], table_items, $[])
+	);
+	return true;
+    }
+
+    boolean DNSHandlerSOA (map options) {
+	if (options["show"]:nil!=nil) {
+	    DNSHandlerSOAShow((string) options["zone"]:nil);
+	    return false;
+	} else if (options["set"]:nil!=nil) {
+	    map <string, string> params = $[];
+	    foreach (string param, ["serial", "ttl", "refresh", "retry", "expiry", "minimum"], {
+		if (options[param]:nil!=nil && options[param]:nil!="")
+		    params[param] = tostring(options[param]:"");
+	    });
+	    DnsServerAPI::SetZoneSOA((string) options["zone"]:"", params);
+	}
+    }
+
+    boolean DNSHandlerResourceRecordsShow (string only_for_zone, string only_for_type) {
+	list <list <string> > table_items = [];
+	foreach (string zone_name, map <string, string> zone, DnsServerAPI::GetZones(), {
+	    # skipping all zones which arent requested
+	    if (only_for_zone!=nil && only_for_zone!=zone_name) return;
+	    foreach (map <string, string> resourcerecord, DnsServerAPI::GetZoneRRs(zone_name), {
+		# filtering rr types
+		if (only_for_type!=nil && only_for_type!=resourcerecord["type"]:nil) return;
+		table_items = add (
+		    table_items, [
+			zone_name,
+			resourcerecord["key"]:"",
+			resourcerecord["type"]:"",
+			resourcerecord["value"]:""
+		    ]
+		);
+	    });
+	});
+	
+	ScreenWizard(
+	    // TRANSLATORS: commandline section header
+	    _("Mail Servers"),
+	    // TRANSLATORS: commandline table header item
+	    String::TextTable([
+		// TRANSLATORS: commandline table header item
+		_("Zone"),
+		// TRANSLATORS: commandline table header item
+		_("Record Query"),
+		// TRANSLATORS: commandline table header item
+		_("Record Type"),
+		// TRANSLATORS: commandline table header item
+		_("Record Value"),
+	    ], table_items, $[])
+	);
+	return true;
+    }
+
+    boolean DNSHandlerResourceRecords (map options) {
+	if (options["show"]:nil!=nil) {
+	    DNSHandlerResourceRecordsShow((string) options["zone"]:nil, (string) options["type"]:nil);
+	    return false;
+	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
+	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    return false;
+	} else if (options["add"]:nil!=nil) {
+	    return DnsServerAPI::AddZoneRR(
+		(string) options["zone"]:"",
+		(string) options["type"]:"",
+		(string) options["query"]:"",
+		(string) options["value"]:""
+	    );
+	} else if (options["remove"]:nil!=nil) {
+	    return DnsServerAPI::RemoveZoneRR(
+		(string) options["zone"]:"",
+		(string) options["type"]:"",
+		(string) options["query"]:"",
+		(string) options["value"]:""
+	    );
+	}
+	return false;
+    }
+
+    boolean DNSHandlerHostRecordsShow (string only_for_zone) {
+	list <list <string> > table_items = [];
+	foreach (map <string, string> hosts, DnsServerAPI::GetZoneHosts(only_for_zone), {
+	    table_items = add (
+		table_items, [
+		    hosts["zone"]:"",
+		    hosts["hostname"]:"",
+		    hosts["ip"]:""
+		]
+	    );
+	});
+	
+	ScreenWizard(
+	    // TRANSLATORS: commandline section header
+	    _("Host Name Record"),
+	    // TRANSLATORS: commandline table header item
+	    String::TextTable([
+		// TRANSLATORS: commandline table header item
+		_("Zone"),
+		// TRANSLATORS: commandline table header item
+		_("Host Name"),
+		// TRANSLATORS: commandline table header item
+		_("IP"),
+	    ], table_items, $[])
+	);
+	return true;
+    }    
+
+    boolean DNSHandlerHostRecords (map options) {
+	if (options["show"]:nil!=nil) {
+	    DNSHandlerHostRecordsShow((string) options["zone"]:nil);
+	    return false;
+	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
+	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    return false;
+	} else if (options["add"]:nil!=nil) {
+	    return DnsServerAPI::AddHost (
+		(string) options["zone"]:"",
+		(string) options["hostname"]:"",
+		(string) options["ip"]:""
+	    );
+	} else if (options["remove"]:nil!=nil) {
+	    return DnsServerAPI::RemoveHost (
+		(string) options["zone"]:"",
+		(string) options["hostname"]:"",
+		(string) options["ip"]:""
+	    );
 	}
     }
 
@@ -466,18 +704,65 @@
 		"handler" : DNSHandlerStartup,
 		
 		"help" : _("Start-Up Settings"),
-		"example" : [ "startup show", "startup atboot; startup manual" ],
+		"example" : [
+		    "startup show",
+		    "startup atboot; startup manual"
+		],
 	    ],
 	    "forwarders" : $[
 		"handler" : DNSHandlerForwarders,
 		// TRANSLATORS: commandline short help for command
 		"help" : _("DNS Forwarders"),
-		"example" : [ "forwarders show", "forwarders add ip=125.11.235.1", "forwarders remove ip=44.82.1.12" ],
+		"example" : [
+		    "forwarders show",
+		    "forwarders add ip=125.11.235.1",
+		    "forwarders remove ip=44.82.1.12"
+		],
 	    ],
 	    "logging" : $[
 		"handler" : DNSHandlerLogging,
 		// TRANSLATORS: commandline short help for command
 		"help" : _("Logging Settings"),
+	    ],
+	    "zones" : $[
+		"handler" : DNSHandlerZones,
+		// TRANSLATORS: commandline short help for command
+		"help" : _("DNS Zones"),
+	    ],
+	    "acls" : $[
+		"handler" : DNSHandlerACLs,
+		// TRANSLATORS: commandline short help for command
+		"help" : _("Access Control Lists"),
+	    ],
+	    "transport" : $[
+		"handler" : DNSHandlerTransport,
+		// TRANSLATORS: commandline short help for command
+		"help" : _("Zone Transport Rules"),
+	    ],
+	    "nameserver" : $[
+		"handler" : DNSHandlerNameServers,
+		// TRANSLATORS: commandline short help for command, base cmdline command
+		"help" : _("Zone Name Servers"),
+	    ],
+	    "mailserver" : $[
+		"handler" : DNSHandlerMailServers,
+		// TRANSLATORS: commandline short help for command, base cmdline command
+		"help" : _("Zone Mail Servers"),
+	    ],
+	    "soa" : $[
+		"handler" : DNSHandlerSOA,
+		// TRANSLATORS: commandline short help for command, base cmdline command
+		"help" : _("Start of Authority (SOA)"),
+	    ],
+	    "dnsrecord" : $[
+		"handler" : DNSHandlerResourceRecords,
+		// TRANSLATORS: commandline short help for command, base cmdline command
+		"help" : _("Zone Resource Records such as A, CNAME, NS, MX or PTR"),
+	    ],
+	    "host" : $[
+		"handler" : DNSHandlerHostRecords,
+		// TRANSLATORS: commandline short help for command, base cmdline command
+		"help" : _("Handles 'A' and correspondent 'PTR' record at once"),
 	    ],
 	],
 	"options" : $[
@@ -530,6 +815,116 @@
 		// TRANSLATORS: commandline short help for command
 		"help" : _("Maximum number of versions for rotation, '0' means no rotation"),
 	    ],
+	    "name" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("Zone Name"),
+	    ],
+	    "zonetype" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("Zone Type, 'master' or 'slave'"),
+	    ],
+	    "masterserver" : $[
+		"type" : "ip4",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("DNS Zone Masterserver"),
+	    ],
+	    "zone" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("Zone Name"),
+	    ],
+	    "enable" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("Enable option"),
+	    ],
+	    "disable" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("Disable option"),
+	    ],
+	    "ns" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("Name Server (in fully qualified format finished with a dot or relative name)"),
+	    ],
+	    "mx" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("Mail Server (in fully qualified format finished with a dot or relative name)"),
+	    ],
+	    "priority" : $[
+		"type" : "integer",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("Mail server priority, number from 0 to 65535"),
+	    ],
+	    "serial" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("Serial number of zone update"),
+	    ],
+	    "ttl" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("General Time To Live of records in zone"),
+	    ],
+	    "refresh" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("An interval before the zone records should be refreshed"),
+	    ],
+	    "retry" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("An interval between retries of failed refresh"),
+	    ],
+	    "expiry" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("An interval after zone record are no longer authoritative"),
+	    ],
+	    "minimum" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command, TTL is DNS-Specific (Time to Live), shouldn't be translated
+		"help" : _("Minimum TTL which should be exported with records in this zone"),
+	    ],
+	    "type" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command, Types are DNS-Specific, cannot be translated
+		"help" : _("DNS Resource Record type, such as A, CNAME, NS, MX or PTR"),
+	    ],
+	    "query" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command, DNS query is a question for 'value' when we have a /key/ and 'type', ('A' record for 'example.org'? -> 192.0.34.166)
+		"help" : _("DNS query, such as 'example.org' for 'A' record"),
+	    ],
+	    "value" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("DNS Resource Record value, such as '192.0.34.166' for example.org's A record"),
+	    ],
+	    "hostname" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("Host name for the DNS record"),
+	    ],
+	    "queries" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command, %1 are possible untranlatable parameters "(yes|no)"
+		"help" : sformat(_("Log named queries %1"), "(yes|no)"),
+	    ],
+	    "updates" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command, %1 are possible untranlatable parameters "(yes|no)"
+		"help" : sformat(_("Log Zone Updates %1"), "(yes|no)"),
+	    ],
+	    "transfers" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command, %1 are possible untranlatable parameters "(yes|no)"
+		"help" : sformat(_("Log Zone Transfers %1"), "(yes|no)"),
+	    ],
 	],
 	"mappings" : $[
 	    "startup" : [
@@ -542,6 +937,38 @@
 	    "logging" : [
 		"show", "destination", "set",
 		"file", "maxsize", "maxversions",
+		"queries", "transfers", "updates",
+	    ],
+	    "zones" : [
+		"show", "add", "remove", "set",
+		"name", "masterserver", "zonetype",
+	    ],
+	    "acls" : [
+		"show"
+	    ],
+	    "transport" : [
+		"show", "enable", "disable",
+		"zone",
+	    ],
+	    "nameserver" : [
+		"show", "add", "remove",
+		"ns", "zone",
+	    ],
+	    "mailserver" : [
+		"show", "add", "remove",
+		"mx", "zone", "priority",
+	    ],
+	    "soa" : [
+		"show", "set",
+		"zone", "serial", "ttl", "refresh", "retry", "expiry", "minimum",
+	    ],
+	    "dnsrecord" : [
+		"show", "add", "remove",
+		"zone", "query", "type", "value",
+	    ],
+	    "host" : [
+		"show", "add", "remove",
+		"zone", "hostname", "ip",
 	    ],
 	],
     ];
