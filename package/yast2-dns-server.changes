@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Mar 11 13:12:48 CET 2004 - jsrain@suse.de
+
+- adapted to include files listed in syscofnig only
+
+-------------------------------------------------------------------
 Wed Mar 10 17:24:11 CET 2004 - jsrain@suse.de
 
 - addapted to the new array context - a YCP list is always a

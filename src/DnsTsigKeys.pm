@@ -74,6 +74,10 @@ sub AnalyzeTSIGKeyFile {
 
     y2milestone ("Reading TSIG file $filename");
     $filename = NormalizeFilename ($filename);
+    if (substr ($filename, 0, 1) ne "/")
+    {
+	$filename = "/etc/named.d/$filename";
+    }
     my $contents = SCR::Read (".target.string", $filename);
     if ($contents =~ /.*key[ \t]+([^ \t}{;]+).* {/)
     {
