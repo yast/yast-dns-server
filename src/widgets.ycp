@@ -3,6 +3,7 @@
  * Package:	Configuration of dns-server
  * Summary:	Widgets used by DNS server configuration
  * Authors:	Jiri Srain <jsrain@suse.cz>
+ *		Lukas Ocilka <locilka@suse.cz>
  *
  * $Id$
  */
@@ -1653,4 +1654,27 @@ define map getDdnsKeysWidget () ``{
 	];
     }
 
+    /**
+     * Ask for exit without saving
+     * @return event that should be handled, nil if user canceled the exit
+     */
+    global define boolean confirmAbort () ``{
+	return Popup::YesNo (
+    // Yes-No popup
+_("Really leave the DHCP server configuration without saving?
+All changes will be lost."));
+    }
+
+    /**
+     * Check whether settings were changed and if yes, ask for exit
+     * without saving
+     * @return event that should be handled, nil if user canceled the exit
+     */
+    global define boolean confirmAbortIfChanged () ``{
+	if (! DnsServer::WasModified ())
+	    return true;
+	return confirmAbort ();
+    }
+
+/* EOF */
 }

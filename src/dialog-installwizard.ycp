@@ -75,7 +75,7 @@ symbol runInstallWizardForwardersDialog () {
     );
     Wizard::SetAbortButton ( `abort, Label::CancelButton() );
     Wizard::HideBackButton ();
-    InitExpertForwardersPage ();
+    InitExpertForwardersPage ("forwarders");
 
     map event = $[];
     any ret = nil;
@@ -97,14 +97,14 @@ symbol runInstallWizardForwardersDialog () {
 	}
 	else
 	{
-	    HandleExpertForwardersPage (event);
+	    HandleExpertForwardersPage ("forwarders", event);
 	}
     }
 
     Wizard::RestoreBackButton ();
     Wizard::RestoreAbortButton ();
     if (ret == `next)
-	StoreExpertForwardersPage ();
+	StoreExpertForwardersPage ("forwarders", $[]);
 
     return (symbol) ret;
 }
@@ -124,7 +124,7 @@ symbol runInstallWizardZonesDialog () {
     Wizard::RestoreAbortButton ();
     Wizard::RestoreBackButton ();
     Wizard::RestoreNextButton ();
-    InitExpertZonesPage ();
+    InitExpertZonesPage ("zones");
 
     map event = $[];
     any ret = nil;
@@ -155,12 +155,12 @@ symbol runInstallWizardZonesDialog () {
 	}
 	else
 	{
-	    HandleExpertZonesPage (event);
+	    HandleExpertZonesPage ("zones", event);
 	}
     }
 
     if (ret == `next || ret == `edit_zone)
-	StoreExpertZonesPage ();
+	StoreExpertZonesPage ("zones", $[]);
 
     return (symbol) ret;
 }
@@ -227,7 +227,7 @@ symbol runInstallWizardFinishDialog () {
 	{
 	    boolean use_ldap = (boolean)
 		UI::QueryWidget (`id ("use_ldap"), `Value);
-	    DnsServer::SetUseLdap (use_ldap, false);
+	    DnsServer::SetUseLdap (use_ldap);
 	    DnsServer::InitYapiConfigOptions ($["use_ldap" : use_ldap]);
 	    DnsServer::LdapInit (true);
 	    DnsServer::CleanYapiConfigOptions ();
