@@ -357,7 +357,7 @@
 		    _("Predefined")
 		    :
 		    // TRANSLATORS: table item - ACL type
-		    _("User-Defined")
+		    _("Custom")
 		),
 		acl_values["value"]:""
 	    ]);
@@ -749,7 +749,7 @@
 	    "acls" : $[
 		"handler" : DNSHandlerACLs,
 		// TRANSLATORS: commandline short help for command
-		"help" : _("Access Control Lists"),
+		"help" : _("Access control lists"),
 		"examples" : [
 		    "acls show"
 		],
@@ -757,7 +757,7 @@
 	    "transport" : $[
 		"handler" : DNSHandlerTransport,
 		// TRANSLATORS: commandline short help for command
-		"help" : _("Zone Transport Rules"),
+		"help" : _("Zone transport rules"),
 		"examples" : [
 		    "transport show",
 		    "transport show zone=example.com",
@@ -767,7 +767,7 @@
 	    "nameserver" : $[
 		"handler" : DNSHandlerNameServers,
 		// TRANSLATORS: commandline short help for command, base cmdline command
-		"help" : _("Zone Name Servers"),
+		"help" : _("Zone name servers"),
 		"example" : [
 		    "nameserver show",
 		    "nameserver show zone=example.com",
@@ -779,7 +779,7 @@
 	    "mailserver" : $[
 		"handler" : DNSHandlerMailServers,
 		// TRANSLATORS: commandline short help for command, base cmdline command
-		"help" : _("Zone Mail Servers"),
+		"help" : _("Zone mail servers"),
 		"example" : [
 		    "mailserver show",
 		    "mailserver show zone=example.org",
@@ -801,7 +801,7 @@
 	    "dnsrecord" : $[
 		"handler" : DNSHandlerResourceRecords,
 		// TRANSLATORS: commandline short help for command, base cmdline command
-		"help" : _("Zone Resource Records such as A, CNAME, NS, MX or PTR"),
+		"help" : _("Zone resource records, such as A, CNAME, NS, MX, or PTR"),
 		"example" : [
 		    "dnsrecord show",
 		    "dnsrecord show zone=example.org",
@@ -814,7 +814,7 @@
 	    "host" : $[
 		"handler" : DNSHandlerHostRecords,
 		// TRANSLATORS: commandline short help for command, base cmdline command
-		"help" : _("Handles 'A' and correspondent 'PTR' record at once"),
+		"help" : _("Handles 'A' and corresponding 'PTR' record at once"),
 		"example" : [
 		    "host show",
 		    "host show zone=example.org",
@@ -881,12 +881,12 @@
 	    "zonetype" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("Zone Type, 'master' or 'slave'"),
+		"help" : _("Zone type, 'master' or 'slave'"),
 	    ],
 	    "masterserver" : $[
 		"type" : "ip4",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("DNS Zone Masterserver"),
+		"help" : _("DNS zone master server"),
 	    ],
 	    "zone" : $[
 		"type" : "string",
@@ -906,17 +906,17 @@
 	    "ns" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("Name Server (in fully qualified format finished with a dot or relative name)"),
+		"help" : _("Name server (in fully qualified format finished with a dot or relative name)"),
 	    ],
 	    "mx" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("Mail Server (in fully qualified format finished with a dot or relative name)"),
+		"help" : _("Mail server (in fully qualified format finished with a dot or relative name)"),
 	    ],
 	    "priority" : $[
 		"type" : "integer",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("Mail server priority, number from 0 to 65535"),
+		"help" : _("Mail server priority (number from 0 to 65535)"),
 	    ],
 	    "serial" : $[
 		"type" : "string",
@@ -926,7 +926,7 @@
 	    "ttl" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("General Time To Live of records in zone"),
+		"help" : _("General time to live of records in zone"),
 	    ],
 	    "refresh" : $[
 		"type" : "string",
@@ -941,17 +941,17 @@
 	    "expiry" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("An interval after zone record are no longer authoritative"),
+		"help" : _("An interval after which zone records are no longer authoritative"),
 	    ],
 	    "minimum" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command, TTL is DNS-Specific (Time to Live), shouldn't be translated
-		"help" : _("Minimum TTL which should be exported with records in this zone"),
+		"help" : _("Minimum TTL that should be exported with records in this zone"),
 	    ],
 	    "type" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command, Types are DNS-Specific, cannot be translated
-		"help" : _("DNS Resource Record type, such as A, CNAME, NS, MX or PTR"),
+		"help" : _("DNS resource record type, such as A, CNAME, NS, MX, or PTR"),
 	    ],
 	    "query" : $[
 		"type" : "string",
@@ -961,7 +961,7 @@
 	    "value" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("DNS Resource Record value, such as '192.0.34.166' for example.org's A record"),
+		"help" : _("DNS resource record value, such as '192.0.34.166' for example.org's A record"),
 	    ],
 	    "hostname" : $[
 		"type" : "string",
@@ -976,12 +976,12 @@
 	    "updates" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command, %1 are possible untranlatable parameters "(yes|no)"
-		"help" : sformat(_("Log Zone Updates %1"), "(yes|no)"),
+		"help" : sformat(_("Log zone updates %1"), "(yes|no)"),
 	    ],
 	    "transfers" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command, %1 are possible untranlatable parameters "(yes|no)"
-		"help" : sformat(_("Log Zone Transfers %1"), "(yes|no)"),
+		"help" : sformat(_("Log zone transfers %1"), "(yes|no)"),
 	    ],
 	],
 	"mappings" : $[

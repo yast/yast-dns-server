@@ -229,9 +229,8 @@ Use this dialog to define various options of the DNS server logging.</p>") +
 
     /* Expert Mode Configuration - Logging 2/3 */
 _("<p><b><big>Log Type</big></b><br>
-Select <b>Log to System Log</b> to save DNS server log messages to system log.
-<br>
-To save the DNS server log messages to a separate file, select <b>Log to File</b> and specify the <b>File Name</b> to which to save the log and 
+Select <b>Log to System Log</b> to save DNS server log messages to the system log.
+To save the DNS server log messages to a separate file, select <b>Log to File</b> and set the <b>File Name</b> to which to save the log and 
 the <b>Maximum Size</b> of the log file.
 The DNS server automatically rotates the log files. Use <b>Maximum Versions</b>
 to specify how many files with the log should be saved.</p>
