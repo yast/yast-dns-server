@@ -454,6 +454,12 @@ sub SelectZone {
     else
     {
 	%current_zone = %{$zones[$zone_index]};
+	if (! ($current_zone{"modified"}))
+	{
+	    my $serial = $current_zone{"soa"}{"serial"};
+	    $serial = DnsZones->UpdateSerial ($serial);
+	    $current_zone{"soa"}{"serial"} = $serial;
+	}
     }
     $current_zone_index = $zone_index;
     y2milestone ("Selected zone with index $current_zone_index");
