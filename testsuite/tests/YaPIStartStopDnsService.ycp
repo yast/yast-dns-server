@@ -1,4 +1,18 @@
+/**
+ * File:	YaPIStartStopDnsService.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Testsuite for starting/stopping dns-server
+ * Authors:	Jiri Srain <jsrain@suse.cz>, Lukas Ocilka <locilka@suse.cz>
+ * Copyright:	Copyright 2004, Novell, Inc.  All rights reserved.
+ *
+ * $Id$
+ *
+ * Testsuite for starting/stopping dns-server
+ */
+
 {
+    // testedfiles: DnsServer.pm DNSD.pm
+
     include "testsuite.ycp";
 
     import "YaPI::DNSD";

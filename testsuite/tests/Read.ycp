@@ -1,21 +1,18 @@
 /**
- * File:
- *  rw.ycp
- *
- * Module:
- *  DHCP server configurator
- *
- * Summary:
- *  Read and write testsuite
- *
- * Authors:
- *  Jiri Srain <jsrain@suse.cz>
+ * File:	Read.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Testsuite for reading configuration
+ * Authors:	Jiri Srain <jsrain@suse.cz>, Lukas Ocilka <locilka@suse.cz>
+ * Copyright:	Copyright 2004, Novell, Inc.  All rights reserved.
  *
  * $Id$
  *
+ * Testsuite for reading configuration for dns-server
  */
 
 {
+    // testedfiles: DnsServer.pm DNSD.pm
+
     include "testsuite.ycp";
     import "Progress";
     import "DnsServer";
