@@ -1098,6 +1098,7 @@ global define map getMasterTableWidget () ``{
 	"option_delete" : masterTableEntryDelete,
 	"add_items" : [ "A", "CNAME", "PTR", "NS", "MX" ],
 	"add_items_keep_order" : true,
+	"add_unlisted" : false,
 	"help" : HELPS["master_zone"]:"",
     ]);
     return ret;
