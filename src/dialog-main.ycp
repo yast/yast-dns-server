@@ -28,6 +28,12 @@ import "CWMFirewallInterfaces";
 import "Message";
 import "DnsRoutines";
 import "CWMTsigKeys";
+import "DnsTsigKeys";
+import "Mode";
+import "Popup";
+import "Hostname";
+import "Confirm";
+import "DnsServerAPI";
 
 /**
  * Dialog Expert Settings - Start Up
@@ -1000,52 +1006,46 @@ symbol HandleExpertLoggingPage (string key, map event);
  * Initialize the tab of the dialog
  */
 void InitExpertLoggingPage (string key) {
-    logging = DnsServer::GetLoggingOptions ();
-    foreach (map<string,any> l, logging, {
-	string value = l["value"]:"";
-	if (l["key"]:"" == "category")
-	{
-	    if (regexpmatch (value, "^[ \t]*default[ \t]*\\{[ \t]*log_file"))
-		UI::ChangeWidget (`id ("log_type"), `CurrentButton,
-		    "log_type_file");
-	    if (regexpmatch (value, "^[ \t]*queries[ \t]*\\{"))
-		UI::ChangeWidget (`id ("l_named_queries"), `Value, true);
-	    if (regexpmatch (value, "^[ \t]*xfer-in[ \t]*\\{"))
-		UI::ChangeWidget (`id ("l_zone_updates"), `Value, true);
-	    if (regexpmatch (value, "^[ \t]*xfer-out[ \t]*\\{"))
-		UI::ChangeWidget (`id ("l_zone_transfers"), `Value, true);
-	}
-	else if (l["key"]:"" == "channel"
-	    && regexpmatch (l["value"]:"", "^[ \t]*log_file[ \t]*\\{"))
-	{
-	    string s = l["value"]:"";
-	    integer index = findfirstof (s, "{");
-	    s = substring (s, index + 1);
-	    index = findlastof (s, "}");
-	    s = substring (s, 0, index);
-	    string fn = regexpsub (s, "file[ \t]+\"([^\"]+)\"", "\\1");
-	    if (fn != nil)
-		UI::ChangeWidget (`id ("logfile_path"), `Value, fn);
-
-	    integer sz = tointeger (regexpsub (s, "size[ \t]+([0123456789]+)","\\1"));
-	    string  su = tolower (regexpsub (s, "size[ \t]+[0123456789]+([kKmMgG])","\\1"));
-	    
-	    if (su != nil) {
-		# no unit = in Bytes
-		if (su == "")  { sz = tointeger(sz / 1024 / 1024 + 0.5); }
-		else if (su == "k") { sz = tointeger(sz / 1024 + 0.5); }
-		# else if (su == "m") {} # M is the default unit
-		else if (su == "g") { sz = sz * 1024; }
+    map <string, string> channel = DnsServerAPI::GetLoggingChannel();
+    if (channel["destination"]:nil=="file") {	
+	UI::ChangeWidget (`id ("log_type"), `CurrentButton, "log_type_file");
+	UI::ChangeWidget (`id ("max_versions"), `Value, tointeger(channel["versions"]:"0"));
+	UI::ChangeWidget (`id ("logfile_path"), `Value, channel["filename"]:"");
+	
+	integer sz = 0;
+	string  su = "";
+	// if size is defined and 
+	if (channel["size"]:nil!=nil && tointeger(channel["size"]:"0")>0) {
+	    sz = tointeger (regexpsub (channel["size"]:"", "([0123456789]+)", "\\1"));
+	    // size is only number, no unit assigned
+	    if (channel["size"]:nil!=tostring(sz)) {
+		su = tolower (regexpsub (channel["size"]:"", "[0123456789]+([kKmMgG])", "\\1"));
 	    }
-	    if (sz != nil)
-		UI::ChangeWidget (`id ("max_size"), `Value, sz);
-
-	    integer vc = tointeger (regexpsub (s, "versions[ \t]+([^ \t]+)","\\1"));
-	    if (vc != nil)
-		UI::ChangeWidget (`id ("max_versions"), `Value, vc);
 	}
+	if (su != nil) {
+	    # no unit = in Bytes
+	    if (su == "")  { sz = tointeger(sz / 1024 / 1024 + 0.5); }
+	    else if (su == "k") { sz = tointeger(sz / 1024 + 0.5); }
+	    # else if (su == "m") {} # M is the default unit
+	    else if (su == "g") { sz = sz * 1024; }
+	}
+	if (sz != nil)
+	    UI::ChangeWidget (`id ("max_size"), `Value, sz);
 
-    });
+    } else {
+	UI::ChangeWidget (`id ("log_type"), `CurrentButton, "log_type_system");
+    }
+
+    list <string> categories = DnsServerAPI::GetLoggingCategories();
+    if (contains(categories, "queries")) {
+	UI::ChangeWidget (`id ("l_named_queries"), `Value, true);
+    }
+    if (contains(categories, "xfer-in")) {
+	UI::ChangeWidget (`id ("l_zone_updates"), `Value, true);
+    }
+    if (contains(categories, "xfer-out")) {
+	UI::ChangeWidget (`id ("l_zone_transfers"), `Value, true);
+    }    
 
     HandleExpertLoggingPage (key, $["ID" : "log_type_system"]);
 }
@@ -1054,59 +1054,29 @@ void InitExpertLoggingPage (string key) {
  * Store settings of a tab of a dialog
  */
 void StoreExpertLoggingPage (string key, map event) {
-    logging = filter (map<string,any> l, logging, {
-	return (l["key"]:"" != "category" || ! (
-	    regexpmatch (l["value"]:"", "^[ \t]*default[ \t]*\\{")
-	    || regexpmatch (l["value"]:"", "^[ \t]*queries[ \t]*\\{")
-	    || regexpmatch (l["value"]:"", "^[ \t]*xfer-in[ \t]*\\{")
-	    || regexpmatch (l["value"]:"", "^[ \t]*xfer-out[ \t]*\\{")
-	))
-	&& ! (l["key"]:"" == "channel"
-	    && regexpmatch (l["value"]:"", "^[ \t]*log_file[ \t]*\\{"));
-    });
+    list <string> used_categories = [];
+    if ((boolean) UI::QueryWidget (`id ("l_named_queries"), `Value)) {
+	used_categories = add (used_categories, "queries");
+    }
+    if ((boolean) UI::QueryWidget (`id ("l_zone_updates"), `Value)) {
+	used_categories = add (used_categories, "xfer-in");
+    }
+    if ((boolean) UI::QueryWidget (`id ("l_zone_transfers"), `Value)) {
+	used_categories = add (used_categories, "xfer-out");
+    }
+    DnsServerAPI::SetLoggingCategories(used_categories);
 
-    boolean use_file = UI::QueryWidget (`id ("log_type"), `CurrentButton)
-	== "log_type_file";
-    string channel = "default_syslog";
-    if (use_file)
-    {
-	channel = "log_file";
-	string fn = (string)UI::QueryWidget (`id ("logfile_path"), `Value);
-	integer log_size = tointeger(UI::QueryWidget (`id ("max_size"), `Value));
-	string sz =  ((log_size > 0) ? tostring(log_size) + "M" : "0" );
-	integer vc = (integer)UI::QueryWidget (`id ("max_versions"), `Value);
-	logging = add (logging, $[
-	    "key" : "channel",
-	    "value" : sformat ("log_file { file \"%1\" size %2 versions %3; }",
-		fn, sz, vc),
+    boolean use_file = UI::QueryWidget (`id ("log_type"), `CurrentButton) == "log_type_file";
+    if (use_file) {
+	DnsServerAPI::SetLoggingChannel($[
+	    "destination" : "file",
+	    "filename" : (string) UI::QueryWidget (`id ("logfile_path"), `Value),
+	    "size" :     tostring (UI::QueryWidget (`id ("max_size"), `Value)) + "M",
+	    "versions" : tostring (UI::QueryWidget (`id ("max_versions"), `Value))
 	]);
+    } else {
+	DnsServerAPI::SetLoggingChannel($[ "destination" : "syslog" ]);
     }
-    logging = add (logging, $[
-	"key" : "category",
-	"value" : sformat ("default { %1; }", channel),
-    ]);
-    if ((boolean)UI::QueryWidget (`id ("l_named_queries"), `Value))
-    {
-	logging = add (logging, $[
-	    "key" : "category",
-	    "value" : sformat ("queries { %1; }", channel),
-	]);
-    }
-    if ((boolean)UI::QueryWidget (`id ("l_zone_updates"), `Value))
-    {
-	logging = add (logging, $[
-	    "key" : "category",
-	    "value" : sformat ("xfer-in { %1; }", channel),
-	]);
-    }
-    if ((boolean)UI::QueryWidget (`id ("l_zone_transfers"), `Value))
-    {
-	logging = add (logging, $[
-	    "key" : "category",
-	    "value" : sformat ("xfer-out { %1; }", channel),
-	]);
-    }
-    DnsServer::SetLoggingOptions (logging);
 }
 
 /**
