@@ -15,7 +15,7 @@
 //       should be replaced in future by some better agent
 
 `ag_ini(
-    IniAgent( "/etc/named.conf",
+    `IniAgent( "/etc/named.conf",
 	$[
 	    "options"	: [ "global_values" ],
 	    "comments"	: [ "^[ \t]*#.*$", "^[ \t]*$" ],
