@@ -3,6 +3,7 @@ Thu Mar 11 13:12:48 CET 2004 - jsrain@suse.de
 
 - adapted to include files listed in syscofnig only
 - fixed saving of new zones in some situations
+- 2.9.9
 
 -------------------------------------------------------------------
 Wed Mar 10 17:24:11 CET 2004 - jsrain@suse.de
