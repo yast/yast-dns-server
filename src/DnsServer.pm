@@ -31,6 +31,7 @@ YaST::YCP::Import ("Report");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("SuSEFirewall");
 YaST::YCP::Import ("Message");
+YaST::YCP::Import ("ProductFeatures");
 use DnsZones;
 use DnsTsigKeys;
 
@@ -590,13 +591,15 @@ sub SetUseLdap {
 	my $success = $self->LdapInit ();
 
 	if (!$success) {
-	    return;
+	    return Boolean(0);
 	}
     }
 
     $self->SetModified ();
 
     $save_all = 1;
+
+    return Boolean(1);
 }
 
 BEGIN { $TYPEINFO{GetUseLdap} = [ "function", "boolean" ];}
@@ -855,7 +858,9 @@ sub Read {
 	return Boolean (0);
     }
 
-    $self->LdapInit (0);
+    if (ProductFeatures->ui_mode eq "expert") {
+	$self->LdapInit (0);
+    }
  
     Progress->NextStage ();
 
