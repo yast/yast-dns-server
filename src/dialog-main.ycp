@@ -24,6 +24,7 @@ import "CWMServiceStart";
 import "Mode";
 import "Report";
 import "ProductFeatures";
+import "CWMFirewallInterfaces";
 
 /**
  * Dialog Expert Settings - Start Up
@@ -1628,6 +1629,13 @@ map<string, any> start_up_dialog_definition =
 	"save_now_action" : DnsServer::Write,
 	// push button
 	"save_now_button" : _("Save Settings and Restart DNS Server &Now"),
+
+	// FIXME:!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	"get_open_firewall" : nil,
+	"set_open_firewall" : nil,
+	"common_details_handler" : CWMFirewallInterfaces::DisplayPopup,
+	"get_allowed_interfaces" : nil,
+	"set_allowed_interfaces" : nil,
     ];
 
 /**

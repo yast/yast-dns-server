@@ -32,6 +32,8 @@ YaST::YCP::Import ("Service");
 YaST::YCP::Import ("SuSEFirewall");
 YaST::YCP::Import ("Message");
 YaST::YCP::Import ("ProductFeatures");
+YaST::YCP::Import ("SuSEFirewall");
+YaST::YCP::Import ("FirewallWidget");
 use DnsZones;
 use DnsTsigKeys;
 
@@ -42,7 +44,7 @@ use DnsData qw(@tsig_keys $start_service $chroot @allowed_interfaces
 @zones @options @logging $ddns_file_name
 $modified $save_all @files_to_delete %current_zone $current_zone_index
 $adapt_firewall %firewall_settings $write_only @new_includes @deleted_includes
-@zones_update_actions);
+@zones_update_actions $firewall_support);
 use DnsRoutines;
 
 my $use_ldap = 0;
@@ -229,6 +231,31 @@ sub ZoneWrite {
     return 1;
 }
 
+BEGIN { $TYPEINFO{ReadFirewallSupport} = ["function", "boolean"]; };
+sub ReadFirewallSupport {
+    my $self = shift;
+
+    $firewall_support = 1;
+
+    @allowed_interfaces = ();
+    my $at_least_one_allowed = 0;
+    foreach my $protocol ("UDP", "TCP") {
+	foreach my $interface ("INT", "EXT", "DMZ") {
+	    if (SuSEFirewall->HaveService ("53",$protocol,$interface)) {
+		++$at_least_one_allowed;
+		push @allowed_interfaces, $interface;
+	    }
+	    if (SuSEFirewall->HaveService ("domain",$protocol,$interface)) {
+		++$at_least_one_allowed;
+		push @allowed_interfaces, $interface;
+	    }
+	}
+    }
+    if (!$at_least_one_allowed) {
+	$firewall_support = 0;
+    }
+}
+
 BEGIN { $TYPEINFO{AdaptFirewall} = ["function", "boolean"]; }
 sub AdaptFirewall {
     my $self = shift;
@@ -240,17 +267,23 @@ sub AdaptFirewall {
 
     my $ret = 1;
 
+    my $HIGHPORTS_UDP = SCR->Read (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_UDP");
+    my $HIGHPORTS_TCP = SCR->Read (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_TCP");
+
     foreach my $i ("INT", "EXT", "DMZ") {
-        y2milestone ("Removing dhcpd iface $i");
-        SuSEFirewall->RemoveService ("42", "UDP", $i);
-        SuSEFirewall->RemoveService ("42", "TCP", $i);
+        y2milestone ("Removing dns iface $i");
+        SuSEFirewall->RemoveService ("53",	"UDP", $i);
+	SuSEFirewall->RemoveService ("domain",	"UDP", $i);
+        SuSEFirewall->RemoveService ("53",	"TCP", $i);
+	SuSEFirewall->RemoveService ("domain",	"TCP", $i);
     }
     if ($start_service)
     {
+	# FIXME: interfaces to allow are not set !!!
         foreach my $i (@allowed_interfaces) {
-            y2milestone ("Adding dhcpd iface %1", $i);
-            SuSEFirewall->AddService ("42", "UDP", $i);
-            SuSEFirewall->AddService ("42", "TCP", $i);
+            y2milestone ("Adding dns iface %1", $i);
+            SuSEFirewall->AddService ("domain", "UDP", $i);
+            SuSEFirewall->AddService ("domain", "TCP", $i);
         }
     }
     if (! Mode->test ())
@@ -261,13 +294,49 @@ sub AdaptFirewall {
     }
     if ($start_service)
     {
-        $ret = SCR->Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD",
-            SuSEFirewall->MostInsecureInterface (\@allowed_interfaces)) && $ret;
+        $ret = SCR->Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DNS", "yes")
+	    && $ret;
+
+	# Allowing access to high udp ports
+	if ($HIGHPORTS_UDP =~ /^(no|domain|DNS|53)$/) {
+	    # Not used yet or used by BIND, setting to BIND only
+	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_UDP", "domain");
+	} else {
+	    # Also another service is enabled, setting to "yes"
+	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_UDP", "yes");
+	}
+
+	# Allowing acces to high tcp ports
+	if ($HIGHPORTS_TCP =~ /^(no|domain|DNS|53)$/) {
+	    # Not used yet or used by BIND, setting to BIND only
+	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_TCP", "domain");
+	} else {
+	    # Also another service is enabled, setting to "yes"
+	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_TCP", "yes");
+	}
     }
     else
     {
-        $ret = SCR->Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD", "no")
+        $ret = SCR->Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DNS", "no")
             && $ret;
+
+	# Disallowing access to high udp ports
+	if ($HIGHPORTS_UDP =~ /^(no|domain|DNS|53)$/) {
+	    # Only bind used it, disabling
+	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_UDP", "no");
+	} else {
+	    # Also another service is enabled, setting to "yes"
+	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_UDP", "yes");
+	}
+
+	# Disallowing acces to high tcp ports
+	if ($HIGHPORTS_TCP =~ /^(no|domain|DNS|53)$/) {
+	    # Only bind used it, disabling
+	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_TCP", "no");
+	} else {
+	    # Also another service is enabled, setting to "yes"
+	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_TCP", "yes");
+	}
     }
 
     $ret = SCR->Write (".sysconfig.SuSEfirewall2", undef) && $ret;
@@ -1023,6 +1092,8 @@ sub Read {
     } @zones;
     $modified = 0;
 
+    FirewallWidget->Init("dns-server");
+
     Progress->NextStage ();
 
     return Boolean(1);
@@ -1072,7 +1143,7 @@ sub Write {
 
     if (! $modified)
     {
-	return "true";
+	return Boolean($ok);
     }
 
     $ok = $self->StopDnsService () && $ok;
@@ -1086,7 +1157,8 @@ sub Write {
     }
 
     #adapt firewall
-    $ok = $self->AdaptFirewall () && $ok;
+### FIXME:
+###    $ok = $self->AdaptFirewall () && $ok;
 
     # save ACLs
     $ok = SCR->Write (".dns.named.value.acl", \@acl) && $ok;
@@ -1119,8 +1191,10 @@ sub Write {
 	$modify_resolv_conf_dynamically ? "yes" : "no");
     SCR->Write (".sysconfig.network.config", undef);
 
-    #set to sysconfig if LDAP is to be used
-    LdapStore ();
+    if ($use_ldap) {
+	#set to sysconfig if LDAP is to be used
+	LdapStore ();
+    }
 
     Progress->NextStage ();
 
@@ -1134,7 +1208,7 @@ sub Write {
 
     if (0 != @zones_update_actions)
     {
-	if ($ret != 0)
+	if ($ret->{"exit"} != 0)
 	{
 	    $ok = 0;
 	}
@@ -1149,14 +1223,17 @@ sub Write {
 
     if ($start_service)
     {
-	my $ret = 0;
+	my $ret = {};
+	$ret->{'exit'} = 0;
 	if (! $write_only)
 	{
-	    $ret = SCR->Execute (".target.bash", "/etc/init.d/named restart");
+	    $ret = SCR->Execute (".target.bash_output", "/etc/init.d/named restart");
 	}
 	Service->Enable ("named");
-	if (0 != $ret)
+	if ($ret->{'exit'} != 0)
 	{
+	    # Cannot start service 'named', because $error
+	    Report->Error (__("Error occurred while starting service 'named'.\nError: ".$ret->{'stdout'}));
 	    $ok = 0;
 	}
     }
