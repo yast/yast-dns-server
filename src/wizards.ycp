@@ -122,7 +122,7 @@
       * Main workflow of the dns-server configuration
       * @return sequence result
       */
-    global define symbol MainSequence() ``{
+/**    global define symbol MainSequence() ``{
 
 	map aliases = $[
 	    "main"		: ``(runMainDialog ()),
@@ -207,6 +207,7 @@
 
 	return ret;
     }
+*/
 
     /**
       * Whole configuration of dns-server

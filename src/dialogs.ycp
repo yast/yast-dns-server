@@ -76,7 +76,7 @@ All changes will be lost."));
  * Run main dialog
  * @return symbol for wizard sequencer
  */
-global define symbol runMainDialog () ``{
+/** global define symbol runMainDialog () ``{
     y2milestone ("Running main dialog");
 
     list<map<string,any> > w = CWM::CreateWidgets (["start", "chroot", "zones", "advanced_mbutton", "log_button"],
@@ -104,12 +104,13 @@ global define symbol runMainDialog () ``{
     return CWM::Run (w,
 	$[`abort : ReallyExit ]);
 }
+*/
 
 /**
  * Run global options dialog
  * @return symbol for wizard sequencer
  */
-define symbol runGlobalOptionsDialog () ``{
+/** define symbol runGlobalOptionsDialog () ``{
     y2milestone ("Running global options dialog");
 
     list<string> w = ["global_table"];
@@ -127,12 +128,13 @@ define symbol runGlobalOptionsDialog () ``{
 	contents, caption, Label::BackButton (), Label::OKButton (),
 	$[`abort : ReallyAbortAlways]);
 }
+*/
 
 /**
  * Run firewall settings dialog
  * @return symbol for wizard sequencer
  */
-define symbol runFirewallDialog () ``{
+/** define symbol runFirewallDialog () ``{
     y2milestone ("Running firewall settings dialog");
 
     if (! SuSEFirewall::start)
@@ -159,12 +161,13 @@ define symbol runFirewallDialog () ``{
 	contents, caption, Label::BackButton (), Label::OKButton (),
 	$[`abort : ReallyAbortAlways]);
 }
+*/
 
 /**
  * Run synaimc DNS settings dialog
  * @return symbol for wizard sequencer
  */
-define symbol runDDNSDialog () ``{
+/** define symbol runDDNSDialog () ``{
     y2milestone ("Running TSIG keys management dialog");
 
     list<string> w = ["ddns_keys"];
@@ -182,12 +185,13 @@ define symbol runDDNSDialog () ``{
 	contents, caption, Label::BackButton (), Label::OKButton (),
 	$[`abort : ReallyAbortAlways]);
 }
+*/
 
 /**
  * Run dialog for new zone selection
  * @return symbol for wizard sequencer
  */
-define symbol runNewZoneDialog () ``{
+/** define symbol runNewZoneDialog () ``{
     y2milestone ("Running new zone type dialog");
 
     list<string> w = ["zone_type", "zone_direction"];
@@ -207,12 +211,13 @@ define symbol runNewZoneDialog () ``{
 	contents, caption, Label::BackButton (), Label::NextButton (),
 	$[`abort : ReallyAbortAlways]);
 }
+*/
 
 /**
  * Run master zone edit dialog
  * @return symbol for wizard sequencer
  */
-global define symbol runMasterZoneDialog () ``{
+/** global define symbol runMasterZoneDialog () ``{
     y2milestone ("Running master zone editation dialog");
 
     list<string> w = [ "zone_name", "allow_ddns", "master_table", "soa_button"];
@@ -232,12 +237,13 @@ global define symbol runMasterZoneDialog () ``{
 	contents, caption, Label::BackButton (), Label::OKButton (),
 	$[`abort : ReallyAbortAlways]);
 }
+*/
 
 /**
  * Run SOA record edit dialog
  * @return symbol for wizard sequencer
  */
-global define symbol runSoaDialog () ``{
+/** global define symbol runSoaDialog () ``{
     y2milestone ("Running SOA editation dialog");
 
     list<string> w = [ "soa" ];
@@ -253,12 +259,13 @@ global define symbol runSoaDialog () ``{
 	contents, caption, Label::BackButton (), Label::OKButton (),
 	$[`abort : ReallyAbortAlways]);
 }
+*/
 
 /**
  * Run slave or stub zone edit dialog
  * @return symbol for wizard sequencer
  */
-global define symbol runSlaveStubZoneDialog (symbol type) ``{
+/** global define symbol runSlaveStubZoneDialog (symbol type) ``{
     y2milestone ("Running slave/stub zone editation dialog: %1", type);
 
     list<string> w = [ "zone_name", "zone_masters" ];
@@ -279,22 +286,25 @@ global define symbol runSlaveStubZoneDialog (symbol type) ``{
 	contents, caption, Label::BackButton (), Label::OKButton (),
 	$[`abort : ReallyAbortAlways]);
 }
+*/
 
 /**
  * Run slave zone edit dialog
  * @return symbol for wizard sequencer
  */
-global define symbol runSlaveZoneDialog () ``{
+/** global define symbol runSlaveZoneDialog () ``{
     return runSlaveStubZoneDialog (`slave);
 }
+*/
 
 /**
  * Run stub zone edit dialog
  * @return symbol for wizard sequencer
  */
-global define symbol runStubZoneDialog () ``{
+/** global define symbol runStubZoneDialog () ``{
     return runSlaveStubZoneDialog (`stub);
 }
+*/
 
 define symbol runZoneTypeSwitch () ``{
     string type = current_zone["type"]:"master";
@@ -314,11 +324,12 @@ define symbol runZoneTypeSwitch () ``{
     }
 }
 
-define symbol runZoneStore () ``{
+/** define symbol runZoneStore () ``{
     DnsServer::StoreCurrentZone (current_zone);
     DnsServer::StoreZone ();
     return `next;
 }
+*/
 
 /* EOF */
 }

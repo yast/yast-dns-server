@@ -18,6 +18,7 @@ import "DnsServer";
 // FIXME - DnsFakeTabs will be replaced by real Tabs
 import "DnsFakeTabs";
 import "DnsRoutines";
+import "ProductFeatures";
 
 /**
  * Dialog Tab - Zone Editor - Basics
@@ -40,17 +41,24 @@ term GetMasterZoneEditorTabBasics () {
     acl = (list<string>)
 	sort (merge (acl, ["any", "none", "localhost", "localnets"]));
 
+    term expert_settings = `Empty();
+    if (ProductFeatures::ui_mode == "expert") {
+	expert_settings = `VBox (
+	    `Left (`CheckBox (`id ("allow_ddns"), `opt (`notify),
+		// check box
+		_("A&llow Dynamic Updates"))
+	    ),
+	    `Left (`ReplacePoint (`id (`ddns_key_rp),
+		// combo box
+	      `ComboBox (`id ("ddns_key"), `opt(`hstretch), _("TSIG &Key"),
+		    updater_keys)
+    	    )),
+	    `VSpacing (2)
+	);
+    }
+
     term contents = `VBox (
-	`Left (`CheckBox (`id ("allow_ddns"), `opt (`notify),
-	    // check box
-	    _("A&llow Dynamic Updates"))
-	),
-	`Left (`ReplacePoint (`id (`ddns_key_rp),
-	    // combo box
-	   `ComboBox (`id ("ddns_key"), `opt(`hstretch), _("TSIG &Key"),
-		updater_keys)
-        )),
-	`VSpacing (2),
+	expert_settings,
 	`Left (`CheckBox (`id ("enable_zone_transport"), `opt (`notify),
 	    // check box
 	    _("Enable &Zone Transport"))),
