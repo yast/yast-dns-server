@@ -1,0 +1,19 @@
+$TTL 2W
+@		IN SOA		dns.domain.cz	root.domain.cz. (
+				2003080400	; serial
+				1H		; refresh
+				1H		; retry
+				1W		; expiry
+				1D )		; minimum
+
+		IN MX		10 dns.domain.cz.
+		IN MX		20 sns.domain.cz.
+		IN NS		dns.domain.cz.
+		IN NS		sns.domain.cz.
+dns		IN A		1.2.3.4
+sns		IN A		1.2.3.5
+other		IN A		1.2.3.6
+other2		IN A		1.2.3.7
+		IN MX		10 other.domain.cz.
+alias		IN CNAME	dns
+alias2		IN CNAME	other2.domain.cz.

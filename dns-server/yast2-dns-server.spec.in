@@ -1,0 +1,37 @@
+@HEADER-COMMENT@
+# neededforbuild yast2-devel-packages perl-gettext yast2-perl-bindings yast2-ldap perl-X500-DN perl-Digest-SHA1 perl-Parse-RecDescent yast2-ldap-client yast2-pam
+
+
+@HEADER@
+Requires:	yast2 /usr/bin/host perl-gettext yast2-perl-bindings bind-utils yast2-ldap perl-X500-DN perl-Digest-SHA1 perl-Parse-RecDescent yast2-ldap-client
+
+BuildArchitectures:	noarch
+
+Summary:	Configuration of dns-server
+
+%description
+-
+
+@PREP@
+
+@BUILD@
+
+@INSTALL@
+
+@CLEAN@
+
+%files
+%defattr(-,root,root)
+%dir @yncludedir@/dns-server
+@yncludedir@/dns-server/*
+@clientdir@/dns-server.ycp
+@clientdir@/dns-server_*.ycp
+@moduledir@/*
+@desktopdir@/dns-server.desktop
+@scrconfdir@/dns_named.scr
+@scrconfdir@/dns_zone.scr
+@scrconfdir@/cfg_named.scr
+@scrconfdir@/named_forwarders.scr
+@agentdir@/ag_dns_zone
+@agentdir@/ag_named_forwarders
+%doc @docdir@

@@ -1,0 +1,8 @@
+General:
+- editing of other zone types (forward, hint)
+- configuring logging
+- create some parser available to parse general named.conf (and not only
+  nice-formatted)
+
+DNS zone file agent:
+- why is there a list as argument when reading?

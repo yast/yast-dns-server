@@ -1,0 +1,23 @@
+// Dirty hack for tabs in YCP until the widget implementation is ready
+{
+    module "DnsFakeTabs";
+
+
+    global term DumbTabs( list<term> items, term contents )
+    {
+	term tabs = `HBox();
+	
+	foreach ( term item, items, 
+	{
+	    string text = (string) item[1]:"";
+	    term idTerm = (term)   item[0]:`id(`unknown);
+	    tabs = add( tabs, `PushButton( idTerm, text ) );
+	});
+
+	tabs = add( tabs, `HStretch() );
+
+	y2milestone( "Creating tabs: %1", tabs );
+
+	return `VBox( tabs, `Frame( "", contents ) );
+    }
+}

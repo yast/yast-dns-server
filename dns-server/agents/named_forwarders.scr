@@ -1,0 +1,13 @@
+/**
+ * File:        named_forwarders.scr
+ * Summary:     Agent for rading and writing of DNS zone files
+ * Author:      Jiri Srain <jsrain@suse.cz>
+ * Access:      read, write
+ *
+ * $Id$
+ *
+ */
+.dns.named-forwarders
+
+`ag_named_forwarders ()
+

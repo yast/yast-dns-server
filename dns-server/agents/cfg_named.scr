@@ -1,0 +1,16 @@
+/**
+ * File:	cfg_named.scr
+ * Summary:	Agent for reading/writing /etc/sysconfig/named
+ * Author:	Jiri Srain <jsrain@suse.cz>
+ * Access:	read / write
+ *
+ * $Id$
+ *
+ * Read/Sets the values defined in <tt>/etc/sysconfig/named</tt>
+ * in an easy manner.
+ */
+.sysconfig.named
+
+`ag_ini(
+    `SysConfigFile("/etc/sysconfig/named")
+)

@@ -1,0 +1,274 @@
+/**
+ * File:	include/dns-server/dialog-installwizard.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Main tab-style dialog definitions
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *              Lukas Ocilka <lukas.ocilka@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+textdomain "dns-server";
+
+import "DnsServer";
+import "IP";
+import "Popup";
+import "Label";
+import "CWM";
+import "Wizard";
+import "ProductFeatures";
+import "CWMFirewallInterfaces";
+
+symbol runInstallWizardForwardersDialog () {
+    string caption =
+	// Dialog caption (before a dash)
+	_("DNS Server Installation") +
+	" - " +
+	// Dialog caption (after a dash)
+	_("Forwarder Settings");
+
+    term contents = ExpertForwardersDialog();
+
+    Wizard::SetContentsButtons ( caption, contents, HELPS["forwarders"]:"",
+	Label::BackButton (), Label::NextButton ()
+    );
+    Wizard::SetAbortButton ( `abort, Label::CancelButton() );
+    Wizard::HideBackButton ();
+    InitExpertForwardersPage ("forwarders");
+
+    map event = $[];
+    any ret = nil;
+    while (true) {
+	event = UI::WaitForEvent();
+	ret = event["ID"]:nil;
+	if (ret == `next ) {
+	    break;
+	}
+	else if (ret == `cancel || ret == `abort) {
+	    if ( ReallyAbortAlways() )
+		break;
+	    else
+		continue;
+	}
+	else if (ret == `back)
+	{
+	    break;
+	}
+	else
+	{
+	    HandleExpertForwardersPage ("forwarders", event);
+	}
+    }
+
+    Wizard::RestoreBackButton ();
+    Wizard::RestoreAbortButton ();
+    if (ret == `next)
+	StoreExpertForwardersPage ("forwarders", $[]);
+
+    return (symbol) ret;
+}
+
+symbol runInstallWizardZonesDialog () {
+    string caption =
+	// Dialog caption (before a dash)
+	_("DNS Server Installation") +
+	" - " +
+	// Dialog caption (after a dash)
+	_("DNS Zones");
+
+    Wizard::SetContentsButtons (
+	caption, ExpertZonesDialog (), HELPS["zones"]:"",
+	Label::BackButton (), Label::NextButton ()
+    );
+    Wizard::RestoreAbortButton ();
+    Wizard::RestoreBackButton ();
+    Wizard::RestoreNextButton ();
+    InitExpertZonesPage ("zones");
+
+    map event = $[];
+    any ret = nil;
+    while (true) {
+	event = UI::WaitForEvent();
+	ret = event["ID"]:nil;
+	if (ret == `next ) {
+	    break;
+	}
+	else if (ret == `cancel || ret == `abort) {
+	    if ( ReallyAbortAlways() )
+		break;
+	    else
+		continue;
+	}
+	else if (ret == `back)
+	{
+	    break;
+	}
+	else if (ret == "edit_zone")
+	{
+	   integer index = (integer)
+		UI::QueryWidget (`id ("zones_list_table"), `CurrentItem);
+	    DnsServer::SelectZone (index);
+	    current_zone = DnsServer::FetchCurrentZone ();
+	    ret = `edit_zone;
+	    break;
+	}
+	else
+	{
+	    HandleExpertZonesPage ("zones", event);
+	}
+    }
+
+    if (ret == `next || ret == `edit_zone)
+	StoreExpertZonesPage ("zones", $[]);
+
+    return (symbol) ret;
+}
+
+symbol runInstallWizardFinishDialog () {
+    string caption =
+	// Dialog caption (before a dash)
+	_("DNS Server Installation") +
+	" - " +
+	// Dialog caption (after a dash)
+	_("Finish Wizard");
+
+
+    ReadForwarders ();
+    string fw = mergestring (forwarders, ", ");
+    list<map > zones = DnsServer::FetchZones ();
+    list<string> zn = maplist (map z, zones, ``(z["zone"]:""));
+    string zl = mergestring (zn, ", ");
+
+    string rich_text =
+	"<ul>" +
+	// Rich Text Item - Installation overview
+	sformat ( _("<li>Forwarders: %1</li>"), fw ) +
+	// Rich Text Item - Installation overview
+	sformat ( _("<li>Domains: %1</li>"), zl) +
+	"</ul>";
+
+    map<string,any> firewall_settings = $[
+	"services" : [ "dns-server" ],
+	"display_details" : true,
+    ];
+    map<string,any> firewall_widget =
+	CWMFirewallInterfaces::CreateOpenFirewallWidget (firewall_settings);
+    term firewall_layout = firewall_widget["custom_widget"]:`VBox ();
+    string firewall_help = firewall_widget["help"]:"";
+
+    term ldap_support = ((ProductFeatures::ui_mode == "expert") ?
+	`VBox (
+	    `VSpacing ( 1 ),
+	    // check box
+	    `Left (`CheckBox (`id ("use_ldap"), `opt (`notify), _("&LDAP Support Active"))),
+	    `VSpacing ( 1 )
+	)
+	:
+	`VSpacing ( 1 )
+    );
+
+    term dialog =
+	`Top (
+	    `VBox (
+		// Frame label (DNS starting)
+		`VBox (
+		    firewall_layout,
+		    ldap_support,
+		    // Label for Radiobuttons - DNS starting
+		    `Left ( `Label ( _("Start-up Behavior") ) ),
+		    `Left (
+			`RadioButtonGroup( `id ( "dns_server_type" ), `opt( `shrinkable ),
+			    `VBox (
+				// Radiobutton label - DNS starting
+				`Left( `RadioButton( `id (`on), _("O&n -- Start DNS Server Now and when Booting") ) ),
+				// Radiobutton label - DNS starting
+				`Left( `RadioButton( `id (`off), _("O&ff -- Server Only Starts Manually") ) ),
+				`VSpacing ( 1 )
+			    )
+			)
+		    )
+		),
+
+		`RichText ( `id ( "installation_overview" ),
+		    rich_text
+		),
+		`VSpacing ( 2 ),
+		// Push Button - start expert configuration
+		`PushButton ( `id ( `expert ), _("DNS Server &Expert Configuration...")),
+		`VStretch()
+	    )
+	);
+
+    Wizard::SetContentsButtons (
+	caption, dialog,
+	HELPS["installwizard_step3"]:"" + firewall_help,
+	Label::BackButton (), Label::NextButton ()
+    );
+    Wizard::SetNextButton ( `next, Label::FinishButton() );
+
+    boolean auto_start = DnsServer::GetStartService ();
+    UI::ChangeWidget (`id ("dns_server_type"), `CurrentButton, auto_start
+        ? `on
+        : `off);
+
+    boolean use_ldap = false;
+    // only expert allows to store data in ldap
+    if (ProductFeatures::ui_mode == "expert") {
+	use_ldap = DnsServer::GetUseLdap ();
+	UI::ChangeWidget (`id ("use_ldap"), `Value, use_ldap);
+    }
+
+    boolean ldap_changed = false;
+    map event = $[];
+    any ret = nil;
+    CWMFirewallInterfaces::OpenFirewallInit (firewall_widget, "");
+    while (true) {
+	event = UI::WaitForEvent ();
+	ret = event["ID"]:nil;
+	CWMFirewallInterfaces::OpenFirewallHandle (firewall_widget, "", event);
+	if (ret == `next ) {
+	    break;
+	}
+	else if (ret == `expert)
+	{
+	    break;
+	}
+	else if (ret == `back)
+	{
+	    break;
+	}
+	else if (ret == `cancel || ret == `abort) {
+	    if ( ReallyAbortAlways() )
+		break;
+	    else
+		continue;
+	}
+	else if (ret == "use_ldap")
+	{
+	    boolean use_ldap = (boolean)
+		UI::QueryWidget (`id ("use_ldap"), `Value);
+	    DnsServer::SetUseLdap (use_ldap);
+	    DnsServer::InitYapiConfigOptions ($["use_ldap" : use_ldap]);
+	    DnsServer::LdapInit (true);
+	    DnsServer::CleanYapiConfigOptions ();
+	    use_ldap = DnsServer::GetUseLdap ();
+	    UI::ChangeWidget (`id ("use_ldap"), `Value, use_ldap);
+	}
+    }
+
+    if (ret == `next || ret == `expert)
+    {
+	DnsServer::SetModified ();
+	boolean auto_start
+            = UI::QueryWidget (`id ("dns_server_type"), `CurrentButton) == `on;
+	DnsServer::SetStartService (auto_start);
+	CWMFirewallInterfaces::OpenFirewallStore (firewall_widget, "", event);
+    }
+
+    return (symbol) ret;
+}
+
+/* EOF */
+}
