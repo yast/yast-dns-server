@@ -697,11 +697,10 @@ define symbol advMenubuttonHandle (string id, map event) ``{
 	    "actions" : [
 		// menubutton entry, try to keep short
 		[ _("Restart DNS Server"),
-		    ``{SCR::Execute (.target.bash,
-			"/etc/init.d/named restart");}],
+		    RestartDnsDaemon ],
 		// menubutton entry, try to keep short
 		[ _("Save Settings and Restart DNS Server"),
-		    ``{DnsServer::Write ();} ],
+		    DnsServer::Write ],
 	    ],
 	]);
 	return nil;

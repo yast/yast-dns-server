@@ -14,6 +14,15 @@
     import "Require";
     import "Mode";
     import "Label";
+    import "Service";
+
+
+    /**
+     * Restart the DNS daemon
+     */
+    define void RestartDnsDaemon () ``{
+	Service::RunInitScript("named", "restart");
+    }
 
     /**
       * Remove quotes around a string
