@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Fri Sep  3 13:20:31 CEST 2004 - locilka@suse.cz
+
+- added GetModified/SetModified support into the autoyast client
+
+-------------------------------------------------------------------
 Tue Aug 31 08:55:10 CEST 2004 - locilka@suse.cz
 
 - added new firewall variables into Read() testsuite
