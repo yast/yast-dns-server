@@ -78,7 +78,7 @@ All changes will be lost."));
 global define symbol runMainDialog () ``{
     y2milestone ("Running main dialog");
 
-    list<map> w = CWM::CreateWidgets (["start", "chroot", "zones", "advanced_mbutton", "log_button"],
+    list<map<string,any> > w = CWM::CreateWidgets (["start", "chroot", "zones", "advanced_mbutton", "log_button"],
 	DnsServerUI::widgets);
     term contents = `HBox (`HSpacing (1), `VBox (
 	`VSpacing (1),
