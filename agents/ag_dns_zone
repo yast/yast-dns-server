@@ -1,0 +1,176 @@
+#!/usr/bin/perl -w
+
+use ycp;
+use File::Temp;
+
+sub tabToFile ($)
+{
+    my $word = shift;
+    my $ret = "";
+    if (length ($word) < 8)
+    {
+	$ret = "$word" . "\t";
+    }
+    else
+    {
+	$ret = $word;
+    }
+    return $ret;
+}
+
+
+while ( <STDIN> )
+{
+    my ($command, $path, $argument) = ycp::ParseCommand ($_);
+
+    if ($command eq "Write")
+    {
+	if ($path eq "." && ref ($argument) eq "ARRAY")
+	{
+	    my @a = @{$argument};
+	    my $file = $a[0];
+	    my %data = %{$a[1]};
+
+	    open (OUT, ">$file");
+
+	    # write the TTL record first
+	    if (exists ($data{"TTL"}))
+	    {
+		print OUT "\$TTL $data{\"TTL\"}\n";
+	    }
+
+	    # write the SOA record now
+	    if (exists ($data{"soa"}))
+	    {
+		my %soa = %{$data{"soa"}};
+		my $domain = tabToFile ($soa{"domain"});
+		my $server = $soa{"server"};
+		my $mail = $soa{"mail"};
+		my $serial = tabToFile ($soa{"serial"});
+		my $refresh = tabToFile ($soa {"refresh"});
+		my $retry = tabToFile ($soa{"retry"});
+		my $expiry = tabToFile ($soa{"expiry"});
+		my $minimum = tabToFile ($soa {"minimum"} . " )");
+		if ((exists ($soa{"comment"})) && ($soa{"comment"} ne ""))
+		{
+		    print OUT "$soa{\"comment\"}";
+		}
+		print OUT "$domain\tIN SOA\t\t$server\t$mail (\n";
+		print OUT "\t\t\t\t$serial\t; serial\n";
+		print OUT "\t\t\t\t$refresh\t; refresh\n";
+		print OUT "\t\t\t\t$retry\t; retry\n";
+		print OUT "\t\t\t\t$expiry\t; expiry\n";
+		print OUT "\t\t\t\t$minimum\t; minimum\n";		
+	    }
+	    print OUT "\n";
+
+	    #now the normal records come
+	    my @records = @{$data{"records"}};
+	    foreach $ref (@records) {
+		%record = %{$ref};
+		if ((exists ($record{"comment"})) && ($record{"comment"} ne ""))
+		{
+		    print OUT "$record{\"comment\"}";
+		}
+		$key = tabToFile ($record{"key"});
+		$type = tabToFile ("IN " . $record{"type"});
+		$value = $record{"value"};
+		print OUT "$key\t$type\t$value\n";
+	    }
+
+	    close (OUT);
+	    ycp::Return ("true");
+	}
+	else
+	{
+	    y2error ("Wrong arguments");
+	    ycp::Return ("false");
+	}
+
+
+    }
+    elsif ($command eq "Read")
+    {
+	if ($path eq "." && ref ($argument) eq "ARRAY")
+	{
+	    my @a = @{$argument};
+	    my $file = $a[0];
+	    my %data = ();
+	    my @records = ();
+	    my $comment = "";
+
+	    open (IN, "$file");
+	    while ( $line = <IN> )
+	    {
+		if ($line =~ /^\$TTL[ \t]*[0-9]+[A-Za-z]/) # TTL record
+		{
+		    ($ttl) = $line =~ m/^\$TTL[ \t]*([0-9]+[A-Za-z])/;
+		    $data{"TTL"} = $ttl;
+		}
+		elsif ($line =~ /^[^ \t]*[ \t]*IN[ \t]*SOA[ \t]*.*$/) # SOA record
+		{
+		    my %soa = ();
+		    ($soa{"domain"}, $soa{"server"}, $soa{"mail"})
+			= $line =~ /^([^ \t]+)[ \t]*IN[ \t]*SOA[ \t]*([^ \t]+)[ \t]*([^ \t]+)[ \t]*/;
+		    $line = <IN>;
+		    ($soa{"serial"}) = $line =~ /^[ \t]*([0-9]+)[ \t]/;
+		    $line = <IN>;
+		    ($soa{"refresh"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z])[ \t]/;
+		    $line = <IN>;
+		    ($soa{"retry"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z])[ \t]/;
+		    $line = <IN>;
+		    ($soa{"expiry"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z])[ \t]/;
+		    $line = <IN>;
+		    ($soa{"minimum"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z])[ \t]/;
+		    $data{"soa"} = \%soa;
+		    if ($comment ne "")
+		    {
+			$soa{"comment"} = $comment;
+			$comment = "";
+		    }
+		}
+		elsif ($line =~ /^[^ \t]*[ \t]*IN[ \t]*[A-Za-z]+[ \t]*[^ \t;\n][^;\n]*.*$/) #normal record
+		{
+		    my %rec = ();
+		    
+		    ($rec{"key"}, $rec{"type"}, $rec{"value"}) = $line =~ /^([^ \t]*)[ \t]*IN[ \t]*([A-Za-z]+)[ \t]*([^;\n]+).*$/;
+
+		    if ($line =~ /^[^;]*;.*$/)
+		    {
+y2error ("Line contains help");
+			($comment_after) = $line =~ m/^[^;]*(;.*)$/;
+			chomp ($comment_after);
+			$comment = $comment . $comment_after . "\n";
+		    }
+		    if ($comment ne "")
+		    {
+			$rec{"comment"} = $comment;
+			$comment = "";
+		    }
+		    push (@records, \%rec);
+		}
+		elsif ($line =~ /^[ \t]*;.*$/)
+		{
+		    chomp ($line);
+		    $comment = $comment . $line . "\n";
+		}
+		# else blank line, ignore it
+	    }
+	    close (IN);
+	    $data{"records"} = \@records;
+	    ycp::Return (\%data);
+	}
+	else
+	{
+	    y2error ("Wrong arguments");
+	    ycp::Return ("false");
+	}
+
+
+    }
+    else
+    {
+        y2error ("Wrong path or arguments");
+        ycp::Return ("false");
+    }
+}

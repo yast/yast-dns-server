@@ -1,0 +1,30 @@
+@HEADER-COMMENT@
+# neededforbuild yast2-devel-packages
+
+@HEADER@
+Requires:	yast2
+
+BuildArchitectures:	noarch
+
+Summary:	Configuration of dns-server
+
+%description
+-
+
+@PREP@
+
+@BUILD@
+
+@INSTALL@
+
+@CLEAN@
+
+%files
+%defattr(-,root,root)
+%dir @yncludedir@/dns-server
+@yncludedir@/dns-server/*
+@clientdir@/dns-server.ycp
+@clientdir@/dns-server_*.ycp
+@moduledir@/DnsServer.ycp
+@configdir@/dns-server.y2cc
+%doc @docdir@

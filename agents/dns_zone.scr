@@ -1,0 +1,13 @@
+/**
+ * File:        dns_zone.scr
+ * Summary:     Agent for rading and writinf of DNS zone files
+ * Author:      Jiri Srain <jsrain@suse.cz>
+ * Access:      read, write
+ *
+ * $Id$
+ *
+ */
+.dns.zone
+
+`ag_dns_zone ()
+
