@@ -25,6 +25,8 @@
     import "Popup";
 
 
+    global define map createNewZone(string zone_type) ``{return $[];}
+
     include "dns-server/misc.ycp";
     include "dns-server/helps.ycp";
 

@@ -138,11 +138,11 @@
       */
     global define void zonesInit (any key) ``{
 	integer index = -1;
-/* FIXME	list items = maplist (`z, all_zones, ``{
+	list items = maplist (map z, DnsServer::FetchZones(), ``{
 	    index = index + 1;
 	    return `item (`id (index), z["zone"]:"", z["type"]:"master");
 	});
-	UI::ChangeWidget (`id (`zones), `Items, items);*/
+	UI::ChangeWidget (`id (`zones), `Items, items);
 	UI::SetFocus (`id (`zones));
     }
 
@@ -165,23 +165,28 @@
       */
     global define symbol zonesHandle (any key, map event) ``{
 	UI::SetFocus (`id (`zones));
-/* FIXME	integer current = UI::QueryWidget (`id (`zones), `CurrentItem);
+	integer current = (integer) UI::QueryWidget (`id (`zones), `CurrentItem);
         if (event["ID"]:nil == `add || event["ID"]:nil == `edit
 	    || event["ID"]:nil == `zones)
         {
+            map current_zone = $[];
             if (event["ID"]:nil == `add)
             {
-		string zone_type = askForZoneType ();
-                current_zone = createNewZone (zone_type);
-                current_id = -1;
+//		string zone_type = askForZoneType ();
+//                current_zone = createNewZone (zone_type);
+                DnsServer::SelectZone(-1);
+                current_zone = DnsServer::FetchCurrentZone();
+//                current_id = -1;
             }
             else
             {
-                current_zone = eval (all_zones[current]:$[]);
-		current_id = current;
+//                current_zone = eval (all_zones[current]:$[]);
+                DnsServer::SelectZone(current);
+                current_zone = (map) eval(DnsServer::FetchCurrentZone());
+//		current_id = current;
             }
 	    string type = current_zone["type"]:"master";
-	    displayed_settings = "settings";
+//	    displayed_settings = "settings";
 	    if (type == "master")
 	    {
 		return `edit_master;
@@ -203,14 +208,15 @@
 	    // yes-no popup
 	    if (Popup::YesNo (_("Delete selected zone?")))
 	    {
-		all_zones[current] = nil;
-		all_zones = filter (`k, all_zones, ``(k != nil));
+/*		all_zones[current] = nil;
+		all_zones = filter (`k, all_zones, ``(k != nil));*/
+                DnsServer::RemoveZoneIndex(current, false);
 		zonesInit (key);
-		zones_modified = true;
+//		zones_modified = true;
 	    }
             return nil;
         }
-*/
+
     }
 
     /**
