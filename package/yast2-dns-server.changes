@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Aug 31 08:55:10 CEST 2004 - locilka@suse.cz
+
+- added new firewall variables into Read() testsuite
+- 2.10.7
+
+-------------------------------------------------------------------
 Mon Aug 30 05:24:21 CEST 2004 - nashif@suse.de
 
 - Added GetModified function to _auto client
