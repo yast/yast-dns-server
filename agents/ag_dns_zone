@@ -136,11 +136,11 @@ while ( <STDIN> )
 			$comment = "";
 		    }
 		}
-		elsif ($line =~ /^[^ \t]*[ \t]*IN[ \t]*[A-Za-z]+[ \t]*[^ \t;\n][^;\n]*.*$/) #normal record
+		elsif ($line =~ /^[^ \t]*[ \t]*[0-9]*[ \t]*IN[ \t]*[A-Za-z]+[ \t]*[^ \t;\n][^;\n]*.*$/) #normal record
 		{
 		    my %rec = ();
 		    
-		    ($rec{"key"}, $rec{"type"}, $rec{"value"}) = $line =~ /^([^ \t]*)[ \t]*IN[ \t]*([A-Za-z]+)[ \t]*([^;\n]+).*$/;
+		    ($rec{"key"}, $rec{"type"}, $rec{"value"}) = $line =~ /^([^ \t]*)[ \t]*[0-9]*[ \t]*IN[ \t]*([A-Za-z]+)[ \t]*([^;\n]+).*$/;
 
 		    if ($line =~ /^[^;]*;.*$/)
 		    {
