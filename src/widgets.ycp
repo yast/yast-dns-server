@@ -475,7 +475,7 @@ global define boolean globalTableEntryDelete (any opt_id, any opt_key) ``{
     if (! Popup::YesNo (_("Delete selected entry?")))
 	return false;
     current_section[oid] = $[];
-    current_section = filter (map o, current_section, ``(o != $[]));
+    current_section = filter (map<string,any> o, current_section, ``(o != $[]));
     return true;
 }
 
@@ -740,7 +740,7 @@ global define symbol nsHandle (string id, map event) ``{
  */
 global define void nsInit (string id) ``{
     string zone_name = current_zone["zone"]:"";
-    list records = filter (map r, current_zone["records"]:[], ``(
+    list<map> records = filter (map r, (list<map>)(current_zone["records"]:[]), ``(
 	r["type"]:"" == "NS"
 	&& (r["key"]:"" == sformat ("%1.", zone_name)
 	    || r["key"]:"" == zone_name)
@@ -866,7 +866,7 @@ global define symbol mxHandle (string id, map event) ``{
  */
 global define void mxInit (string id) ``{
     string zone_name = current_zone["zone"]:"";
-    list records = filter (map r, current_zone["records"]:[], ``(
+    list<map> records = filter (map r, (list<map>)(current_zone["records"]:[]), ``(
 	r["type"]:"" == "MX"
 	&& (r["key"]:"" == sformat ("%1.", zone_name)
 	    || r["key"]:"" == zone_name)
@@ -978,7 +978,7 @@ global define boolean masterTableEntryDelete (any opt_id, string opt_key) ``{
 global define list getMasterTableContents (map descr) ``{
     string zone_name = current_zone["zone"]:"";
     integer index = -1;
-    list ret = maplist (map m, current_zone["records"]:[], ``{
+    list<integer> ret = maplist (map m, current_zone["records"]:[], ``{
 	index = index + 1;
 	if (m["type"]:"" == "TTL" || m["type"]:"" == "ORIGIN")
 	    return -1;
@@ -1435,7 +1435,7 @@ Old keys will be removed. Continue?")))
 	}
 	new_tsig_keys = add (new_tsig_keys, filename);
 	foreach (string k, keys, ``{
-	    current_tsig_keys = filter (map key, current_tsig_keys, ``(
+	    current_tsig_keys = filter (map<string,string> key, current_tsig_keys, ``(
 		key["key"]:nil != k
 	    ));
 	    current_tsig_keys = add (current_tsig_keys, $[

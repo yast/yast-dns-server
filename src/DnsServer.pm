@@ -538,12 +538,12 @@ sub StoreZones {
     SetModified ();
 }
 
-BEGIN{$TYPEINFO{GetGlobalOptions}=["function",["list",["map","any","any"]]];}
+BEGIN{$TYPEINFO{GetGlobalOptions}=["function",["list",["map","string","any"]]];}
 sub GetGlobalOptions {
     return @options;
 }
 
-BEGIN{$TYPEINFO{SetGlobalOptions}=["function","void",["list",["map","any","any"]]];}
+BEGIN{$TYPEINFO{SetGlobalOptions}=["function","void",["list",["map","string","any"]]];}
 sub SetGlobalOptions {
     @options = @{$_[0]};
     SetModified ();

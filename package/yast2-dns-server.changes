@@ -3,6 +3,8 @@ Mon Mar  1 11:05:13 CET 2004 - jsrain@suse.de
 
 - fixed creating of TSIG keys
 - merged texts from proofread
+- more strict data types
+- 2.9.5
 
 -------------------------------------------------------------------
 Fri Feb 20 15:49:14 CET 2004 - jsrain@suse.de
