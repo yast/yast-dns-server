@@ -10,3 +10,5 @@ config
 zone
 zone_new
 tmp
+run
+*.test

@@ -16,6 +16,7 @@
     import "LogView";
     import "CWM";
     import "DnsServer";
+    import "TablePopup";
 
 
 // log popup
@@ -91,15 +92,11 @@
       * @return map of widget
       */
     global define map getGlobalTableWidget () ``{
-        map ret = CWM::CreateTableDescr ($[
+        map ret = TablePopup::CreateTableDescr ($[
 	    "add_delete" : true,
 	    "up_down" : false,
 	    "unique_keys" : true,
 	], $[
-	    "init" : ``(CWM::TableInit (
-		DnsServer::widgets["global_table"]:$[])),
-	    "handle" : ``(CWM::TableHandle (
-		DnsServer::widgets["global_table"]:$[])),
 	    "store" : ``(DnsServer::globalTableStore ()),
 	    "options" : DnsServer::popups,
 	    "ids" : ``(DnsServer::getGlobalTableContents ()),
@@ -367,21 +364,24 @@
 	    }
 	    current_zone["records"] = current_zone["records"]:$[];
 	    current_zone["records", new_name] = host;
-	    CWM::TableInit (DnsServer::widgets["master_table"]:$[], widget);
+	    TablePopup::TableInit (
+		DnsServer::widgets["master_table"]:$[], widget);
 	    return nil;
 	}
 	else if (event["ID"]:nil == `_tp_delete)
 	{
 	    current_zone["records"]
 		= remove (current_zone["records"]:$[], current);
-	    CWM::TableInit (DnsServer::widgets["master_table"]:$[], widget);
+	    TablePopup::TableInit (
+		DnsServer::widgets["master_table"]:$[], widget);
 	    return nil;
 	}
-	any retval = CWM::TableHandle (DnsServer::widgets["master_table"]:$[],
+	any retval = TablePopup::TableHandle (DnsServer::widgets["master_table"]:$[],
 	    widget, event);
 	if (event == `_tp_edit && current == "_zone")
 	{
-	    CWM::TableInit (DnsServer::widgets["master_table"]:$[], widget);
+	    TablePopup::TableInit (
+		DnsServer::widgets["master_table"]:$[], widget);
 	}
 	return retval;
     }
@@ -391,11 +391,11 @@
       * @return map of widget
       */
     global define map getMasterTableWidget () ``{
-        map ret = CWM::CreateTableDescr ($[
+        map ret = TablePopup::CreateTableDescr ($[
 	    "add_delete_buttons" : true,
 	    "up_down_buttons" : false
 	], $[
-            "init" : ``(CWM::TableInit (
+            "init" : ``(TablePopup::TableInit (
                 DnsServer::widgets["master_table"]:$[])),
             "handle" : ``(DnsServer::masterTableHandle ()),
             "store" : ``(DnsServer::masterTableStore ()),
@@ -433,14 +433,10 @@
       * @return map of widget
       */
     global define map getSlaveTableWidget () ``{
-        map ret = CWM::CreateTableDescr ($[
+        map ret = TablePopup::CreateTableDescr ($[
 	    "add_delete_buttons" : false,
 	    "up_down_buttons" : false
 	], $[
-            "init" : ``(CWM::TableInit (
-                DnsServer::widgets["slave_table"]:$[])),
-            "handle" : ``(CWM::TableHandle (
-		DnsServer::widgets["slave_table"]:$[])),
             "store" : ``(DnsServer::masterTableStore ()),
             "options" : DnsServer::popups,
             "ids" : ``(DnsServer::getSlaveTableContents ()),

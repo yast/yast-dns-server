@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Oct 29 10:43:33 CET 2003 - jsrain@suse.de
+
+- adapted to Table/Popup stuff split off from CWM.ycp
+- 2.9.0
+
+-------------------------------------------------------------------
 Wed Sep 17 12:59:52 CEST 2003 - jsrain@suse.de
 
 - added possibility to adapt firewall settings when saving DNS
