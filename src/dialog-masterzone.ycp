@@ -1522,7 +1522,7 @@ symbol runSlaveZoneTabDialog () {
 	    `HStretch ()
 	),
 	`VSpacing ( 1 ),
-	`Left (`TextEntry (`id ("master"), _("Master DNS Server"))),
+	`Left (`TextEntry (`id ("master"), _("Master DNS Server IP"))),
 	`VSpacing (2),
 	`Left (`CheckBox (`id ("enable_zone_transport"), `opt (`notify),
 	    // check box
@@ -1626,7 +1626,7 @@ If you continue, current zone will be removed.")
 	DnsServer::SetModified ();
     }
     was_editing_zone = true;
-    return (symbol)ret;
+    return (symbol) ret;
 }
 
 /**
