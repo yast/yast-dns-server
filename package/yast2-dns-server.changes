@@ -1,9 +1,15 @@
 -------------------------------------------------------------------
+Mon Jan 24 09:22:21 CET 2005 - locilka@suse.cz
+
+- fixed testsuite (new PamSettings)
+- 2.11.4
+
+-------------------------------------------------------------------
 Wed Dec 15 15:19:36 CET 2004 - jsrain@suse.cz
 
 - clean-up of neededforbuild and requires
 - using Progress::set ()
-- fixed testsiote
+- fixed testsuite
 - 2.11.3
 
 -------------------------------------------------------------------
