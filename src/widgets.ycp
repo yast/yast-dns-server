@@ -567,6 +567,12 @@ global define symbol zonesHandle (any key, map event) ``{
 	}
 	else
         {
+	    if (current == nil)
+	    {
+		// popup error message
+		Popup::Message (_("No zone is selected."));
+		return nil;
+	    }
 	    DnsServer::SelectZone(current);
 	    current_zone = DnsServer::FetchCurrentZone();
 	    y2milestone ("Fetched zone: %1", current_zone);
@@ -575,6 +581,12 @@ global define symbol zonesHandle (any key, map event) ``{
     }
     else if (event["ID"]:nil == `delete)
     {
+	if (current == nil)
+	{
+	    // popup error message
+	    Popup::Message (_("No zone is selected."));
+	    return nil;
+	}
 	// yes-no popup
 	if (Popup::YesNo (_("Delete selected zone?")))
 	{
