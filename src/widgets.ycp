@@ -296,6 +296,15 @@
       * @return symbol for wizard sequencer or nil
       */
     global define symbol masterTableHandle (any widget, map event) ``{
+        if (event["ID"]:nil == `_tp_table)
+        {
+            if (event["EventReason"]:"" == "Activated"
+                && event["EventType"]:"" == "WidgetEvent")
+            {
+                event["ID"] = `_tp_edit;
+            }
+        }
+
 	string current = UI::QueryWidget (`id (`_tp_table), `CurrentItem);
 	if ((event["ID"]:nil == `_tp_add)
 	    || (event["ID"]:nil == `_tp_edit
