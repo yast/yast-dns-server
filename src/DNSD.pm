@@ -186,14 +186,14 @@ sub ReadGlobalOptions {
 
     DnsServer->InitYapiConfigOptions ($config_options);
 
-    Progress::off ();
+    Progress->off ();
     my $ret = DnsServer->Read ();
     my $options = undef;
     if ($ret)
     {
 	$options = DnsServer->GetGlobalOptions ();
     }
-    Progress::on ();
+    Progress->on ();
 
     DnsServer->CleanYapiConfigOptions ();
 
@@ -232,11 +232,11 @@ sub WriteGlobalOptions {
 
     DnsServer->InitYapiConfigOptions ($config_options);
 
-    Progress::off ();
+    Progress->off ();
     my $ret = DnsServer->Read ();
     $ret = $ret && DnsServer->SetGlobalOptions ($options);
     $ret = $ret && DnsServer->Write ();
-    Progress::on ();
+    Progress->on ();
 
     DnsServer->CleanYapiConfigOptions ();
 
@@ -275,14 +275,14 @@ sub ReadZones {
 
     DnsServer->InitYapiConfigOptions ($config_options);
 
-    Progress::off ();
+    Progress->off ();
     my $ret = DnsServer->Read ();
     my $zones = undef;
     if ($ret)
     {
 	$zones = DnsServer->FetchZones ();
     }
-    Progress::on ();
+    Progress->on ();
 
     DnsServer->CleanYapiConfigOptions ();
 
@@ -361,11 +361,11 @@ sub WriteZones {
 
     DnsServer->InitYapiConfigOptions ($config_options);
 
-    Progress::off ();
+    Progress->off ();
     my $ret = DnsServer->Read ();
     $ret = $ret && DnsServer->StoreZones ($zones);
     $ret = $ret && DnsServer->Write ();
-    Progress::on ();
+    Progress->on ();
 
     DnsServer->CleanYapiConfigOptions ();
 
