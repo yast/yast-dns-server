@@ -317,7 +317,8 @@ Display the log and continue with configuration?")))
 	}
 	else
 	{
-	    SCR::Execute (.target.bash, "/etc/init.d/named stop");
+	    if (! write_only)
+		SCR::Execute (.target.bash, "/etc/init.d/named stop");
 	    Runlevel::ServiceAdjust ("named", "disable");
 	}
 

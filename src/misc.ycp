@@ -93,7 +93,7 @@ Select version of DNS daenon to install")),
 	    return nil;
 	map packages = $[
 	    8 : [[ "bindutil", "bind8" ], [ "bind8-devel" ]],
-	    9 : [[ "bind9", "bind9-util" ], [ "bind9-devel", ]]];
+	    9 : [[ "bind9", "bind9-utils" ], [ "bind9-devel", ]]];
 	list inst = [];
 	list del = [];
 	if (selected == 8)
@@ -117,9 +117,15 @@ packages %2 will be removed.</p>");
 	else
 	    // ruch text
 	    message = _("<p>Packages %1 will be installed.</p>");
-	return Require::RequireAndConflictTarget (inst, del, message)
+	integer retval = Require::RequireAndConflictTarget (inst, del, message)
 	    ? selected
 	    : nil;
+	if (retval == nil)
+	{
+	    // error report
+	    Report::Error (_("Failed to install required packages"));
+	}
+	return retval;
     }
 
     /**
@@ -259,7 +265,6 @@ packages %2 will be removed.</p>");
 	    "soa" : soa,
 	    "records" : records,
 	];
-y2error ("Filename: %1", filename);
 	return SCR::Write (.dns.zone, ["/var/lib/named/" + filename, save]);
     }
 
