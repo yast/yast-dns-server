@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Aug 26 11:39:22 CEST 2004 - locilka@suse.cz
+
+- removed dependency on yast2-ldap-server
+
+-------------------------------------------------------------------
 Mon Aug 23 15:20:20 CEST 2004 - locilka@suse.cz
 
 - forwarders moved into the single file
