@@ -1534,6 +1534,7 @@ symbol HandleExpertZonesPage (string key, map event) {
 
 	// fixing bug #45950, slave zone _MUST_ have master server
 	if (zone_type == "slave") {
+	    DnsServer::SelectZone (size(zones)-1);
 	    current_zone = DnsServer::FetchCurrentZone ();
 	    return `edit_zone;
 	}

@@ -464,7 +464,7 @@ To enter the expert mode of the DNS server configuration, click
     // slave zone help text 1/2
 "slave_zone" : _("<p><big><b>Slave DNS Zone</b></big><br>
 Each slave zone must have the master name server defined. Use
-<b>Master DNS Server</b> to define the master name server.</p>") +
+<b>Master DNS Server IP</b> to define the master name server.</p>") +
 
     // slave zone help text 2/2
 _("<p><big><b>Zone Transport</b></big><br>
