@@ -147,8 +147,10 @@ void InitZoneBasicsTab () {
             }
         }
     });
-    UI::ChangeWidget (`id ("allow_ddns"), `Value, allowed);
-    UI::ChangeWidget (`id ("ddns_key"), `Enabled, allowed);
+    if (ProductFeatures::ui_mode == "expert") {
+	UI::ChangeWidget (`id ("allow_ddns"), `Value, allowed);
+	UI::ChangeWidget (`id ("ddns_key"), `Enabled, allowed);
+    }
     if (allowed)
     {
         UI::ChangeWidget (`id ("ddns_key"), `Value, key);
@@ -171,14 +173,16 @@ void StoreZoneBasicsTab () {
     current_zone["options"] = filter (map m, current_zone["options"]:[], ``(
         m != $[]
     ));
-    string key = (string)UI::QueryWidget (`id ("ddns_key"), `Value);
-    boolean allowed = (boolean)UI::QueryWidget (`id ("allow_ddns"), `Value);
-    if (allowed)
-    {
-        current_zone["options"] = add (current_zone["options"]:[], $[
-            "key" : "allow-update",
-            "value" : sformat ("{ key %1; }", key),
-        ]);
+
+    if (ProductFeatures::ui_mode == "expert") {
+	string key = (string)UI::QueryWidget (`id ("ddns_key"), `Value);
+	boolean allowed = (boolean)UI::QueryWidget (`id ("allow_ddns"), `Value);
+	if (allowed) {
+    	    current_zone["options"] = add (current_zone["options"]:[], $[
+        	"key" : "allow-update",
+        	"value" : sformat ("{ key %1; }", key),
+    	    ]);
+	}
     }
     ZoneAclStore ();
 }
@@ -188,25 +192,28 @@ void StoreZoneBasicsTab () {
  */
 symbol HandleZoneBasicsTab (map event) {
     any ret = event["ID"]:nil;
-    if (ret == "allow_ddns" && Mode::config)
-    {
-	// popup message
-	Popup::Message (_("This function is not available during
+
+    if (ProductFeatures::ui_mode == "expert") {
+	if (ret == "allow_ddns" && Mode::config) {
+	    // popup message
+	    Popup::Message (_("This function is not available during
 preparation for autoinstallation.
 "));
-	UI::ChangeWidget (`id ("allow_ddns"), `Value, false);
-	return nil;
+	    UI::ChangeWidget (`id ("allow_ddns"), `Value, false);
+	    return nil;
+	}
+	if (ret == "allow_ddns"
+	    && (boolean)UI::QueryWidget (`id ("allow_ddns"), `Value)
+	    && size (DnsTsigKeys::ListTSIGKeys ()) == 0
+	) {
+	    // error report
+	    Report::Error (_("No TSIG key is defined."));
+	    UI::ChangeWidget (`id ("allow_ddns"), `Value, false);
+	}
+	UI::ChangeWidget (`id ("ddns_key"), `Enabled,
+	    (boolean)UI::QueryWidget (`id ("allow_ddns"), `Value));
     }
-    if (ret == "allow_ddns"
-	&& (boolean)UI::QueryWidget (`id ("allow_ddns"), `Value)
-	&& size (DnsTsigKeys::ListTSIGKeys ()) == 0)
-    {
-	// error report
-	Report::Error (_("No TSIG key is defined."));
-	UI::ChangeWidget (`id ("allow_ddns"), `Value, false);
-    }
-    UI::ChangeWidget (`id ("ddns_key"), `Enabled,
-	(boolean)UI::QueryWidget (`id ("allow_ddns"), `Value));
+
     ZoneAclHandle (event);
     return nil;
 }
