@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Oct 22 09:28:39 CEST 2004 - locilka@suse.cz
+
+- fixed checking for LDAP Support to show the messages about failed
+  test
+
+-------------------------------------------------------------------
 Thu Oct 21 12:05:24 CEST 2004 - locilka@suse.cz
 
 - used CWMTsigKeys module instead of own TSIG keys handling
