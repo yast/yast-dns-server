@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Feb 28 12:06:43 CET 2005 - locilka@suse.cz
+
+- fixing TTL initialization in zone editor
+- fixing initializing SuSEfirewall, turning Progress off
+
+-------------------------------------------------------------------
 Thu Feb 24 08:31:34 CET 2005 - locilka@suse.cz
 
 - fixed testsuite because of new feature
