@@ -63,11 +63,12 @@
     import "Mode";
     import "Progress";
 
-    Mode::test = true;
+    Mode::SetMode("test");
 
     Progress::off ();
 
     map READ = $[
+	"passwd" : $[ "passwd" : $[ "pluslines" : [] ] ],
 	"probe" : $[
 	    "architecture" : "i386",
 	    "has_apm" : true,
@@ -182,6 +183,7 @@
 	"target" : $[
 	    "bash_output" : $["exit" : 1, "stdout" : "", "stderr" : ""],
 	],
+	"passwd" : $[ "init" : true ],
     ];
 
     DUMP ("==========================================================");

@@ -242,7 +242,7 @@ symbol HandleZoneBasicsTab (map event) {
     any ret = event["ID"]:nil;
 
     if (ProductFeatures::ui_mode == "expert") {
-	if (ret == "allow_ddns" && Mode::config) {
+	if (ret == "allow_ddns" && Mode::config ()) {
 	    // popup message
 	    Popup::Message (_("This function is not available during
 preparation for autoinstallation.

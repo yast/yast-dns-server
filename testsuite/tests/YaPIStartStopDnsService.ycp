@@ -59,7 +59,7 @@
     import "YaPI::DNSD";
     import "Mode";
 
-    Mode::test = true;
+    Mode::SetMode("test");
 
     DUMP ("==========================================================");
     TEST (``(YaPI::DNSD::StartDnsService ($[])), [], nil);
