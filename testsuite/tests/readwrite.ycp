@@ -19,6 +19,9 @@
     include "testsuite.ycp";
     import "Progress";
     import "DnsServer";
+    import "Mode";
+
+    Mode::test = true;
 
     Progress::off ();
 
@@ -60,25 +63,32 @@
 	    "allow-query":"{ 127.0.0.1; }",
 	     "directory":"\"/var/lib/named\"",
 	], "zones":[
-	    $[
-		"a":$["zealot.suse.cz.":["127.0.0.1"]],
-		"cname":$[],
-		"expiry":"6W",
+	     $[
 		"file":"localhost.zone",
-		"mail":"root",
-		"minimum":"1 W",
-		"mx":[],
-		"ns":["@"],
-		"ptr":$[],
-		"refresh":"2D",
-		"retry":"4H",
-		"server":"zealot.suse.cz.",
+		"records":$[],
+		"soa":$[
+		    "expiry":"6W",
+		    "mail":"root",
+		    "minimum":"1W",
+		    "refresh":"2D",
+		    "retry":"4H",
+		    "serial":2003062300,
+		    "server":"@",
+		    "zone":"@"
+		],
 		"ttl":"1W",
 		"type":"master",
 		"zone":"localhost",
+		"zone_rec":$[
+		    "A":["127.0.0.1"],
+		    "MX":[],
+		    "NS":["@"]
+		],
+		"changed" : true,
 	    ],
 	]
     ];
+    DnsServer::modified = true;
     TEST (``(DnsServer::Write ()), [READ, WRITE, EXEC], 0);
     DUMP ("=======================");
 }

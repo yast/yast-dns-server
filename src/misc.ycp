@@ -12,6 +12,7 @@
     textdomain "dns-server";
 
     import "Require";
+    import "Mode";
 
     /**
       * If modified, ask for confirmation
@@ -50,10 +51,9 @@
       *  ask
       */
     global define integer getBindVersion (boolean ask) ``{
-return 8;// FIXME remove
 	boolean bind8 = Require::IsPackageInstalledTarget ("bind8");
 	boolean bind9 = Require::IsPackageInstalledTarget ("bind9");
-	if (bind8 && ! bind9)
+	if ((bind8 && ! bind9) || Mode::test)
 	{
 	    return 8;
 	}
@@ -66,7 +66,7 @@ return 8;// FIXME remove
 	    return nil;
 	}
 	return nil;
-	// TODO ask user what daemon to use
+	// TODO ask user what daemon to use, maybe not needed (dependency & confilct)
     }
 
     /**
@@ -262,7 +262,7 @@ return 8;// FIXME remove
       * @return boolean true if success
       */
     global define boolean saveZone (map zone) ``{
-	if (! zone["changed"]:false)
+	if (! zone["changed"]:false && ! save_all)
 	    return true;
 	string filename = zone["file"]:"";
 	if (filename == "")

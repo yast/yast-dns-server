@@ -28,20 +28,25 @@
     include "dns-server/widgets.ycp";
 
     /**
-     * Data was modified?
-     */
+      * Data was modified?
+      */
     global boolean modified = false;
+
+    /**
+      * save everything, not only changed settings
+      */
+    global boolean save_all = false;
+
+    /**
+      * Were the zones modified?
+      */
+    global boolean zones_modified = false;
 
     /**
       * Write only, used during autoinstallation.
       * Don't run services and SuSEconfig, it's all done at one place.
       */
     global boolean write_only = false;
-
-    /**
-      * Shall the dns server be started?
-      */
-    global boolean start_dns = false;
 
     /**
       * BIND version
@@ -142,6 +147,10 @@
 	}
 
 	settings["start_service"] = Runlevel::ServiceEnabled ("named");
+	settings["chroot"]
+	    = SCR::Read (.sysconfig.named.NAMED_RUN_CHROOTED) == "yes"
+		? true
+		: false;
 
 	if(UI::PollInput() == `abort) return false;
 	Progress::NextStageStep (10);
@@ -246,13 +255,24 @@
 	if(UI::PollInput() == `abort) return false;
 	Progress::NextStageStep (0);
 
+	if (save_all)
+	    modified = true;
+
+	if (! modified)
+	{
+	    Progress::NextStageStep (3 * zones);
+	    // progress stage
+	    Progress::Title(_("Finished"));
+	    return true;
+	}
+
+
 	date = getDate ();
 	// be sure options are before zones
 	SCR::Write (.dns.named.section.options, "");
 
 	boolean ok = true;
 	foreach (`z, settings["zones"]:[], ``{
-	    z["changed"] = true; // FIXME remove
 	    ok = ok && saveZone (z);
 	    Progress::NextStep ();
 	});
@@ -260,9 +280,14 @@
 	if(UI::PollInput() == `abort) return false;
 	Progress::NextStageStep (zones);
 
-	ok = ok &&saveGlobals ();
+	if (modified)
+	    ok = ok &&saveGlobals ();
 	if (! ok)
 	    return false;
+
+	SCR::Write (.sysconfig.named.NAMED_RUN_CHROOTED,
+	    settings["chroot"]:false ? "yes" : "no");
+	SCR::Write (.sysconfig.named, nil);
 
 	if(UI::PollInput() == `abort) return false;
 	Progress::NextStageStep (2 * zones);
@@ -281,7 +306,7 @@
 An error occured during starting of DNS server.
 Display the log and continue with configuration?")))
 		{
-		    DnsServer::showLogPopup (nil);
+		    showLogPopup (nil);
 		    return nil;
 		}
 		return false;
@@ -302,17 +327,18 @@ Display the log and continue with configuration?")))
 	return true;
     }
 
-/**
- * Get all dns-server settings from the first parameter
- * (For use by autoinstallation.)
- * @param settings The YCP structure to be imported.
- * @return boolean True on success
- */
-global define boolean Import (map settings) ``{
-    // TODO FIXME: your code here (fill the above mentioned variables)...
-    sleep(3000);
-    return true;
-}
+    /**
+      * Get all dns-server settings from the first parameter
+      * (For use by autoinstallation.)
+      * @param imp_settings The YCP structure to be imported.
+      * @return boolean True on success
+      */
+    global define boolean Import (map imp_settings) ``{
+	settings = imp_settings;
+	modified = true;
+	save_all = true;
+	return true;
+    }
 
     /**
       * Dump the dns-server settings to a single map
@@ -323,23 +349,23 @@ global define boolean Import (map settings) ``{
 	return settings;
     }
 
-/**
- * Create a textual summary and a list of unconfigured cards
- * @return list summary of the current configuration
- */
-global define list Summary() ``{
-    // TODO FIXME: your code here...
-    return [ _("Configuration summary ..."), [] ];
-}
-
-/**
- * Create an overview table with all configured cards
- * @return table items
- */
-global define list Overview() ``{
-    // TODO FIXME: your code here...
-    return [];
-}
+    /**
+      * Create a textual summary and a list of unconfigured cards
+      * @return list summary of the current configuration
+      */
+    global define list Summary() ``{
+	string start_string = settings["start_service"]:false
+	    ? _("Start DNS server when booting the system")
+	    : _("Do not start DNS server when booting the system");
+	list zones = maplist (`z, settings["zones"]:[], ``(
+	    z["zone"]:""
+	));
+	zones = filter (`z, zones, ``(z != ""));
+	string zones_string = sformat (_("Configured zones: %1"),
+	    mergestring (zones, ", "));
+	list ret = [ start_string, zones_string ];
+	return ret;
+    }
 
 /* EOF */
 }

@@ -1,8 +1,8 @@
 @HEADER-COMMENT@
-# neededforbuild yast2-devel-packages
+# neededforbuild yast2-devel-packages yast2-packager
 
 @HEADER@
-Requires:	yast2
+Requires:	yast2 dns_daemon yast2-packager
 
 BuildArchitectures:	noarch
 
@@ -27,4 +27,8 @@ Summary:	Configuration of dns-server
 @clientdir@/dns-server_*.ycp
 @moduledir@/DnsServer.ycp
 @configdir@/dns-server.y2cc
+@scrconfdir@/dns_named.scr
+@scrconfdir@/dns_zone.scr
+@scrconfdir@/cfg_named.scr
+@agentdir@/ag_dns_zone
 %doc @docdir@

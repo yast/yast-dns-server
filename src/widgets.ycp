@@ -13,7 +13,9 @@
 
     import "Label";
     import "Popup";
-    import "PopupLog";
+    import "LogView";
+    import "CWM";
+    import "DnsServer";
 
 
 // log popup
@@ -25,10 +27,19 @@
       * @return value for wizard sequencer, always nil
       */
     global define any showLogPopup (any key, any event) ``{
-	PopupLog::Display ($[
+	LogView::Display ($[
 	    "file" : "/var/log/messages",
 	    "grep" : "named",
 	    "save" : true,
+	    "actions" : [
+		// menubutton entry, try to keep short
+		[ _("Restart DNS server"),
+		    ``{SCR::Execute (.target.bash,
+			"/etc/init.d/named restart");}],
+		// menubutton entry, try to keep short
+		[ _("Save settings and restarrt DNS server"),
+		    ``{DnsServer::Write ();} ],
+	    ],
 	]);
 	return nil;
     }
@@ -42,7 +53,8 @@
       */
     global define list getGlobalTableContents (map descr) ``{
 	list ret = maplist (`k, `v, settings["options"]:$[], ``(k));
-	ret = merge (["__start_service", "__zones", "____sep"], ret);
+	ret = merge (["__start_service", "__chroot", "__save_all", "__zones",
+	    "____sep"], ret);
 	return ret;
     }
     /**
@@ -53,7 +65,7 @@
       */
     global define boolean globalTableEntryDelete (any opt_id, any opt_key) ``{
 	// message popup
-	if (! Popup::Message (_("Delete selected entry?")))
+	if (! Popup::YesNo (_("Delete selected entry?")))
 	    return false;
 	settings["options"]
 	    = filter (`k, `v, settings["options"]:$[], ``(k != opt_id));
@@ -67,7 +79,10 @@
       */
     global define void globalTableStore (any widget, any event) ``{
 	if (event == `zones)
+	{
 	    all_zones = eval (settings["zones"]:[]);
+	    zones_modified = false;
+	}
     }
 
     /**
@@ -90,7 +105,25 @@
 		"summary" : ``(DnsServer::globalTableEntrySummary ()),
 	    ],
 	    "option_delete" : ``(DnsServer::globalTableEntryDelete ()),
-	    "add_items" : ["add_values"], // TODO
+	    "add_items" : [ "hostname", "version", "directory", "named-xfer",
+		"dump-file", "memstatistics-file", "pid-file",
+		"statistics-file", "auth-nxdomain", "deallocate-on-exit",
+		"dialup", "fake-iquery", "fetch-glue", "has-old-clients",
+		"host-statistics", "host-statistics-max", "multiple-cnames",
+		"notify", "suppress-initial-notify", "recursion",
+		"rfc2308-type1", "use-id-pool", "treat-cr-as-space",
+		"also-notify", "forward", "forwarders", "check-names",
+		"allow-query", "allow-recursion", "allow-transfer",
+		"blackhole", "listen-on", "query-source", "lame-ttl",
+		"max-transfer-time-in", "max-ncache-ttl", "min-roots",
+		"serial-queries", "transfer-format", "transfers-in",
+		"transfers-out", "transfers-per-ns", "transfer-source",
+		"maintain-ixfr-base", "max-ixfr-log-size", "coresize",
+		"datasize", "files", "stacksize", "cleaning-interval",
+		"heartbeat-interval", "interface-interval",
+		"statistics-interval", "topology", "sortlist", "rrset-order",
+		"preferred-glue",
+	    ],
 	]);
         return ret;
     }
@@ -118,6 +151,8 @@
       */
     global define void zonesStore (any key, any event) ``{
 	settings["zones"] = all_zones;
+	if (zones_modified)
+	    modified = true;
     }
 
     /**
@@ -239,6 +274,8 @@
     global define void masterTableStore (any widget, any event) ``{
         if (event == `next)
 	{
+	    current_zone["changed"] = true;
+	    zones_modified = true;
 	    if (current_id == -1)
 		all_zones = add (all_zones, current_zone);
 	    else
@@ -319,8 +356,13 @@
 	    CWM::TableInit (DnsServer::widgets["master_table"]:$[], widget);
 	    return nil;
 	}
-	return CWM::TableHandle (DnsServer::widgets["master_table"]:$[],
+	any retval = CWM::TableHandle (DnsServer::widgets["master_table"]:$[],
 	    widget, event);
+	if (event == `_tp_edit && current == "_zone")
+	{
+	    CWM::TableInit (DnsServer::widgets["master_table"]:$[], widget);
+	}
+	return retval;
     }
 
     /**
@@ -349,6 +391,7 @@
 		"allow-transfer", "forward", "forwarders", "dialup", "notify",
 		"also-notify", "pubkey",
 	    ],
+	    "help" : HELPS["master_zone"]:"",
         ]);
         return ret;
     }
@@ -364,7 +407,6 @@
 	list ret = [ "_zone", "____sep1", "masters"];
 	return ret;
     }
-
 
     /**
       * Get map of widget
