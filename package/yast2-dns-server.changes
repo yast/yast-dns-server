@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Aug 18 14:13:51 CEST 2004 - locilka@suse.cz
+
+- added better handling around disabling DDNS
+- added support for $ORIGIN writing
+- added more checking for DDNS/nonDDNS zone files
+
+-------------------------------------------------------------------
 Tue Aug 17 14:35:27 CEST 2004 - locilka@suse.cz
 
 - added missing DDNS support
