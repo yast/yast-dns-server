@@ -7,6 +7,9 @@ Wed Oct 20 14:07:55 CEST 2004 - locilka@suse.cz
 - added checking for only-number values
 - added checking for used quoting
 - added checking for used brackets
+- added Confirm::DeleteSelected() for deleting records
+- added "-" for ACL names
+- unification of UI (buttons and spaces)
 
 -------------------------------------------------------------------
 Tue Oct 19 14:43:23 CEST 2004 - locilka@suse.cz

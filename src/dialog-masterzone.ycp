@@ -19,6 +19,7 @@ import "DnsServer";
 import "DnsFakeTabs";
 import "DnsRoutines";
 import "ProductFeatures";
+import "Confirm";
 
 string ToRelativeName (string absolute_name, string zone_name) {
     if (absolute_name == nil || zone_name == nil) {
@@ -859,7 +860,7 @@ term GetMasterZoneEditorTabRecords () {
 		)
 	    ),
 	    `HBox (
-		`HWeight ( 7,
+		`HWeight ( 9,
 		    `VBox (
 			// Table label - Records listing
 			`Left ( `Label (_("Configured Resource Records") ) ),
@@ -1223,6 +1224,10 @@ symbol HandleZoneRecordsTab (map event) {
     }
     else if (ret == "delete_record")
     {
+	if (! Confirm::DeleteSelected()) {
+	    return nil;
+	}
+
 	HandleNsupdate(current_zone["records", r]:$[],"delete");
 
 	current_zone["records", r] = nil;
