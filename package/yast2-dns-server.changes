@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Jun 22 14:18:09 CEST 2004 - locilka@suse.de
+
+- moved TreeWidget handling to CWM
+
+-------------------------------------------------------------------
 Tue Jun 22 13:04:45 CEST 2004 - jsrain@suse.cz
 
 - fixed syntax in YaPI file (#42012)
