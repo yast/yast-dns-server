@@ -24,7 +24,7 @@ YaST::YCP::Import ("DNS");
 YaST::YCP::Import ("Ldap");
 YaST::YCP::Import ("Mode");
 YaST::YCP::Import ("NetworkDevices");
-YaST::YCP::Import ("Package");
+YaST::YCP::Import ("PackageSystem");
 YaST::YCP::Import ("Popup");
 YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Report");
@@ -850,15 +850,9 @@ sub Read {
     Progress->NextStage ();
 
     # Check packages
-    if (! (Mode->config () || Package->Installed ("bind")))
+    if (! Mode->test () && ! PackageSystem->CheckAndInstallPackagesInteractive (["bind"]))
     {
-	my $installed = Package->Install ("bind");
-	if (! $installed)
-	{
-	    # error popup
-	    Report->Error (Message->CannotContinueWithoutPackagesInstalled());
-	    return Boolean (0);
-	}
+	return Boolean (0);
     }
 
     $self->LdapInit (0);
@@ -909,8 +903,11 @@ sub Read {
     foreach my $opt_name (@opt_names) {
 	$opt_hash{$opt_name} = 1;
     }
+
+    my $key;
+
     @opt_names = sort (keys (%opt_hash));
-    foreach my $key (@opt_names) {
+    foreach $key (@opt_names) {
 	my @values = @{SCR->Read (".dns.named.value.options.$key") || []};
 	foreach my $value (@values) {
 	    push @options, {
@@ -935,7 +932,7 @@ sub Read {
 	$log_hash{$log_name} = 1;
     }
     @log_names = sort (keys (%log_hash));
-    foreach my $key (@log_names) {
+    foreach $key (@log_names) {
 	my @values = @{SCR->Read (".dns.named.value.logging.$key") || []};
 	foreach my $value (@values) {
 	    push @logging, {
@@ -997,7 +994,7 @@ sub Read {
 	
 	my @zone_options_names = @{SCR->Dir (".dns.named.value.$path_el")|| []};
 	my @zone_options = ();
-	foreach my $key (@zone_options_names) {
+	foreach $key (@zone_options_names) {
 	    my @values = @{SCR->Read (".dns.named.value.$path_el.\"\Q$key\E\"") || []};
 	    foreach my $value (@values) {
 		push @zone_options, {
