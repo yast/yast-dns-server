@@ -135,6 +135,34 @@
 	];
 
 	Wizard::CreateDialog();
+	Wizard::SetDesktopIcon("dns-server");
+
+	symbol ret = Sequencer::Run(aliases, sequence);
+
+	UI::CloseDialog();
+	return ret;
+    }
+
+    /**
+      * Whole configuration of dns-server
+      * @return sequence result
+      */
+    global define symbol DnsAutoSequence() ``{
+
+	map aliases = $[
+	    "main"	:   ``( MainSequence() ),
+	];
+
+	map sequence = $[
+	    "ws_start" : "main",
+	    "main" : $[
+		`abort	: `abort,
+		`next	: `next
+	    ]
+	];
+
+	Wizard::CreateDialog();
+	Wizard::SetDesktopIcon("dns-server");
 
 	symbol ret = Sequencer::Run(aliases, sequence);
 
