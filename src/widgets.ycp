@@ -937,7 +937,6 @@ global define list getMasterTableContents (map descr) ``{
     string zone_name = current_zone["zone"]:"";
     integer index = -1;
     list ret = maplist (map m, current_zone["records"]:[], ``{
-y2error ("Type: %1", m["type"]:"");
 	index = index + 1;
 /*	if ((m["type"]:"" == "NS" || m["type"]:"" == "MX")
 	    && (m["key"]:"" == sformat ("%1.", zone_name)
