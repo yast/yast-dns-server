@@ -251,10 +251,14 @@ global define map getZoneNameWidget () ``{
  */
 global define void soaInit (string id) ``{
     foreach (string r,
-	["serial", "refresh", "retry", "expiry", "minimum", "server", "mail"],
+	["serial", "refresh", "retry", "expiry", "minimum", "server"],
     ``{
 	    UI::ChangeWidget (`id (r), `Value, current_zone["soa", r]:"");
     });
+    string mail = current_zone["soa", "mail"]:"";
+    if (regexpmatch (mail, "^[^@\.]+\..*$"));
+	mail = regexpsub (mail, "^([^@\.]+)\.(.*)$", "\\1@\\2");
+    UI::ChangeWidget (`id ("mail"), `Value, mail);
     UI::ChangeWidget (`id ("ttl"), `Value, current_zone["ttl"]:"");
     UI::SetFocus (`id ("ttl"));
 }
@@ -267,10 +271,26 @@ global define void soaInit (string id) ``{
 global define void soaStore (string id, map event) ``{
     current_zone["soa"] = current_zone["soa"]:$[];
     foreach (string r,
-	["serial", "refresh", "retry", "expiry", "minimum", "server", "mail"],
+	["serial", "refresh", "retry", "expiry", "minimum", "server"],
     ``{
 	current_zone["soa", r] = UI::QueryWidget (`id (r), `Value);
     });
+    string mail = (string)UI::QueryWidget (`id ("mail"), `Value);
+    if (regexpmatch (mail, "^[^@]+@.*$"))
+    {
+	mail = regexpsub (mail, "^([^@]+)@(.*)$", "\\1.\\2");
+    }
+    if (regexpmatch (mail, "^.*[^\.]$"))
+    {
+	mail = sformat ("%1.", mail);
+    }
+    current_zone["soa", "mail"] = mail;
+    string server = (string)UI::QueryWidget (`id ("server"), `Value);
+    if (regexpmatch (mail, "^.*[^\.]$"))
+    {
+	mail = sformat ("%1.", mail);
+    }
+    current_zone["soa", "server"] = server;
     current_zone["ttl"] = UI::QueryWidget (`id ("ttl"), `Value);
     current_zone["soa_modified"] = 1;
 }
