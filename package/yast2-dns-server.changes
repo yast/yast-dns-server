@@ -3,6 +3,7 @@ Mon Feb 21 10:40:13 CET 2005 - locilka@suse.cz
 
 - added global functional DnsServerAPI Perl module
 - added full commandline support
+- 2.11.5
 
 -------------------------------------------------------------------
 Thu Feb 17 13:10:46 CET 2005 - locilka@suse.cz
