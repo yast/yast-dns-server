@@ -16,7 +16,7 @@
  */
 
     textdomain "dns-server";
-    import "DnsServer";
+    import "DnsServerUI";
 
     /* The main () */
     y2milestone ("----------------------------------------");
@@ -25,7 +25,7 @@
     /* main ui function */
     any ret = nil;
 
-    ret = DnsServer::DnsSequence();
+    ret = DnsServerUI::DnsSequence();
     y2debug("ret=%1", ret);
 
     /* Finish */

@@ -41,10 +41,10 @@
 	UI::SetFocus (`id ("master"));
 	symbol ret = nil;
 	while (ret == nil)
-	    ret = UI::UserInput ();
+	    ret = (symbol)UI::UserInput ();
 	if (ret == `_tp_ok)
 	{
-	    string selected = UI::QueryWidget (`id (`rt), `CurrentButton);
+	    string selected = (string)UI::QueryWidget (`id (`rt), `CurrentButton);
 	    UI::CloseDialog ();
 	    return selected;
 	}
@@ -79,10 +79,10 @@
 	UI::SetFocus (`id (`a));
 	symbol ret = nil;
 	while (ret == nil)
-	    ret = UI::UserInput ();
+	    ret = (symbol)UI::UserInput ();
 	if (ret == `_tp_ok)
 	{
-	    ret = UI::QueryWidget (`id (`rt), `CurrentButton);
+	    ret = (symbol)UI::QueryWidget (`id (`rt), `CurrentButton);
 	    UI::CloseDialog ();
 	    return ret;
 	}
@@ -125,13 +125,13 @@
 	}
 	if (ret == `_tp_ok)
 	{
-	    string addresses = UI::QueryWidget (`id (`ip), `Value);
+	    string addresses = (string)UI::QueryWidget (`id (`ip), `Value);
 	    list l = splitstring (addresses, ",");
-	    l = maplist (`e, l, ``(DeQuote (e)));
+// FIXME	    l = maplist (`e, l, ``(DeQuote (e)));
 	    orig["A"] = l;
-	    string mx = UI::QueryWidget (`id (`mx), `Value);
+	    string mx = (string)UI::QueryWidget (`id (`mx), `Value);
 	    l = splitstring (mx, ",");
-	    l = maplist (`e, l, ``(DeQuote (e)));
+// FIXME	    l = maplist (`e, l, ``(DeQuote (e)));
 	    orig["MX"] = l;
 	    orig["key"] = UI::QueryWidget (`id (`name), `Value);
 	    UI::CloseDialog ();
@@ -229,9 +229,10 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void globalPopupInit (any opt_id, any opt_key) ``{
-	UI::ChangeWidget (`id (opt_key), `Value,
-	    settings["options", opt_key]:"");
+    global define void globalPopupInit (any opt_id, string opt_key) ``{
+// FIXME
+//	UI::ChangeWidget (`id (opt_key), `Value,
+//	    settings["options", opt_key]:"");
 	UI::SetFocus (`id (opt_key));
     }
 
@@ -240,9 +241,10 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void globalPopupStore (any opt_id, any opt_key) ``{
-	settings["options", opt_key] = UI::QueryWidget (`id (opt_key), `Value);
-	modified = true;
+    global define void globalPopupStore (any opt_id, string opt_key) ``{
+// FIXME
+//	settings["options", opt_key] = UI::QueryWidget (`id (opt_key), `Value);
+	DnsServer::SetModified ();
     }
 
     /**
@@ -251,8 +253,10 @@
       * @param opt_key any option key
       * @return string table entry summary
       */
-    global define string globalTableEntrySummary (any opt_id, any opt_key) ``{
-	return sformat ("%1", settings["options", opt_key]:"");
+    global define string globalTableEntrySummary (any opt_id, string opt_key) ``{
+// FIXME
+//	return sformat ("%1", settings["options", opt_key]:"");
+	return "XXX";
     }
 
 // master domain table fallback handlers
@@ -262,7 +266,7 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void masterPopupInit (any opt_id, any opt_key) ``{
+    global define void masterPopupInit (any opt_id, string opt_key) ``{
 	UI::SetFocus (`id (opt_key));
 	if (substring (opt_key, 0, 2) == "__")
 	{
@@ -270,8 +274,9 @@
 	}
 	else if (substring (opt_key, 0, 1) == "_")
 	{
-	    UI::ChangeWidget (`id (opt_key), `Value,
-		current_zone[substring (opt_key, 1)]:"");
+// FIXME
+//	    UI::ChangeWidget (`id (opt_key), `Value,
+//		current_zone[substring (opt_key, 1)]:"");
 	    return;
 	}
     }
@@ -281,19 +286,20 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void masterPopupStore (any opt_id, any opt_key) ``{
+    global define void masterPopupStore (any opt_id, string opt_key) ``{
 	if (substring (opt_key, 0, 2) == "__")
 	{
 
 	}
 	else if (substring (opt_key, 0, 1) == "_")
 	{
-	    current_zone[substring (opt_key, 1)]
-		= UI::QueryWidget (`id (opt_key), `Value);
-	    return;
+// FIXME
+//	    current_zone[substring (opt_key, 1)]
+//		= UI::QueryWidget (`id (opt_key), `Value);
+//	    return;
 	}
-
-        settings["options", opt_key] = UI::QueryWidget (`id (opt_key), `Value);
+// FIXME
+//        settings["options", opt_key] = UI::QueryWidget (`id (opt_key), `Value);
     }
 
      /**
@@ -302,16 +308,16 @@
       * @param opt_key any option key
       * @return string table entry summary
       */
-   global define string masterTableEntrySummary (any opt_id, any opt_key) ``{
+   global define string masterTableEntrySummary (any opt_id, string opt_key) ``{
 	if (substring (opt_key, 0, 2) == "__")
 	{
 	    return "";
 	}
 	else if (substring (opt_key, 0, 1) == "_")
 	{
-	    return sformat ("%1", current_zone[substring (opt_key, 1)]:"");
+// FIXME	    return sformat ("%1", current_zone[substring (opt_key, 1)]:"");
 	}
-	map host = current_zone["records", opt_key]:$[];
+/* FIXME	map host = current_zone["records", opt_key]:$[];
 	if (host["A"]:[] != [])
 	    // table entry, %1 is IP address
 	    return sformat (_("Host %1"),
@@ -324,7 +330,7 @@
 	    return sformat (_("Pointer to %1"), host["PTR", 0]:"");
 	else
 	    // table entry
-	    return _("Unknown record type");
+	    return _("Unknown record type");*/
     }
 
 
@@ -336,8 +342,8 @@
       * @param opt_key any option key
       * @return string table entry summary
       */
-    global define string startServiceSummary (any opt_id, any opt_key) ``{
-	if (settings["start_service"]:false)
+    global define string startServiceSummary (any opt_id, string opt_key) ``{
+	if (DnsServer::GetStartService())
 	{
 	    // table cell
 	    return _("Yes");
@@ -354,9 +360,9 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void startServiceInit (any opt_id, any opt_key) ``{
+    global define void startServiceInit (any opt_id, string opt_key) ``{
 	UI::ChangeWidget (`id ("__start_service"), `Value,
-	    settings["start_service"]:false);
+	    DnsServer::GetStartService());
 	UI::SetFocus (`id (opt_key));
     }
 
@@ -365,10 +371,10 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void startServiceStore (any opt_id, any opt_key)``{
-	settings["start_service"]
-	    = UI::QueryWidget (`id ("__start_service"), `Value);
-	modified = true;
+    global define void startServiceStore (any opt_id, string opt_key)``{
+	DnsServer::SetStartService(
+	    (boolean)UI::QueryWidget (`id ("__start_service"), `Value)
+	);
     }
 
 // run in chroot environment option
@@ -379,7 +385,7 @@
       * @param opt_key any option key
       * @return string table entry summary
       */
-    global define string ChrootSummary (any opt_id, any opt_key) ``{
+/*    global define string ChrootSummary (any opt_id, string opt_key) ``{
 	return settings["chroot"]:false ? _("Yes") : _("No");
     }
 
@@ -388,7 +394,7 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void ChrootInit (any opt_id, any opt_key) ``{
+/*    global define void ChrootInit (any opt_id, string opt_key) ``{
 	UI::ChangeWidget (`id ("__chroot"), `Value, settings["chroot"]:false);
 	UI::SetFocus (`id ("__chroot"));
     }
@@ -398,9 +404,9 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void ChrootStore (any opt_id, any opt_key) ``{
+/*    global define void ChrootStore (any opt_id, string opt_key) ``{
 	settings["chroot"] = UI::QueryWidget (`id ("__chroot"), `Value);
-	modified = true;
+	DnsServer::SetModified ();
     }
 
 // adapt firewall
@@ -411,7 +417,7 @@
       * @param opt_key any option key
       * @return string table entry summary
       */
-    global define string FirewallSummary (any opt_id, any opt_key) ``{
+/*    global define string FirewallSummary (any opt_id, string opt_key) ``{
 	return adapt_firewall ? _("Yes") : _("No");
     }
 
@@ -420,7 +426,7 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void FirewallInit (any opt_id, any opt_key) ``{
+/*    global define void FirewallInit (any opt_id, string opt_key) ``{
 	UI::ChangeWidget (`id ("__firewall"), `Value, adapt_firewall);
 	UI::SetFocus (`id ("__firewall"));
     }
@@ -430,9 +436,9 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void FirewallStore (any opt_id, any opt_key) ``{
+/*    global define void FirewallStore (any opt_id, string opt_key) ``{
 	adapt_firewall = UI::QueryWidget (`id ("__firewall"), `Value);
-	modified = true;
+	DnsServer::SetModified ();
     }
 
 // save everything popup
@@ -443,7 +449,7 @@
       * @param opt_key any option key
       * @return string table entry summary
       */
-    global define string SaveAllSummary (any opt_id, any opt_key) ``{
+/*    global define string SaveAllSummary (any opt_id, string opt_key) ``{
 	return save_all ? _("Yes") : _("No");
     }
 
@@ -452,7 +458,7 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void SaveAllInit (any opt_id, any opt_key) ``{
+/*    global define void SaveAllInit (any opt_id, string opt_key) ``{
 	UI::ChangeWidget (`id ("__save_all"), `Value, save_all);
 	UI::SetFocus (`id ("__save_all"));
     }
@@ -462,9 +468,9 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void SaveAllStore (any opt_id, any opt_key) ``{
+/*    global define void SaveAllStore (any opt_id, string opt_key) ``{
 	save_all = UI::QueryWidget (`id ("__save_all"), `Value);
-	modified = true;
+	DnsServer::SetModified ();
     }
 
 // Ns/Mx popup
@@ -475,7 +481,7 @@
       * @param opt_key any option key
       * @return string table entry summary
       */
-    global define string NsMxSummary (any opt_id, any opt_key) ``{
+/*    global define string NsMxSummary (any opt_id, string opt_key) ``{
 	string zone =  current_zone["zone"]:"" + ".";
 	list contents
 	    = current_zone["zone_rec", substring (opt_key, 1)]:[];
@@ -489,7 +495,7 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void NsMxInit (any opt_id, any opt_key) ``{
+/*    global define void NsMxInit (any opt_id, string opt_key) ``{
 	string zone =  current_zone["zone"]:"" + ".";
 	list contents
 	    = current_zone["zone_rec", substring (opt_key, 1)]:[];
@@ -508,7 +514,7 @@
       * @param opt_key any option key
       * @param event map event that occured
       */
-    global define void NsMxHandle (any opt_id, any opt_key, map event) ``{
+/*    global define void NsMxHandle (any opt_id, string opt_key, map event) ``{
 	UI::SetFocus (`id (`addresses));
 	string active = UI::QueryWidget (`id (`addresses), `CurrentItem);
 	integer pos = 0;
@@ -586,7 +592,7 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void NsMxStore (any opt_id, any opt_key) ``{
+/*    global define void NsMxStore (any opt_id, string opt_key) ``{
 	current_zone["zone_rec"] = current_zone["zone_rec"]:$[];
 	string zone =  current_zone["zone"]:"" + ".";
 	current_zone["zone_rec", substring (opt_key, 1)]
@@ -600,7 +606,7 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void soaInit (any opt_id, any opt_key) ``{
+/*    global define void soaInit (any opt_id, string opt_key) ``{
 	foreach (`r,
 	    [ "refresh", "retry", "expiry", "minimum", "server", "mail"],
 	``{
@@ -615,7 +621,7 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void soaStore (any opt_id, any opt_key) ``{
+/*    global define void soaStore (any opt_id, string opt_key) ``{
 	current_zone["soa"] = current_zone["soa"]:$[];
 	foreach (`r,
 	    [ "refresh", "retry", "expiry", "minimum", "server", "mail"],
@@ -633,7 +639,7 @@
       * @param opt_key any option key
       * @return string table entry summary
       */
-    global define string MastersSummary (any opt_id, any opt_key) ``{
+/*    global define string MastersSummary (any opt_id, string opt_key) ``{
 	return current_zone["masters"]:"";
     }
 
@@ -642,7 +648,7 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void MastersInit (any opt_id, any opt_key) ``{
+/*    global define void MastersInit (any opt_id, string opt_key) ``{
 	UI::ChangeWidget (`id ("masters"), `Value, current_zone["masters"]:"");
 	UI::SetFocus (`id ("masters"));
     }
@@ -652,7 +658,7 @@
       * @param opt_id any option id
       * @param opt_key any option key
       */
-    global define void MastersStore (any opt_id, any opt_key) ``{
+/*    global define void MastersStore (any opt_id, string opt_key) ``{
 	current_zone["masters"] = UI::QueryWidget (`id ("masters"), `Value);
     }
 
@@ -664,9 +670,9 @@
     global define map InitPopups () ``{
 	map ns_mx_popup = $[
 	    "widget" : `custom,
-	    "init" : ``(DnsServer::NsMxInit ()),
-	    "handle" : ``(DnsServer::NsMxHandle ()),
-	    "store" : ``(DnsServer::NsMxStore ()),
+//	    "init" : ``(DnsServer::NsMxInit ()),
+//	    "handle" : ``(DnsServer::NsMxHandle ()),
+//	    "store" : ``(DnsServer::NsMxStore ()),
 	    "custom_widget" : `HBox (
 		`VBox (
 		    `ReplacePoint (`id (`addresses_rp),
@@ -699,8 +705,8 @@
 
 	map soa_popup = $[
 	    "widget" : `custom,
-	    "init" : ``(DnsServer::soaInit ()),
-	    "store" : ``(DnsServer::soaStore ()),
+//	    "init" : ``(DnsServer::soaInit ()),
+//	    "store" : ``(DnsServer::soaStore ()),
 	    "custom_widget" : /*`VBox (
 		`HBox (
 		    `HWeight (1, `TextEntry (`id ("ttl"), _("$&TTL"))),
@@ -747,13 +753,13 @@
 		"table" : $[
 		    // table cell, label
 		    "label" : _("Start DNS Server at Boot"),
-		    "summary" : ``(DnsServer::startServiceSummary ()),
+		    "summary" : startServiceSummary,
 		    "optional" : false,
 		],
 		"popup" : $[
 		    "widget" : `checkbox,
-		    "init" : ``(DnsServer::startServiceInit ()),
-		    "store" : ``(DnsServer::startServiceStore ()),
+		    "init" : startServiceInit,
+		    "store" : startServiceStore,
 		],
 	    ],
 	    "__zones" : $[
@@ -786,7 +792,7 @@
 		    "optional" : false,
 		]
 	    ],
-	    "_NS" : $[
+/*	    "_NS" : $[
 		"table" : $[
 		    // table cell, label
 		    "label" : _("Domain Name Servers"),
@@ -854,7 +860,7 @@
 		    "init" : ``(DnsServer::SaveAllInit ()),
 		    "store" : ``(DnsServer::SaveAllStore ()),
 		],
-	    ],
+	    ],*/
 	];
     }
 

@@ -18,42 +18,6 @@
     include "wizard/sequencer.ycp";
 
     /**
-      * Whole configuration of dns-server
-      * @return sequence result
-      */
-    global define symbol DnsSequence() ``{
-
-	map aliases = $[
-	    "read"	: [ ``( ReadDialog() ), true ],
-	    "main"	:   ``( MainSequence() ),
-	    "write"	: [ ``( WriteDialog() ), true ]
-	];
-
-	map sequence = $[
-	    "ws_start" : "read",
-	    "read" : $[
-		`abort	: `abort,
-		`next	: "main"
-	    ],
-	    "main" : $[
-		`abort	: `abort,
-		`next	: "write"
-	    ],
-	    "write" : $[
-		`abort	: `abort,
-		`next	: `next
-	    ]
-	];
-
-	Wizard::CreateDialog();
-
-	any ret = WizardSequencer(aliases, sequence);
-
-	UI::CloseDialog();
-	return ret;
-    }
-
-    /**
       * Main workflow of the dns-server configuration
       * @return sequence result
       */
@@ -91,8 +55,44 @@
 	    ],
 	];
 
-	any ret = WizardSequencer(aliases, sequence);
+	symbol ret = WizardSequencer(aliases, sequence);
 
+	return ret;
+    }
+
+    /**
+      * Whole configuration of dns-server
+      * @return sequence result
+      */
+    global define symbol DnsSequence() ``{
+
+	map aliases = $[
+	    "read"	: [ ``( ReadDialog() ), true ],
+	    "main"	:   ``( MainSequence() ),
+	    "write"	: [ ``( WriteDialog() ), true ]
+	];
+
+	map sequence = $[
+	    "ws_start" : "read",
+	    "read" : $[
+		`abort	: `abort,
+		`next	: "main"
+	    ],
+	    "main" : $[
+		`abort	: `abort,
+		`next	: "write"
+	    ],
+	    "write" : $[
+		`abort	: `abort,
+		`next	: `next
+	    ]
+	];
+
+	Wizard::CreateDialog();
+
+	symbol ret = WizardSequencer(aliases, sequence);
+
+	UI::CloseDialog();
 	return ret;
     }
 

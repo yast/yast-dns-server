@@ -22,10 +22,30 @@
       * Ask user if exit without saving
       * @return boolean true if exit
       */
-    global define boolean reallyExit () ``{
+    global define boolean ReallyExit () ``{
+	if (! DnsServer::WasModified ())
+	    return true;
 	// yes-no popup
 	return Popup::YesNo (_("Really exit?
 All changes will be lost."));
+    }
+
+    /**
+      * If modified, ask for confirmation
+      * @return true if abort is confirmed
+      */
+    global define boolean ReallyAbort () ``{
+	if (! DnsServer::WasModified ())
+	    return true;
+	return Popup::ReallyAbort (true);
+    }
+
+    /**
+      * Ask for confirmation (always)
+      * @return true if abort is confirmed
+      */
+    global define boolean ReallyAbortAlways () ``{
+	return Popup::ReallyAbort (true);
     }
 
     /**
@@ -45,8 +65,8 @@ All changes will be lost."));
     global define symbol WriteDialog() ``{
 	Wizard::RestoreHelp (HELPS["write"]:"");
 	boolean ret = DnsServer::Write();
-	if (! ret && cfg_restart_wanted)
-	    return `back;
+//	if (! ret && cfg_restart_wanted)
+//	    return `back;
 	return ret ? `next : `abort;
     }
 
@@ -55,8 +75,8 @@ All changes will be lost."));
       * @return symbol for wizard sequencer
       */
     global define symbol runMainDialog () ``{
-	list w = CWM::CreateWidgets (["global_table", "log_button"],
-	    DnsServer::widgets);
+	list<map> w = CWM::CreateWidgets (["global_table", "log_button"],
+	    DnsServerUI::widgets);
 	term contents = `HBox (`HSpacing (1), `VBox (
 	    `VSpacing (1),
 	    "global_table",
@@ -76,9 +96,10 @@ All changes will be lost."));
 	Wizard::ReplaceAbortButton (
 	    `PushButton (`id (`abort), Label::CancelButton ()));
 
+	y2error ("Running main dialog");
+
 	return CWM::Run (w,
-	     $[`abort : ``(! DnsServer::modified
-		|| DnsServer::reallyExit ())]);
+	     $[`abort : ReallyExit ]);
     }
 
     /**
@@ -94,10 +115,9 @@ All changes will be lost."));
 	// dialog caption
 	string caption = _("Zones Configuration");
 
-	return CWM::ShowAndRun (["zones"], DnsServer::widgets,
+	return CWM::ShowAndRun (["zones"], DnsServerUI::widgets,
 	    contents, caption, Label::BackButton (), Label::OKButton (),
-	     $[`abort : ``(! (DnsServer::modified || DnsServer::zones_modified)
-		|| Popup::ReallyAbort (true))]);
+	     $[`abort : ReallyAbort]);
     }
 
     /**
@@ -113,9 +133,9 @@ All changes will be lost."));
 	// dialog caption
 	string caption = _("DNS Master Zone Configuration");
 
-	return CWM::ShowAndRun (["master_table"], DnsServer::widgets,
+	return CWM::ShowAndRun (["master_table"], DnsServerUI::widgets,
 	    contents, caption, Label::BackButton (), Label::OKButton (),
-	     $[`abort : ``(Popup::ReallyAbort (true))]);
+	     $[`abort : ReallyAbortAlways]);
     }
 
     /**
@@ -131,9 +151,9 @@ All changes will be lost."));
 	// dialog caption
 	string caption = _("DNS Slave Zone Configuration");
 
-	return CWM::ShowAndRun (["slave_table"], DnsServer::widgets,
+	return CWM::ShowAndRun (["slave_table"], DnsServerUI::widgets,
 	    contents, caption, Label::BackButton (), Label::OKButton (),
-	     $[`abort : ``(Popup::ReallyAbort (true))]);
+	     $[`abort : ReallyAbortAlways]);
     }
 
 /* EOF */

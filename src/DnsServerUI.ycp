@@ -15,14 +15,17 @@
     module "DnsServerUI";
     textdomain "dns-server";
 
+    import "DnsServer";
     import "Progress";
     import "Report";
     import "Summary";
     import "Runlevel";
     import "Require";
     import "Mode";
+    import "Popup";
 
 
+    include "dns-server/misc.ycp";
     include "dns-server/helps.ycp";
 
     include "dns-server/options.ycp";
@@ -39,7 +42,6 @@
       */
     global map widgets = InitWidgets ();
 
-//    include "dns-server/misc.ycp";
     include "dns-server/dialogs.ycp";
     include "dns-server/wizards.ycp";
 
