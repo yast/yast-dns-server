@@ -216,28 +216,20 @@ sub AdaptFirewall {
 }
 
 sub ReadDDNSKeys {
-    my @globals = @{SCR::Dir (".dns.named.value") || []};
-    my %globals = ();
-    foreach my $g (@globals) {
-	$globals{$g} = 1;
-    }
-    @globals = keys (%globals);
     @DnsTsigKeys::tsig_keys = ();
-    foreach my $key (@globals) {
-        if ($key eq "include")
-        {
-	    my @filenames = @{SCR::Read (".dns.named.value.$key") || []};
-	    foreach my $filename (@filenames) {
-		y2milestone ("Reading include file $filename");
-		$filename = NormalizeFilename ($filename);
-		my @tsig_keys = @{DnsTsigKeys::AnalyzeTSIGKeyFile ($filename) || []};
-		foreach my $tsig_key (@tsig_keys) {
-		    y2milestone ("Having key $tsig_key, file $filename");
-		    push @DnsTsigKeys::tsig_keys, {
-			"filename" => $filename,
-			"key" => $tsig_key,
-		    };
-		}
+    my $includes = SCR::Read (".sysconfig.named.NAMED_CONF_INCLUDE_FILES")|| "";
+    my @includes = split (/ /, $includes);
+    foreach my $filename (@includes) {
+	if ($filename ne "") {
+	    y2milestone ("Reading include file $filename");
+	    $filename = NormalizeFilename ($filename);
+	    my @tsig_keys = @{DnsTsigKeys::AnalyzeTSIGKeyFile ($filename) ||[]};
+	    foreach my $tsig_key (@tsig_keys) {
+		y2milestone ("Having key $tsig_key, file $filename");
+		push @DnsTsigKeys::tsig_keys, {
+		    "filename" => $filename,
+		    "key" => $tsig_key,
+		};
 	    }
 	}
     };
@@ -248,41 +240,9 @@ sub AdaptDDNS {
 
     my @globals = @{SCR::Dir (".dns.named.value") || []};
 
-    my @includes = @{SCR::Read (".dns.named.value.include") || []};
-    #translate list to hash
-    my %includes = ();
-    foreach my $i (@includes) {
-	my $i = NormalizeFilename ($i);
-	$includes{$i} = 1;
-    }
-    # remove obsolete
-    foreach my $i (@deleted_includes) {
-	my $file = $i->{"filename"};
-	$includes{$file} = 0;
-    }
-    # add new
-    foreach my $i (@new_includes) {
-	my $file = $i->{"filename"};
-	$includes{$file} = 1;
-    }
-    #save them back
-    foreach my $i (keys (%includes)) {
-	if ($includes{$i} != 1)
-	{
-	    delete $includes{$i};
-	}
-    }
-    @includes = sort (keys (%includes));
-    @includes = map {
-	"\"$_\"";
-    } @includes;
-
-    y2milestone ("Final includes: @includes");
-    SCR::Write (".dns.named.value.include", \@includes);
-
     my $includes = SCR::Read (".sysconfig.named.NAMED_CONF_INCLUDE_FILES")|| "";
-    @includes = split (/ /, $includes);
-    %includes = ();
+    my @includes = split (/ /, $includes);
+    my %includes = ();
     foreach my $i (@includes) {
 	$includes{$i} = 1;
     }
