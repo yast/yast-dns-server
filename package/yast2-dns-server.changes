@@ -3,6 +3,7 @@ Thu Aug 28 09:03:23 CEST 2003 - jsrain@suse.de
 
 - checkycp fixes
 - fixed progress labels containing DHCP instead of DNS
+- 2.8.7
 
 -------------------------------------------------------------------
 Mon Aug 25 15:01:52 CEST 2003 - jsrain@suse.de
