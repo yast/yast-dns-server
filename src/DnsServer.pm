@@ -88,8 +88,38 @@ sub ZoneWrite {
     if ($zone_file eq "")
     {
 	$zone_file = "master/$zone_name";
-	$zone_map{"file"} = $zone_file;
     }
+
+    my $allow_update = 0;
+    foreach my $opt_ref (@{$zone_map{"options"} || []})
+    {
+	if ($opt_ref->{"key"} eq "allow-update")
+	{
+	    $allow_update = 1;
+	}
+    }
+
+    if ($allow_update && @tsig_keys > 0 && $zone_file =~ /^master\/(.+)/)
+    {
+	my $new_zone_file = $1;
+	$new_zone_file = "dyn/$new_zone_file";
+	while (SCR->Read (".target.size", "/var/lib/named/$new_zone_file") > 0)
+	{
+	    $new_zone_file = "$new_zone_file" . "X";
+	}
+	SCR->Execute (".target.bash", "test -f /var/lib/named/$zone_file && /bin/mv /var/lib/named/$zone_file /var/lib/named/$new_zone_file");
+	y2milestone ("Zone file $zone_file moved to $new_zone_file");
+	$zone_file = $new_zone_file;
+    }
+    elsif ($zone_map{"is_new"})
+    {
+	while (SCR->Read (".target.size", "/var/lib/named/$zone_file") > 0)
+	{
+	    $zone_file = "$zone_file" . "X";
+	}
+	y2milestone ("Zone $zone_name is new, zone file set to $zone_file");
+    }
+    $zone_map{"file"} = $zone_file;
 
     #save changed of named.conf
     my $base_path = ".dns.named.value.\"zone \\\"$zone_name\\\" in\"";
@@ -124,7 +154,7 @@ sub ZoneWrite {
     if ($zone_type eq "master")
     {
 	# write the zone file
-	if (@tsig_keys == 0)
+	if (@tsig_keys == 0 || ! $allow_update)
 	{
 	    DnsZones->ZoneFileWrite (\%zone_map);
 	}
@@ -418,6 +448,7 @@ sub SelectZone {
 	    "type" => "master",
 	    "soa" => \%new_soa,
 	    "ttl" => "2D",
+	    "is_new" => 1,
 	);
     }
     else
