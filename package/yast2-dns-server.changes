@@ -5,6 +5,8 @@ Tue Mar 30 09:33:02 CEST 2004 - jsrain@suse.de
 - fixed editing of multiple zones within one run of the module
   (the later edited replaced settings of the previously edited)
   (#37268)
+- putting zones that can be updated dynamically to
+  /var/lib/named/dyn (#37472)
 
 -------------------------------------------------------------------
 Mon Mar 29 10:53:32 CEST 2004 - jsrain@suse.de
