@@ -1661,7 +1661,7 @@ define map getDdnsKeysWidget () ``{
     global define boolean confirmAbort () ``{
 	return Popup::YesNo (
     // Yes-No popup
-_("Really leave the DHCP server configuration without saving?
+_("Really leave the DNS server configuration without saving?
 All changes will be lost."));
     }
 
