@@ -270,7 +270,7 @@ sub ZoneFileWrite {
 # This light hack is here because nsupdate needs at least one NS record working for it's updates
 # and it would never delete the last record, even user would add another after the removing. So,
 # he would have two NS records - the last old one and the new one.
-BEGIN{$TYPEINFO{GetSortedUpdateCommands}=["function",["list",["map","any","any"]],[["list",["map","any","any"]],"string"]];}
+BEGIN{$TYPEINFO{GetSortedUpdateCommands}=["function",["list",["map","any","any"]],["list",["map","any","any"]],"string"];}
 sub GetSortedUpdateCommands {
     my $class = shift;
     my @all_actions = @{+shift};
