@@ -196,7 +196,7 @@ symbol runInstallWizardFinishDialog () {
 		),
 		`VSpacing ( 2 ),
 		// Push Button - start expert configuration
-		`PushButton ( `id ( `expert ), _("Enter DNS Server Expert Configuration...")),
+		`PushButton ( `id ( `expert ), _("DNS Server &Expert Configuration...")),
 		`VStretch()
 	    )
 	);

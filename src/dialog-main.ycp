@@ -1619,7 +1619,7 @@ map<string,map<string,any> > new_widgets = $[
 	"get_service_auto_start" : DnsServer::GetStartService,
 	"set_service_auto_start" : DnsServer::SetStartService,
 	// radio button
-	"start_auto_button" : _("Start DNS Server when &Booting"),
+	"start_auto_button" : _("Start DNS Server When &Booting"),
 	// radio button
 	"start_manual_button" : _("Start DNS Server &Manually"),
 	"help" : sformat (CWMServiceStart::AutoStartHelpTemplate (),
@@ -1634,7 +1634,7 @@ map<string,map<string,any> > new_widgets = $[
 	// label - service status
 	"service_running_label" : _("DNS Server is running"),
 	// label - service status
-	"service_not_running_label" : _("DNS Server is not running"),
+	"service_not_running_label" : _("DNS server is not running"),
 	// push button
 	"start_now_button" : _("&Start DNS Server Now"),
 	// push button

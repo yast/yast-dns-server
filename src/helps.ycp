@@ -381,8 +381,7 @@ and click <b>Change</b>. To delete a record, select it and click
 
     /* Zone Editor - Help for tab - Records 3/7 or 3/5 */
 _("<p><b><big>Record Settings</big></b><br>
-Each <b>Type</b> of record has its own syntax defined in RFC.</p>
-"),
+Each <b>Type</b> of record has its own syntax defined in the RFC.</p>"),
 
     /* Zone Editor - Help for tab - Records 4/7 (alt. 1) */
 "zone_editor_records_forward" : _("<p><b>A -- Domain Name Translation</b><br>
@@ -441,7 +440,7 @@ Check the entered settings before finishing the configuration.</p>
 
 // Final step of the installation wizard - 2/5
 _("<p>Select <b>Open Port in Firewall</b> to adapt the
-SuSEfirewall2 settings to allow all connections to your DNS Server.</p>") +
+SuSEfirewall2 settings to allow all connections to your DNS server.") +
 
 // Final step of the installation wizard - 3/5
 _("<p><b><big>Booting</big></b><br>
@@ -459,8 +458,7 @@ set <b>LDAP Support Active</b>.</p>")
     // Final step of the installation wizard - 5/5
 _("<p><b><big>Expert Mode</big></b><br>
 To enter the expert mode of the DNS server configuration, click
-<b>Enter DNS Server Expert Configuration...</b>.</p>
-"),
+<b>DNS Server Expert Configuration...</b>.</p>"),
 
     // slave zone help text 1/2
 "slave_zone" : _("<p><big><b>Slave DNS Zone</b></big><br>
