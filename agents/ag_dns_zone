@@ -238,11 +238,11 @@ while ( <STDIN> )
 		    }
 		    $zone = $soa{"zone"};
 		}
-		elsif ($line =~ /^[^ \t]*[ \t]*[0-9]*[ \t]*(IN)?[ \t]*[A-Za-z]+[ \t]*[^ \t;\n][^;\n]*.*$/) #normal record
+		elsif ($line =~ /^[^ \t]*([ \t]+[0-9a-zA-Z]+)?[ \t]*(IN)?[ \t]+[A-Za-z]+[ \t]+[^ \t;\n][^;\n]*.*$/) #normal record
 		{
 		    my %rec = ();
-		    my $in = "";
-		    ($rec{"key"}, $in, $rec{"type"}, $rec{"value"}) = $line =~ /^([^ \t]*)[ \t]*[0-9]*[ \t]*(IN)?[ \t]*([A-Za-z]+)[ \t]*([^;\n]+).*$/;
+		    my $in = ""; my $ttl = "";
+		    ($rec{"key"}, $ttl, $in, $rec{"type"}, $rec{"value"}) = $line =~ /^([^ \t]*)([ \t]+[0-9a-zA-Z]+)?[ \t]*(IN)?[ \t]+([A-Za-z]+)[ \t]+([^;\n]+).*$/;
 
 		    # undefined key takes the key from the previous line
 		    if (!$rec{"key"}) {

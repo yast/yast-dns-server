@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Aug 19 10:40:49 CEST 2004 - locilka@suse.de
+
+- added support for correct handling of TTL in zone file for any RR
+
+-------------------------------------------------------------------
 Wed Aug 18 14:13:51 CEST 2004 - locilka@suse.cz
 
 - added better handling around disabling DDNS

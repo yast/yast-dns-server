@@ -286,8 +286,8 @@ sub GetSortedUpdateCommands {
 	    push @actions, $command;
 	} else {
 	    my $command_for_zone = $command->{"key"};
-	    $command_for_zone =~ s/^[^\.]+\.(.*)\.$/$1/;
-	    if ($command_for_zone eq $zone_name) {
+	    $command_for_zone =~ s/\.$//;
+	    if ($command_for_zone ne $zone_name) {
 		# pushing all NS records for another domain or subdomain
 		push @actions, $command;
 	    } else {
@@ -334,6 +334,7 @@ sub UpdateZones {
 	my @commands = (
 	    "server 127.0.0.1",
 	    "key $tsig_key $tsig_key_value",
+	    "zone $zone_name.",
 	);
 
 	my @static_actions;
