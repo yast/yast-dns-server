@@ -849,10 +849,7 @@ sub Read {
     ""
     );
 
-    my $sl = 0.5;
-
     Progress->NextStage ();
-    sleep ($sl);
 
     # Check packages
     if (! (Mode->config () || Package->Installed ("bind")))
@@ -869,7 +866,6 @@ sub Read {
     $self->LdapInit (0);
  
     Progress->NextStage ();
-    sleep ($sl);
 
     my $started = $self->GetDnsServiceStatus ();
     $self->StopDnsService ();
@@ -879,7 +875,6 @@ sub Read {
     }
 
     Progress->NextStage ();
-    sleep ($sl);
 
     # Information about the daemon
     $start_service = Service->Enabled ("named");
@@ -1029,7 +1024,6 @@ sub Read {
     $modified = 0;
 
     Progress->NextStage ();
-    sleep ($sl);
 
     return Boolean(1);
 }
@@ -1070,10 +1064,9 @@ sub Write {
     ""
     );
 
-    my $sl = 0.5;
+    my $sl = 2;
 
     Progress->NextStage ();
-    sleep ($sl);
 
     my $ok = 1;
 
@@ -1085,7 +1078,6 @@ sub Write {
     $ok = $self->StopDnsService () && $ok;
 
     Progress->NextStage ();
-    sleep ($sl);
 
     # authenticate to LDAP 
     if ($use_ldap)
@@ -1131,7 +1123,6 @@ sub Write {
     LdapStore ();
 
     Progress->NextStage ();
-    sleep ($sl);
 
     my $ret = 0;
     if (0 != @zones_update_actions)
@@ -1140,7 +1131,6 @@ sub Write {
     }
 
     Progress->NextStage ();
-    sleep ($sl);
 
     if (0 != @zones_update_actions)
     {
@@ -1156,7 +1146,6 @@ sub Write {
     }
 
     Progress->NextStage ();
-    sleep ($sl);
 
     if ($start_service)
     {
