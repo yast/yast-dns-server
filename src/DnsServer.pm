@@ -586,11 +586,8 @@ sub SetUseLdap {
     $use_ldap = shift;
 
     if ($use_ldap) {
-	# trying save into LDAP if selected
-	$self->LdapStore ();
-	Progress->off ();
-	my $success = $self->Read ();
-	Progress->on ();
+	# trying init LDAP if use_ldap selected
+	my $success = $self->LdapInit ();
 
 	if (!$success) {
 	    return;
