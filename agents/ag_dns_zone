@@ -146,7 +146,7 @@ while ( <STDIN> )
 			$key = tabToFile (TruncateOrigin($key, $current_origin));
 			$value = TruncateOrigin($value, $current_origin);
 		    } else {
-			$key = AddZoneName($key, $domain_name);
+			$key = tabToFile (AddZoneName($key, $domain_name));
 			$value = AddZoneName($value, $domain_name);
 		    }
 		    $type = tabToFile ("IN ".$type);

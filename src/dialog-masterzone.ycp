@@ -18,6 +18,7 @@ import "DnsServer";
 // FIXME - DnsFakeTabs will be replaced by real Tabs
 import "DnsFakeTabs";
 import "DnsRoutines";
+import "DnsServerAPI";
 import "ProductFeatures";
 import "Confirm";
 
@@ -696,28 +697,26 @@ void InitSoaTab () {
     UI::ChangeWidget (`id ("zone_settings_serial"), `Value,
 	current_zone["soa", "serial"]:"");
 
-    UI::ChangeWidget (`id ("zone_settings_ttl_value"), `Value, tointeger (
-	filterchars (sformat ("%1", current_zone["ttl"]:(any)""),
-	"0123456789")));
-    UI::ChangeWidget (`id ("zone_settings_refresh_value"), `Value, tointeger (
-	filterchars (current_zone["soa", "refresh"]:"", "0123456789")));
-    UI::ChangeWidget (`id ("zone_settings_retry_value"), `Value, tointeger (
-	filterchars (current_zone["soa", "retry"]:"", "0123456789")));
-    UI::ChangeWidget (`id ("zone_settings_expiry_value"), `Value, tointeger (
-	filterchars (current_zone["soa", "expiry"]:"", "0123456789")));
-    UI::ChangeWidget (`id ("zone_settings_minimum_value"), `Value, tointeger (
-	filterchars (current_zone["soa", "minimum"]:"", "0123456789")));
+    map <string, string> map_ids_to_values = $[
+	"zone_settings_ttl"     : "ttl",
+	"zone_settings_refresh" : "refresh",
+	"zone_settings_retry"   : "retry",
+	"zone_settings_expiry"  : "expiry",
+	"zone_settings_minimum" : "minimum",
+    ];
 
-    UI::ChangeWidget (`id ("zone_settings_ttl_units"), `Value,
-	num2unit (sformat ("%1", current_zone["ttl"]:(any)"")));
-    UI::ChangeWidget (`id ("zone_settings_refresh_units"), `Value,
-	num2unit (current_zone["soa", "refresh"]:""));
-    UI::ChangeWidget (`id ("zone_settings_retry_units"), `Value,
-	num2unit (current_zone["soa", "retry"]:""));
-    UI::ChangeWidget (`id ("zone_settings_expiry_units"), `Value,
-	num2unit (current_zone["soa", "expiry"]:""));
-    UI::ChangeWidget (`id ("zone_settings_minimum_units"), `Value,
-	num2unit (current_zone["soa", "minimum"]:""));
+    foreach (string id, string value, map_ids_to_values, {
+	integer time_int = 0;
+	if (id == "ttl") {
+	    time_int = DnsServerAPI::TimeToSeconds((string) current_zone[value]:"0S");
+	} else {
+	    time_int = DnsServerAPI::TimeToSeconds((string) current_zone["soa", value]:"0S");
+	}
+	string time_str = DnsServerAPI::SecondsToHighestTimeUnit(time_int);
+	
+	UI::ChangeWidget (`id (id + "_value"), `Value, tointeger(filterchars (time_str, "0123456789")));
+	UI::ChangeWidget (`id (id + "_units"), `Value, tolower(filterchars (time_str, "WwDdHhMmSs")));
+    });
 
     UI::ChangeWidget (`id ("zone_settings_serial"), `ValidChars, "0123456789");
 }
