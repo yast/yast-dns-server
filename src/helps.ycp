@@ -59,18 +59,23 @@ a configured DNS zone, select it and click <B>Delete</B>.</P>
     // help 4/4
     "adv_mbutton" : _("<p><b><big>Advanced functions</big></b><br>
 To edit global options,
-adjust firewall settings
+adjust firewall settings,
+manage the TSIG keys for dynamic updates of the zones
 or display the log of the DNS server,
 use <b>Advanced</b>.</p>"),
 
+    // zone dialog
     // help 1/5
     "zone_name" : _("<p><b><big>Zone Name</big></b><br>
 Enter the name od the of the zone (domain) to <b>Zone Name</b>.</p>"),
 
     // help 2/5, alt. 1
-    "allow_ddns" : _("<p><b><big></big></b><br>
-
-</p>"),
+    "allow_ddns" : _("<p><b><big>Dynamic DNS zone updates</big></b><br>
+The zone can be updated automatically, usually because of dynamically
+assigned IP addresses by DHCP server. To allow DDNS updates, set
+<b>Allow Dynamic Updates</b> and the <b>TSIG key</b>
+to be used to authentication. The key must be the same for
+both DHCP and DNS server.</p>"),
 
     // help 3/5, only for alt. 1
     "master_zone" : _("<p><b><big>Editing a DNS Zone</big></b><br>
@@ -118,6 +123,21 @@ firewall configuration component.</p>"),
 To adapt the firewall settings so that the DNS server can be accessed
 through all network interfaces it listens to, check
 <b>Adapt Firewall Settings</b>.</p>"),
+
+    // soa dialog
+    // help text 1/1
+    "soa" : _("<p><b><big>SOA Record Configuration</big></b><br>
+Set the entries of the SOA record. The SOA record usually does not require
+to be changed.</p>"),
+
+    // ddns keys dialog
+    // help text 1/1
+    "ddns_keys" :  _("<p><b><big>TSIG Keys Management</big></b><br>
+Define TSIG keys used for dynamic zone updates here.
+To add a new TSIG key, use the 
+<b>File Name</b> text field or the <b>Browse</b> button, and click <b>Add</b>.
+To delete existing TSIG key, select it in the list, and click <b>Delete</b>.
+</p>"),
 
 
 ];

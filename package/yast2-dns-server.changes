@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Feb 19 13:28:23 CET 2004 - jsrain@suse.de
+
+- added Dynamic DNS support
+- updating zones via nsupdate if possbile
+- fixed zones handling agent
+- fixed neededforbuild and requires lists
+
+-------------------------------------------------------------------
 Tue Feb 17 17:18:28 CET 2004 - jsrain@suse.de
 
 - added possibility to adjust firewall settings for DNS service

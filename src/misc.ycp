@@ -58,7 +58,7 @@
 	}
 	list output = [];
 	integer pos = -1;
-	output = maplist(`e, input, ``{
+	output = maplist(any e, input, ``{
 	    pos = pos + 1;
 	    if (pos == index1)
 	    {

@@ -11,11 +11,10 @@
 
     textdomain "dns-server";
 
-    import "Wizard";
-
-    import "Popup";
     import "Label";
-    include "wizard/sequencer.ycp";
+    import "Popup";
+    import "Sequencer";
+    import "Wizard";
 
     /**
       * Main workflow of the dns-server configuration
@@ -35,6 +34,7 @@
 	    "store_zone"	:[``(runZoneStore ()), true],
 	    "firewall_settings" : ``(runFirewallDialog ()),
 	    "ddns_settings"	: ``(runDDNSDialog ()),
+	    "ddns_settings_2"	: ``(runDDNSDialog ()),
 	];
 
 	map sequence = $[
@@ -75,6 +75,11 @@
 		`next : "store_zone",
 		`soa : "soa",
 		`again : "master_zone",
+		`ddns : "ddns_settings_2",
+	    ],
+	    "ddns_settings_2" : $[
+		`abort : `abort,
+		`next : "master_zone",
 	    ],
 	    "soa" : $[
 		`abort : `abort,
@@ -96,7 +101,7 @@
 	    ],
 	];
 
-	symbol ret = WizardSequencer(aliases, sequence);
+	symbol ret = Sequencer::Run(aliases, sequence);
 
 	return ret;
     }
@@ -131,7 +136,7 @@
 
 	Wizard::CreateDialog();
 
-	symbol ret = WizardSequencer(aliases, sequence);
+	symbol ret = Sequencer::Run(aliases, sequence);
 
 	UI::CloseDialog();
 	return ret;
