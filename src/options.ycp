@@ -23,9 +23,12 @@ import "DnsServer";
  * @param opt_key any option key
  */
 global define void globalPopupInit (any opt_id, string opt_key) ``{
-    integer oid = (integer)opt_id;
-    UI::ChangeWidget (`id (opt_key), `Value,
-	current_section[oid, "value"]:"");
+    if (opt_id != nil)
+    {
+	integer oid = (integer)opt_id;
+	UI::ChangeWidget (`id (opt_key), `Value,
+	    current_section[oid, "value"]:"");
+    }
     UI::SetFocus (`id (opt_key));
 }
 
@@ -35,8 +38,19 @@ global define void globalPopupInit (any opt_id, string opt_key) ``{
  * @param opt_key any option key
  */
 global define void globalPopupStore (any opt_id, string opt_key) ``{
-    integer oid = (integer)opt_id;
-    current_section[oid, "value"] = UI::QueryWidget (`id (opt_key), `Value);
+    if (opt_id == nil)
+    {
+	map<string,any> new_opt = $[
+	    "key" : opt_key,
+	    "value" : UI::QueryWidget (`id (opt_key), `Value),
+	];
+	current_section = add (current_section, new_opt);
+    }
+    else
+    {
+	integer oid = (integer)opt_id;
+	current_section[oid, "value"] = UI::QueryWidget (`id (opt_key), `Value);
+    }
     DnsServer::SetModified ();
 }
 
