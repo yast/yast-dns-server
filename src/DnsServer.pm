@@ -216,7 +216,7 @@ sub AdaptFirewall {
 }
 
 sub ReadDDNSKeys {
-    my @globals = SCR::Dir (".dns.named.value");
+    my @globals = @{SCR::Dir (".dns.named.value") || []};
     my %globals = ();
     foreach my $g (@globals) {
 	$globals{$g} = 1;
@@ -226,11 +226,11 @@ sub ReadDDNSKeys {
     foreach my $key (@globals) {
         if ($key eq "include")
         {
-	    my @filenames = SCR::Read (".dns.named.value.$key") || ();
+	    my @filenames = @{SCR::Read (".dns.named.value.$key") || []};
 	    foreach my $filename (@filenames) {
 		y2milestone ("Reading include file $filename");
 		$filename = NormalizeFilename ($filename);
-		my @tsig_keys = DnsTsigKeys::AnalyzeTSIGKeyFile ($filename);
+		my @tsig_keys = @{DnsTsigKeys::AnalyzeTSIGKeyFile ($filename) || []};
 		foreach my $tsig_key (@tsig_keys) {
 		    y2milestone ("Having key $tsig_key, file $filename");
 		    push @DnsTsigKeys::tsig_keys, {
@@ -246,9 +246,9 @@ sub ReadDDNSKeys {
 sub AdaptDDNS {
     my @do_not_copy_chroot = ();
 
-    my @globals = SCR::Dir (".dns.named.value");
+    my @globals = @{SCR::Dir (".dns.named.value") || []};
 
-    my @includes = SCR::Read (".dns.named.value.include") || ();
+    my @includes = @{SCR::Read (".dns.named.value.include") || []};
     #translate list to hash
     my %includes = ();
     foreach my $i (@includes) {
@@ -314,14 +314,14 @@ BEGIN { $TYPEINFO{SaveGlobals} = [ "function", "boolean" ]; }
 sub SaveGlobals {
 
     #delete all deleted zones first
-    my @old_sections = SCR::Dir (".dns.named.section") || ();
+    my @old_sections = @{SCR::Dir (".dns.named.section") || []};
     my @old_zones = grep (/^zone/, @old_sections);
     my @current_zones = map {
 	my %zone = %{$_};
 	"zone \"$zone{\"zone\"}\" in";
     } @zones;
     my @del_zones = grep {
-	! contains (\@zones, $_);
+	! contains (\@current_zones, $_);
     } @old_zones;
     y2milestone ("Deleting zones @del_zones");
     foreach my $z (@del_zones) {
@@ -369,6 +369,7 @@ sub StoreZone {
     {
 	$zones[$current_zone_index] = \%current_zone;
     }
+    return Boolean(1);
 }
 
 BEGIN { $TYPEINFO{FindZone} = ["function", "integer", "string"]; }
@@ -515,7 +516,7 @@ sub SetAllowedInterfaces {
 
 BEGIN { $TYPEINFO{GetAllowedInterfaces} = [ "function", ["list","string"]];}
 sub GetAllowedInterfaces {
-    return @allowed_interfaces;
+    return \@allowed_interfaces;
 }
 BEGIN {$TYPEINFO{FetchCurrentZone} = [ "function", ["map", "string", "any"] ]; }
 sub FetchCurrentZone {
@@ -530,7 +531,7 @@ sub StoreCurrentZone {
 
 BEGIN {$TYPEINFO{FetchZones} = [ "function", ["list", ["map", "any", "any"] ] ]; }
 sub FetchZones {
-    return @zones;
+    return \@zones;
 }
 
 BEGIN {$TYPEINFO{StoreZones} = [ "function", "void", [ "list", ["map", "any", "any"] ] ]; }
@@ -541,7 +542,7 @@ sub StoreZones {
 
 BEGIN{$TYPEINFO{GetGlobalOptions}=["function",["list",["map","string","any"]]];}
 sub GetGlobalOptions {
-    return @options;
+    return \@options;
 }
 
 BEGIN{$TYPEINFO{SetGlobalOptions}=["function","void",["list",["map","string","any"]]];}
@@ -656,21 +657,21 @@ sub Read {
 	: 0;
     y2milestone ("Chroot: $chroot");
 
-    my @zone_headers = SCR::Dir (".dns.named.section");
+    my @zone_headers = @{SCR::Dir (".dns.named.section") || []};
     @zone_headers = grep (/^zone/, @zone_headers);
     y2milestone ("Read zone headers @zone_headers");
 
-    my @opt_names = SCR::Dir (".dns.named.value.options");
+    my @opt_names = @{SCR::Dir (".dns.named.value.options") || []};
     if (! @opt_names)
     {
 	@opt_names = ();
     }
     foreach my $key (@opt_names) {
-	my @values = SCR::Read (".dns.named.value.options.$key") || ();
+	my @values = @{SCR::Read (".dns.named.value.options.$key") || []};
 	foreach my $value (@values) {
 	    push @options, {
 		"key" => $key,
-		"value" => SCR::Read (".dns.named.value.options.$key") || "",
+		"value" => $value,
 	    };
 	}
     }
@@ -683,9 +684,9 @@ sub Read {
 	my $path_el = $_;
 	$path_el =~ s/\"/\\\"/g;
 	$path_el = "\"$path_el\"";
-	my @tmp = SCR::Read (".dns.named.value.$path_el.type") || ();
+	my @tmp = @{SCR::Read (".dns.named.value.$path_el.type") || []};
 	my $zonetype = $tmp[0] || "";
-	@tmp = SCR::Read (".dns.named.value.$path_el.file") || ();
+	@tmp = @{SCR::Read (".dns.named.value.$path_el.file") || []};
 	my $filename = $tmp[0] || "";
 	if (! defined $filename)
 	{
@@ -703,7 +704,7 @@ sub Read {
 	}
 	elsif ($zonetype eq "slave" || $zonetype eq "stub")
 	{
-	    @tmp = SCR::Read (".dns.named.value.$path_el.masters") || ();
+	    @tmp = @{SCR::Read (".dns.named.value.$path_el.masters") || []};
 	    $zd{"masters"} = $tmp[0] || "";
  	    if ($zd{"masters"} =~ /\{.*;\}/)
 	    {
@@ -715,10 +716,10 @@ sub Read {
 # TODO hint, forward, .... not supported at the moment
 	}
 	
-	my @zone_options_names = SCR::Dir (".dns.named.value.$path_el");
+	my @zone_options_names = @{SCR::Dir (".dns.named.value.$path_el")|| []};
 	my @zone_options = ();
 	foreach my $key (@zone_options_names) {
-	    my @values = SCR::Read (".dns.named.value.$path_el.$key") || ();
+	    my @values = @{SCR::Read (".dns.named.value.$path_el.$key") || []};
 	    foreach my $value (@values) {
 		push @zone_options, {
 		    "key" => $key,
@@ -738,7 +739,7 @@ sub Read {
     Progress::NextStage ();
     sleep ($sl);
 
-    return "true";
+    return Boolean(1);
 }
 
 BEGIN { $TYPEINFO{Write} = ["function", "boolean"]; }
@@ -864,7 +865,7 @@ sub Write {
     Progress::NextStage ();
     sleep ($sl);
 
-    return $ok;
+    return Boolean($ok);
 }
 
 BEGIN { $TYPEINFO{Export}  =["function", [ "map", "any", "any" ] ]; }
@@ -879,7 +880,7 @@ sub Export {
     );
     return \%ret;
 }
-BEGIN { $TYPEINFO{Import} = ["function", "void", [ "map", "any", "any" ] ]; }
+BEGIN { $TYPEINFO{Import} = ["function", "boolean", [ "map", "any", "any" ] ]; }
 sub Import {
     my %settings = %{$_[0]};
 
@@ -897,6 +898,7 @@ sub Import {
     $current_zone_index = -1;
     $adapt_firewall = 0;
     $write_only = 0;
+    return Boolean(1);
 }
 
 BEGIN { $TYPEINFO{Summary} = ["function", [ "list", "string" ] ]; }
@@ -954,7 +956,7 @@ sub Summary {
     my $zones_list = join (", ", @zones_descr);
     #  summary string, %s is list of DNS zones (their names), coma separated
     push (@ret, sprintf (_("Configured Zones: %s"), $zones_list));
-    return @ret;
+    return \@ret;
 }
 
 

@@ -1,5 +1,5 @@
 Dump	=======================
-Return	nil
+Return	true
 Dump	=======================
 Execute	.target.bash "/etc/init.d/named stop" 0
 Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
@@ -10,9 +10,9 @@ Write	.dns.named.value.options.notify ["no"] true
 Write	.dns.named nil true
 Dir	.dns.named.value: ["options", "zone \"localhost\" in"]
 Read	.dns.named.value.include 0
-Write	.dns.named.value.include ["\"0\""] true
+Write	.dns.named.value.include [] true
 Read	.sysconfig.named.NAMED_CONF_INCLUDE_FILES 0
-Write	.sysconfig.named.NAMED_CONF_INCLUDE_FILES "0" true
+Write	.sysconfig.named.NAMED_CONF_INCLUDE_FILES "" true
 Dir	.dns.named.value."zone \"localhost\" in": ["file", "type"]
 Write	.dns.named.value."zone \"localhost\" in".file nil true
 Write	.dns.named.value."zone \"localhost\" in".type nil true

@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Mar 10 17:24:11 CET 2004 - jsrain@suse.de
+
+- addapted to the new array context - a YCP list is always a
+  reference to a Perl array
+
+-------------------------------------------------------------------
 Wed Mar 10 10:09:33 CET 2004 - jsrain@suse.de
 
 - added missing import (#35519)
