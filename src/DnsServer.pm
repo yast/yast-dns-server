@@ -82,6 +82,18 @@ YaST::YCP::Import ("Service");
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
 
+BEGIN{$TYPEINFO{GetFQDN} = ["function", "string"];}
+sub GetFQDN {
+    my $out = SCR::Execute (".target.bash_output", "/bin/hostname --fqdn");
+    if ($out->{"exit"} ne 0)
+    {
+	return "@";
+    }
+    my $stdout = $out->{"stdout"};
+    my ($ret, $rest) = split ("\n", $stdout, 2);
+    return $ret;
+}
+
 BEGIN { $TYPEINFO{AbsoluteZoneFileName} = ["function", "string", "string" ]; }
 sub AbsoluteZoneFileName {
     my $file_name = $_[0];
@@ -291,13 +303,16 @@ sub ZoneFileWrite {
     my $zone_name = $zone_map{"zone"} || "@";
     my $ttl = $zone_map{"ttl"} || "2D";
 
+    my $fqdn = GetFQDN ();
+    $fqdn = "$fqdn.";
+    my $adm_mail = "root.$fqdn";
     my %soa = (
 	"expiry" => "1W",
-	"mail" => "root",
+	"mail" => $adm_mail,
 	"minimum" => "1D",
 	"refresh" => "3H",
 	"retry" => "1H",
-	"server" => "@",
+	"server" => $fqdn,
 	"zone" => "@",
 	"serial" => UpdateSerial (""),
     );
@@ -700,14 +715,17 @@ sub SelectZone {
     if ($zone_index == -1)
     {
 	my $serial =  UpdateSerial ("");
+	my $fqdn = GetFQDN ();
+	$fqdn = "$fqdn.";
+	my $adm_mail = "root.$fqdn";
 	my %new_soa = (
 	    "expiry" => "1W",
-	    "mail" => "root",
+	    "mail" => $adm_mail,
 	    "minimum" => "1D",
 	    "refresh" => "3H",
 	    "retry" => "1H",
 	    "serial" => $serial,
-	    "server" => "@",
+	    "server" => $fqdn,
 	    "zone" => "@",
 	);
 	%current_zone = (
