@@ -1618,6 +1618,7 @@ void SaveAndRestart () {
     Wizard::CreateDialog ();
     Wizard::RestoreHelp (HELPS["write"]:"");
     DnsServer::Write ();
+    sleep(1000);
     UI::CloseDialog ();
 }
 
