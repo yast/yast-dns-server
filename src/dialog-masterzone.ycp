@@ -796,6 +796,7 @@ boolean ValidateSoaTab (map event) {
     integer expiry = tointeger (DnsRoutines::NormalizeTime (expiry_str));
     if (expiry < refresh)
     {
+	// TRANSLATORS: A popup with question, current setting could produce errors
 	if (! Popup::YesNo (_("The expiration time-out is higher than the time period
 of zone refreshes. The zone will not be reachable
 from slave name servers all the time.
@@ -1071,6 +1072,7 @@ boolean CheckNewZoneRecordLogic (map <string, string> record) {
 	// (hostname or FQ -> hostname or FQ)
 	if (key == val) {
 	    UI::SetFocus ( `id ("add_record_val") );
+	    // TRANSLATORS: a popup message, CNAME (link) points to itself
 	    Popup::Error ( _("CNAME cannot point to itself.") );
 	    return false;
 	}
@@ -1522,6 +1524,7 @@ symbol runSlaveZoneTabDialog () {
 	    `HStretch ()
 	),
 	`VSpacing ( 1 ),
+	// TRANSLATORS: Text entry
 	`Left (`TextEntry (`id ("master"), _("Master DNS Server IP"))),
 	`VSpacing (2),
 	`Left (`CheckBox (`id ("enable_zone_transport"), `opt (`notify),
@@ -1595,6 +1598,7 @@ If you continue, current zone will be removed.")
 	{
 	    if (false)
 	    {
+		// TRANSLATORS: A popup error message
 		Report::Error (_("Master DNS server was not defined."));
 		continue;
 	    }
