@@ -1,8 +1,8 @@
 @HEADER-COMMENT@
-# neededforbuild yast2-devel-packages yast2-packager perl-gettext
+# neededforbuild yast2-devel-packages yast2-packager perl-gettext yast2-perl-bindings
 
 @HEADER@
-Requires:	yast2 yast2-packager /usr/bin/host yast2-firewall perl-gettext
+Requires:	yast2 yast2-packager /usr/bin/host yast2-firewall perl-gettext yast2-perl-bindings
 
 BuildArchitectures:	noarch
 
@@ -25,7 +25,8 @@ Summary:	Configuration of dns-server
 @yncludedir@/dns-server/*
 @clientdir@/dns-server.ycp
 @clientdir@/dns-server_*.ycp
-@moduledir@/DnsServer.ycp
+@moduledir@/DnsServerUI.y*
+@moduledir@/DnsServer.pm
 @desktopdir@/dns-server.desktop
 @scrconfdir@/dns_named.scr
 @scrconfdir@/dns_zone.scr
