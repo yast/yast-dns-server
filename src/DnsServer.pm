@@ -598,7 +598,7 @@ sub StoreZone {
 	$zones[$current_zone_index] = \%tmp_current_zone;
     }
 
-    return Boolean(1);
+    return 1;
 }
 
 BEGIN { $TYPEINFO{FindZone} = ["function", "integer", "string"]; }
@@ -714,7 +714,7 @@ BEGIN { $TYPEINFO{GetStartService} = [ "function", "boolean" ];}
 sub GetStartService {
     my $self = shift;
 
-    return Boolean($start_service);
+    return $start_service;
 }
 
 BEGIN { $TYPEINFO{SetUseLdap} = [ "function", "void", "boolean" ];}
@@ -727,7 +727,7 @@ sub SetUseLdap {
 	my $success = $self->LdapInit (1);
 
 	if (!$success) {
-	    return Boolean(0);
+	    return 0;
 	}
     }
 
@@ -735,20 +735,23 @@ sub SetUseLdap {
 
     $save_all = 1;
 
-    return Boolean(1);
+    return 1;
 }
 
 BEGIN { $TYPEINFO{GetUseLdap} = [ "function", "boolean" ];}
 sub GetUseLdap {
     my $self = shift;
 
-    return Boolean($use_ldap);
+    return $use_ldap;
 }
 
 BEGIN { $TYPEINFO{SetChrootJail} = [ "function", "void", "boolean" ];}
 sub SetChrootJail {
     my $self = shift;
     $chroot = shift;
+    if ($chroot !~ /^[01]$/) {
+	y2error("Chroot was set to '".$chroot."'");
+    }
 
     $self->SetModified ();
 }
@@ -757,7 +760,7 @@ BEGIN { $TYPEINFO{GetChrootJail} = [ "function", "boolean" ];}
 sub GetChrootJail {
     my $self = shift;
 
-    return Boolean($chroot);
+    return $chroot;
 }
 
 BEGIN { $TYPEINFO{SetModified} = ["function", "void" ]; }
@@ -1012,7 +1015,7 @@ sub Read {
     # Check packages
     if (! Mode->test () && ! PackageSystem->CheckAndInstallPackagesInteractive (["bind"]))
     {
-	return Boolean (0);
+	return 0;
     }
 
     if (ProductFeatures->ui_mode eq "expert") {
@@ -1206,7 +1209,7 @@ sub Read {
 
     Progress->NextStage ();
 
-    return Boolean(1);
+    return 1;
 }
 
 BEGIN { $TYPEINFO{Write} = ["function", "boolean"]; }
@@ -1257,7 +1260,7 @@ sub Write {
 
     if ((! $modified) && (! SuSEFirewall->GetModified()))
     {
-	return Boolean($ok);
+	return $ok;
     }
 
     $ok = $self->StopDnsService () && $ok;
@@ -1398,12 +1401,19 @@ sub Write {
     Progress->NextStage ();
     sleep ($sl);
 
-    return Boolean($ok);
+    return $ok;
 }
 
 BEGIN { $TYPEINFO{Export}  =["function", [ "map", "any", "any" ] ]; }
 sub Export {
     my $self = shift;
+
+    if (not defined $start_service || $start_service !~ /^[01]$/) {
+	y2warning("start_service = '".$start_service."'");
+    }
+    if (not defined $chroot || $chroot !~ /^[01]$/) {
+	y2warning("chroot = '".$chroot."'");
+    }
 
     my %ret = (
 	"start_service" => $start_service,
@@ -1443,7 +1453,7 @@ sub Import {
 	$self->CleanYapiConfigOptions ();
     }
 
-    return Boolean(1);
+    return 1;
 }
 
 BEGIN { $TYPEINFO{Summary} = ["function", [ "list", "string" ] ]; }
