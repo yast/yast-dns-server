@@ -9,7 +9,7 @@ Write	.dns.named.value.options.notify "no" true
 Write	.dns.named nil true
 Write	.dns.named.section."zone \"localhost\" in" "" true
 Dir	.dns.named.value."zone \"localhost\" in": ["file", "type"]
-Write	.dns.zone ["/var/lib/named/localhost.zone", $["TTL":"1W", "records":[$["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":42, "server":"@", "zone":"@"]]] true
+Write	.dns.zone ["/var/lib/named/localhost.zone", $["TTL":"1W", "records":[$["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":"42", "server":"@", "zone":"@"]]] true
 Write	.dns.named.value."zone \"localhost\" in".localhost.zone "\"localhost.zone\"" true
 Write	.dns.named.value."zone \"localhost\" in".type "master" true
 Write	.dns.named nil true
