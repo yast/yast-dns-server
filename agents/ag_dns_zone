@@ -31,11 +31,19 @@ sub TruncateOrigin {
 }
 
 sub AddZoneName {
-    my $addhere  = shift;
-    my $zonename = shift;
+    my $addhere  = shift || '';
+    my $zonename = shift || '';
 
+    # zone name isn't added for records finished by a dot
+    # they are FQDN already and zone name cannot be added
     if (($addhere !~ /\.$/) && ($zonename ne "\@")) {
-	$addhere .= ".".$zonename.".";
+	# added is only the zone name
+	if (!$addhere) {
+	    $addhere = $zonename.".";
+	# connected with a dot with the relative record
+	} else {
+	    $addhere .= ".".$zonename.".";
+	}
     }
 
     return $addhere;
@@ -119,8 +127,9 @@ while ( <STDIN> )
 		{
 		    print OUT "$record{\"comment\"}";
 		}
-		$type = $record{"type"};
-		$value = $record{"value"};
+		my $type  = $record{"type"} || '';
+		my $value = $record{"value"} || '';
+		my $key   = $record{"key"} || '';
 		if ($record{"type"} eq "TTL")
 		{
 		    print OUT "\$TTL $value\n";
@@ -132,12 +141,12 @@ while ( <STDIN> )
 		}
 		else
 		{
-		    # normal record
-		    $key = tabToFile (TruncateOrigin($record{"key"}, $current_origin));
-		    # MX and NS records should be FQDN
+		    # MX and NS records should be all in FQDN format
 		    if ($type !~ /^(MX|NS)$/i) {
+			$key = tabToFile (TruncateOrigin($key, $current_origin));
 			$value = TruncateOrigin($value, $current_origin);
 		    } else {
+			$key = AddZoneName($key, $domain_name);
 			$value = AddZoneName($value, $domain_name);
 		    }
 		    $type = tabToFile ("IN ".$type);
