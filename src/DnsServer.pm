@@ -90,7 +90,7 @@ sub ZoneWrite {
 
     #save changed of named.conf
     my $base_path = ".dns.named.value.\"zone \\\"$zone_name\\\" in\"";
-#    SCR::Write (".dns.named.section.\"zone \\\"$zone_name\\\" in\"", "");
+    SCR::Write ("$base_path.type", [$zone_map{"type"} || "master"]);
 
     my @old_options = @{SCR::Dir ($base_path) || []};
     my @save_options = map {
@@ -127,7 +127,7 @@ sub ZoneWrite {
 	}
 	else
 	{
-	    y2error ("Updating zone dynamically");
+	    y2milestone ("Updating zone $zone_name dynamically");
 	    if ($zone_map{"soa_modified"})
 	    {
 		DnsZones::UpdateSOA (\%zone_map);
@@ -708,7 +708,7 @@ sub Write {
     # DNS server read dialog caption
     my $caption = _("Initializing DNS Server Configuration");
 
-    Progress::New( $caption, " ", 4, [
+    Progress::New( $caption, " ", 5, [
 	# progress stage
 	_("Flush caches of the DNS daemon"),
 	# progress stage
@@ -717,6 +717,8 @@ sub Write {
 	_("Restart the DNS daemon"),
 	# progress stage
 	_("Update zone files"),
+	# progress stage
+	_("Adjust the DNS service"),
     ],
     [
 	# progress step
@@ -727,6 +729,8 @@ sub Write {
 	_("Restarting the DNS daemon..."),
 	# progress step
 	_("Updating zone files..."),
+	# progress step
+	_("Adjusting the DNS service..."),
 	# progress step
 	_("Finished")
     ],
