@@ -340,7 +340,7 @@ packages %2 will be removed.</p>");
 	    sformat ("zone \"%1\" in", zone["zone"]:"")),
 	    "");
 
-	list old_options = SCR::Dir (.dns.named.value.options);
+	list old_options = SCR::Dir (base);//.dns.named.value.options);
 	if (old_options == nil)
 	    old_options = [];
 	list save_options = old_options;
@@ -369,7 +369,7 @@ packages %2 will be removed.</p>");
 
 	list del_options = filter (`o, old_options,
 	    ``(! contains (save_options, o)));
-	foreach (`o, old_options, ``{
+	foreach (`o, del_options, ``{
 	    SCR::Write (add (base, o), nil);
 	});
 	SCR::Write (add (base, "type"), zone["type"]:"master");

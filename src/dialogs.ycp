@@ -45,6 +45,8 @@
       * @return symbol for wizard sequencer
       */
     global define symbol runMainDialog () ``{
+	list w = CWM::CreateWidgets (["global_table", "log_button"],
+	    DnsServer::widgets);
 	term contents = `HBox (`HSpacing (1), `VBox (
 	    `VSpacing (1),
 	    "global_table",
@@ -56,9 +58,19 @@
 	// dialog caption
 	string caption = _("DNS server configuration");
 
-	return CWM::ShowAndRun (["global_table", "log_button", ],
-	    DnsServer::widgets, contents, caption, Label::BackButton (),
-	    Label::FinishButton (), $[]);
+	string help = CWM::MergeHelps (w);
+	contents = CWM::PrepareDialog (contents, w);
+	Wizard::SetContentsButtons (caption, contents, help,
+	    Label::BackButton (), Label::FinishButton ());
+	Wizard::ReplaceBackButton(`VSpacing (0));
+	Wizard::ReplaceAbortButton (
+	    `PushButton (`id (`abort), Label::CancelButton ()));
+
+	return CWM::Run (w,
+	     $[`abort : ``(! DnsServer::modified
+		// yes-no popup
+		|| Popup::YesNo (_("Really exit?
+All changes will be lost.")))]);
     }
 
     /**
@@ -75,7 +87,12 @@
 	string caption = _("Zones configuration");
 
 	return CWM::ShowAndRun (["zones"], DnsServer::widgets,
-	    contents, caption, Label::BackButton (), Label::OKButton (), $[]);
+	    contents, caption, Label::BackButton (), Label::OKButton (),
+	     $[`abort : ``(! (NtpClient::modified || NtpClient::zones_modified)
+		// yes-no popup
+		|| Popup::YesNo (_("Really exit?
+All changes will be lost.")))]);
+
     }
 
     /**
@@ -92,7 +109,11 @@
 	string caption = _("DNS master zone configuration");
 
 	return CWM::ShowAndRun (["master_table"], DnsServer::widgets,
-	    contents, caption, Label::BackButton (), Label::OKButton (), $[]);
+	    contents, caption, Label::BackButton (), Label::OKButton (),
+	     $[`abort : ``(! NtpClient::modified
+		// yes-no popup
+		|| Popup::YesNo (_("Really exit?
+All changes will be lost.")))]);
     }
 
     /**
@@ -109,7 +130,11 @@
 	string caption = _("DNS slave zone configuration");
 
 	return CWM::ShowAndRun (["slave_table"], DnsServer::widgets,
-	    contents, caption, Label::BackButton (), Label::OKButton (), $[]);
+	    contents, caption, Label::BackButton (), Label::OKButton (),
+	     $[`abort : ``(! NtpClient::modified
+		// yes-no popup
+		|| Popup::YesNo (_("Really exit?
+All changes will be lost.")))]);
     }
 
 /* EOF */

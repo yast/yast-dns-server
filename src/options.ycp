@@ -432,7 +432,7 @@
       */
     global define void SaveAllStore (any opt_id, any opt_key) ``{
 	save_all = UI::QueryWidget (`id ("__save_all"), `Value);
-
+	modified = true;
     }
 
 // Ns/Mx popup

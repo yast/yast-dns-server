@@ -340,6 +340,7 @@ Display the log and continue with configuration?")))
     global define boolean Import (map imp_settings) ``{
 	settings = imp_settings;
 	modified = true;
+	zones_modified = true;
 	save_all = true;
 	return true;
     }
@@ -358,18 +359,35 @@ Display the log and continue with configuration?")))
       * @return list summary of the current configuration
       */
     global define list Summary() ``{
+	map zone_types = $[
+	    // type of zone to be used in summary
+	    "master" : _("master"),
+	    // type of zone to be used in summary
+	    "slave" : _("slave"),
+	    // type of zone to be used in summary
+	    "stub" : _("stub"),
+	    // type of zone to be used in summary
+	    "hint" : _("hint"),
+	    // type of zone to be used in summary
+	    "forward" : _("forward"),
+	];
 	string start_string = settings["start_service"]:false
 	    // summary string
 	    ? _("Start DNS server when booting the system")
 	    // summary string
 	    : _("Do not start DNS server when booting the system");
-	list zones = maplist (`z, settings["zones"]:[], ``(
-	    z["zone"]:""
+	list(list(string)) zones = maplist (`z, settings["zones"]:[], ``(
+	    [z["zone"]:"", z["type"]:""]
 	));
-	zones = filter (`z, zones, ``(z != ""));
+	zones = filter (`z, zones, ``(z[0]:"" != ""));
+	list(string) zones_disp = maplist (`z, zones, ``(
+	    z[1]:"" != ""
+		? sformat ("%1 (%2)", z[0]:"", zone_types[(z[1]:"")]:(z[1]:""))
+		: z[0]:""
+	));
 	// summary string, %1 is list of DNS zones (their names)
 	string zones_string = sformat (_("Configured zones: %1"),
-	    mergestring (zones, ", "));
+	    mergestring (zones_disp, ", "));
 	list ret = [ start_string, zones_string ];
 	return ret;
     }

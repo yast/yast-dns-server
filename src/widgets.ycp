@@ -69,6 +69,7 @@
 	    return false;
 	settings["options"]
 	    = filter (`k, `v, settings["options"]:$[], ``(k != opt_id));
+	DnsServer::modified = true;
 	return true;
     }
 
@@ -167,7 +168,8 @@
     global define symbol zonesHandle (any key, map event) ``{
 	UI::SetFocus (`id (`zones));
 	integer current = UI::QueryWidget (`id (`zones), `CurrentItem);
-        if (event["ID"]:nil == `add || event["ID"]:nil == `edit)
+        if (event["ID"]:nil == `add || event["ID"]:nil == `edit
+	    || event["ID"]:nil == `zones)
         {
             if (event["ID"]:nil == `add)
             {
@@ -202,6 +204,7 @@
         {
             current_list = filter (`k, `v, current_list, ``(k != current));
             zonesInit ();
+	    zones_modified = true;
             return nil;
         }
 
@@ -215,7 +218,7 @@
 	return $[
 	    "widget" : `custom,
 	    "custom_widget" : `VBox (
-		`Table (`id (`zones), `header (
+		`Table (`id (`zones), `opt (`notify), `header (
 		    // table header
 		    _("Zone"),
 		    // table header

@@ -1,0 +1,43 @@
+/**
+ * File:
+ *  ppdpatch.ycp
+ *
+ * Module:
+ *  Printer configurator
+ *
+ * Summary:
+ *  Testsuite
+ *
+ * Authors:
+ *  Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ *
+ */
+
+{
+
+    integer old = WFM::SCRGetDefault ();
+
+    integer h = WFM::SCROpen ("ag_dns_zone", false);
+    if (h < 1)
+    {
+        return;
+    }
+
+    list server = [];
+    list peer = [];
+    list fudge = [];
+
+    WFM::SCRSetDefault (h);
+
+    map zone = SCR::Read (., ["zone"]);
+    y2milestone ("Zone: %1", zone);
+
+    any ret = SCR::Write (., ["zone_new", zone]);
+    y2milestone ("Write ret: %1", ret);
+
+    WFM::SCRSetDefault (old);
+    y2milestone ("New file: %1", SCR::Read (.target.string, "zone_new"));
+    WFM::SCRClose (h);
+}

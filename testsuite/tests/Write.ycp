@@ -47,32 +47,84 @@
 	    "stat" : $[],
 	    "ycp" : $[],
 	],
-    ];
-    map WRITE = $[];
-    map EXEC = $[
-	"target" : $[
-	    "bash_output" : $[],
-	],
-    ];
-
-    DUMP ("=======================");
-    TEST (``(DnsServer::Read ()), [READ, WRITE, EXEC], 0);
-    DUMP ("=======================");
-    DnsServer::settings = $[
-	"options":$[
-	    "allow-query":"{ 127.0.0.1; }",
-	     "directory":"\"/var/lib/named\"",
-	], "zones":[
-	     $[
-		"file":"localhost.zone",
-		"records":$[],
+	"dns" : $[
+	    "named" : $[
+		"section" : $[
+		    "options" : "",
+		    "zone \"localhost\" in" : "",
+		],
+		"value" : $[
+		    "options" : $[
+			"directory" : "\"/var/lib/named\"",
+			"notify" : "no",
+		    ],
+		    "zone \"localhost\" in" : $[
+			"type" : "master",
+			"file" : "\"localhost.zone\"",
+		    ],
+		],
+	    ],
+	    "zone" : $[
+		"TTL":"1W",
+		"records":[
+		    $[
+			"key":"",
+			"type":"NS",
+			"value":"@"
+		    ], $[
+			"key":"",
+			"type":"A",
+			"value":"127.0.0.1"
+		    ], $[
+			"key" : "localhost2",
+			"type" : "A",
+			"value" : "127.0.0.2"
+		    ],
+		],
 		"soa":$[
 		    "expiry":"6W",
 		    "mail":"root",
 		    "minimum":"1W",
 		    "refresh":"2D",
 		    "retry":"4H",
-		    "serial":2003062300,
+		    "serial":42,
+		    "server":"@",
+		    "zone":"@"
+		]
+	    ],
+	],
+    ];
+    map WRITE = $[];
+    map EXEC = $[
+	"target" : $[
+	    "bash_output" : $["exit" : 0, "stdout" : "20030806"],
+	],
+    ];
+
+    DUMP ("=======================");
+    TEST (``(DnsServer::Import ($[
+	"chroot":false,
+	"options":$[
+	    "directory":"\"/var/lib/named\"",
+	    "notify":"no"
+	],
+	"start_service":false,
+	"zones":[
+	    $[
+		"file":"localhost.zone",
+		"records":$[
+		    "localhost2":$[
+			"A":["127.0.0.2"],
+			"MX":[]
+		    ]
+		],
+		"soa":$[
+		    "expiry":"6W",
+		    "mail":"root",
+		    "minimum":"1W",
+		    "refresh":"2D",
+		    "retry":"4H",
+		    "serial":42,
 		    "server":"@",
 		    "zone":"@"
 		],
@@ -83,12 +135,9 @@
 		    "A":["127.0.0.1"],
 		    "MX":[],
 		    "NS":["@"]
-		],
-		"changed" : true,
-	    ],
-	]
-    ];
-    DnsServer::modified = true;
-    TEST (``(DnsServer::Write ()), [READ, WRITE, EXEC], 0);
+		]
+	    ]
+	]])), [], 0);
     DUMP ("=======================");
+    TEST (``(DnsServer::Write ()), [READ, WRITE, EXEC], 0);
 }
