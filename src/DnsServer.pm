@@ -33,9 +33,9 @@ my @allowed_interfaces = ();
 
 my @zones = ();
 
-my %options = ();
+my @options = ();
 
-my %logging = ();
+my @logging = ();
 
 #transient variables
 
@@ -375,7 +375,9 @@ sub SaveGlobals {
 
     # delete all removed options
     my @old_options = @{SCR::Dir (".dns.named.value.options") || []};
-    my @current_options = keys (%options);
+    my @current_options = map {
+	$_->{"key"}
+    } (@options);
     my @del_options = grep {
 	! contains (\@current_options, $_);
     } @old_options;
@@ -384,9 +386,11 @@ sub SaveGlobals {
     }
 
     # save the settings
-    foreach my $key (sort (keys(%options)))
+    foreach my $option (@options)
     {
-	SCR::Write (".dns.named.value.options.$key", $options{$key});
+	my $key = $option->{"key"};
+	my $value = $option->{"value"};
+	SCR::Write (".dns.named.value.options.$key", $value);
     }
 
     # really save the file
@@ -585,36 +589,36 @@ sub StoreZones {
     @zones = @{$_[0]};
 }
 
-BEGIN {$TYPEINFO{GetGlobalOptions} = [ "function", ["map", "any", "any"] ]; }
+BEGIN{$TYPEINFO{GetGlobalOptions}=["function",["list",["map","any","any"]]];}
 sub GetGlobalOptions {
-    return \%options;
+    return @options;
 }
 
-BEGIN {$TYPEINFO{SetGlobalOptions} = [ "function", "void", [ "map", "any", "any" ] ]; }
+BEGIN{$TYPEINFO{SetGlobalOptions}=["function","void",["list",["map","any","any"]]];}
 sub SetGlobalOptions {
-    %options = ${$_[0]};
+    @options = @{$_[0]};
 }
 
 BEGIN {$TYPEINFO{GetGlobalOption} = [ "function", "any", "any" ];}
 sub GetGlobalOption {
     my $key = $_[0];
 
-    return $options{$key};
+# FIXME    return $options{$key};
 }
 
 BEGIN {$TYPEINFO{SetGlobalOption} = ["function", "void", "any", "any"];}
 sub SetGlobalOption {
-    my $key = $_[0];
-    my $value = $_[1];
-
-    $options{$key} = $value;
+# FIXME    my $key = $_[0];
+#    my $value = $_[1];
+#
+#    $options{$key} = $value;
 }
 
 BEGIN {$TYPEINFO{RemoveGlobalOption} = ["function", "void", "any" ];}
 sub RemoveGlobalOption {
-    my $key = $_[0];
-
-    delete ($options{$key});
+# FIXME    my $key = $_[0];
+#
+#    delete ($options{$key});
 }
 
 ##------------------------------------
@@ -647,9 +651,10 @@ sub Read {
 	@opt_names = ();
     }
     foreach my $key (@opt_names) {
-	$options{$key} = SCR::Read (".dns.named.value.options.$key");
-    }
-    foreach my $key (keys(%options)) {
+	push @options, {
+	    "key" => $key,
+	    "value" => SCR::Read (".dns.named.value.options.$key"),
+	};
     }
 
     @zones = map {
@@ -749,8 +754,8 @@ sub Export {
 	"chroot" => $chroot,
 	"allowed_interfaces" => \@allowed_interfaces,
 	"zones" => \@zones,
-	"options" => \%options,
-	"logging" => \%logging,
+	"options" => \@options,
+	"logging" => \@logging,
     );
     return \%ret;
 }
@@ -762,8 +767,8 @@ sub Import {
     $chroot = $settings{"chroot"} || 1;
     @allowed_interfaces = @{$settings{"allowed_interfaces"} || []};
     @zones = @{$settings{"zones"} || []}; 
-    %options = %{$settings{"options"} || {}};
-    %logging = %{$settings{"logging"} || {}};
+    @options = @{$settings{"options"} || []};
+    @logging = @{$settings{"logging"} || []};
 
     $modified = 1;
     $save_all = 1;

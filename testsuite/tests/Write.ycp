@@ -116,9 +116,15 @@
     DUMP ("=======================");
     TEST (``(DnsServer::Import ($[
 	"chroot":false,
-	"options":$[
-	    "directory":"\"/var/lib/named\"",
-	    "notify":"no"
+	"options":[
+	    $[
+		"key" : "directory",
+		"value":"\"/var/lib/named\"",
+	    ],
+	    $[
+		"key" : "notify",
+		"value":"no"
+	    ],
 	],
 	"start_service":false,
 	"zones":[
