@@ -53,8 +53,8 @@
       */
     global define list getGlobalTableContents (map descr) ``{
 	list ret = maplist (`k, `v, settings["options"]:$[], ``(k));
-	ret = merge (["__start_service", "__chroot", "__save_all", "__zones",
-	    "____sep"], ret);
+	ret = merge (["__start_service", "__chroot", "__firewall",
+	    "__save_all", "__zones", "____sep"], ret);
 	return ret;
     }
     /**

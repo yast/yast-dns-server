@@ -91,6 +91,8 @@
 
     global string displayed_settings = "settings";
 
+    global boolean adapt_firewall = true;
+
     /**
       * Map of popups for CWM
       */
@@ -286,6 +288,7 @@ YaST2 will install packages %1.
 
 	if (! modified)
 	{
+	    adaptFirewall ();
 	    Progress::NextStageStep (3 * zones);
 	    // progress stage
 	    Progress::Title(_("Finished"));
@@ -346,6 +349,7 @@ Display the log and continue with configuration?
 	    Runlevel::ServiceAdjust ("named", "disable");
 	}
 
+	adaptFirewall ();
 	if(UI::PollInput() == `abort) return false;
 	Progress::NextStageStep (3 * zones);
 
@@ -353,6 +357,53 @@ Display the log and continue with configuration?
         Progress::Title(_("Finished"));
 
 	return true;
+    }
+
+    /**
+      * Adjust the firewall settings if wanted
+      */
+    global define void adaptFirewall () ``{
+	if (adapt_firewall)
+	{
+	    if (settings["start_service"]:false)
+	    {
+		if (SCR::Read (.sysconfig.SuSEfirewall2.FW_SERVICE_DNS) == "no")
+		    SCR::Write (.sysconfig.SuSEfirewall2.FW_SERVICE_DNS, "yes");
+		SCR::Write (.sysconfig.SuSEfirewall2.FW_PROTECT_FROM_INTERNAL,
+		    "no");
+	    }
+	    else
+	    {
+		SCR::Write (.sysconfig.SuSEfirewall2.FW_SERVICE_DNS, "no");
+		if ("no" != SCR::Read (
+			.sysconfig.SuSEfirewall2.FW_SERVICE_DNS)
+		    ||"no" != SCR::Read (
+			.sysconfig.SuSEfirewall2.FW_SERVICE_DHCLIENT)
+		    ||"no" != SCR::Read (
+			.sysconfig.SuSEfirewall2.FW_SERVICE_DHCPD)
+		    ||"no" != SCR::Read (
+			.sysconfig.SuSEfirewall2.FW_SERVICE_SQUID)
+		    ||"no" != SCR::Read (
+			.sysconfig.SuSEfirewall2.FW_SERVICE_SAMBA))
+		{
+		    SCR::Write (
+			.sysconfig.SuSEfirewall2.FW_PROTECT_FROM_INTERNAL,
+			"no");
+		}
+		else
+		{
+		    SCR::Write (
+			.sysconfig.SuSEfirewall2.FW_PROTECT_FROM_INTERNAL,
+			"yes");
+		}
+
+	    }
+
+	    SCR::Write (.sysconfig.SuSEfirewall2, nil);
+	    if (! write_only)
+		SCR::Execute (.target.bash, "test -x /sbin/rcSuSEfirewall2 && /sbin/rcSuSEfirewall2 status && /sbin/rcSuSEfirewall2 restart");
+
+	}
     }
 
     /**
