@@ -38,7 +38,7 @@ use DnsZones;
 use DnsTsigKeys;
 
 use lib "/usr/share/YaST2/modules/";
-use YaPI::LdapServer;
+use LdapServerAccess;
 
 use DnsData qw(@tsig_keys $start_service $chroot @allowed_interfaces
 @zones @options @logging $ddns_file_name
@@ -1650,19 +1650,7 @@ sub LdapPrepareToWrite {
 	|| 0 != scalar (@{NetworkDevices->Locate ("IPADDR", $ldap_server)}))
     {
 	y2milestone ("LDAP server is local, checking included schemas");
-	my @schemas = @{YaPI::LdapServer->ReadSchemaIncludeList ()};
-	my @dns_schema = grep /dnszone.schema/, @schemas;
-	if (0 == scalar (@dns_schema))
-	{
-	    y2milestone ("Including the DNS zone schema");
-	    push @schemas, "/etc/openldap/schema/dnszone.schema";
-	    YaPI::LdapServer->WriteSchemaIncludeList (\@schemas);
-	    YaPI::LdapServer->SwitchService(1);
-	}
-	else
-	{
-	    y2milestone ("DNS zone schema is already included");
-	}
+	LdapServerAccess->AddLdapSchemas(\("/etc/openldap/schema/dnszone.schema"),1);
     }
     else
     {
