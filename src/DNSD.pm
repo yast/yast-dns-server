@@ -32,7 +32,7 @@ configuration options. Currently following keys are supported:
 
 C<"use_ldap">
  says if settings should be written/read to LDAP or not. Possible values are
- 1 (use LDAP if configured properly) or 0 (don't use LDAP).
+ 1 (use LDAP if configured properly) or 0 (do not use LDAP).
  If not specified, mode is detected automatically.
 
 C<"ldap_passwd">
