@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Tue Aug 17 14:35:27 CEST 2004 - locilka@suse.cz
+
+- added missing DDNS support
+- fixed function for converting DNS time (3W4D) to seconds
+- fixed zone reading to support $ORIGIN records
+- fixed some Perl warnings
+
+-------------------------------------------------------------------
 Mon Aug 16 12:45:33 CEST 2004 - locilka@suse.cz
 
 - fixed "modified" functionality when firewall is changed

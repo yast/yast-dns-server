@@ -43,28 +43,39 @@ sub NormalizeTime {
     my $self = shift;
     my $time = shift;
 
-    if ($time =~ /^([0-9]+)([A-Za-z])$/)
+    my $converted_time = 0;
+    while ($time =~ s/^([0-9]+)([A-Za-z])//)
     {
 	my $count = $1;
 	my $unit = uc ($2);
 	if ($unit eq "M")
 	{
-	    return $count * 60;
+	    $converted_time += $count * 60;
 	}
 	elsif ($unit eq "H")
 	{
-	    return $count * 60 * 60;
+	    $converted_time += $count * 60 * 60;
 	}
 	elsif ($unit eq "D")
 	{
-	    return $count * 60 * 60 * 12;
+	    $converted_time += $count * 60 * 60 * 24;
 	}
 	elsif ($unit eq "W")
 	{
-	    return $count * 60 * 60 * 12 * 7;
+	    $converted_time += $count * 60 * 60 * 24 * 7;
+	}
+	else # seconds S
+	{
+	    $converted_time += $count;
 	}
     }
-    return $time;
+
+    if ($time =~ /^[0-9]+$/)
+    {
+	$converted_time += $time;
+    }
+
+    return $converted_time;
 }
 
 
