@@ -50,6 +50,9 @@ use DnsRoutines;
 
 my $forwarders_include = '/etc/named.d/forwarders.conf';
 
+# include of forwarders
+my $include_defined_in_conf = 0;
+
 my $use_ldap = 0;
 
 my $ldap_available = 0;
@@ -448,24 +451,6 @@ sub AdaptDDNS {
     return 1;
 }
 
-sub AdaptIncludesForForwarders {
-    my $class = shift;
-
-#    Removed functionality, it is not needed to include it twice yet
-#    my $includes = SCR->Read (".sysconfig.named.NAMED_CONF_INCLUDE_FILES") || "";
-#    my @includes = split (/ /, $includes);
-#
-#    if (scalar( grep { $_ eq $forwarders_include } @includes ) == 0) {
-#	push @includes, $forwarders_include;
-#
-#	y2milestone("Adding ".$forwarders_include." into sysconfig/named/NAMED_CONF_INCLUDE_FILES");
-#	$includes = join (" ", @includes);
-#	SCR->Write (".sysconfig.named.NAMED_CONF_INCLUDE_FILES", $includes);
-#    }
-
-    return 1;
-}
-
 BEGIN { $TYPEINFO{SaveGlobals} = [ "function", "boolean" ]; }
 sub SaveGlobals {
     my $self = shift;
@@ -538,16 +523,23 @@ sub SaveGlobals {
 	push @values, $value;
 	$opt_map{$key} = \@values;
     }
+
+    # are forwarders in configuration?
+    my $forwarders_found = 0;
     foreach my $key (sort (keys (%opt_map)))
     {
 	if ($key ne "forwarders") {
 	    my @values = @{$opt_map{$key} || []};
 	    SCR->Write (".dns.named.value.options.\"\Q$key\E\"", \@values);
 	} else {
+	    $forwarders_found = 1;
 	    # writing forwarders into single file
 	    SCR->Write (".dns.named-forwarders", [$forwarders_include, @{$opt_map{$key}}[0]]);
-	    $self->AdaptIncludesForForwarders();
 	}
+    }
+    # forwarders were but now are't in configuration, replace them
+    if ($include_defined_in_conf && !$forwarders_found) {
+	SCR->Write (".dns.named-forwarders", [$forwarders_include, "{}"]);
     }
 
     # delete all removed logging options
@@ -1084,7 +1076,7 @@ sub Read {
 
     @opt_names = sort (keys (%opt_hash));
     my $forwarders_in_options = "";
-    my $include_defined_in_conf = 0;
+
     my $forwarders_value = "";
     my $forwarders_include_record = "\"".$forwarders_include."\"";
     foreach $key (@opt_names) {
