@@ -19,6 +19,8 @@
     import "Report";
     import "Summary";
     import "Runlevel";
+    import "Require";
+    import "Mode";
 
     include "dns-server/misc.ycp";
     include "dns-server/dialogs.ycp";
@@ -259,14 +261,14 @@ YaST2 will install packages %1."));
 		//  progress stage
 		_("Save main configuration file"),
 		// progress stage
-		_("Restart DHCP server"),
+		_("Restart DNS server"),
 	    ], [
 		// progress step
 		_("Saving the zone files..."),
 		// progress step
 		_("Saving main configuration file..."),
 		// progress step
-		_("Restarting DHCP server..."),
+		_("Restarting DNS server..."),
 	    ],
 	    ""
 	);

@@ -88,7 +88,7 @@ All changes will be lost.")))]);
 
 	return CWM::ShowAndRun (["zones"], DnsServer::widgets,
 	    contents, caption, Label::BackButton (), Label::OKButton (),
-	     $[`abort : ``(! (NtpClient::modified || NtpClient::zones_modified)
+	     $[`abort : ``(! (DnsServer::modified || DnsServer::zones_modified)
 		// yes-no popup
 		|| Popup::YesNo (_("Really exit?
 All changes will be lost.")))]);
@@ -110,7 +110,7 @@ All changes will be lost.")))]);
 
 	return CWM::ShowAndRun (["master_table"], DnsServer::widgets,
 	    contents, caption, Label::BackButton (), Label::OKButton (),
-	     $[`abort : ``(! NtpClient::modified
+	     $[`abort : ``(! DnsServer::modified
 		// yes-no popup
 		|| Popup::YesNo (_("Really exit?
 All changes will be lost.")))]);
@@ -131,7 +131,7 @@ All changes will be lost.")))]);
 
 	return CWM::ShowAndRun (["slave_table"], DnsServer::widgets,
 	    contents, caption, Label::BackButton (), Label::OKButton (),
-	     $[`abort : ``(! NtpClient::modified
+	     $[`abort : ``(! DnsServer::modified
 		// yes-no popup
 		|| Popup::YesNo (_("Really exit?
 All changes will be lost.")))]);
