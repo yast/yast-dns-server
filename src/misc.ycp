@@ -1,0 +1,339 @@
+/**
+ * File:	include/dns-server/misc.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Miscelanous functions for configuration of dns-server.
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+    textdomain "dns-server";
+
+    import "Require";
+
+    /**
+      * If modified, ask for confirmation
+      * @return true if abort is confirmed
+      */
+    global define boolean ReallyAbort () ``{
+	return ! modified () || UI::ReallyAbortPopup (true);
+    }
+
+    global define string getLocalHostName () ``{
+	string ret = "";
+	map bash_out = SCR::Execute (.target.bash_output, "/bin/hostname -f");
+	if (bash_out["exit"]:1 == 0)
+	{
+	    string tmp = bash_out["stdout"]:nil;
+	    if (tmp != nil)
+	    {
+		list l = splitstring (tmp, "\n");
+		ret = l[0]:"" + ".";
+		y2milestone ("Detected local host name %1", ret);
+		return ret;
+	    }
+	}
+	y2error ("Hostname detection failed, using localhost");
+	return "localhost";
+    }
+
+    /**
+      * Get the version of BIND installed
+      * @param ask boolean true if can ask user about the version
+      * @return integer version of BIND (8 or 9), nil if both or none if can't
+      *  ask
+      */
+    global define integer getBindVersion (boolean ask) ``{
+return 8;// FIXME remove
+	boolean bind8 = Require::IsPackageInstalledTarget ("bind8");
+	boolean bind9 = Require::IsPackageInstalledTarget ("bind9");
+	if (bind8 && ! bind9)
+	{
+	    return 8;
+	}
+	else if (bind9 && ! bind8)
+	{
+	    return 9;
+	}
+	else if (! ask)
+	{
+	    return nil;
+	}
+	return nil;
+	// TODO ask user what daemon to use
+    }
+
+    /**
+      * Read the zone file
+      * @param zone string the zone name
+      * @param file string filename of the zone file
+      */
+    global define map zoneRead (string zone, string file) ``{
+	map zonemap = SCR::Read (.dns.zone, ["/var/lib/named/" + file]);
+	map ret = $[
+	    "zone" : zone,
+	    "ttl" : zonemap["TTL"]:"2W",
+	    "expiry" : zonemap["soa", "expiry"]:"6W",
+	    "mail" : zonemap["soa", "mail"]:"root",
+	    "minimum" : zonemap["soa", "minimum"]:"1W",
+	    "refresh" : zonemap["soa", "refresh"]:"2D",
+	    "retry" : zonemap["soa", "retry"]:"4H",
+	    "server" : zonemap["soa", "server"]:"@",
+	    "serial" : zonemap["soa", "serial"]:"0",
+	];
+	list records = zonemap["records"]:[];
+	list in_ns = [];
+	map in_mx = $[];
+	map in_ptr = $[];
+	map in_cname = $[];
+	map in_a = $[];
+	string previous_key = ret["server"]:"";
+	foreach (`r, records, ``{
+	    string key = sformat ("%1", r["key"]:"");
+	    string type = sformat ("%1", r["type"]:"");
+	    string value = sformat ("%1", r["value"]:"");
+	    if (type == "NS")
+	    {
+		in_ns = add (in_ns, value);
+	    }
+	    else if (type == "MX")
+	    {
+		list split = splitstring (value, " ");
+		split = filter (`s, split, s != "");
+		integer pref = tointeger (split[0]:0);
+		in_mx[pref] = split[1]:"";
+	    }
+	    else if (type == "CNAME")
+	    {
+		in_cname[key] = value;
+	    }
+	    else if (type == "PTR")
+	    {
+		in_ptr[key] = value;
+	    }
+	    else if (type == "A")
+	    {
+		if (key == "")
+		    key = previous_key;
+		else
+		    previous_key = key;
+		list addresses = in_a[key]:[];
+		addresses = add (addresses, value);
+		in_a[key] = addresses;
+	    }
+	});
+	ret["ns"] = in_ns;
+	ret["mx"] = maplist (`k, `v, in_mx, ``(v));
+	ret["ptr"] = in_ptr;
+	ret["cname"] = in_cname;
+	ret["a"] = in_a;
+	y2milestone ("Read zone %1", ret);
+	return ret;
+    }
+
+    /**
+      * Write the zone file
+      * @param zone map zone file contents in a map
+      * @return boolean true if success
+      */
+    global define boolean zoneWrite (map zone) ``{
+	string filename = zone["file"]:"";
+
+	map soa = $[
+            "zone" : zone["zone"]:"@",
+            "expiry" : zone["expiry"]:"6W",
+            "mail" : zone["mail"]:"root",
+            "minimum" : zone["minimum"]:"1W",
+            "refresh" : zone["refresh"]:"2D",
+            "retry" : zone["retry"]:"4H",
+            "server" : zone["server"]:"@",
+	];
+	string serial = sformat ("%1", zone["serial"]:"0");
+	string suffix = "";
+	if (substring (serial, 0, 8) == date)
+	{
+	    suffix = substring (serial, 8, 2);
+	    integer int_suf = tointeger (suffix);
+	    int_suf = int_suf + 1;
+	    suffix = sformat ("%1", int_suf);
+	    if (size (suffix) < 2)
+		suffix = "0" + suffix;
+	    if (size (suffix) > 2)
+		suffix = substring (suffix, 0, 2);
+	}
+	else
+	{
+	    suffix = "00";
+	}
+
+	soa["serial"] = date + suffix;
+
+	list records = [];
+	integer index = 0;
+	foreach (`r, zone["ns"]:[], ``{
+	    records[index] = $[ "key" : "", "type" : "NS", "value" : r];
+	    index = index + 1;
+	});
+
+	integer mail_index = 1;
+        foreach (`r, zone["mx"]:[], ``{
+            records[index] = $[ "key" : "", "type" : "MX",
+		"value" : sformat ("%1 %2", mail_index, r)];
+            index = index + 1;
+	    mail_index = mail_index + 1;
+        });
+
+	foreach (`k, `v, zone["ptr"]:$[], ``{
+	    records[index] = $[ "key" : k, "type" : "PTR", "value" : v ];
+	    index = index + 1;
+	});
+
+	foreach (`k, `v, zone["a"]:$[], ``{
+	    records[index] = $[ "key" : k, "type" : "A", "value" : v[0]:"" ];
+	    index = index + 1;
+	    integer siz = size (v);
+	    if (siz > 1)
+	    {
+		integer current = 1;
+		while (current < siz)
+		{
+		    records[index] = $[ "key" : "", "type" : "A",
+			"value" : v[current]:"" ];
+		    index = index + 1;
+		    current = current + 1;
+		}
+	    }
+	});
+
+	foreach (`k, `v, zone["cname"]:$[], ``{
+	    records[index] = $[ "key" : k, "type" : "CNAME", "value" : v ];
+	    index = index + 1;
+	});
+
+	map save = $[
+	    "TTL" : zone["ttl"]:"2W",
+	    "soa" : soa,
+	    "records" : records,
+	];
+
+	return SCR::Write (.dns.zone, [filename, save]);
+    }
+
+    /**
+      * Save the global (/etc/named.conf) settings
+      * Delete records of deleted zones
+      * Don't save zone information to the named.conf
+      * @return boolean true on success
+      */
+    global define boolean saveGlobals () ``{
+	// delete all deleted zones first
+	list old_sections = SCR::Dir (.dns.named.section);
+	list old_zones = filter (`z, old_sections, ``(
+	    substring (z, 0, 4) == "zone"));
+	list my_zones = maplist (`z, settings["zones"]:[], ``(
+	    sformat ("zone \"%1\" in", z["zone"]:"")));
+	list del_zones = filter (`z, old_zones, ``(! contains (my_zones, z)));
+	y2milestone ("Deleting zones %1", del_zones);
+	foreach (`z, del_zones, ``{
+	    string filename
+		= SCR::Read (add (add (.dns.named.value, z), "file"));
+	    SCR::Execute (.target.bash, sformat (
+		"test -f %1 && /usr/bin/rm %1",
+		filename));
+	    SCR::Write (add (.dns.named.section, z), nil);
+	});
+
+	// delete all removed options
+	list old_options = SCR::Dir (.dns.named.value.options);
+	if (old_options == nil)
+	    old_options = [];
+	list current_options = maplist (`k, `v, settings["options"]:$[], ``(k));
+	list del_options = filter (`o, old_options, ``(
+	    ! contains (current_options, o)));
+	y2milestone ("Deleting options %1", del_options);
+	foreach (`o, del_options, ``{
+	    SCR::Write (add (.dns.named.value.options, o), nil);
+	});
+
+	// save the settings
+	foreach (`k, `v, settings["options"]:$[], ``{
+	    SCR::Write (add (.dns.named.value.options, k), v);
+	});
+
+	// really save the file
+	return SCR::Write (.dns.named, nil);
+    }
+
+    global define boolean saveZone (map zone) ``{
+	if (! zone["changed"]:false)
+	    return true;
+	string filename = zone["file"]:"";
+	if (filename == "")
+	{
+	    filename = sformat ("/var/lib/named/master/%1",
+		zone["zone"]:"unknown");
+	    while (SCR::Read (.target.size, filename) >= 0)
+		filename = filename + "I";
+	}
+	zone["file"] = filename;
+	y2milestone ("Writing zone %1", zone);
+
+	// save the changes to named.conf
+	path base = add (.dns.named.value,
+	    sformat ("zone \"%1\" in", zone["zone"]:""));
+	SCR::Write (add (.dns.named.section,
+	    sformat ("zone \"%1\" in", zone["zone"]:"")),
+	    "");
+
+	list old_options = SCR::Dir (.dns.named.value.options);
+	if (old_options == nil)
+	    old_options = [];
+	list save_options = old_options;
+
+	if (zone["type"]:"master" == "master")
+	{
+	    // wrote the zone file
+	    zoneWrite (zone);
+	    save_options = ["type", "file"];
+
+	    // write existing keys
+	    SCR::Write (add (base, "file"), "\"" + zone["file"]:"" + "\"");
+	}
+	else if (zone["type"]:"master" == "slave")
+	{
+
+	}
+	else if (zone["type"]:"master" == "hint")
+	{
+	    save_options = ["type", "file"];
+	    SCR::Write (add (base, "file"), "\"" + zone["file"]:"" + "\"");
+	}
+
+	list del_options = filter (`o, old_options,
+	    ``(! contains (save_options, o)));
+	foreach (`o, old_options, ``{
+	    SCR::Write (add (base, o), nil);
+	});
+	SCR::Write (add (base, "type"), zone["type"]:"master");
+
+	return true;
+    };
+
+    /**
+      * Get the system date in the format of zone serial SOA entry
+      * @return string date in requested format
+      */
+    global define string getDate () ``{
+	map bash_out = SCR::Execute (.target.bash_output, "date '+%Y%m%d'");
+	string ret = "";
+	if (bash_out["exit"]:0 == 0)
+	    ret = bash_out["stdout"]:"";
+	if (findfirstof (ret, "\n") != nil)
+	    ret = substring (ret, 0, findfirstof (ret, "\n"));
+	return ret;
+    }
+
+/* EOF */
+}

@@ -43,7 +43,7 @@ while ( <STDIN> )
 	    if (exists ($data{"soa"}))
 	    {
 		my %soa = %{$data{"soa"}};
-		my $domain = tabToFile ($soa{"domain"});
+		my $domain = tabToFile ($soa{"zone"});
 		my $server = $soa{"server"};
 		my $mail = $soa{"mail"};
 		my $serial = tabToFile ($soa{"serial"});
@@ -65,7 +65,11 @@ while ( <STDIN> )
 	    print OUT "\n";
 
 	    #now the normal records come
-	    my @records = @{$data{"records"}};
+	    my @records = ();
+	    if (exists ($data{"records"}))
+	    {
+		@records = @{$data{"records"}};
+	    }
 	    foreach $ref (@records) {
 		%record = %{$ref};
 		if ((exists ($record{"comment"})) && ($record{"comment"} ne ""))
@@ -110,7 +114,7 @@ while ( <STDIN> )
 		elsif ($line =~ /^[^ \t]*[ \t]*IN[ \t]*SOA[ \t]*.*$/) # SOA record
 		{
 		    my %soa = ();
-		    ($soa{"domain"}, $soa{"server"}, $soa{"mail"})
+		    ($soa{"zone"}, $soa{"server"}, $soa{"mail"})
 			= $line =~ /^([^ \t]+)[ \t]*IN[ \t]*SOA[ \t]*([^ \t]+)[ \t]*([^ \t]+)[ \t]*/;
 		    $line = <IN>;
 		    ($soa{"serial"}) = $line =~ /^[ \t]*([0-9]+)[ \t]/;
@@ -137,7 +141,6 @@ while ( <STDIN> )
 
 		    if ($line =~ /^[^;]*;.*$/)
 		    {
-y2error ("Line contains help");
 			($comment_after) = $line =~ m/^[^;]*(;.*)$/;
 			chomp ($comment_after);
 			$comment = $comment . $comment_after . "\n";
@@ -167,6 +170,10 @@ y2error ("Line contains help");
 	}
 
 
+    }
+    elsif ($command eq "result")
+    {
+	exit 0;
     }
     else
     {
