@@ -202,9 +202,13 @@
         }
         else if (event["ID"]:nil == `delete)
         {
-            current_list = filter (`k, `v, current_list, ``(k != current));
-            zonesInit ();
-	    zones_modified = true;
+	    if (Popup::YesNo (_("Delete selected zone?")))
+	    {
+		all_zones[current] = nil;
+		all_zones = filter (`k, all_zones, ``(k != nil));
+		zonesInit (key);
+		zones_modified = true;
+	    }
             return nil;
         }
 
