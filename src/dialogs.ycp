@@ -18,6 +18,10 @@
     import "CWM";
     import "Wizard";
 
+    /**
+      * Ask user if exit without saving
+      * @return boolean true if exit
+      */
     global define boolean reallyExit () ``{
 	// yes-no popup
 	return Popup::YesNo (_("Really exit?
