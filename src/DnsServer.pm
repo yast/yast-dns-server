@@ -227,7 +227,8 @@ sub ZoneFileWrite {
     my @records = ();
 
     my %records = %{$zone_map{"records"} || {}};
-    while ((my $key, my $values_ref) = each (%records)) {
+    foreach my $key (sort (keys (%records))) {
+	my $values_ref = $records{$key};
 	my %values = %{$values_ref};
 	my @types = keys (%values);
 	my @preferred = ("A", "CNAME", "PTR");
@@ -383,9 +384,9 @@ sub SaveGlobals {
     }
 
     # save the settings
-    while ((my $key, my $value) = each %options)
+    foreach my $key (sort (keys(%options)))
     {
-	SCR::Write (".dns.named.value.options.$key", $value);
+	SCR::Write (".dns.named.value.options.$key", $options{$key});
     }
 
     # really save the file
