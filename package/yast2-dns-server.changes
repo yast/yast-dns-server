@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Thu Jun 17 09:10:59 CEST 2004 - locilka@suse.cz
+
+- 2.10.0
+
+-------------------------------------------------------------------
 Mon May 31 10:17:20 CEST 2004 - jsrain@suse.cz
 
 - fixed errors in YaPI (typo in StartDnsService function name,
