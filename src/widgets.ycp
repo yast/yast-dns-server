@@ -494,8 +494,15 @@ global define void zonesInit (any key) ``{
     integer index = -1;
     list items = maplist (map z, DnsServer::FetchZones(), ``{
 	index = index + 1;
-	return `item (`id (index), z["zone"]:"", z["type"]:"master");
+	string zone_name = z["zone"]:"";
+	if (zone_name == "." || zone_name == "0.0.127.in-addr.arpa"
+	    || zone_name == "localhost")
+	{
+	    return `item ();
+	}
+	return `item (`id (index), zone_name, z["type"]:"master");
     });
+    items = filter (any i, items, ``(i != `item ()));
     UI::ChangeWidget (`id (`zones), `Items, items);
     UI::SetFocus (`id (`zones));
 }
@@ -930,6 +937,7 @@ global define list getMasterTableContents (map descr) ``{
     string zone_name = current_zone["zone"]:"";
     integer index = -1;
     list ret = maplist (map m, current_zone["records"]:[], ``{
+y2error ("Type: %1", m["type"]:"");
 	index = index + 1;
 /*	if ((m["type"]:"" == "NS" || m["type"]:"" == "MX")
 	    && (m["key"]:"" == sformat ("%1.", zone_name)
