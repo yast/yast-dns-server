@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Jul 12 12:59:07 CEST 2004 - locilka@suse.de
+
+- fixed zone modifications in LDAP (#42792)
+
+-------------------------------------------------------------------
 Tue Jun 22 14:18:09 CEST 2004 - locilka@suse.de
 
 - moved TreeWidget handling to CWM
