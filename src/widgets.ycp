@@ -18,6 +18,7 @@
     import "CWM";
     import "DnsServer";
     import "TablePopup";
+    import "Confirm";
 
 global define symbol chrootHandle (string id, map event);
 global define symbol zonesHandle (string key, map event);
@@ -486,9 +487,9 @@ global define void globalTableStore (string widget, map event) ``{
  */
 global define boolean globalTableEntryDelete (any opt_id, any opt_key) ``{
     integer oid = (integer)opt_id;
-    // message popup
-    if (! Popup::YesNo (_("Delete selected entry?")))
+    if (! Confirm::DeleteSelected()) {
 	return false;
+    }
     current_section[oid] = $[];
     current_section = filter (map<string,any> o, current_section, ``(o != $[]));
     return true;
@@ -1519,8 +1520,7 @@ Old keys will be removed. Continue?")))
     {
 	UI::OpenDialog (`VBox (
 	    `HBox (
-		// text entry
-		`TextEntry (`id (`filename), _("&File Name")),
+		`TextEntry (`id (`filename), Label::FileName()),
 		`VBox (
 		    `Label (" "),
 		    `PushButton (`id (`browse), Label::BrowseButton ())
@@ -1602,8 +1602,7 @@ define map getDdnsKeysWidget () ``{
 	    // frane
 	    `Frame (_("Add New Key"), `VBox (
 		`HBox (
-		    // text entry
-		    `TextEntry (`id (`k_new), _("&File Name")),
+		    `TextEntry (`id (`k_new), Label::FileName()),
 		    `VBox (
 			`Label (" "),
 			`PushButton (`id (`k_browse), Label::BrowseButton ())

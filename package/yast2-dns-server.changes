@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Oct 19 14:43:23 CEST 2004 - locilka@suse.cz
+
+- using global text-modules anywhere it is possible
+
+-------------------------------------------------------------------
 Fri Oct 15 09:30:19 CEST 2004 - locilka@suse.cz
 
 - fixed bug #40761, used ACLs were deleted without additional
