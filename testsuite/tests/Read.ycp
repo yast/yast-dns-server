@@ -16,7 +16,14 @@
     // testedfiles: DnsServer.pm DNSD.pm
 
     map I_READ = $[
-	"etc"	: $[ "nsswitch_conf" : "" ],
+	"etc"	: $[
+	    "nsswitch_conf" : "",
+	    "security" : $[
+		"v" : $[
+		    "pam_unix2" : "",
+		],
+	    ],
+	],
 	"probe" : $[
 	    "architecture" : "i386",
 	    "has_apm" : true,
@@ -66,7 +73,14 @@
 
     map READ = $[
 	"passwd" : $[ "passwd" : $[ "pluslines" : [] ] ],
-	"etc"	: $[ "nsswitch_conf" : "" ],
+	"etc"	: $[
+	    "nsswitch_conf" : "",
+	    "security" : $[
+		"v" : $[
+		    "pam_unix2" : "",
+		],
+	    ],
+	],
 	"probe" : $[
 	    "architecture" : "i386",
 	    "has_apm" : true,
