@@ -13,8 +13,8 @@
 
     import "Wizard";
 
-    include "ui/common_popups.ycp";
-    include "ui/common_messages.ycp";
+    import "Popup";
+    import "Label";
     include "wizard/sequencer.ycp";
 
     /**
@@ -45,12 +45,14 @@
 	    ]
 	];
 
+	// dialog caption
 	string caption = _("DNS server configuration");
+	// label
 	term contents = `Label(_("Initializing ..."));
 
 	Wizard::CreateDialog();
 	Wizard::SetContentsButtons(caption, contents, "",
-	    BackButtonLabel(), NextButtonLabel());
+	    Label::BackButton(), Label::NextButton());
 
 	any ret = WizardSequencer(aliases, sequence);
 
@@ -66,7 +68,9 @@
 
 	map aliases = $[
 	    "main"		: ``(runMainDialog ()),
+	    "zones"		: ``(runZonesDialog ()),
 	    "master_zone"	: ``(runMasterZoneDialog ()),
+	    "slave_zone"	: ``(runSlaveZoneDialog ()),
 	];
 
 	map sequence = $[
@@ -74,6 +78,23 @@
 	    "main" : $[
 		`abort : `abort,
 		`next : `next,
+		`zones : "zones",
+	    ],
+	    "zones" : $[
+		`abort : `abort,
+		`next : "main",
+		`edit_master : "master_zone",
+		`edit_slave : "slave_zone",
+	    ],
+	    "master_zone" : $[
+		`abort : `abort,
+		`next : "zones",
+		`again : "master_zone",
+	    ],
+	    "slave_zone" : $[
+		`abort : `abort,
+		`next : "zones",
+		`again : "slave_zone",
 	    ],
 	];
 
