@@ -500,8 +500,8 @@ global define boolean globalTableEntryDelete (any opt_id, any opt_key) ``{
  */
 global define map getGlobalTableWidget () ``{
     map ret = TablePopup::CreateTableDescr ($[
-	"add_delete" : true,
-	"up_down" : false,
+	"add_delete_buttons" : true,
+	"up_down_buttons" : false,
 	"unique_keys" : true,
     ], $[
 	"init" : globalTableInit,
