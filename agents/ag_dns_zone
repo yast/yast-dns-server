@@ -31,6 +31,8 @@ while ( <STDIN> )
 	    my $file = $a[0];
 	    my %data = %{$a[1]};
 
+	    y2milestone ("Writing zone file $file");
+
 	    open (OUT, ">$file");
 
 	    # write the TTL record first
@@ -95,13 +97,14 @@ while ( <STDIN> )
     }
     elsif ($command eq "Read")
     {
-	if ($path eq "." && ref ($argument) eq "ARRAY")
+	if ($path eq "." && ! ref ($argument))
 	{
-	    my @a = @{$argument};
-	    my $file = $a[0];
+	    my $file = $argument;
 	    my %data = ();
 	    my @records = ();
 	    my $comment = "";
+
+	    y2milestone ("Reading zone file $file");
 
 	    open (IN, "$file");
 	    while ( $line = <IN> )
