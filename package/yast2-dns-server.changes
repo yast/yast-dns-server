@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Aug 25 15:01:52 CEST 2003 - jsrain@suse.de
+
+- removed support for bind8 (no more in distro)
+- 2.8.6
+
+-------------------------------------------------------------------
 Wed Aug 20 16:09:13 CEST 2003 - jsuchome@suse.de
 
 - removed redundant "initialization dialog" (#28779)
