@@ -1,6 +1,4 @@
 {
-    // testedfiles: DnsServer.pm DNSD.pm
-
     include "testsuite.ycp";
 
     import "YaPI::DNSD";
