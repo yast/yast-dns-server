@@ -23,7 +23,6 @@
     import "Progress";
     import "Report";
     import "Require";
-    import "Runlevel";
     import "Summary";
     import "SuSEFirewall";
 
