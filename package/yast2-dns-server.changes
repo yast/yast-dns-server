@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Mar  2 13:02:i02 CET 2005 - locilka@suse.cz
+
+- merged proofed texts
+
+-------------------------------------------------------------------
 Tue Mar  1 11:23:04 CET 2005 - locilka@suse.cz
 
 - fixing bug #67005, It was still possible to create slave zone
