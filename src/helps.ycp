@@ -34,6 +34,17 @@ Please wait for a while...<br></p>") +
 You can abort the saving by pressing the <b>Abort</b> button.
 An additional dialog will inform you whether it is safe to do so or not.</p>"),
 
+	// help 1/1
+	"log_button" : _("<p><b><big>Displaying a log</big></b><br>
+To display the DNS server log, click the <b>Display log</b> button.</p>"),
+
+	// help 1/1
+	"zones" : _("<p><b><big>Editing DNS zones</big></b><br>
+To edit settings of a DNS zone, choose the appropriate
+entry of the table and click <B>Edit</B>.
+To add a new DNS zone, use <B>Add</B>. To remove
+a configured DNS zone, select it and click <B>Delete</B>.</P>"),
+
     /* Summary dialog help 1/3 */
     "summary" : _("<p><b><big>DnsServer configuration</big></b><br>
 Configure dns-server here.<br></p>") +

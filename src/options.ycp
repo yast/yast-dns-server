@@ -1,0 +1,699 @@
+/**
+ * File:	include/dns-server/options.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Table options and popups used by DNS server configuration
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+    textdomain "dns-server";
+
+    /**
+      * Ask for zone type
+      * @return string zone type
+      */
+    global define string askForZoneType () ``{
+	term buttons = `VBox (
+	    // radio button, type of zone
+	    `Left (`RadioButton (`id ("master"), _("&Master"), true)),
+	    // radio button, type of zone
+	    `Left (`RadioButton (`id ("slave"), _("&Slave"), false)),
+	    // radio button, type of zone
+	    Left (`RadioButton (`id ("stub"), _("S&tub"), false))
+	);
+	term t = `HBox (`HSpacing (1), `VBox (
+	    // heading
+	    `Heading (_("Select the type of new zone")),
+	    `VSpacing (1),
+	    `RadioButtonGroup (`id (`rt), buttons),
+	    `VSpacing (1),
+	    CWM::OkCancelBox (),
+	    `VSpacing (1)
+	), `HSpacing (1));
+	UI::OpenDialog (t);
+	UI::SetFocus (`id ("master"));
+	symbol ret = nil;
+	while (ret == nil)
+	    ret = UI::UserInput ();
+	if (ret == `_tp_ok)
+	{
+	    string selected = UI::QueryWidget (`id (`rt), `CurrentButton);
+	    UI::CloseDialog ();
+	    return selected;
+	}
+	UI::CloseDialog ();
+	return nil;
+    }
+
+    /**
+      * Ask for type of new record to the zone file
+      * @param type symbol type of zone
+      * @return symbol type of new record or nil if canceled
+      */
+    global define symbol askForRecType (symbol type) ``{
+	term buttons = `Empty ();
+	if (type == `normal)
+	    buttons = `VBox (
+		// zone record type
+		`Left (`RadioButton (`id (`a), _("A"), true)),
+		// zone record type
+		`Left (`RadioButton (`id (`cname), _("CNAME"), false))
+	    );
+	term t = `HBox (`HSpacing (1), `VBox (
+	    // heading
+	    `Heading (_("Select type of record to add")),
+	    `VSpacing (1),
+	    `RadioButtonGroup (`id (`rt), buttons),
+	    `VSpacing (1),
+	    CWM::OkCancelBox (),
+	    `VSpacing (1)
+	), `HSpacing (1));
+	UI::OpenDialog (t);
+	UI::SetFocus (`id (`a));
+	symbol ret = nil;
+	while (ret == nil)
+	    ret = UI::UserInput ();
+	if (ret == `_tp_ok)
+	{
+	    ret = UI::QueryWidget (`id (`rt), `CurrentButton);
+	    UI::CloseDialog ();
+	    return ret;
+	}
+	UI::CloseDialog ();
+	return nil;
+    }
+
+    /**
+      * A record editation popup
+      * @param orig map original A record
+      * @return map updated A record or nil if canceled
+      */
+    global define map editA (map orig) ``{
+	term t = `HBox (`HSpacing (1), `VBox (
+	    // heading
+	    `Heading (_("Edit the DNS zone record")),
+	    `HSpacing (50),
+	    `VSpacing (1),
+	    // text entry
+	    `TextEntry (`id (`name), _("&Host name")),
+	    `VSpacing (2),
+	    // text entry
+	    `TextEntry (`id (`ip), _("&IP addresses")),
+	    `VSpacing (1),
+	    // text entry
+	    `TextEntry (`id (`mx), _("&Mail servers")),
+	    `VSpacing (1),
+	    CWM::OkCancelBox (),
+	    `VSpacing (1)
+	), `HSpacing (1));
+	UI::OpenDialog (t);
+	UI::ChangeWidget (`id (`name), `Value, orig["key"]:"");
+	UI::ChangeWidget (`id (`ip), `Value, mergestring (orig["A"]:[], ", "));
+	UI::ChangeWidget (`id (`mx), `Value, mergestring (orig["MX"]:[], ", "));
+	UI::SetFocus (`id (`name));
+	any ret = nil;
+	while (ret == nil)
+	{
+	    ret = UI::UserInput ();
+	}
+	if (ret == `_tp_ok)
+	{
+	    string addresses = UI::QueryWidget (`id (`ip), `Value);
+	    list l = splitstring (addresses, ",");
+	    l = maplist (`e, l, ``(DeQuote (e)));
+	    orig["A"] = l;
+	    string mx = UI::QueryWidget (`id (`mx), `Value);
+	    l = splitstring (mx, ",");
+	    l = maplist (`e, l, ``(DeQuote (e)));
+	    orig["MX"] = l;
+	    orig["key"] = UI::QueryWidget (`id (`name), `Value);
+	    UI::CloseDialog ();
+	    return orig;
+	}
+	UI::CloseDialog ();
+	return nil;
+    }
+
+    /**
+      * PTR record editation popup
+      * @param orig map original PTR record
+      * @return map updated PTR record or nil if canceled
+      */
+    global define map editPTR (map orig) ``{
+	term t = `HBox (`HSpacing (1), `VBox (
+	    `Heading (_("Edit the DNS zone record")),
+	    `HSpacing (30),
+	    `VSpacing (1),
+	    // text entry
+	    `TextEntry (`id (`ip), _("&IP address")),
+	    `VSpacing (1),
+	    // text entry
+	    `TextEntry (`id (`name), _("&Host name")),
+	    `VSpacing (1),
+	    CWM::OkCancelBox (),
+	    `VSpacing (1)
+	), `HSpacing (1));
+	UI::OpenDialog (t);
+	UI::ChangeWidget (`id (`ip), `Value, orig["key"]:"");
+	UI::ChangeWidget (`id (`name), `Value, orig["CNAME", 0]:"");
+	UI::SetFocus (`id (`alias));
+	any ret = nil;
+	while (ret == nil)
+	{
+	    ret = UI::UserInput ();
+	}
+	if (ret == `_tp_ok)
+	{
+	    orig["key"] = UI::QueryWidget (`id (`ip), `Value);
+	    orig["CNAME"] = [ UI::QueryWidget (`id (`name), `Value) ];
+	    UI::CloseDialog ();
+	    return orig;
+	}
+	UI::CloseDialog ();
+	return nil;
+    }
+
+    /**
+      * CNAME record editation popup
+      * @param orig map original CNAME record
+      * @return map updated CNAME record or nil if canceled
+      */
+    global define map editCNAME (map orig) ``{
+	term t = `HBox (`HSpacing (1), `VBox (
+	    // heading
+	    `Heading (_("Edit the DNS zone record")),
+	    `HSpacing (30),
+	    `VSpacing (1),
+	    // text entry
+	    `TextEntry (`id (`alias), _("&Alias")),
+	    `VSpacing (1),
+	    // text entry
+	    `TextEntry (`id (`name), _("&Base host name")),
+	    `VSpacing (1),
+	    CWM::OkCancelBox (),
+	    `VSpacing (1)
+	), `HSpacing (1));
+	UI::OpenDialog (t);
+	UI::ChangeWidget (`id (`alias), `Value, orig["key"]:"");
+	UI::ChangeWidget (`id (`name), `Value, orig["CNAME", 0]:"");
+	UI::SetFocus (`id (`alias));
+	any ret = nil;
+	while (ret == nil)
+	{
+	    ret = UI::UserInput ();
+	}
+	if (ret == `_tp_ok)
+	{
+	    orig["key"] = UI::QueryWidget (`id (`alias), `Value);
+	    orig["CNAME"] = [ UI::QueryWidget (`id (`name), `Value) ];
+	    UI::CloseDialog ();
+	    return orig;
+	}
+	UI::CloseDialog ();
+	return nil;
+    }
+
+
+// global table fallback handlers
+
+
+    /**
+      * Fallback initialization function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void globalPopupInit (any opt_id, any opt_key) ``{
+	UI::ChangeWidget (`id (opt_key), `Value,
+	    settings["options", opt_key]:"");
+	UI::SetFocus (`id (opt_key));
+    }
+
+    /**
+      * Fallback store function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void globalPopupStore (any opt_id, any opt_key) ``{
+	settings["options", opt_key] = UI::QueryWidget (`id (opt_key), `Value);
+    }
+
+    /**
+      * Fallback summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      * @return string table entry summary
+      */
+    global define string globalTableEntrySummary (any opt_id, any opt_key) ``{
+	return sformat ("%1", settings["options", opt_key]:"");
+    }
+
+// master domain table fallback handlers
+
+    /**
+      * Fallback initialization function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void masterPopupInit (any opt_id, any opt_key) ``{
+	UI::SetFocus (`id (opt_key));
+	if (substring (opt_key, 0, 2) == "__")
+	{
+
+	}
+	else if (substring (opt_key, 0, 1) == "_")
+	{
+	    UI::ChangeWidget (`id (opt_key), `Value,
+		current_zone[substring (opt_key, 1)]:"");
+	    return;
+	}
+    }
+
+    /**
+      * Fallback store function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void masterPopupStore (any opt_id, any opt_key) ``{
+	if (substring (opt_key, 0, 2) == "__")
+	{
+
+	}
+	else if (substring (opt_key, 0, 1) == "_")
+	{
+	    current_zone[substring (opt_key, 1)]
+		= UI::QueryWidget (`id (opt_key), `Value);
+	    return;
+	}
+
+        settings["options", opt_key] = UI::QueryWidget (`id (opt_key), `Value);
+    }
+
+     /**
+      * Fallback summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      * @return string table entry summary
+      */
+   global define string masterTableEntrySummary (any opt_id, any opt_key) ``{
+	if (substring (opt_key, 0, 2) == "__")
+	{
+	    return "";
+	}
+	else if (substring (opt_key, 0, 1) == "_")
+	{
+	    return sformat ("%1", current_zone[substring (opt_key, 1)]:"");
+	}
+	map host = current_zone["records", opt_key]:$[];
+	if (host["A"]:[] != [])
+	    // table entry, %1 is IP address
+	    return sformat (_("Host %1"),
+		mergestring (host["A"]:[], ", "));
+	else if (host["CNAME"]:[] != [])
+	    // table entry, %1 is host name
+	    return sformat (_("Alias for %1"), host["CNAME", 0]:"");
+	else if (host["PTR"]:[] != [])
+	    // table entry, %1 is host name
+	    return sformat (_("Pointer to %1"), host["PTR", 0]:"");
+	else
+	    // table entry
+	    return _("Unknown record type");
+    }
+
+
+// start seervice option
+
+    /**
+      * Summary function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      * @return string table entry summary
+      */
+    global define string startServiceSummary (any opt_id, any opt_key) ``{
+	if (settings["start_service"]:false)
+	{
+	    // table cell
+	    return _("Yes");
+	}
+	else
+	{
+	    // table cell
+	    return _("No");
+	}
+    }
+
+    /**
+      * Initialization function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void startServiceInit (any opt_id, any opt_key) ``{
+	UI::ChangeWidget (`id ("__start_service"), `Value,
+	    settings["start_service"]:false);
+	UI::SetFocus (`id (opt_key));
+    }
+
+    /**
+      * Store function of a table entry / popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void startServiceStore (any opt_id, any opt_key)``{
+	settings["start_service"]
+	    = UI::QueryWidget (`id ("__start_service"), `Value);
+    }
+
+    /**
+      * Summary function of a table entry
+      * @param opt_id any option id
+      * @param opt_key any option key
+      * @return string table entry summary
+      */
+    global define string NsMxSummary (any opt_id, any opt_key) ``{
+	string zone =  current_zone["zone"]:"" + ".";
+	list contents
+	    = current_zone["zone_rec", substring (opt_key, 1)]:[];
+	return mergestring (contents, " ");
+    }
+
+    global list(string) addr_items = [];
+
+    /**
+      * Initialization function of a popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void NsMxInit (any opt_id, any opt_key) ``{
+	string zone =  current_zone["zone"]:"" + ".";
+	list contents
+	    = current_zone["zone_rec", substring (opt_key, 1)]:[];
+	addr_items = maplist (`c, contents, ``(
+	    DeQuote (c)
+	));
+	UI::ReplaceWidget (`id (`addresses_rp), `SelectionBox (`id (`addresses),
+	   `opt (`notify, `immediate),
+	    _("Add&resses"), addr_items));
+	NsMxHandle (opt_id, opt_key, `init);
+    }
+
+    /**
+      * Handle function of a popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      * @param event any event that occured
+      */
+    global define void NsMxHandle (any opt_id, any opt_key, any event) ``{
+	UI::SetFocus (`id (`addresses));
+	string active = UI::QueryWidget (`id (`addresses), `CurrentItem);
+	integer pos = 0;
+	while (pos < size (addr_items) && addr_items[pos]:"" != active)
+	    pos = pos + 1;
+	if (event == `up)
+	{
+	    addr_items = swapItems (addr_items, pos, pos - 1);
+	    pos = pos - 1;
+	}
+	else if (event == `down)
+	{
+	    addr_items = swapItems (addr_items, pos, pos + 1);
+	    pos = pos + 1;
+	}
+	else if (event == `delete)
+	{
+	    addr_items = filter (`i, addr_items, ``(i != active));
+	}
+	else if (event == `add)
+	{
+	    term popup = `VBox (`VSpacing (1),
+	    // textentry header
+	    `TextEntry (`id (`address), _("&Address")),
+	    `HSpacing (25),
+	    `VSpacing (1),
+	    `HBox (`HStretch (),
+		`PushButton (`id (`ok), `opt (`key_F10, `default),
+		    Label::OKButton ()),
+		`HStretch (),
+		`PushButton (`id (`cancel), `opt (`key_F8),
+		    Label::CancelButton ()),
+		`HStretch ()
+	    ), `VSpacing (1));
+	    UI::OpenDialog (popup);
+	    UI::SetFocus (`id (`address));
+	    symbol pushed = nil;
+	    while (pushed == nil)
+		pushed = UI::UserInput ();
+	    string new_addr = UI::QueryWidget (`id (`address), `Value);
+	    UI::CloseDialog ();
+	    if (pushed == `ok)
+	    {
+		addr_items = add (addr_items, new_addr);
+	    }
+	}
+
+	UI::ChangeWidget (`id (`up), `Enabled, pos > 0);
+	UI::ChangeWidget (`id (`down), `Enabled, pos < size (addr_items) - 1);
+
+	if (event == `up || event == `down || event == `delete || event == `add
+	    || event == `init)
+	{
+	    UI::ReplaceWidget (`id (`addresses_rp),
+		`SelectionBox (`id (`addresses),
+		    `opt (`notify, `immediate),
+		    _("Add&resses"), addr_items));
+	    UI::SetFocus (`id (`addresses));
+	    UI::ChangeWidget (`id (`delete), `Enabled, size (addr_items) > 0);
+	    if (size (addr_items) > 0)
+	    {
+		if (! contains (addr_items, active))
+		{
+		    active = addr_items[0]:"";
+		}
+		UI::ChangeWidget (`id (`addresses),`CurrentItem, active);
+	    }
+	}
+    }
+
+
+    /**
+      * Store function of a popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void NsMxStore (any opt_id, any opt_key) ``{
+	current_zone["zone_rec"] = current_zone["zone_rec"]:$[];
+	string zone =  current_zone["zone"]:"" + ".";
+	current_zone["zone_rec", substring (opt_key, 1)]
+	    = addr_items;
+    }
+
+// soa popup
+
+    /**
+      * Initialization function of a popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void soaInit (any opt_id, any opt_key) ``{
+	foreach (`r,
+	    [ "refresh", "retry", "expiry", "minimum", "server", "mail"],
+	``{
+	    UI::ChangeWidget (`id (r), `Value, current_zone["soa", r]:"");
+	});
+	UI::ChangeWidget (`id ("ttl"), `Value, current_zone["ttl"]:"");
+	UI::SetFocus (`id ("ttl"));
+    }
+
+    /**
+      * Store function of a popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void soaStore (any opt_id, any opt_key) ``{
+	current_zone["soa"] = current_zone["soa"]:$[];
+	foreach (`r,
+	    [ "refresh", "retry", "expiry", "minimum", "server", "mail"],
+	``{
+	    current_zone["soa", r] = UI::QueryWidget (`id (r), `Value);
+	});
+	current_zone["ttl"] = UI::QueryWidget (`id ("ttl"), `Value);
+    }
+
+// master popup
+
+    /**
+      * Summary function of a table entry
+      * @param opt_id any option id
+      * @param opt_key any option key
+      * @return string table entry summary
+      */
+    global define string MastersSummary (any opt_id, any iot_key) ``{
+	return current_zone["masters"]:"";
+    }
+
+    /**
+      * Initialization function of a popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void MastersInit (any opt_id, any opt_key) ``{
+	UI::ChangeWidget (`id ("masters"), `Value, current_zone["masters"]:"");
+	UI::SetFocus (`id ("masters"));
+    }
+
+    /**
+      * Store function of a popup
+      * @param opt_id any option id
+      * @param opt_key any option key
+      */
+    global define void MastersStore (any opt_id, any opt_key) ``{
+	current_zone["masters"] = UI::QueryWidget (`id ("masters"), `Value);
+    }
+
+
+    /**
+      * Initialize all poups
+      * @return map description of all popups/options
+      */
+    global define map InitPopups () ``{
+	map ns_mx_popup = $[
+	    "widget" : `custom,
+	    "init" : ``(DnsServer::NsMxInit ()),
+	    "handle" : ``(DnsServer::NsMxHandle ()),
+	    "store" : ``(DnsServer::NsMxStore ()),
+	    "custom_widget" : `HBox (
+		`VBox (
+		    `ReplacePoint (`id (`addresses_rp),
+			`SelectionBox (`id (`addresses),
+			    `opt (`notify, `immediate),
+			    // selection box label
+			    _("Add&resses"), [])
+		    ),
+		    `HBox (
+			`HStretch (),
+			`PushButton (`id (`add), `opt (`key_F3),
+			    Label::AddButton ()),
+			`PushButton (`id (`delete), `opt(`key_F5),
+			    Label::DeleteButton ()),
+			`HStretch ()
+		    )
+		),
+		`HSquash (
+		    `VBox (
+			`VStretch (),
+			// push button
+			`PushButton (`id (`up), `opt (`hstretch), _("&Up")),
+			// push button
+			`PushButton (`id (`down), `opt (`hstretch), _("&Down")),
+			`VStretch ()
+		    )
+		)
+	    ),
+	];
+
+	map soa_popup = $[
+	    "widget" : `custom,
+	    "init" : ``(DnsServer::soaInit ()),
+	    "store" : ``(DnsServer::soaStore ()),
+	    "custom_widget" : `HBox (
+		`VBox (
+		    // text entry
+		    `TextEntry (`id ("ttl"), _("$&TTL")),
+		    // text entry
+		    `TextEntry (`id ("server"), _("Primary &source")),
+		    // text entry
+		    `TextEntry (`id ("mail"), _("&Administrator's mail"))
+		),
+		`HSpacing (1),
+		`VBox (
+		    // text entry
+		    `TextEntry (`id ("refresh"), _("Re&fresh")),
+		    // text entry
+		    `TextEntry (`id ("retry"), _("&Retry")),
+		    // text entry
+		    `TextEntry (`id ("expiry"), _("E&xpiry")),
+		    // text entry
+		    `TextEntry (`id ("minimum"), _("Mi&nimum"))
+		)
+	    ),
+	];
+
+	return $[
+	    "__start_service" : $[
+		"table" : $[
+		    // table cell, label
+		    "label" : _("Start DNS server at boot time"),
+		    "summary" : ``(DnsServer::startServiceSummary ()),
+		    "optional" : false,
+		],
+		"popup" : $[
+		    "widget" : `checkbox,
+		    "init" : ``(DnsServer::startServiceInit ()),
+		    "store" : ``(DnsServer::startServiceStore ()),
+		],
+	    ],
+	    "__zones" : $[
+		"table" : $[
+		    // table cell
+		    "label" : _("DNS zones"),
+		    "handle" : `zones,
+		    "optional" : false,
+		],
+            ],
+	    "_zone" : $[
+		"table" : $[
+		    // table cell, label
+		    "label" : _("Zone name"),
+		    "optional" : false,
+		]
+	    ],
+	    "__soa" : $[
+		"table" : $[
+		    // table cell, label
+		    "label" : _("SOA"),
+		    "optional" : false,
+		],
+		"popup" : soa_popup,
+	    ],
+	    "_ttl" : $[
+		"table" : $[
+		    // table cell, label
+		    "label" : _("Time to live"),
+		    "optional" : false,
+		]
+	    ],
+	    "_NS" : $[
+		"table" : $[
+		    // table cell, label
+		    "label" : _("Domain name servers"),
+		    "optional" : false,
+		    "summary" : ``(DnsServer::NsMxSummary ()),
+		],
+		"popup" : ns_mx_popup,
+	    ],
+	    "_MX" : $[
+		"table" : $[
+		    // table cell, label
+		    "label" : _("Domain mail servers"),
+		    "optional" : false,
+		    "summary" : ``(DnsServer::NsMxSummary ()),
+		],
+		"popup" : ns_mx_popup,
+	    ],
+	    "masters" : $[
+		"table" : $[
+		    // table cell, label
+		    "label" : _("Domain master name servers"),
+		    "optional" : false,
+		    "summary" : ``(DnsServer::MastersSummary ()),
+		],
+		"popup" : $[
+		    "init" : ``(DnsServer::MastersInit ()),
+		    "store" : ``(DnsServer::MastersStore ()),
+		],
+	    ],
+	];
+    }
+
+}

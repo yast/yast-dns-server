@@ -21,6 +21,10 @@
 	return ! modified () || UI::ReallyAbortPopup (true);
     }
 
+    /**
+      * Get the name of this host
+      * @return string hostname of this host
+      */
     global define string getLocalHostName () ``{
 	string ret = "";
 	map bash_out = SCR::Execute (.target.bash_output, "/bin/hostname -f");
@@ -69,66 +73,53 @@ return 8;// FIXME remove
       * Read the zone file
       * @param zone string the zone name
       * @param file string filename of the zone file
+      * @return map the contents of the zone
       */
     global define map zoneRead (string zone, string file) ``{
 	map zonemap = SCR::Read (.dns.zone, ["/var/lib/named/" + file]);
 	map ret = $[
 	    "zone" : zone,
 	    "ttl" : zonemap["TTL"]:"2W",
-	    "expiry" : zonemap["soa", "expiry"]:"6W",
-	    "mail" : zonemap["soa", "mail"]:"root",
-	    "minimum" : zonemap["soa", "minimum"]:"1W",
-	    "refresh" : zonemap["soa", "refresh"]:"2D",
-	    "retry" : zonemap["soa", "retry"]:"4H",
-	    "server" : zonemap["soa", "server"]:"@",
-	    "serial" : zonemap["soa", "serial"]:"0",
+	    "soa" : zonemap["soa"]:$[],
 	];
-	list records = zonemap["records"]:[];
+	list original_records = zonemap["records"]:[];
 	list in_ns = [];
 	map in_mx = $[];
 	map in_ptr = $[];
 	map in_cname = $[];
 	map in_a = $[];
-	string previous_key = ret["server"]:"";
-	foreach (`r, records, ``{
+	string previous_key = zone + ".";
+	map records = $[];
+	foreach (`r, original_records, ``{
 	    string key = sformat ("%1", r["key"]:"");
 	    string type = sformat ("%1", r["type"]:"");
 	    string value = sformat ("%1", r["value"]:"");
-	    if (type == "NS")
-	    {
-		in_ns = add (in_ns, value);
-	    }
-	    else if (type == "MX")
-	    {
-		list split = splitstring (value, " ");
-		split = filter (`s, split, s != "");
-		integer pref = tointeger (split[0]:0);
-		in_mx[pref] = split[1]:"";
-	    }
-	    else if (type == "CNAME")
-	    {
-		in_cname[key] = value;
-	    }
-	    else if (type == "PTR")
-	    {
-		in_ptr[key] = value;
-	    }
-	    else if (type == "A")
-	    {
-		if (key == "")
-		    key = previous_key;
-		else
-		    previous_key = key;
-		list addresses = in_a[key]:[];
-		addresses = add (addresses, value);
-		in_a[key] = addresses;
-	    }
+
+	    if (key == "")
+		key = previous_key;
+	    else
+		previous_key = key;
+
+	    map host = records[key]:$[];
+	    host[type] = add (host[type]:[], value);
+	    records[key] = host;
 	});
-	ret["ns"] = in_ns;
-	ret["mx"] = maplist (`k, `v, in_mx, ``(v));
-	ret["ptr"] = in_ptr;
-	ret["cname"] = in_cname;
-	ret["a"] = in_a;
+	records = mapmap (`rk, `rv, records, ``{
+	    list mx = rv["MX"]:[];
+	    map mxmap = $[];
+	    foreach (`m, mx, ``{
+		list split = splitstring (m, " ");
+		split = filter (`s, split, ``(s != ""));
+		integer pref = tointeger (split[0]:0);
+		mxmap[pref] = split[1]:"";
+	    });
+	    rv["MX"] = maplist (`k, `v, mxmap, ``(v));
+	    return [rk, rv];
+	});
+	map main = records[zone + "."]:$[];
+	records = filter (`k, `v, records, ``(k != zone + "."));
+	ret["zone_rec"] = main;
+	ret["records"] = records;
 	y2milestone ("Read zone %1", ret);
 	return ret;
     }
@@ -140,17 +131,19 @@ return 8;// FIXME remove
       */
     global define boolean zoneWrite (map zone) ``{
 	string filename = zone["file"]:"";
+	string zonename = zone["zone"]:"@";
 
-	map soa = $[
-            "zone" : zone["zone"]:"@",
-            "expiry" : zone["expiry"]:"6W",
-            "mail" : zone["mail"]:"root",
-            "minimum" : zone["minimum"]:"1W",
-            "refresh" : zone["refresh"]:"2D",
-            "retry" : zone["retry"]:"4H",
-            "server" : zone["server"]:"@",
-	];
-	string serial = sformat ("%1", zone["serial"]:"0");
+	map soa = union ($[
+		"zone" : "@",
+		"expiry" : "6W",
+		"mail" : "root",
+		"minimum" : "1W",
+		"refresh" : "2D",
+		"retry" : "4H",
+		"server" : "@",
+	    ], zone["soa"]:$[]);
+
+	string serial = sformat ("%1", soa["serial"]:"0");
 	string suffix = "";
 	if (substring (serial, 0, 8) == date)
 	{
@@ -171,45 +164,41 @@ return 8;// FIXME remove
 	soa["serial"] = date + suffix;
 
 	list records = [];
-	integer index = 0;
-	foreach (`r, zone["ns"]:[], ``{
-	    records[index] = $[ "key" : "", "type" : "NS", "value" : r];
-	    index = index + 1;
-	});
-
-	integer mail_index = 1;
-        foreach (`r, zone["mx"]:[], ``{
-            records[index] = $[ "key" : "", "type" : "MX",
-		"value" : sformat ("%1 %2", mail_index, r)];
-            index = index + 1;
-	    mail_index = mail_index + 1;
-        });
-
-	foreach (`k, `v, zone["ptr"]:$[], ``{
-	    records[index] = $[ "key" : k, "type" : "PTR", "value" : v ];
-	    index = index + 1;
-	});
-
-	foreach (`k, `v, zone["a"]:$[], ``{
-	    records[index] = $[ "key" : k, "type" : "A", "value" : v[0]:"" ];
-	    index = index + 1;
-	    integer siz = size (v);
-	    if (siz > 1)
+	foreach (`k, `v, zone["zone_rec"]:$[], ``{
+	    if (k == "MX")
 	    {
-		integer current = 1;
-		while (current < siz)
-		{
-		    records[index] = $[ "key" : "", "type" : "A",
-			"value" : v[current]:"" ];
-		    index = index + 1;
-		    current = current + 1;
-		}
+		integer mx_index = 0;
+		v = maplist (`m, v, ``{
+		    mx_index = mx_index + 10;
+		    return sformat ("%1 %2", mx_index, m);
+		});
 	    }
+	    foreach (`line, v, ``{
+		records = add (records, $[
+		    "key" : "",
+		    "type" : k,
+		    "value" : line,
+		]);
+	    });
 	});
 
-	foreach (`k, `v, zone["cname"]:$[], ``{
-	    records[index] = $[ "key" : k, "type" : "CNAME", "value" : v ];
-	    index = index + 1;
+	foreach (`key, `values, zone["records"]:$[], ``{
+	    map prefered = filter (`k, `v, values, ``(
+		contains (["A", "CNAME", "PTR"], k)));
+	    map other = filter (`k, `v, values, ``(
+		! contains (["A", "CNAME", "PTR"], k)));
+	    foreach (`l, [prefered, other], ``{
+		foreach (`type, `values, l, ``{
+		    foreach (`v, values, ``{
+			records = add (records, $[
+			    "key" : key,
+			    "type" : type,
+			    "value" : v,
+			]);
+			key = "";
+		    });
+		});
+	    });
 	});
 
 	map save = $[
@@ -218,7 +207,7 @@ return 8;// FIXME remove
 	    "records" : records,
 	];
 
-	return SCR::Write (.dns.zone, [filename, save]);
+	return SCR::Write (.dns.zone, ["/var/lib/named/" + filename, save]);
     }
 
     /**
@@ -266,6 +255,12 @@ return 8;// FIXME remove
 	return SCR::Write (.dns.named, nil);
     }
 
+    /**
+      * Save zone (both zone file and appropriate part of named.conf
+      * Don't flush named.conf to file, just to the agent's memory
+      * @param zone map zone contents
+      * @return boolean true if success
+      */
     global define boolean saveZone (map zone) ``{
 	if (! zone["changed"]:false)
 	    return true;
@@ -292,7 +287,9 @@ return 8;// FIXME remove
 	    old_options = [];
 	list save_options = old_options;
 
-	if (zone["type"]:"master" == "master")
+	string zone_type = zone["type"]:"master";
+
+	if (zone_type == "master")
 	{
 	    // wrote the zone file
 	    zoneWrite (zone);
@@ -301,9 +298,10 @@ return 8;// FIXME remove
 	    // write existing keys
 	    SCR::Write (add (base, "file"), "\"" + zone["file"]:"" + "\"");
 	}
-	else if (zone["type"]:"master" == "slave")
+	else if (zone_type == "slave" || zone_type == "stub")
 	{
-
+	    save_options = ["masters"];
+	    SCR::Write (add (base, "masters"),zone["masters"]:"");
 	}
 	else if (zone["type"]:"master" == "hint")
 	{
@@ -334,6 +332,91 @@ return 8;// FIXME remove
 	    ret = substring (ret, 0, findfirstof (ret, "\n"));
 	return ret;
     }
+
+    /**
+      * Remove quotes around a string
+      * @param orig string quoted string
+      * @return string unquoted string
+      */
+    global define string DeQuote (string orig) ``{
+	while (substring (orig, 0, 1) == " ")
+	    orig = substring (orig, 1);
+	while (substring (orig, size (orig) -1) == " ")
+	    orig = substring (orig, 0, size (orig) - 1);
+	if (substring (orig, 0, 1) == "\""
+	    && substring (orig, size (orig) - 2, 1) == "\"")
+	{
+	    orig = substring (orig, 1, size (orig) - 2);
+	}
+	return orig;
+    }
+
+    /**
+      * Add quotes around a string
+      * @param orig string unquotes string
+      * @return string quoted string
+      */
+    global define string Quote (string orig) ``{
+	return sformat ("\"%1\"", orig);
+    }
+
+    /**
+      * returns modified list where items index1 and index2 are swapped.
+      * if indices are out of bounds, unmodified list is returned.
+      * @param input list
+      * @param index1 index of the first element
+      * @param index2 index og the second element
+      * @return list modified list
+      */
+    global define list swapItems(list input, integer index1, integer index2) ``{
+	if (index1 >= size(input) || index2 >= size(input)
+	    || index1 < 0 || index2 < 0)
+	{
+	    return input;
+	}
+	list output = [];
+	integer pos = -1;
+	output = maplist(`e, input, ``{
+	    pos = pos + 1;
+	    if (pos == index1)
+	    {
+		return select(input, index2, $[]);
+	    }
+	    else if (pos == index2)
+	    {
+		return select(input, index1, $[]);
+	    }
+	    return e;
+	});
+	return output;
+    }
+
+    /**
+      * Get zone type from the zone identification
+      * @param zone string zone identification
+      * @return symbol zone type
+      */
+    global define symbol getZoneType (string zone) ``{
+        string relevant_zone_part = "";
+        if (size (zone) > 12
+	    && substring (zone, size (zone) - 12) == "in-addr.arpa")
+	{
+	    return `reverse;
+	}
+	return `normal;
+    }
+
+    /**
+      * Prepare a new zone
+      * @param zone_type string master or slave
+      * @return map of the zone
+      */
+    global define map createNewZone(string zone_type) ``{
+	return $[
+	    "type" : zone_type,
+	];
+    }
+
 
 /* EOF */
 }

@@ -28,14 +28,14 @@
             "scripts": $[
                 "exists": true,
                 "runlevel": $[
-                    "dhcpd": $[
+                    "named": $[
                         "start": [],
                         "stop":  [],
                         ],
                     ],
                 // their contents is not important for ServiceAdjust
                 "comment": $[
-                    "dhcpd": $[],
+                    "named": $[],
                     ],
                 ],
             ],
@@ -64,7 +64,7 @@
 		"a":$["zealot.suse.cz.":["127.0.0.1"]],
 		"cname":$[],
 		"expiry":"6W",
-		"file":"/var/lib/named/localhost.zone",
+		"file":"localhost.zone",
 		"mail":"root",
 		"minimum":"1 W",
 		"mx":[],

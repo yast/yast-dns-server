@@ -6,7 +6,7 @@
 
 [Y2Module dns-server]
 
-; name of the entry, shown in y2cc
+; // name of the entry, shown in y2cc
 Name = _("DNS server")
 
 ; "raw" group name to which this module belongs
@@ -16,7 +16,7 @@ Group = Net_advanced
 ; icon displayed in y2cc
 Icon = dns-server.png
 
-; *one* *short* descriptive line for y2cc
+; // *one* *short* descriptive line for y2cc
 Helptext = _("Configure DNS server")
 
 ; arguments, seperated by space

@@ -27,7 +27,6 @@ y2milestone("----------------------------------------");
 y2milestone("DnsServer auto started");
 
 import "DnsServer";
-include "dns-server/wizards.ycp";
 
 any ret = nil;
 string func = "";
@@ -53,7 +52,7 @@ else if (func == "Reset") {
 }
 /* Change configuration (run AutoSequence) */
 else if (func == "Change") {
-    ret = DnsServerAutoSequence();
+    ret = DnsServer::MainSequence();
 }
 /* Import configuration */
 else if (func == "Import") {

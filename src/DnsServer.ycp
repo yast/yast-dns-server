@@ -24,7 +24,7 @@
     include "dns-server/dialogs.ycp";
     include "dns-server/wizards.ycp";
     include "dns-server/helps.ycp";
-    include "dns-server/popups.ycp";
+    include "dns-server/options.ycp";
     include "dns-server/widgets.ycp";
 
     /**
@@ -66,6 +66,23 @@
       * DNS server settings
       */
     global map settings = $[];
+
+    /**
+      * Temporary list of zones
+      */
+    global list all_zones = [];
+
+    /**
+      * Temporary storage of current zone
+      */
+    global map current_zone = $[];
+
+    /**
+      * Temporary variable for storing original id of currently edited zone
+      */
+    global integer current_id = -1;
+
+    global string displayed_settings = "settings";
 
     /**
       * Map of popups for CWM
@@ -119,9 +136,12 @@
 	version = getBindVersion (interactive_read);
 	if (version == nil)
 	{
+	    // error report
 	    Report::Error (_("Install bind8 or bind9 first"));
 	    return false;
 	}
+
+	settings["start_service"] = Runlevel::ServiceEnabled ("named");
 
 	if(UI::PollInput() == `abort) return false;
 	Progress::NextStageStep (10);
@@ -150,7 +170,7 @@
 		"type"));
 	    string filename = SCR::Read (add (add (.dns.named.value, z),
 		"file"));
-	    if (regexpmatch (filename, "^\".*\"$"))
+	    if (filename != nil && regexpmatch (filename, "^\".*\"$"))
 		filename = regexpsub (filename, "^\"(.*)\"$", "\\1");
 	    map zd = $[];
 	    if (zonetype == "master")
@@ -168,7 +188,7 @@
 		// not supported now
 		// TODO in future
 	    }
-	    zd = $[ "file" : filename ];
+	    zd["file"] = filename;
 	    zd["type"] = zonetype;
 	    zd["zone"] = zonename;
 	    done = done + 1;
@@ -247,7 +267,7 @@
 	if(UI::PollInput() == `abort) return false;
 	Progress::NextStageStep (2 * zones);
 
-	if (settings["__run_dhcp_server"]:false)
+	if (settings["start_service"]:false)
 	{
 	    integer ret = 0;
 	    if (! write_only)
@@ -305,8 +325,7 @@ global define boolean Import (map settings) ``{
 
 /**
  * Create a textual summary and a list of unconfigured cards
- * @param split split configured and unconfigured?
- * @return summary of the current configuration
+ * @return list summary of the current configuration
  */
 global define list Summary() ``{
     // TODO FIXME: your code here...

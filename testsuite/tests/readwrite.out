@@ -1,6 +1,8 @@
 Dump	=======================
 Execute	.target.bash_output "/bin/hostname -f" $[]
 Log	Hostname detection failed, using localhost
+Read	.init.scripts.exists "named" true
+Read	.init.scripts.runlevel "named" $["named":$["start":[], "stop":[]]]
 Dir	.dns.named.section: []
 Dir	.dns.named.value.options: []
 Return	true
@@ -10,7 +12,7 @@ Write	.dns.named.section.options "" true
 Write	.dns.named.section."zone \"localhost\" in" "" true
 Dir	.dns.named.value.options: []
 Write	.dns.zone ["/var/lib/named/localhost.zone", $["TTL":"1W", "records":[$["key":"", "type":"NS", "value":"@"], $["key":"zealot.suse.cz.", "type":"A", "value":"127.0.0.1"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1 W", "refresh":"2D", "retry":"4H", "serial":"00", "server":"zealot.suse.cz.", "zone":"localhost"]]] true
-Write	.dns.named.value."zone \"localhost\" in"."file" "\"/var/lib/named/localhost.zone\"" true
+Write	.dns.named.value."zone \"localhost\" in"."file" "\"localhost.zone\"" true
 Write	.dns.named.value."zone \"localhost\" in"."type" "master" true
 Dir	.dns.named.section: []
 Dir	.dns.named.value.options: []
@@ -20,7 +22,7 @@ Write	.dns.named nil true
 Execute	.target.bash "/etc/init.d/named stop" 0
 Read	.init.scripts.exists "named" true
 Read	.init.scripts.exists "named" true
-Read	.init.scripts.runlevel "named" $["dhcpd":$["start":[], "stop":[]]]
-Read	.init.scripts.comment "named" $["dhcpd":$[]]
+Read	.init.scripts.runlevel "named" $["named":$["start":[], "stop":[]]]
+Read	.init.scripts.comment "named" $["named":$[]]
 Return	true
 Dump	=======================
