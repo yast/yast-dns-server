@@ -499,23 +499,23 @@ define map getMXPopup () ``{
     return $[
 	"table" : $[
 	    "summary" : MXSummary,
-	    "init" : MXInit,
-	    "store" : MXStore,
 	    // combo box item, MX is more technical description
 	    "label" : _("MX -- Mail Relay"),
 	],
 	"popup" : $[
+	    "init" : MXInit,
+	    "store" : MXStore,
 	    "widget" : `custom,
 	    "custom_widget" : `HBox (`HSpacing (1), `VBox (
 		`HSpacing (30),
 		// text entry
-		`TextEntry (`id (`alias), _("&Domain Name")),
+		`TextEntry (`id (`key), _("&Domain Name")),
 		`VSpacing (1),
 		// text entry
-		`TextEntry (`id (`name), _("&Mail Relay")),
+		`TextEntry (`id (`value), _("&Mail Relay")),
 		`VSpacing (1),
 		// int field
-		`IntField (`id (`prio), _("&Priority")),
+		`IntField (`id (`prio), _("&Priority"), 0, 100, 0),
 		`VSpacing (1)
 	    ), `HSpacing (1)),
 	],
