@@ -19,5 +19,5 @@ X-SuSE-YaST-AutoInstResource= dns-server
 Icon=dns-server
 Exec=/sbin/yast2 dns-server 
 
-Name=DNS server
+Name=DNS Server
 GenericName=Configure DNS server
