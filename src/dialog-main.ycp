@@ -1544,13 +1544,25 @@ string dns_server_label = _("DNS Server");
 map<string, map<string, any> > tabs = $[
     "start_up" : $[
 	// FIXME: new startup
-	"contents"		: `VBox ("start_up", `VStretch ()),
+	"contents"		: `VBox (
+	    "auto_start_up",
+	    "firewall",
+	    "use_ldap",
+	    "start_stop",
+	    `VStretch ()
+	),
 	// Dialog Label - DNS - expert settings
 	"caption"		: dns_server_label + " - " + _("Start-Up"),
 	// Tree Menu Item - DNS - expert settings
 	"tree_item_label"	: _("Start-Up"),
 	// FIXME: new startup
-	"widget_names"		: [ "start_up" ],
+	"widget_names"		: ((ProductFeatures::ui_mode == "expert") ?
+		// expert mode
+		[ "auto_start_up", "firewall", "use_ldap", "start_stop" ]
+		:
+		// simple mode
+		[ "auto_start_up", "firewall", "start_stop" ]
+	),
     ],
     "forwarders" : $[
 	"contents"		: ExpertForwardersDialog(),
@@ -1602,59 +1614,52 @@ map<string, map<string, any> > tabs = $[
     ],
 ];
 
-// FIXME: validation are a map's elements
-//        "validate_function" : ValidateXYZ() and "validate_type" : `function
-
-map<string, any> start_up_dialog_definition =
-    $[
-	// FIXME:
+map<string,map<string,any> > new_widgets = $[
+    "auto_start_up" : CWMServiceStart::CreateAutoStartWidget ($[
 	"get_service_auto_start" : DnsServer::GetStartService,
-	// FIXME:
 	"set_service_auto_start" : DnsServer::SetStartService,
-	// push button
+	// radio button
 	"start_auto_button" : _("Start DNS Server when &Booting"),
-	// push button
+	// radio button
 	"start_manual_button" : _("Start DNS Server &Manually"),
-
+	"help" : sformat (CWMServiceStart::AutoStartHelpTemplate (),
+	    // part of help text - radio button label, NO SHORTCUT!!!
+	    _("Start DNS Server when Booting"),
+	    // part of help text - radio button label, NO SHORTCUT!!!
+	    _("Start DNS Server Manually")
+	),
+    ]),
+    "start_stop" : CWMServiceStart::CreateStartStopWidget ($[
 	"service_id" : "named",
 	// label - service status
-	"service_running_label" : _("DNS server is running."),
+	"service_running_label" : _("DNS Server is running"),
 	// label - service status
 	"service_not_running_label" : _("DNS Server is not running"),
 	// push button
 	"start_now_button" : _("&Start DNS Server Now"),
 	// push button
 	"stop_now_button" : _("S&top DNS Server Now"),
-	// FIXME:
 	"save_now_action" : DnsServer::Write,
 	// push button
 	"save_now_button" : _("Save Settings and Restart DNS Server &Now"),
-
-	// FIXME:!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	"get_open_firewall" : nil,
-	"set_open_firewall" : nil,
-	"common_details_handler" : CWMFirewallInterfaces::DisplayPopup,
-	"get_allowed_interfaces" : nil,
-	"set_allowed_interfaces" : nil,
-    ];
-
-/**
- * Temporary procedure for handling the LDAP support in Main dialog
- * Because BLOCK is not allowed here
- */
-map<string, any> HandleStartUPDialogDefinition () {
-    // LDAP enabled only for EXPERT mode
-    if (ProductFeatures::ui_mode == "expert") {
-	start_up_dialog_definition["get_use_ldap"] = DnsServer::GetUseLdap;
-	start_up_dialog_definition["set_use_ldap"] = DnsServer::SetUseLdap;
-	// check box
-	start_up_dialog_definition["use_ldap_checkbox"] = _("&LDAP Support Active");
-    }
-    return start_up_dialog_definition;
-}
-
-map<string,map<string,any> > new_widgets = $[
-    "start_up" : CWMServiceStart::CreateWidget (HandleStartUPDialogDefinition()),
+	"help" : sformat (CWMServiceStart::StartStopHelpTemplate (true),
+	    // part of help text - push button label, NO SHORTCUT!!!
+	    _("Start DNS Server Now"),
+	    // part of help text - push button label, NO SHORTCUT!!!
+	    _("Stop DNS Server Now"),
+	    // part of help text - push button label, NO SHORTCUT!!!
+	    _("Save Settings and Restart DNS Server Now")),
+    ]),
+    "firewall" : CWMFirewallInterfaces::CreateOpenFirewallWidget ($[
+	"services" : [ "dns-server" ],
+	"display_details" : true,
+    ]),
+    "use_ldap" : CWMServiceStart::CreateLdapWidget ($[
+	"get_use_ldap" : DnsServer::GetUseLdap,
+	"set_use_ldap" : DnsServer::SetUseLdap,
+	// checkbox label
+	"use_ldap_checkbox" : _("&LDAP Support Active"),
+    ]),
     "forwarders" : $[
 	"widget"	: `custom,
 	"custom_widget"	: `VBox (),

@@ -33,7 +33,7 @@ YaST::YCP::Import ("SuSEFirewall");
 YaST::YCP::Import ("Message");
 YaST::YCP::Import ("ProductFeatures");
 YaST::YCP::Import ("SuSEFirewall");
-YaST::YCP::Import ("FirewallWidget");
+
 use DnsZones;
 use DnsTsigKeys;
 
@@ -898,11 +898,13 @@ sub Read {
     # DNS server read dialog caption
     my $caption = __("Initializing DNS Server Configuration");
 
-    Progress->New( $caption, " ", 3, [
+    Progress->New( $caption, " ", 4, [
 	# progress stage
 	__("Check the environment"),
 	# progress stage
 	__("Flush caches of the DNS daemon"),
+	# progress stage
+	__("Read the firewall settings"),
 	# progress stage
 	__("Read the settings"),
     ],
@@ -911,6 +913,8 @@ sub Read {
 	__("Checking the environment..."),
 	# progress step
 	__("Flushing caches of the DNS daemon..."),
+	# progress step
+	__("Reading the firewall settings..."),
 	# progress step
 	__("Reading the settings..."),
 	# progress step
@@ -939,6 +943,10 @@ sub Read {
     {
 	$self->StartDnsService ();
     }
+
+    Progress->NextStage ();
+    
+    SuSEFirewall::Read();
 
     Progress->NextStage ();
 
@@ -1092,8 +1100,6 @@ sub Read {
     } @zones;
     $modified = 0;
 
-    FirewallWidget->Init("dns-server");
-
     Progress->NextStage ();
 
     return Boolean(1);
@@ -1106,7 +1112,7 @@ sub Write {
     # DNS server read dialog caption
     my $caption = __("Saving DNS Server Configuration");
 
-    Progress->New( $caption, " ", 5, [
+    Progress->New( $caption, " ", 6, [
 	# progress stage
 	__("Flush caches of the DNS daemon"),
 	# progress stage
@@ -1117,6 +1123,8 @@ sub Write {
 	__("Update zone files"),
 	# progress stage
 	__("Adjust the DNS service"),
+	# progress stage
+	__("Write the firewall settings")
     ],
     [
 	# progress step
@@ -1129,6 +1137,8 @@ sub Write {
 	__("Updating zone files..."),
 	# progress step
 	__("Adjusting the DNS service..."),
+	# progress step
+	__("Writing the firewall settings..."),
 	# progress step
 	__("Finished")
     ],
@@ -1251,6 +1261,13 @@ sub Write {
 	# FIXME when YaST settings are needed
 	SCR->Write (".target.ycp", Directory->vardir() . "/dns_server", {});
     }
+
+    Progress->NextStage ();
+    
+    # Firewall has it's own Progress
+    Progress->off();
+    SuSEFirewall::Write();
+    Progress->on();
 
     Progress->NextStage ();
     sleep ($sl);

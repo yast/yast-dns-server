@@ -19,58 +19,7 @@ import "Label";
 import "CWM";
 import "Wizard";
 import "ProductFeatures";
-
-/**
- * Dialog InstallWizard - Finish
- * @return term for InstallWizard_Finish_Dialog()
- */
-term InstallWizardFinishContent (string rt_contents) {
-    term ldap_support = ((ProductFeatures::ui_mode == "expert") ?
-	`VBox (
-	    `VSpacing ( 1 ),
-	    // check box
-	    `Left (`CheckBox (`id ("use_ldap"), `opt (`notify), _("&LDAP Support Active"))),
-	    `VSpacing ( 1 )
-	)
-	:
-	`VSpacing ( 1 )
-    );
-
-    term dialog =
-	`Top (
-	    `VBox (
-		// Frame label (DNS starting)
-		`VBox (
-		    // CheckBox
-		    `Left( `CheckBox (`id("open_port_in_firewall"), _("Open Port in Firewall"), true)),
-		    ldap_support,
-		    // Label for Radiobuttons - DNS starting
-		    `Left ( `Label ( _("Start-up Behavior") ) ),
-		    `Left (
-			`RadioButtonGroup( `id ( "dns_server_type" ), `opt( `shrinkable ),
-			    `VBox (
-
-				// Radiobutton label - DNS starting
-				`Left( `RadioButton( `id (`on), _("O&n -- Start DNS Server Now and when Booting") ) ),
-				// Radiobutton label - DNS starting
-				`Left( `RadioButton( `id (`off), _("O&ff -- Server Only Starts Manually") ) ),
-				`VSpacing ( 1 )
-			    )
-			)
-		    )
-		),
-
-		`RichText ( `id ( "installation_overview" ),
-		    rt_contents
-		),
-		`VSpacing ( 2 ),
-		// Push Button - start expert configuration
-		`PushButton ( `id ( `expert ), _("Enter DNS Server Expert Configuration...")),
-		`VStretch()
-	    )
-	);
-    return dialog;
-}
+import "CWMFirewallInterfaces";
 
 symbol runInstallWizardForwardersDialog () {
     string caption =
@@ -200,9 +149,61 @@ symbol runInstallWizardFinishDialog () {
 	sformat ( _("<li>Domains: %1</li>"), zl) +
 	"</ul>";
 
+    map<string,any> firewall_settings = $[
+	"services" : [ "dns-server" ],
+	"display_details" : true,
+    ];
+    map<string,any> firewall_widget =
+	CWMFirewallInterfaces::CreateOpenFirewallWidget (firewall_settings);
+    term firewall_layout = firewall_widget["custom_widget"]:`VBox ();
+    string firewall_help = firewall_widget["help"]:"";
+
+    term ldap_support = ((ProductFeatures::ui_mode == "expert") ?
+	`VBox (
+	    `VSpacing ( 1 ),
+	    // check box
+	    `Left (`CheckBox (`id ("use_ldap"), `opt (`notify), _("&LDAP Support Active"))),
+	    `VSpacing ( 1 )
+	)
+	:
+	`VSpacing ( 1 )
+    );
+
+    term dialog =
+	`Top (
+	    `VBox (
+		// Frame label (DNS starting)
+		`VBox (
+		    firewall_layout,
+		    ldap_support,
+		    // Label for Radiobuttons - DNS starting
+		    `Left ( `Label ( _("Start-up Behavior") ) ),
+		    `Left (
+			`RadioButtonGroup( `id ( "dns_server_type" ), `opt( `shrinkable ),
+			    `VBox (
+				// Radiobutton label - DNS starting
+				`Left( `RadioButton( `id (`on), _("O&n -- Start DNS Server Now and when Booting") ) ),
+				// Radiobutton label - DNS starting
+				`Left( `RadioButton( `id (`off), _("O&ff -- Server Only Starts Manually") ) ),
+				`VSpacing ( 1 )
+			    )
+			)
+		    )
+		),
+
+		`RichText ( `id ( "installation_overview" ),
+		    rich_text
+		),
+		`VSpacing ( 2 ),
+		// Push Button - start expert configuration
+		`PushButton ( `id ( `expert ), _("Enter DNS Server Expert Configuration...")),
+		`VStretch()
+	    )
+	);
+
     Wizard::SetContentsButtons (
-	caption, InstallWizardFinishContent(rich_text),
-	HELPS["installwizard_step3"]:"",
+	caption, dialog,
+	HELPS["installwizard_step3"]:"" + firewall_help,
 	Label::BackButton (), Label::NextButton ()
     );
     Wizard::SetNextButton ( `next, Label::FinishButton() );
@@ -220,9 +221,13 @@ symbol runInstallWizardFinishDialog () {
     }
 
     boolean ldap_changed = false;
+    map event = $[];
     any ret = nil;
+    CWMFirewallInterfaces::OpenFirewallInit (firewall_widget, "");
     while (true) {
-	ret = UI::UserInput();
+	event = UI::WaitForEvent ();
+	ret = event["ID"]:nil;
+	CWMFirewallInterfaces::OpenFirewallHandle (firewall_widget, "", event);
 	if (ret == `next ) {
 	    break;
 	}
@@ -259,6 +264,7 @@ symbol runInstallWizardFinishDialog () {
 	boolean auto_start
             = UI::QueryWidget (`id ("dns_server_type"), `CurrentButton) == `on;
 	DnsServer::SetStartService (auto_start);
+	CWMFirewallInterfaces::OpenFirewallStore (firewall_widget, "", event);
     }
 
     return (symbol) ret;
