@@ -157,7 +157,7 @@
     // Function returns map $[ queries : (yes|no), updates : (yes|no), transfers : (yes|no) ]
     map <string, string> GetLoggingAdditionals () {
 	list <string> categories = DnsServerAPI::GetLoggingCategories();
-	map <string, string> addlog = $[ "default" : "no", "xfer-in" : "no", "xfer-out" : "no" ];
+	map <string, string> addlog = $[ "queries" : "no", "xfer-in" : "no", "xfer-out" : "no" ];
 
 	foreach (string category, categories, {
 	    addlog[category] = "yes";
@@ -205,7 +205,7 @@
 	list <list <string> > tabadds_items = [];
 	tabadds_items = add (tabadds_items, [
 	    // TRANSLATORS: commandline table item
-	    _("Log named Queries"), logadds["default"]:""
+	    _("Log named Queries"), logadds["queries"]:""
 	]);
 	tabadds_items = add (tabadds_items, [
 	    // TRANSLATORS: commandline table item
@@ -269,7 +269,7 @@
 	    }
 	} else if (options["set"]:nil!=nil) {
 	    map <string, string> category_mapping = $[
-		"queries"   : "default",
+		"queries"   : "queries",
 		"updates"   : "xfer-in",
 		"transfers" : "xfer-out",
 	    ];
