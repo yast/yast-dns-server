@@ -4,6 +4,7 @@
 
 agent_SCRIPTS =		ag_dns_zone
 
-scrconf_DATA =		dns_zone.scr
+scrconf_DATA =		dns_zone.scr	\
+			dns_named.scr
 
 EXTRA_DIST = $(agent_SCRIPTS) $(scrconf_DATA)

@@ -1,0 +1,105 @@
+/**
+ * File:	include/dns-server/dialogs.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Dialogs definitions
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+    textdomain "dns-server";
+
+    import "DnsServer";
+
+    include "ui/common_popups.ycp";
+    include "ui/common_messages.ycp";
+
+    include "dns-server/helps.ycp";
+    include "dns-server/routines.ycp";
+
+    /**
+      * Read settings dialog
+      * @return `abort if aborted and `next otherwise
+      */
+    global define symbol ReadDialog() ``{
+	Wizard::RestoreHelp (HELPS["read"]:"");
+	boolean ret = DnsServer::Read();
+	return ret ? `next : `abort;
+    }
+
+    /**
+      * Write settings dialog
+      * @return `abort if aborted and `next otherwise
+      */
+    global define symbol WriteDialog() ``{
+	Wizard::RestoreHelp (HELPS["write"]:"");
+	boolean ret = DnsServer::Write();
+	if (! ret && cfg_restart_wanted)
+	    return `back;
+	return ret ? `next : `abort;
+    }
+
+    global define symbol runMainDialog () ``{
+//	DnsServer::settings = $["options":$["allow-query":"{ 127.0.0.1; }", "directory":"\"/var/lib/named\"", "forward":"first", "forwarders":"{ 10.11.12.13; 10.11.12.14; }", "listen-on":"port 53 { 127.0.0.1; }", "listen-on-v6":"{ any ; }", "notify":"no", "notify-source":"* port 53", "query-source":"address * port 53", "transfer-source":"* port 53"], "zones":[$["a":$["zealot.suse.cz.":["127.0.0.1"]], "cname":$[], "expiry":"6W", "file":"/var/lib/named/localhost.zone", "mail":"root", "minimum":"1W", "mx":[], "ns":["@"], "ptr":$[], "refresh":"2D", "retry":"4H", "server":"zealot.suse.cz.", "ttl":"1W", "type":"master", "zone":"localhost"], $["a": $[], "cname":$[], "expiry":"6W", "file":"/var/lib/named/127.0.0.zone", "mail":"root", "minimum":"1W", "mx":[], "ns":["localhost."], "ptr":$["1":"localhost."], "refresh":"2D", "retry":"4H", "server":"zealot.suse.cz.", "ttl":"1W", "type":"master", "zone":"0.0.127.in-addr.arpa"]]];
+sleep (5000);
+	return `next;
+    }
+
+    global define symbol runMasterZoneDialog () ``{
+	list widgets = CWM::getWidgets (["master_select"],
+	    DnsServer::widgets);
+	term contents = `HBox (`HSpacing (2), `VBox (
+		`VSpacing (1),
+		widgets[0, "widget"]:`VSpacing (0),
+
+		`VSpacing (1)
+	    ), `HSpacing (2));
+	// dialog caption
+	string caption = _("DNS zone configuration");
+	string help = "";
+
+	return `next;
+    }
+
+
+/**
+ * Configure2 dialog
+ * @return dialog result
+ */
+global define symbol Configure2Dialog () ``{
+
+    /* DnsServer configure2 dialog caption */
+    string caption = _("DnsServer configuration");
+
+    /* XXPkg configure2 dialog contents */
+    term contents = `Label (_("Second part of configuration of dns-server"));
+
+    Wizard::SetContentsButtons(caption, contents, HELPS["c2"]:"",
+	    BackButtonLabel(), NextButtonLabel());
+
+    any ret = nil;
+    while(true) {
+
+	ret = UI::UserInput();
+
+	/* abort? */
+	if(ret == `abort || ret == `cancel) {
+	    if(ReallyAbort()) break;
+	    else continue;
+	}
+        else if(ret == `next || ret == `back) {
+            break;
+        }
+        else {
+            y2error("unexpected retcode: %1", ret);
+            continue;
+        }
+    }
+
+    return ret;
+}
+
+/* EOF */
+}

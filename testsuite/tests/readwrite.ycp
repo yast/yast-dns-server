@@ -1,0 +1,84 @@
+/**
+ * File:
+ *  rw.ycp
+ *
+ * Module:
+ *  DHCP server configurator
+ *
+ * Summary:
+ *  Read and write testsuite
+ *
+ * Authors:
+ *  Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ *
+ */
+
+{
+    include "testsuite.ycp";
+    import "Progress";
+    import "DnsServer";
+
+    Progress::off ();
+
+    map READ = $[
+	// Runlevel
+        "init": $[
+            "scripts": $[
+                "exists": true,
+                "runlevel": $[
+                    "dhcpd": $[
+                        "start": [],
+                        "stop":  [],
+                        ],
+                    ],
+                // their contents is not important for ServiceAdjust
+                "comment": $[
+                    "dhcpd": $[],
+                    ],
+                ],
+            ],
+
+	"target" : $[
+	    "stat" : $[],
+	    "ycp" : $[],
+	],
+    ];
+    map WRITE = $[];
+    map EXEC = $[
+	"target" : $[
+	    "bash_output" : $[],
+	],
+    ];
+
+    DUMP ("=======================");
+    TEST (``(DnsServer::Read ()), [READ, WRITE, EXEC], 0);
+    DUMP ("=======================");
+    DnsServer::settings = $[
+	"options":$[
+	    "allow-query":"{ 127.0.0.1; }",
+	     "directory":"\"/var/lib/named\"",
+	], "zones":[
+	    $[
+		"a":$["zealot.suse.cz.":["127.0.0.1"]],
+		"cname":$[],
+		"expiry":"6W",
+		"file":"/var/lib/named/localhost.zone",
+		"mail":"root",
+		"minimum":"1 W",
+		"mx":[],
+		"ns":["@"],
+		"ptr":$[],
+		"refresh":"2D",
+		"retry":"4H",
+		"server":"zealot.suse.cz.",
+		"ttl":"1W",
+		"type":"master",
+		"zone":"localhost",
+	    ],
+	]
+    ];
+    TEST (``(DnsServer::Write ()), [READ, WRITE, EXEC], 0);
+    DUMP ("=======================");
+}
