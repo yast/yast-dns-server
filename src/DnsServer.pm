@@ -879,19 +879,22 @@ sub Read {
 
     # Information about the daemon
     $start_service = Service->Enabled ("named");
-    y2milestone ("Service start: $start_service");
-    $chroot = SCR->Read (".sysconfig.named.NAMED_RUN_CHROOTED") ne "no"
-	? 1
-	: 0;
+    y2milestone ("Service start: ".$start_service);
+    $chroot = SCR->Read (".sysconfig.named.NAMED_RUN_CHROOTED") || "yes";
+    $chroot = $chroot eq "yes"
+	    ? 1
+	    : 0;
     y2milestone ("Chroot: $chroot");
 
     $modify_named_conf_dynamically = SCR->Read (
-	".sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY") eq "yes"
+	".sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY") || "no";
+    $modify_named_conf_dynamically = $modify_named_conf_dynamically eq "yes"
 	    ? 1
 	    : 0;
 
     $modify_resolv_conf_dynamically = SCR->Read (
-	".sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY") eq "yes"
+	".sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY") || "no";
+    $modify_resolv_conf_dynamically = $modify_resolv_conf_dynamically eq "yes"
 	    ? 1
 	    : 0;
 
@@ -1368,8 +1371,8 @@ sub LdapInit {
     }
     else
     {
-	my $reload_script = SCR->Read (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS");
-	if (! defined ($reload_script))
+	my $reload_script = SCR->Read (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS") || "";
+	if ($reload_script)
 	{
 	    # yes-no popup
 	    $use_ldap = Popup->YesNo (__("Enable LDAP support?"));
@@ -1641,7 +1644,7 @@ BEGIN { $TYPEINFO{LdapStore} = ["function", "void" ]; }
 sub LdapStore {
     my $self = shift;
 
-    my $reload_script = SCR->Read (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS");
+    my $reload_script = SCR->Read (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS") || "";
     my @reload_scripts = split / /, $reload_script;
 
     if ($use_ldap)
@@ -1672,7 +1675,7 @@ sub EnsureNamedConfIncludeIsRecreated {
 #	return 1;
 #    }
 
-    my $reload_script = SCR->Read (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS");
+    my $reload_script = SCR->Read (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS") || "";
     my @reload_scripts = split / /, $reload_script;
 
     my $already_present
