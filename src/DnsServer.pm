@@ -33,6 +33,7 @@ YaST::YCP::Import ("SuSEFirewall");
 YaST::YCP::Import ("Message");
 YaST::YCP::Import ("ProductFeatures");
 YaST::YCP::Import ("SuSEFirewall");
+YaST::YCP::Import ("CWMTsigKeys");
 
 use DnsZones;
 use DnsTsigKeys;
@@ -44,7 +45,7 @@ use DnsData qw(@tsig_keys $start_service $chroot @allowed_interfaces
 @zones @options @logging $ddns_file_name
 $modified $save_all @files_to_delete %current_zone $current_zone_index
 $adapt_firewall %firewall_settings $write_only @new_includes @deleted_includes
-@zones_update_actions $firewall_support);
+@zones_update_actions $firewall_support @new_includes_tsig @deleted_includes_tsig);
 use DnsRoutines;
 
 my $forwarders_include = '/etc/named.d/forwarders.conf';
@@ -389,7 +390,8 @@ sub ReadDDNSKeys {
 	if ($filename ne "") {
 	    y2milestone ("Reading include file $filename");
 	    $filename = $self->NormalizeFilename ($filename);
-	    my @tsig_keys = @{DnsTsigKeys->AnalyzeTSIGKeyFile ($filename) ||[]};
+	    my @tsig_keys = @{CWMTsigKeys->AnalyzeTSIGKeyFile ($filename) ||[]};
+	    #my @tsig_keys = @{DnsTsigKeys->AnalyzeTSIGKeyFile ($filename) ||[]};
 	    foreach my $tsig_key (@tsig_keys) {
 		y2milestone ("Having key $tsig_key, file $filename");
 		DnsTsigKeys->PushTSIGKey ({
@@ -412,6 +414,14 @@ sub AdaptDDNS {
     my @includes = split (/ /, $includes);
     my %includes = ();
     foreach my $i (@includes) {
+	$includes{$i} = 1;
+    }
+    # remove obsolete TSIGs
+    foreach my $i (@deleted_includes_tsig) {
+	$includes{$i} = 0;
+    }
+    # add new TSIGs
+    foreach my $i (@new_includes_tsig) {
 	$includes{$i} = 1;
     }
     # remove obsolete

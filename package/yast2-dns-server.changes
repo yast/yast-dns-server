@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Oct 21 12:05:24 CEST 2004 - locilka@suse.cz
+
+- used CWMTsigKeys module instead of own TSIG keys handling
+- changed logsize "0M" -> "0"
+- cleaning the code from old unused functions
+
+-------------------------------------------------------------------
 Wed Oct 20 14:07:55 CEST 2004 - locilka@suse.cz
 
 - added more options into the options-listbox

@@ -22,7 +22,7 @@ our %TYPEINFO;
 
 YaST::YCP::Import ("SCR");
 
-use DnsData qw(@tsig_keys @new_includes @deleted_includes);
+use DnsData qw(@tsig_keys @new_includes_tsig @deleted_includes_tsig);
 use DnsRoutines;
 
 sub TSIGKeyName2TSIGKey {
@@ -58,6 +58,27 @@ sub ListTSIGKeys {
     return \@tsig_keys;
 }
 
+BEGIN{$TYPEINFO{GetTSIGKeys}=["function", ["map", "string", "any"]];}
+sub GetTSIGKeys {
+    my $self = shift;
+    
+    return {
+	"removed_files" => \@deleted_includes_tsig,
+	"new_files" => \@new_includes_tsig,
+	"tsig_keys" => \@tsig_keys,
+    };
+}
+
+BEGIN{$TYPEINFO{SetTSIGKeys}=["function", "void", ["map", "string", "any"]];}
+sub SetTSIGKeys {
+    my $self = shift;
+    my $info = shift;
+
+    @tsig_keys = @{$info->{"tsig_keys"} };
+    @new_includes_tsig = @{$info->{"new_files"} };
+    @deleted_includes_tsig = @{$info->{"removed_files"} };
+}
+
 # FIXME multiple keys in one file
 # FIXME the same function in DHCP server component
 BEGIN{$TYPEINFO{AnalyzeTSIGKeyFile}=["function",["list","string"],"string"];}
@@ -78,72 +99,6 @@ sub AnalyzeTSIGKeyFile {
 	return [$1];
     }
     return [];
-}
-
-BEGIN{$TYPEINFO{AddTSIGKey}=["function", "boolean", "string"];}
-sub AddTSIGKey {
-    my $self = shift;
-    my $filename = shift;
-
-    my @new_keys = @{$self->AnalyzeTSIGKeyFile ($filename) || []};
-    y2milestone ("Reading TSIG file $filename");
-    $filename = $self->NormalizeFilename ($filename);
-    @tsig_keys = grep {
-	$_->{"filename"} ne $filename;
-    } @tsig_keys;
-    my $contents = SCR->Read (".target.string", $filename);
-    if (0 != @new_keys)
-    {
-	foreach my $new_key (@new_keys) {
-	    y2milestone ("Having key $new_key, file $filename");
-	    # remove the key if already exists
-	    my @current_keys = grep {
-		$_->{"key"} eq $new_key;
-	    } @tsig_keys;
-	    if (@current_keys > 0)
-	    {
-		$self->DeleteTSIGKey ($new_key);
-	    }
-	    #now add new one
-	    my %new_include = (
-		"filename" => $filename,
-		"key" => $new_key,
-	    );
-	    push @tsig_keys, \%new_include;
-	    push @new_includes, \%new_include;
-	}
-	return Boolean (1);
-    }
-    return Boolean (0);
-}
-
-BEGIN{$TYPEINFO{DeleteTSIGKey}=["function", "boolean", "string"];}
-sub DeleteTSIGKey {
-    my $self = shift;
-    my $key = shift;
-    
-    y2milestone ("Removing TSIG key $key");
-    #add it to deleted list
-    my @current_keys = grep {
-	$_->{"key"} eq $key;
-    } @tsig_keys;
-    if (@current_keys == 0)
-    {
-	y2error ("Key not found");
-	return Boolean(0);
-    }
-    foreach my $k (@current_keys) {
-	push @deleted_includes, $k;
-    }
-    #remove it from current list
-    @new_includes = grep {
-	$_->{"key"} ne $key;
-    } @new_includes;
-    @tsig_keys = grep {
-	$_->{"key"} ne $key;
-    } @tsig_keys;
-
-    return Boolean (1);
 }
 
 BEGIN{$TYPEINFO{PushTSIGKey}=["function", "void", ["map", "string", "string"]];}
