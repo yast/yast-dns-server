@@ -71,6 +71,8 @@ my $ldap_domain = "";
 
 my $ldap_config_dn = "";
 
+my $configuration_timestamp = "";
+
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
 
@@ -954,6 +956,23 @@ sub AutoPackages {
     }
 }
 
+BEGIN { $TYPEINFO{GetConfigurationStat} = ["function", "string"]; }
+sub GetConfigurationStat {
+    my $class = shift;
+
+    my $configfile = "/etc/named.conf";
+    my $ret = SCR->Execute (".target.bash_output",
+	"stat --format='rights: %a, blocks: %b, size: %s, owner: %u:%g changed: %Z, modifyied: %Y' ".$configfile
+    );
+    chop ($ret->{'stdout'});
+    if ($ret->{'exit'} != 0) {
+	y2warning("Cannot read stat of the file '".$configfile."', ".$ret->{'stderr'});
+	return "0";
+    }
+    y2milestone("Stat of the file '".$configfile."' is '".$ret->{'stdout'}."'");
+    return $ret->{'stdout'};
+}
+
 BEGIN { $TYPEINFO{Read} = ["function", "boolean"]; }
 sub Read {
     my $self = shift;
@@ -1012,6 +1031,8 @@ sub Read {
     SuSEFirewall::Read();
 
     Progress->NextStage ();
+
+    $configuration_timestamp = $self->GetConfigurationStat();
 
     # Information about the daemon
     $start_service = Service->Enabled ("named");
@@ -1245,6 +1266,32 @@ sub Write {
     if ($use_ldap)
     {
 	LdapPrepareToWrite ();
+    }
+
+    
+    ### Bugzilla #46121, Configuration file changed by hand, INI-Agent would break
+    my $new_configuration_timestamp = $self->GetConfigurationStat();
+    my $configfile = "/etc/named.conf";
+    my $yast2_suffix = ".yast2-save";
+    # timestamp differs from the Read()
+    if ($new_configuration_timestamp ne $configuration_timestamp) {
+	y2warning("Stat of the configuration file was changed during the YaST2 configuration");
+	# moving into yast2-save file
+	my $ret = SCR->Execute (".target.bash_output", "mv --force ".$configfile." ".$configfile.$yast2_suffix);
+	if ($ret->{'exit'} == 0) {
+	    y2milestone("Configuration moved from '".$configfile."' to '".$configfile.$yast2_suffix);
+	} else {
+	    y2warning("Configuration cannot be moved from '".$configfile."' to '".$configfile.$yast2_suffix.": ".$ret->{'stderr'});
+	    # removing the current file from disk
+	    my $ret = SCR->Execute (".target.bash_output", "rm --force ".$configfile);
+	    if ($ret->{'exit'} == 0) {
+		y2milestone("Configuration file removed '".$configfile."'");
+	    } else {
+		y2milestone("Configuration cannot be removed '".$configfile."', configuration could demage during writing.");
+	    }
+	}
+	my $create = SCR->Execute (".target.bash", "touch ".$configfile);
+	y2milestone("Creating blank configuration file '".$configfile."'");
     }
 
     # save ACLs
