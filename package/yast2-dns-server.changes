@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Mar 22 14:21:36 CET 2004 - jsrain@suse.cz
+
+- updated .desktop file to provide autoinstallation support
+
+-------------------------------------------------------------------
 Thu Mar 18 11:04:45 CET 2004 - jsrain@suse.cz
 
 - addapted to calling all perl and YCP functions as class methods
