@@ -55,12 +55,12 @@
 		],
 		"value" : $[
 		    "options" : $[
-			"directory" : "\"/var/lib/named\"",
-			"notify" : "no",
+			"directory" : ["\"/var/lib/named\""],
+			"notify" : ["no"],
 		    ],
 		    "zone \"localhost\" in" : $[
-			"type" : "master",
-			"file" : "\"localhost.zone\"",
+			"type" : ["master"],
+			"file" : ["\"localhost.zone\""],
 		    ],
 		],
 	    ],

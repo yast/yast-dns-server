@@ -63,7 +63,7 @@ sub TSIGKeyName2TSIGKey {
 
 BEGIN{$TYPEINFO{ListTSIGKeys}=["function",["list",["map","string","string"]]];}
 sub ListTSIGKeys {
-    return @tsig_keys;
+    return \@tsig_keys;
 }
 
 # FIXME multiple keys in one file
@@ -77,16 +77,16 @@ sub AnalyzeTSIGKeyFile {
     my $contents = SCR::Read (".target.string", $filename);
     if ($contents =~ /.*key[ \t]+([^ \t}{;]+).* {/)
     {
-	return ($1);
+	return [$1];
     }
-    return ();
+    return [];
 }
 
 BEGIN{$TYPEINFO{AddTSIGKey}=["function", "boolean", "string"];}
 sub AddTSIGKey {
     my $filename = $_[0];
 
-    my @new_keys = AnalyzeTSIGKeyFile ($filename);
+    my @new_keys = @{AnalyzeTSIGKeyFile ($filename) || []};
     y2milestone ("Reading TSIG file $filename");
     $filename = NormalizeFilename ($filename);
     my $contents = SCR::Read (".target.string", $filename);
