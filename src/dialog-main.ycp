@@ -805,7 +805,7 @@ option without any value?
 	    if (! Popup::ContinueCancel(
 		sformat (
 		    // TRANSLATORS: Popup question. Please, do not translate 'yes' and 'no' strings. %1 is a name of the option, %2 is the value of the option.
-		    _("Option '%1' can only have 'yes' or 'no' value set.
+		    _("Option '%1' can only have a 'yes' or 'no' value set.
 Really set it to '%2'?
 "),
 		    option,
