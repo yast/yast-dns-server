@@ -105,6 +105,10 @@ global define symbol runMainDialog () ``{
 	$[`abort : ReallyExit ]);
 }
 
+/**
+ * Run global options dialog
+ * @return symbol for wizard sequencer
+ */
 define symbol runGlobalOptionsDialog () ``{
     y2milestone ("Running global options dialog");
 
@@ -122,7 +126,60 @@ define symbol runGlobalOptionsDialog () ``{
     return CWM::ShowAndRun (w, DnsServerUI::widgets,
 	contents, caption, Label::BackButton (), Label::OKButton (),
 	$[`abort : ReallyAbortAlways]);
+}
 
+/**
+ * Run firewall settings dialog
+ * @return symbol for wizard sequencer
+ */
+define symbol runFirewallDialog () ``{
+    y2milestone ("Running firewall settings dialog");
+
+    if (! SuSEFirewall::start)
+    {
+	Popup::Message (_("Firewall is not configured"));
+	return `back;
+    }
+
+    list<string> w = ["interface_classes", "adapt_firewall"];
+
+    term contents = `HBox (`HStretch (), `VBox (
+	`VStretch (),
+	"interface_classes",
+	`VStretch (),
+	`Left ("adapt_firewall"),
+	`VStretch ()
+    ), `HStretch ());
+
+    // dialog caption
+    string caption = _("Firewall settings");
+
+    return CWM::ShowAndRun (w, DnsServerUI::widgets,
+	contents, caption, Label::BackButton (), Label::OKButton (),
+	$[`abort : ReallyAbortAlways]);
+}
+
+/**
+ * Run synaimc DNS settings dialog
+ * @return symbol for wizard sequencer
+ */
+define symbol runDDNSDialog () ``{
+    y2milestone ("Running Dynamic DNS settings dialog");
+
+    list<string> w = ["ddns_keys"];
+
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	"ddns_keys",
+	`VSpacing (1)
+    ), `HSpacing (2));
+
+    // dialog caption
+    string caption = _("Dynamic DNS settings");
+
+    return CWM::ShowAndRun (w, DnsServerUI::widgets,
+	contents, caption, Label::BackButton (), Label::OKButton (),
+	$[`abort : ReallyAbortAlways]);
 }
 
 /**
@@ -157,10 +214,12 @@ define symbol runNewZoneDialog () ``{
 global define symbol runMasterZoneDialog () ``{
     y2milestone ("Running master zone editation dialog");
 
-    list<string> w = [ "zone_name", "master_table", "soa_button" ];
+    list<string> w = [ "zone_name", "allow_ddns", "master_table", "soa_button"];
     term contents = `HBox (`HSpacing (1), `VBox (
 	`VSpacing (1),
 	`HBox (`HSpacing (2), "zone_name", `HSpacing (2)),
+	`VSpacing (1),
+	`HBox (`HSpacing (2), "allow_ddns", `HSpacing (2)),
 	`VSpacing (1),
 	"master_table",
 	`VSpacing (1),

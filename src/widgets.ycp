@@ -272,6 +272,7 @@ global define void soaStore (string id, map event) ``{
 	current_zone["soa", r] = UI::QueryWidget (`id (r), `Value);
     });
     current_zone["ttl"] = UI::QueryWidget (`id ("ttl"), `Value);
+    current_zone["soa_modified"] = 1;
 }
 
 /**
@@ -560,6 +561,10 @@ define void advMenubuttonInit (string id) ``{
 	    // menubutton item
 	    `item (`id (`global_options), _("&Edit global options")),
 	    // menubutton item
+	    `item (`id (`firewall), _("&Firewall configuration")),
+	    // menubutton item
+	    `item (`id (`ddns), _("&Dynamic DNS configuration")),
+	    // menubutton item
 	    `item (`id (`show_log), _("&Display log")),
 	]));
 }
@@ -572,8 +577,6 @@ define void advMenubuttonInit (string id) ``{
  */
 define symbol advMenubuttonHandle (string id, map event) ``{
     symbol e = (symbol)(event["ID"]:nil);
-    if (e == `global_options)
-	return e;
     if (e == `show_log)
     {
 	LogView::Display ($[
@@ -590,10 +593,9 @@ define symbol advMenubuttonHandle (string id, map event) ``{
 		    ``{DnsServer::Write ();} ],
 	    ],
 	]);
-
+	return nil;
     }
-
-    return nil;
+    return e;
 }
 
 /**
@@ -605,7 +607,7 @@ define map getAdvancedMenubutton () ``{
 	"init" : advMenubuttonInit,
 	"help" : HELPS["adv_mbutton"]:"",
 	"handle" : advMenubuttonHandle,
-	"handle_events" : [ `global_options, `show_log ],
+	"handle_events" : [ `global_options, `show_log, `firewall, `ddns ],
 	"widget" : `text_entry, // FIXME support for non-displayed widgets
 	"label" : "&x",
     ];
@@ -1015,7 +1017,303 @@ define map getZoneMastersWidget () ``{
     ];
 }
 
+// select interface classes to allow access
 
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
+global define void IfacesInit (string id) ``{
+    list<string> ai = DnsServer::GetAllowedInterfaces ();
+    UI::ChangeWidget (`id (`int), `Value, contains (ai, "int"));
+    UI::ChangeWidget (`id (`ext), `Value, contains (ai, "ext"));
+    UI::ChangeWidget (`id (`dmz), `Value, contains (ai, "dmz"));
+}
+
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
+global define void IfacesStore (string id, map event) ``{
+    list<string> ai = [];
+    if ((boolean)UI::QueryWidget (`id (`int), `Value))
+	ai = add (ai, "int");
+    if ((boolean)UI::QueryWidget (`id (`ext), `Value))
+	ai = add (ai, "ext");
+    if ((boolean)UI::QueryWidget (`id (`dmz), `Value))
+	ai = add (ai, "dmz");
+    DnsServer::SetAllowedInterfaces (ai);
+}
+
+define map getIfaceClassesWidget () ``{
+    return $[
+	"widget" : `custom,
+	// frame
+	"custom_widget" : `Frame (_("Interface classes"), `VBox (
+	    `VSpacing (1),
+	    // check box
+	    `Left (`CheckBox (`id(`int), _("Allow &Internal Interfaces"))),
+	    `VSpacing (1),
+	    `Left (`CheckBox (`id(`ext), _("Allow &External Interfaces"))),
+	    `VSpacing (1),
+	    `Left (`CheckBox (`id(`dmz), _("Allow &Demilitarized zone"))),
+	    `VSpacing (1)
+	)),
+	"init" : IfacesInit,
+	"store" : IfacesStore,
+	"help" : HELPS["iface_classes"]:"",
+    ];
+}
+
+// adapt firewall widget
+
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
+global define void FirewallInit (string id) ``{
+    boolean adapt = DnsServer::GetAdaptFirewall ();
+    UI::ChangeWidget (`id (id), `Value, adapt);
+}
+
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
+global define void FirewallStore (string id, map event) ``{
+    boolean adapt = (boolean)UI::QueryWidget (`id (id), `Value);
+    DnsServer::SetAdaptFirewall (adapt);
+    DnsServer::SetModified ();
+}
+
+
+define map getAdaptFirewallWidget () ``{
+    return $[
+	"widget" : `checkbox,
+	// check box
+	"label" : _("Adapt &Firewall settings"),
+	"init" : FirewallInit,
+	"store" : FirewallStore,
+	"help" : HELPS["adapt_firewall"]:"",
+    ];
+}
+
+// DDNS allowing widget
+
+/**
+ * Handle function of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ * @return symbol always nil
+ */
+global define symbol AllowDdnsHandle (string id, map event) ``{
+    boolean enabled = (boolean)UI::QueryWidget (`id (id), `Value);
+    UI::ChangeWidget (`id ("ddns_key"), `Enabled, enabled);
+    return nil;
+}
+
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
+global define void AllowDdnsInit (string id) ``{
+    boolean allowed = false;
+    string key = nil;
+    list<string> updater_keys = DnsServer::GetUpdaterKeys ();
+    UI::ReplaceWidget (`ddns_key_rp,
+	`ComboBox (
+	    `id ("ddns_key"),
+	    `opt (`hstretch),
+	    // combo box
+	    _("Updater &key"),
+	    updater_keys));
+    foreach (map m, current_zone["options"]:[], ``{
+	if (m["key"]:"" == "allow-update")
+	{
+	    string key = regexpsub (
+		m["value"]:"",
+		"^.*key[ \t]\+[^ \t;]\+[ \t;]\+.*$",
+		"\\1");
+	    if (key != nil)
+	    {
+		allowed = true;
+	    }
+	}
+    });
+    UI::ChangeWidget (`id (id), `Value, allowed);
+    if (allowed)
+    {
+	UI::ChangeWidget (`id ("ddns_key"), `Value, key);
+    }
+    AllowDdnsHandle (id, $[]);
+}
+
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
+global define void AllowDdnsStore (string id, map event) ``{
+    current_zone["options"] = maplist (map m, current_zone["options"]:[], ``{
+	if (m["key"]:"" == "allow-update"
+	    && regexpmatch (m["value"]:"", "^.*key[ \t]+DHCP_UPDATER.*$"))
+	{
+	    return $[];
+	}
+	return m;
+    });
+    current_zone["options"] = filter (map m, current_zone["options"]:[], ``(
+	m != $[]
+    ));
+    string key = (string)UI::QueryWidget (`id ("ddns_key"), `Value);
+    boolean allowed = (boolean)UI::QueryWidget (`id (id), `Value);
+    if (allowed)
+    {
+	current_zone["options"] = add (current_zone["options"]:[], $[
+	    "key" : "allow-update",
+	    "value" : sformat ("{ key %1; }", key),
+	]);
+    }
+}
+
+define map getAllowDdnsWidget () ``{
+    return $[
+	"widget" : `custom,
+	"custom_widget" : `HBox (
+	    `VBox (
+		`Label (" "),
+		`CheckBox (`id ("allow_ddns"), `opt (`notify),
+		    // check box
+		    _("A&llow Dynamic Updates"))
+	    ),
+	    `ReplacePoint (`id (`ddns_key_rp),
+		// combo box
+		`ComboBox (`id ("ddns_key"), `opt(`hstretch), _("Updater &key"))
+	    )
+	),
+	"help" : HELPS["allow_ddns"]:"",
+	"init" : AllowDdnsInit,
+	"store" : AllowDdnsStore,
+	"handle" : AllowDdnsHandle,
+    ];
+}
+
+// get dynamic DNS keys management widget
+
+/**
+ * Initialize the widget
+ * @param id any widget id
+ */
+global define void DdnsKeysInit (string id) ``{
+    list<map<string,string> > keys = DnsServer::ListTSIGKeys ();
+    list items = maplist (map<string,string> k, keys, ``(
+	`item (`id (k["key"]:""), k["key"]:"", k["filename"]:"")
+    ));
+    UI::ChangeWidget (`id (`k_delete), `Enabled, size(items) > 0);
+    UI::ChangeWidget (`id (`keys), `Items, items);
+    UI::SetFocus (`id (`keys));
+}
+
+/**
+ * Handle function of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ * @return symbol always nil
+ */
+global define symbol DdnsKeysHandle (string id, map event) ``{
+    string filename = (string)UI::QueryWidget (`id (`k_new), `Value);
+    if (event["ID"]:nil == `k_browse)
+    {
+	filename = UI::AskForExistingFile (filename, "",
+	    // popup headline
+	    _("Select file with authentication key"));
+	if (filename != nil)
+	    UI::ChangeWidget (`id (`k_new), `Value, filename);
+    }
+    else if (event["ID"]:nil == `k_add)
+    {
+	list<string> keys = DnsServer::AnalyzeTSIGKeyFile (filename);
+	if (size (keys) == 0)
+	{
+	    // message popup
+	    Popup::Message (_("Specified file does not contain any TSIG key"));
+	    return nil;
+	}
+	boolean collision = false;
+	foreach (map<string,string> k, DnsServer::ListTSIGKeys (), ``{
+	    if (contains (keys, k["key"]:""))
+		collision = true;
+	});
+	if (collision)
+	{
+	    // yes-no popup
+	    if (!Popup::YesNo (_("Specified file contains TSIG key with the same
+identifier, as some of already present keys.
+Old keys will be removed. Continue?")))
+	    {
+		return nil;
+	    }
+	}
+	if (! DnsServer::AddTSIGKey (filename))
+	{
+	    // message popup
+	    Popup::Message (_("Adding new TSIG key failed"));
+	    return nil;
+	}
+    }
+    else if (event["ID"]:nil == `k_delete)
+    {
+	string key = (string)UI::QueryWidget (`id (`keys), `CurrentItem);
+	if (! DnsServer::DeleteTSIGKey (key))
+	{
+	    Report::Error (_("Error occured while removing TSIG key"));
+	    return nil;
+	}
+    }
+    DdnsKeysInit (id);
+    return nil;
+}
+
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
+global define void DdnsKeysStore (string id, map event) ``{
+    return;
+}
+
+
+define map getDdnsKeysWidget () ``{
+    return $[
+	"widget" : `custom,
+	"custom_widget" : `VBox (
+	    `Table ( `id (`keys), `header (_("Key"), _("File"))),
+	    `Left (`PushButton (`id (`k_delete), Label::DeleteButton ())),
+	    `VSpacing (1),
+	    `Frame (_("Add new key"), `VBox (
+		`HBox (
+		    `TextEntry (`id (`k_new), _("New file")),
+		    `VBox (
+			`Label (" "),
+			`PushButton (`id (`k_browse), Label::BrowseButton ())
+		    )
+		),
+		`HBox (
+		    `HStretch (),
+		    `PushButton (`id (`k_add), Label::AddButton ()),
+		    `HStretch ()
+		)
+	    ))
+	),
+	"help" : HELPS["ddns_keys"]:"",
+	"init" : DdnsKeysInit,
+	"store" : DdnsKeysStore,
+	"handle" : DdnsKeysHandle,
+    ];
+}
 
 // generic stuff
 
@@ -1040,6 +1338,10 @@ define map getZoneMastersWidget () ``{
 	    "mx_widget" : getMailRelaysWidget (),
 //	    "ns_mx_button" : getNsMxButton (),
 	    "zone_masters" : getZoneMastersWidget (),
+	    "interface_classes" : getIfaceClassesWidget (),
+	    "adapt_firewall" : getAdaptFirewallWidget (),
+	    "allow_ddns" : getAllowDdnsWidget (),
+	    "ddns_keys" : getDdnsKeysWidget (),
 	];
     }
 

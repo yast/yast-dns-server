@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Feb 17 17:18:28 CET 2004 - jsrain@suse.de
+
+- added possibility to adjust firewall settings for DNS service
+
+-------------------------------------------------------------------
 Fri Feb 13 11:23:48 CET 2004 - jsrain@suse.de
 
 - adapted user interface to new backend

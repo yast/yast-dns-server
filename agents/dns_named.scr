@@ -17,7 +17,7 @@
 `ag_ini(
     `IniAgent( "/etc/named.conf",
 	$[
-	    "options"	: [ "global_values" ],
+	    "options"	: [ "global_values", "repeat_names" ],
 	    "comments"	: [ "^[ \t]*#.*$", "^[ \t]*$" ],
 	    "params"    : [
 		$[ "match" : [ "([^ \t]+)[ \t]([^ \t]+(.*[^ \t]+)+)[ \t]*;$", "%s %s;" ]],
