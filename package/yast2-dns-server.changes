@@ -2,6 +2,8 @@
 Tue Aug 31 08:55:10 CEST 2004 - locilka@suse.cz
 
 - added new firewall variables into Read() testsuite
+- repaired DNSServer::modified with DNSServer::WasModified()
+  in _auto client
 - 2.10.7
 
 -------------------------------------------------------------------

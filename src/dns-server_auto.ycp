@@ -68,7 +68,7 @@ else if (func == "Packages") {
     ret = DnsServer::AutoPackages();
 }
 else if (func == "GetModified") {
-    ret = DnsServer::modified;
+    ret = DnsServer::WasModified();
 }
 /* Read current state */
 else if (func == "Read") {
