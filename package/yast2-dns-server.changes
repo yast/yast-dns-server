@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Mon Sep 20 17:21:57 CEST 2004 - jsrain@suse.cz
+
+- fixed Table/Popup's complains about unknown attributes (#45613)
+
+-------------------------------------------------------------------
 Mon Sep 20 10:14:16 CEST 2004 - locilka@suse.cz
 
 - fixed bug #45581, "Save and Restart" the progress was kept instead
