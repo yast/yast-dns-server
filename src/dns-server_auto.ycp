@@ -44,7 +44,8 @@ y2debug("param=%1", param);
 
 /* Create a summary*/
 if(func == "Summary") {
-    ret = select(DnsServer::Summary(), 0, "");
+    list ret_list = DnsServer::Summary();
+    ret = ret_list[0]:"";
 }
 /* Reset configuration */
 else if (func == "Reset") {
