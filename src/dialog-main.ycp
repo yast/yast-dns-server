@@ -638,12 +638,16 @@ term ExpertBasicOptionsDialog () {
 			    `Frame ( _("Add or Change Option"),
 				`VBox (
 				    `HBox (
-					// Combobox for choosing the basic-option
-					`ComboBox ( `id ( "basic_option_selection" ), `opt(`editable), _("O&ption"),
-					    global_options_add_items
+					`HWeight ( 3,
+					    // Combobox for choosing the basic-option
+					    `ComboBox ( `id ( "basic_option_selection" ), `opt(`editable), _("O&ption"),
+						global_options_add_items
+					    )
 					),
-					// Textentry for setting the basic-option value
-					`TextEntry ( `id ( "basic_option_value" ), _("&Value"), "" )
+					`HWeight ( 5,
+					    // Textentry for setting the basic-option value
+					    `TextEntry ( `id ( "basic_option_value" ), _("&Value"), "" )
+					)
 				    ),
 				    `VSpacing ( 2 )
 				)
@@ -1131,10 +1135,14 @@ term Expert_ACLs_Dialog () {
 			    `Frame ( _("Option Setup"),
 				`VBox (
 				    `HBox (
-					// Textentry - adding ACL-optiopn - name
-					`TextEntry ( `id ( "new_acl_name" ), `opt ( `hstretch ), _("&Name") ),
-					// Textentry - adding ACL-optiopn - value
-					`TextEntry ( `id ( "new_acl_value" ), `opt ( `hstretch ), _("&Value") )
+					`HWeight ( 3,
+					    // Textentry - adding ACL-optiopn - name
+					    `TextEntry ( `id ( "new_acl_name" ), `opt ( `hstretch ), _("&Name") )
+					),
+					`HWeight ( 5,
+					    // Textentry - adding ACL-optiopn - value
+					    `TextEntry ( `id ( "new_acl_value" ), `opt ( `hstretch ), _("&Value") )
+					)
 				    ),
 				    `VSpacing ( 1 )
 				)
@@ -1201,7 +1209,7 @@ void RedrawAclPage () {
 void InitExpertAclPage (string key) {
     acl = DnsServer::GetAcl ();
     UI::ChangeWidget (`id ("new_acl_name"), `ValidChars,
-	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
+	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-");
     RedrawAclPage ();
 }
 
@@ -1564,7 +1572,7 @@ term ExpertZonesDialog () {
 	    `VBox (
 		`VSquash (
 		    `HBox (
-			`HWeight ( 3,
+			`HWeight ( 9,
 			    // Frame label - DNS adding zone
 			    `Frame ( _("A&dd New Zone "),
 				`VBox (
@@ -1584,7 +1592,7 @@ term ExpertZonesDialog () {
 				)
 			    )
 			),
-			`HWeight ( 1,
+			`HWeight ( 2,
 			    `VBox (
 				`VStretch (),
 				`VSquash ( `PushButton ( `id ( "add_zone" ), `opt ( `hstretch ), Label::AddButton () ) )
@@ -1597,7 +1605,7 @@ term ExpertZonesDialog () {
 		    // Table header - DNS listing zones
 		    `Left ( `Label ( _("Configured DNS Zones") ) ),
 		    `HBox (
-			`HWeight ( 5,
+			`HWeight ( 9,
 			    `Table ( `id ( "zones_list_table" ), `header (
 				// Table header item - DNS listing zones
 				_("Zone"),
@@ -1609,10 +1617,8 @@ term ExpertZonesDialog () {
 			),
 			`HWeight ( 2,
 			    `VBox (
-				// Pushbutton - delete zone selected in table
-				`VSquash ( `PushButton ( `id ( "delete_zone" ), `opt ( `hstretch ), _("&Delete Zone") ) ),
-				// Pushbutton - edit zone selected in table
-				`VSquash ( `PushButton ( `id ( "edit_zone" ), `opt ( `hstretch ), _("&Edit Zone...") ) ),
+				`VSquash ( `PushButton ( `id ( "delete_zone" ), `opt ( `hstretch ), Label::DeleteButton() ) ),
+				`VSquash ( `PushButton ( `id ( "edit_zone" ), `opt ( `hstretch ), Label::EditButton() ) ),
 				`VStretch ()
 			    )
 			)
