@@ -286,14 +286,14 @@ Use this dialog to manage the DNS zones.</p>
 ") +
 
     /* Expert Mode Configuration - Zones 2/2 */
-_("<p>To add a new zone, enter its <b>Zone Name</b>, select <b>Zone Type</b>
-and click <b>Add</b>.</p>
-<p>To add a new reverse zone, enter a part of reverse IP address followed by
+_("<p>To add a new zone, enter its <b>Zone Name</b>, select the <b>Zone Type</b>,
+and click <b>Add</b>.
+To add a new reverse zone, enter a part of reverse IP address followed by
 <i>.in-addr.arpa</i> as its <b>Zone Name</b> (e.g., Zone Name
 <i>0.168.192.in-addr.arpa</i> for network <i>192.168.0.0/24</i>), select
-<b>Zone Type</b> and click <b>Add</b>.</p>
-<p>To remove a configured zone, select it and click <b>Delete Zone</b>.<br>
-To edit a zone, select it and click <b>Edit Zone...</b>.</p>
+the <b>Zone Type</b>, and click <b>Add</b>.</p>
+<p>To remove a configured zone, select it and click <b>Delete Zone</b>.
+To edit a zone, select it and click <b>Edit Zone</b>.</p>
 "),
 
 "zone_editor_basics"	:
@@ -382,7 +382,8 @@ and click <b>Change</b>. To delete a record, select it and click
 
     /* Zone Editor - Help for tab - Records 3/7 or 3/5 */
 _("<p><b><big>Record Settings</big></b><br>
-Each <b>Type</b> of record has its own syntax defined in the RFC.</p>"),
+Each type of record has its own syntax defined in the RFC.</p>
+"),
 
     /* Zone Editor - Help for tab - Records 4/7 (alt. 1) */
 "zone_editor_records_forward" : _("<p><b>A -- Domain Name Translation</b><br>

@@ -1579,9 +1579,10 @@ symbol runSlaveZoneTabDialog () {
 		    // TRANSLATORS: Popup error headline
 		    _("Missing Master Server"),
 		    // TRANSLATORS: Popup error text
-		    _("Every slave zone needs master's server IP defined.
-Configuration of DNS-Server without master server would fail.
-If you continue, current zone will be removed.")
+		    _("Every slave zone must have its master server IP defined.
+Configuration of a DNS server without a master server would fail.
+If you continue, the current zone will be removed.
+")
 		)) {
 		    // removing current zone - zone needs master server
 		    zones = filter (map z, zones, ``(z != current_zone));
