@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Aug 23 15:20:20 CEST 2004 - locilka@suse.cz
+
+- forwarders moved into the single file
+  bugzilla #40610
+- 2.10.5
+
+-------------------------------------------------------------------
 Thu Aug 19 10:40:49 CEST 2004 - locilka@suse.de
 
 - added support for correct handling of TTL in zone file for any RR

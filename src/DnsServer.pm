@@ -47,6 +47,8 @@ $adapt_firewall %firewall_settings $write_only @new_includes @deleted_includes
 @zones_update_actions $firewall_support);
 use DnsRoutines;
 
+my $forwarders_include = '/etc/named.d/named-forwarders.conf';
+
 my $use_ldap = 0;
 
 my $ldap_available = 0;
@@ -434,6 +436,23 @@ sub AdaptDDNS {
     return 1;
 }
 
+sub AdaptIncludesForForwarders {
+    my $class = shift;
+
+    my $includes = SCR->Read (".sysconfig.named.NAMED_CONF_INCLUDE_FILES") || "";
+    my @includes = split (/ /, $includes);
+
+    if (scalar( grep { $_ eq $forwarders_include } @includes ) == 0) {
+	push @includes, $forwarders_include;
+
+	y2milestone("Adding ".$forwarders_include." into sysconfig/named/NAMED_CONF_INCLUDE_FILES");
+	$includes = join (" ", @includes);
+	SCR->Write (".sysconfig.named.NAMED_CONF_INCLUDE_FILES", $includes);
+    }
+
+    return 1;
+}
+
 BEGIN { $TYPEINFO{SaveGlobals} = [ "function", "boolean" ]; }
 sub SaveGlobals {
     my $self = shift;
@@ -477,6 +496,20 @@ sub SaveGlobals {
     my @del_options = grep {
 	! $self->contains (\@current_options, $_);
     } @old_options;
+
+    # if any forwarders are defined
+    if (scalar (grep { $_->{"key"} eq "forwarders"} @options ) != 0) {
+	# remove them from options because they will be written into single file
+	push @del_options, "forwarders";
+	# if forwarders are not included
+	my $forwarders_include_record = "\"".$forwarders_include."\"";
+	if (scalar (grep { $_->{"key"} eq "include" && $_->{"value"} eq $forwarders_include_record } @options ) == 0) {
+	    # include them
+	    y2milestone("Moving forwarders into single file ".$forwarders_include);
+	    push @options, { "key" => "include", "value" => $forwarders_include_record };
+	}
+    }
+
     foreach my $o (@del_options)
     {
 	SCR->Write (".dns.named.value.options.\"\Q$o\E\"", undef);
@@ -494,8 +527,14 @@ sub SaveGlobals {
     }
     foreach my $key (sort (keys (%opt_map)))
     {
-	my @values = @{$opt_map{$key} || []};
-	SCR->Write (".dns.named.value.options.\"\Q$key\E\"", \@values);
+	if ($key ne "forwarders") {
+	    my @values = @{$opt_map{$key} || []};
+	    SCR->Write (".dns.named.value.options.\"\Q$key\E\"", \@values);
+	} else {
+	    # writing forwarders into single file
+	    SCR->Write (".dns.named-forwarders", [$forwarders_include, @{$opt_map{$key}}[0]]);
+	    $self->AdaptIncludesForForwarders();
+	}
     }
 
     # delete all removed logging options
@@ -1012,15 +1051,33 @@ sub Read {
     my $key;
 
     @opt_names = sort (keys (%opt_hash));
+    my $forwarders_in_options = "";
+    my $include_defined_in_conf = 0;
+    my $forwarders_value = "";
+    my $forwarders_include_record = "\"".$forwarders_include."\"";
     foreach $key (@opt_names) {
 	my @values = @{SCR->Read (".dns.named.value.options.$key") || []};
 	foreach my $value (@values) {
+	    if ($key eq "forwarders") {
+		$forwarders_in_options = $value;
+		next;
+	    }
 	    push @options, {
 		"key" => $key,
 		"value" => $value,
 	    };
+	    if ($key eq "include" && $value eq $forwarders_include_record) {
+		$include_defined_in_conf = 1;
+		$forwarders_value = SCR->Read (".dns.named-forwarders", $forwarders_include) || "";
+	    }
 	}
     }
+    # no forwarders are defined in single file or file doesn't exist
+    # but forwarders are defined right in options
+    if (!$forwarders_value && $forwarders_in_options) {
+	$forwarders_value = $forwarders_in_options;
+    }
+    push @options, { "key" => "forwarders", "value" => $forwarders_value, };
 
     @logging = ();
     my @log_names = ();
