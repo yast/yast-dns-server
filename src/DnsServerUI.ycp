@@ -28,11 +28,11 @@
     import "SuSEFirewall";
 
     define map<string,any> current_zone = $[];
-    define list<map> current_section = [];
+    define list<map<string,any> > current_section = [];
     define list<string> current_zone_ns = [];
     define list<string> current_zone_mx = [];
     define list<string> current_zone_masters = [];
-    define list<map> current_zone_upd_ops = [];
+    define list<map<string,string> > current_zone_upd_ops = [];
 
     define list<map<string,string> > current_tsig_keys = [];
     define list<string> new_tsig_keys = [];
