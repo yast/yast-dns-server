@@ -23,6 +23,7 @@ import "DialogTree";
 import "CWMServiceStart";
 import "Mode";
 import "Report";
+import "ProductFeatures";
 
 /**
  * Dialog Expert Settings - Start Up
@@ -46,10 +47,10 @@ term ExpertStartUpDialog () {
 			)
 		    )
 		),
-		`VSpacing ( 1 ),
-		// check box
-		`Left (`CheckBox (`id ("use_ldap"), `opt (`notify), _("&LDAP Support Active"))),
-		`VSpacing ( 1 ),
+	    `VSpacing ( 1 ),
+	    // check box
+	    `Left (`CheckBox (`id ("use_ldap"), `opt (`notify), _("&LDAP Support Active"))),
+	    `VSpacing ( 1 ),
 		// Frame label (stoping starting DNS server)
 		`Frame ( _("Switch On and Off"),
 		    `Left (
@@ -1602,8 +1603,9 @@ map<string, map<string, any> > tabs = $[
 
 // FIXME: validation are a map's elements
 //        "validate_function" : ValidateXYZ() and "validate_type" : `function
-map<string,map<string,any> > new_widgets = $[
-    "start_up" : CWMServiceStart::CreateWidget ($[
+
+map<string, any> start_up_dialog_definition =
+    $[
 	// FIXME:
 	"get_service_auto_start" : DnsServer::GetStartService,
 	// FIXME:
@@ -1626,13 +1628,25 @@ map<string,map<string,any> > new_widgets = $[
 	"save_now_action" : DnsServer::Write,
 	// push button
 	"save_now_button" : _("Save Settings and Restart DNS Server &Now"),
+    ];
 
-	// LDAP Support
-	"get_use_ldap" : DnsServer::GetUseLdap,
-	"set_use_ldap" : DnsServer::SetUseLdap,
+/**
+ * Temporary procedure for handling the LDAP support in Main dialog
+ * Because BLOCK is not allowed here
+ */
+map<string, any> HandleStartUPDialogDefinition () {
+    // LDAP enabled only for EXPERT mode
+    if (ProductFeatures::ui_mode == "expert") {
+	start_up_dialog_definition["get_use_ldap"] = DnsServer::GetUseLdap;
+	start_up_dialog_definition["set_use_ldap"] = DnsServer::SetUseLdap;
 	// check box
-	"use_ldap_checkbox" : _("&LDAP Support Active"),
-    ]),
+	start_up_dialog_definition["use_ldap_checkbox"] = _("&LDAP Support Active");
+    }
+    return start_up_dialog_definition;
+}
+
+map<string,map<string,any> > new_widgets = $[
+    "start_up" : CWMServiceStart::CreateWidget (HandleStartUPDialogDefinition()),
     "forwarders" : $[
 	"widget"	: `custom,
 	"custom_widget"	: `VBox (),
@@ -1692,8 +1706,11 @@ global map<symbol,any> functions = $[
  * @return symbol for the wizard sequencer
  */
 symbol runExpertDialog () {
+    list<string> expert_dialogs = [ "start_up", "forwarders", "basic_options", "logging", "acls", "keys", "zones" ];
+    list<string> normal_dialog  = [ "start_up", "forwarders", "logging", "zones" ];
+
     return DialogTree::ShowAndRun ($[
-	"ids_order" : [ "start_up", "forwarders", "basic_options", "logging", "acls", "keys", "zones" ],
+	"ids_order" : ((ProductFeatures::ui_mode == "expert") ? expert_dialogs : normal_dialog),
 	"initial_screen" : "start_up",
 	"screens" :  tabs,
 	"widget_descr" : new_widgets,
