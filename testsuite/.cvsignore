@@ -7,8 +7,8 @@ tmp.out*
 tmp.err*
 tmp.log*
 config
-zone
-zone_new
-tmp
 run
 *.test
+tmp
+zone
+zone_new
