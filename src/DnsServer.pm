@@ -585,21 +585,21 @@ sub SetUseLdap {
     my $self = shift;
     $use_ldap = shift;
 
-    $save_all = 1;
-}
+    if ($use_ldap) {
+	# trying save into LDAP if selected
+	$self->LdapStore ();
+	Progress->off ();
+	my $success = $self->Read ();
+	Progress->on ();
 
-BEGIN { $TYPEINFO{SetUseLdapAndSave} = [ "function", "void", "boolean" ];}
-sub SetUseLdapAndSave {
-    my $self = shift;
-    $use_ldap = shift;
+	if (!$success) {
+	    return;
+	}
+    }
 
-    $save_all = 1;
-
-    $self->LdapStore ();
-    Progress->off ();
-    $self->Read ();
-    Progress->on ();
     $self->SetModified ();
+
+    $save_all = 1;
 }
 
 BEGIN { $TYPEINFO{GetUseLdap} = [ "function", "boolean" ];}
