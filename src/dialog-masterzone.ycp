@@ -1555,14 +1555,12 @@ symbol runSlaveZoneTabDialog () {
     current_zone_masters = filter (string m, current_zone_masters, ``(
         m != ""));
     UI::ChangeWidget (`id ("master"), `Value, current_zone_masters[0]:"");
-    UI::ChangeWidget (`id ("master"), `ValidChars, Hostname::ValidCharsFQ);
+    UI::ChangeWidget (`id ("master"), `ValidChars, "0123456789.");
     while (true)
     {
 	event = UI::WaitForEvent ();
 	ret = event["ID"]:nil;
 	ZoneAclHandle (event);
-	if (ret == `cancel)
-	    ret = `abort;
 	if (ret == `abort)
 	{
 	    if ( ReallyAbort() )
@@ -1572,6 +1570,25 @@ symbol runSlaveZoneTabDialog () {
 	}
 	if (ret == `back)
 	{
+	    // fixing bug #45950, slave zone _MUST_ have master server
+	    if (size(current_zone_masters)==0) {
+		if (Popup::ContinueCancelHeadline(
+		    // TRANSLATORS: Popup error headline
+		    _("Missing Master Server"),
+		    // TRANSLATORS: Popup error text
+		    _("Every slave zone needs master's server IP defined.
+Configuration of DNS-Server without master server would fail.
+If you continue, current zone will be removed.")
+		)) {
+		    // removing current zone - zone needs master server
+		    zones = filter (map z, zones, ``(z != current_zone));
+		    DnsServer::StoreZones (zones);
+		    break;
+		} else {
+		    continue;
+		}
+	    }
+
 	    break;
 	}
 	if( ret == `next)
@@ -1586,13 +1603,12 @@ symbol runSlaveZoneTabDialog () {
 		// controlling sever name, IP
 		string master_server =
 		    (string)UI::QueryWidget (`id ("master"), `Value);
-		if (IP::Check4(master_server) != true &&
-		    Hostname::Check(master_server) != true &&
-		    Hostname::CheckFQ(master_server) != true)
+		// Master server must be only IP
+		if (IP::Check4(master_server) != true)
 		{
 		    UI::SetFocus ( `id ("master") );
 		    // A popup error message
-		    Popup::Error ( _("Specified master name server is not a valid host name or IP address.") );
+		    Popup::Error ( _("Specified master name server is not a valid IP address.") );
 		    continue;
 		}
 		break;
