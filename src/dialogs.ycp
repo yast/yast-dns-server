@@ -17,6 +17,7 @@
     import "Label";
     import "CWM";
     import "Wizard";
+    import "Message";
 
     /**
       * Ask user if exit without saving
