@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Sep  2 10:03:55 CEST 2003 - jsrain@suse.de
+
+- fixed deleting a DNS zone
+- ask user before deleting a DNS zone
+
+-------------------------------------------------------------------
 Mon Sep  1 13:11:28 CEST 2003 - jsrain@suse.de
 
 - fixed double-click on table with master zone handling
