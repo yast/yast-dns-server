@@ -786,7 +786,9 @@ boolean CheckOptionValue (string option, string value) {
     if (value == nil || value == "") {
 	if (! Popup::YesNo(
 	    // TRANSLATORS: Popup question
-	    _("Are you sure you want to set this\noption without any value?")
+	    _("Really set this
+option without any value?
+")
 	)) {
 	    return false;
 	}
@@ -797,7 +799,9 @@ boolean CheckOptionValue (string option, string value) {
 	    if (! Popup::ContinueCancel(
 		sformat (
 		    // TRANSLATORS: Popup question. Please, do not translate 'yes' and 'no' strings. %1 is a name of the option, %2 is the value of the option.
-		    _("Option '%1' can only have 'yes' or 'no' value set.\nDo you really want to set it to '%2'?"),
+		    _("Option '%1' can only have 'yes' or 'no' value set.
+Really set it to '%2'?
+"),
 		    option,
 		    value
 		)
@@ -812,7 +816,9 @@ boolean CheckOptionValue (string option, string value) {
 	    if (! Popup::ContinueCancel(
 		sformat (
 		    // TRANSLATORS: Popup question. %1 is a name of the option, %2 is the value of the option.
-		    _("Option '%1' can only be a number.\nDo you really want to set it to '%2'?"),
+		    _("Option '%1' can only be a number.
+Really set it to '%2'?
+"),
 		    option,
 		    value
 		)
@@ -824,7 +830,9 @@ boolean CheckOptionValue (string option, string value) {
 	if (! Popup::ContinueCancel(
 	    sformat (
 		// TRANSLATORS: Popup question. %1 is the value of the option.
-		_("Quotes in this option are not used well.\nDo you really want to set it to '%1'?"),
+		_("Quotes are not used correctly in this option.
+Really set it to '%1'?
+"),
 		value
 	    )
 	)) {
@@ -834,7 +842,9 @@ boolean CheckOptionValue (string option, string value) {
 	if (! Popup::ContinueCancel(
 	    sformat (
 		// TRANSLATORS: Popup question. %1 is the value of the option.
-		_("Brackets in this option are not used well.\nDo you really want to set it to '%1'?"),
+		_("Brackets are not used correctly in this option.
+Really set it to '%1'?
+"),
 		value
 	    )
 	)) {
@@ -881,7 +891,9 @@ symbol HandleExpertBasicOptionsPage (string key, map event) {
 	    if (! Popup::ContinueCancel(
 		sformat(
 		    // Popup question, %1 is the name of the option
-		    _("Option '%1' should be set only once.\nDou you really want to add yet another one?"),
+		    _("Option '%1' should be set only once.
+Really add another one?
+"),
 		    current_key
 		)
 	    )) {
@@ -1271,7 +1283,8 @@ boolean ReallyRemoveACL (string acl_name) {
 	return Popup::ContinueCancel (sformat(
 	    // A popup question
 	    _("This ACL is used by %1 zones.
-Do you really want to remove it?"),
+Really remove it?
+"),
 	    size(zones_where_acl_used)
 	));
     } else {
