@@ -30,6 +30,7 @@ YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Report");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("SuSEFirewall");
+YaST::YCP::Import ("Message");
 use DnsZones;
 use DnsTsigKeys;
 
@@ -858,7 +859,7 @@ sub Read {
 	if (! $installed)
 	{
 	    # error popup
-	    Report->Error (__("Installing required packages failed."));
+	    Report->Error (Message->CannotContinueWithoutPackagesInstalled());
 	    return Boolean (0);
 	}
     }
@@ -1450,7 +1451,7 @@ sub LdapInit {
 	if (! $installed && ! Package->LastOperationCanceled ())
 	{
 	    # error popup
-	    Report->Error (__("Installing required packages failed."));
+	    Report->Error (Message->CannotContinueWithoutPackagesInstalled());
 	    $use_ldap = 0;
 	    return;
 	}
