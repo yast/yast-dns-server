@@ -18,5 +18,5 @@ Read	.dns.zone "/var/lib/named/localhost.zone" $["TTL":"1W", "records":[$["key":
 Dir	.dns.named.value."zone \"localhost\" in": ["file", "type"]
 Read	.dns.named.value."zone \"localhost\" in"."file" ["\"localhost.zone\""]
 Read	.dns.named.value."zone \"localhost\" in"."type" ["master"]
-Return	[$["key":"directory", "value":"\"/var/lib/named\""], $["key":"notify", "value":"no"]]
+Return	[$["key":"directory", "value":"\"/var/lib/named\""], $["key":"notify", "value":"no"], $["key":"forwarders", "value":""]]
 Dump	==========================================================
