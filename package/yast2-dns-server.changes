@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jul 29 14:49:30 CEST 2003 - jsrain@suse.de
+
+- adapted to udpated CWM interface
+- fixed zone files saving (sometimes failed)
+
+-------------------------------------------------------------------
 Fri Jul 11 14:24:00 CEST 2003 - jsrain@suse.de
 
 - several minor updates

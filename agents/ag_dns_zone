@@ -32,7 +32,7 @@ while ( <STDIN> )
 	    my %data = %{$a[1]};
 
 	    open (OUT, ">$file");
-
+y2error ("Writing to", $file);
 	    # write the TTL record first
 	    if (exists ($data{"TTL"}))
 	    {

@@ -259,7 +259,7 @@ packages %2 will be removed.</p>");
 	    "soa" : soa,
 	    "records" : records,
 	];
-
+y2error ("Filename: %1", filename);
 	return SCR::Write (.dns.zone, ["/var/lib/named/" + filename, save]);
     }
 
@@ -320,7 +320,7 @@ packages %2 will be removed.</p>");
 	string filename = zone["file"]:"";
 	if (filename == "")
 	{
-	    filename = sformat ("/var/lib/named/master/%1",
+	    filename = sformat ("master/%1",
 		zone["zone"]:"unknown");
 	    while (SCR::Read (.target.size, filename) >= 0)
 		filename = filename + "I";
