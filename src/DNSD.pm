@@ -10,21 +10,21 @@ This package is the public YaST2 API to configure the Bind version 9
 
 =head1 SYNOPSIS
 
-  use YaPI::DNSD
+use YaPI::DNSD
 
-  $status = StopDhcpService ()
+$status = StopDnsService()
 
-  $status = StartDhcpService ()
+$status = StartDnsService()
 
-  $status = GetDhcpServiceStatus ()
+$status = GetDnsServiceStatus()
 
-  $options = ReadGlobalOptions ()
+$options = ReadGlobalOptions()
 
-  $ret = WriteGlobalOptions ($options);
+$ret = WriteGlobalOptions($options)
 
-  $zones = ReadZones ();
+$zones = ReadZones()
 
-  $ret = WriteZones ($zones);
+$ret = WriteZones($zones)
 
 
 =head1 DESCRIPTION
@@ -60,7 +60,7 @@ use Errno qw(ENOENT);
 #######################################################
 
 =item *
-C<$status StopDnsService ();>
+C<$status = StopDnsService();>
 
 Immediatelly stops the DNS service. Returns nonzero if operation succeeded,
 zero if operation failed.
@@ -80,12 +80,12 @@ EXAMPLE:
 =cut
 
 BEGIN{$TYPEINFO{StopDnsService} = ["function", "boolean"];}
-sub StopDhcpService {
+sub StopDnsService {
     return DnsServer->StopDnsService ();
 }
 
 =item *
-C<$status StartDnsService ();>
+C<$status = StartDnsService ();>
 
 Immediatelly starts the DNS service. Returns nonzero if operation succeeded,
 zero if operation failed.
@@ -110,7 +110,7 @@ sub StartDndService {
 }
 
 =item *
-C<$status GetDnsServiceStatus ();>
+C<$status = GetDnsServiceStatus ();>
 
 Check if DNS service is running. Returns nonzero if service is running,
 zero otherwise.
@@ -172,7 +172,7 @@ sub ReadGlobalOptions {
     my $options = undef;
     if ($ret)
     {
-	$options = DhcpServer->GetGlobalOptions ();
+	$options = DnsServer->GetGlobalOptions ();
     }
     Progress::on ();
     return $options;
@@ -249,7 +249,7 @@ sub ReadZones {
     my $zones = undef;
     if ($ret)
     {
-	$zones = DhcpServer->FetchZones ();
+	$zones = DnsServer->FetchZones ();
     }
     Progress::on ();
     return $zones;
