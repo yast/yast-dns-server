@@ -2,7 +2,7 @@
 # neededforbuild yast2-devel-packages yast2-packager
 
 @HEADER@
-Requires:	yast2 dns_daemon yast2-packager
+Requires:	yast2 yast2-packager /usr/bin/host
 
 BuildArchitectures:	noarch
 

@@ -141,9 +141,8 @@
 	version = getBindVersion (interactive_read);
 	if (version == nil)
 	{
-	    // error report
-	    Report::Error (_("Install bind8 or bind9 first"));
-	    return false;
+	    // warning report
+	    Report::Warning (_("Neither bind8 nor bind9 installed"));
 	}
 
 	settings["start_service"] = Runlevel::ServiceEnabled ("named");
@@ -161,10 +160,14 @@
 	y2milestone ("Read zone sections %1", zone_headers);
 
 	list opt_names = SCR::Dir (.dns.named.value.options);
+	if (opt_names == nil)
+	    opt_names = [];
 	map options = listmap (`key, opt_names, ``{
 	    string val = SCR::Read (add (.dns.named.value.options, key));
 	    return [key, val];
 	});
+	if (options == nil)
+	    options = $[];
 	settings["options"] = options;
 	y2milestone ("Read options: %1", options);
 
@@ -355,12 +358,15 @@ Display the log and continue with configuration?")))
       */
     global define list Summary() ``{
 	string start_string = settings["start_service"]:false
+	    // summary string
 	    ? _("Start DNS server when booting the system")
+	    // summary string
 	    : _("Do not start DNS server when booting the system");
 	list zones = maplist (`z, settings["zones"]:[], ``(
 	    z["zone"]:""
 	));
 	zones = filter (`z, zones, ``(z != ""));
+	// summary string, %1 is list of DNS zones (their names)
 	string zones_string = sformat (_("Configured zones: %1"),
 	    mergestring (zones, ", "));
 	list ret = [ start_string, zones_string ];

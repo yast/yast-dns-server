@@ -37,7 +37,7 @@
 		    ``{SCR::Execute (.target.bash,
 			"/etc/init.d/named restart");}],
 		// menubutton entry, try to keep short
-		[ _("Save settings and restarrt DNS server"),
+		[ _("Save settings and restart DNS server"),
 		    ``{DnsServer::Write ();} ],
 	    ],
 	]);
@@ -90,8 +90,11 @@
       * @return map of widget
       */
     global define map getGlobalTableWidget () ``{
-        map ret = CWM::CreateTable ($["add_delete" : true, "up_down" : false]);
-	ret = union (ret, $[
+        map ret = CWM::CreateTableDescr ($[
+	    "add_delete" : true,
+	    "up_down" : false,
+	    "unique_keys" : true,
+	], $[
 	    "init" : ``(CWM::TableInit (
 		DnsServer::widgets["global_table"]:$[])),
 	    "handle" : ``(CWM::TableHandle (
@@ -370,11 +373,10 @@
       * @return map of widget
       */
     global define map getMasterTableWidget () ``{
-        map ret = CWM::CreateTable ($[
+        map ret = CWM::CreateTableDescr ($[
 	    "add_delete_buttons" : true,
 	    "up_down_buttons" : false
-	]);
-        ret = union (ret, $[
+	], $[
             "init" : ``(CWM::TableInit (
                 DnsServer::widgets["master_table"]:$[])),
             "handle" : ``(DnsServer::masterTableHandle ()),
@@ -413,11 +415,10 @@
       * @return map of widget
       */
     global define map getSlaveTableWidget () ``{
-        map ret = CWM::CreateTable ($[
+        map ret = CWM::CreateTableDescr ($[
 	    "add_delete_buttons" : false,
 	    "up_down_buttons" : false
-	]);
-        ret = union (ret, $[
+	], $[
             "init" : ``(CWM::TableInit (
                 DnsServer::widgets["slave_table"]:$[])),
             "handle" : ``(CWM::TableHandle (

@@ -45,23 +45,20 @@
       * @return symbol for wizard sequencer
       */
     global define symbol runMainDialog () ``{
-	list w = CWM::CreateWidgets (["global_table", "log_button", ],
-	    DnsServer::widgets);
 	term contents = `HBox (`HSpacing (1), `VBox (
 	    `VSpacing (1),
-	    w[0, "widget"]:`VSpacing (0),
+	    "global_table",
 	    `VSpacing (1),
-	    w[1, "widget"]:`VSpacing (0),
+	    "log_button",
 	    `VSpacing (1)
 	), `HSpacing (1));
+
 	// dialog caption
 	string caption = _("DNS server configuration");
-	string help = CWM::MergeHelps (w);
 
-	Wizard::SetContentsButtons (caption, contents, help,
-	    Label::BackButton (), Label::FinishButton ());
-
-	return CWM::Run (w, $[]);
+	return CWM::ShowAndRun (["global_table", "log_button", ],
+	    DnsServer::widgets, contents, caption, Label::BackButton (),
+	    Label::FinishButton (), $[]);
     }
 
     /**
@@ -69,20 +66,16 @@
       * @return symbol for wizard sequencer
       */
     global define symbol runZonesDialog () ``{
-	list w = CWM::CreateWidgets (["zones"], DnsServer::widgets);
 	term contents = `HBox (`HSpacing (1), `VBox (
 	    `VSpacing (1),
-	    w[0, "widget"]:`VSpacing (0),
+	    "zones",
 	    `VSpacing (1)
 	), `HSpacing (1));
 	// dialog caption
-	string caption = _("Host with fixed address configuration");
-	string help = CWM::MergeHelps (w);
+	string caption = _("Zones configuration");
 
-	Wizard::SetContentsButtons (caption, contents, help,
-	    Label::BackButton (), Label::OKButton ());
-
-	return CWM::Run (w, $[]);
+	return CWM::ShowAndRun (["zones"], DnsServer::widgets,
+	    contents, caption, Label::BackButton (), Label::OKButton (), $[]);
     }
 
     /**
@@ -90,21 +83,16 @@
       * @return symbol for wizard sequencer
       */
     global define symbol runMasterZoneDialog () ``{
-	list w = CWM::CreateWidgets (["master_table"],
-	    DnsServer::widgets);
 	term contents = `HBox (`HSpacing (1), `VBox (
 	    `VSpacing (1),
-	    w[0, "widget"]:`VSpacing (0),
+	    "master_table",
 	    `VSpacing (1)
 	), `HSpacing (1));
 	// dialog caption
 	string caption = _("DNS master zone configuration");
-	string help = CWM::MergeHelps (w);
 
-	Wizard::SetContentsButtons (caption, contents, help,
-	    Label::BackButton (), Label::OKButton ());
-
-	return CWM::Run (w, $[]);
+	return CWM::ShowAndRun (["master_table"], DnsServer::widgets,
+	    contents, caption, Label::BackButton (), Label::OKButton (), $[]);
     }
 
     /**
@@ -112,21 +100,16 @@
       * @return symbol for wizard sequencer
       */
     global define symbol runSlaveZoneDialog () ``{
-	list w = CWM::CreateWidgets (["slave_table"],
-	    DnsServer::widgets);
 	term contents = `HBox (`HSpacing (1), `VBox (
 	    `VSpacing (1),
-	    w[0, "widget"]:`VSpacing (0),
+	    "slave_table",
 	    `VSpacing (1)
 	), `HSpacing (1));
 	// dialog caption
 	string caption = _("DNS slave zone configuration");
-	string help = CWM::MergeHelps (w);
 
-	Wizard::SetContentsButtons (caption, contents, help,
-	    Label::BackButton (), Label::OKButton ());
-
-	return CWM::Run (w, $[]);
+	return CWM::ShowAndRun (["slave_table"], DnsServer::widgets,
+	    contents, caption, Label::BackButton (), Label::OKButton (), $[]);
     }
 
 /* EOF */

@@ -13,6 +13,7 @@
 
     import "Require";
     import "Mode";
+    import "Label";
 
     /**
       * If modified, ask for confirmation
@@ -65,8 +66,60 @@
 	{
 	    return nil;
 	}
-	return nil;
-	// TODO ask user what daemon to use, maybe not needed (dependency & confilct)
+	// no installed, both are prevented by dependencies
+	UI::OpenDialog (`VBox (
+	    // label
+	    `Label (_("No DNS daemon is installed.
+Select version of DNS daenon to install")),
+	    `VSpacing (1),
+	    `RadioButtonGroup (`id (`version), `VBox (
+		// radio button
+		`Left (`RadioButton (`id (8), _("Bind &8"), true)),
+		// radio button
+		`Left (`RadioButton (`id (9), _("Bind &9")))
+	    )),
+	    `VSpacing (1),
+	    `HBox (
+		`HStretch (),
+		`PushButton (`id (`ok), Label::OKButton ()),
+		`HSpacing (1),
+		`PushButton (`id (`cancel), Label::CancelButton ()),
+		`HStretch ()
+	    )));
+	symbol ret = UI::UserInput ();
+	integer selected = UI::QueryWidget (`id (`version), `CurrentButton);
+	UI::CloseDialog ();
+	if (ret != `ok)
+	    return nil;
+	map packages = $[
+	    8 : [[ "bindutil", "bind8" ], [ "bind8-devel" ]],
+	    9 : [[ "bind9", "bind9-util" ], [ "bind9-devel", ]]];
+	list inst = [];
+	list del = [];
+	if (selected == 8)
+	{
+	    inst = packages[8]:[];
+	    del = packages[9]:[];
+	}
+	else
+	{
+	    inst = packages[9]:[];
+	    del = packages[8]:[];
+	}
+	inst = inst[0]:[];
+	del = flatten (del);
+	del = filter (`d, del, ``(Require::IsPackageInstalledTarget (d)));
+	string message = "";
+	if (size (del) > 0)
+	    // rich text
+	    message = _("<p>Packages %1 will be installed,
+packages %2 will be removed.</p>");
+	else
+	    // ruch text
+	    message = _("<p>Packages %1 will be installed.</p>");
+	return Require::RequireAndConflictTarget (inst, del, message)
+	    ? selected
+	    : nil;
     }
 
     /**
