@@ -63,6 +63,8 @@ my @new_includes = ();
 
 my @deleted_includes = ();
 
+my @zones_update_actions = ();
+
 
 
 # FIXME this should be defined only once for all modules
@@ -73,6 +75,8 @@ sub _ {
 
 YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("Mode");
+YaST::YCP::Import ("Progress");
+YaST::YCP::Import ("Require");
 YaST::YCP::Import ("Service");
 
 ##-------------------------------------------------------------------------
@@ -172,7 +176,6 @@ sub ZoneRead {
     my %in_a = ();
     my $previous_key = "$zone.";
 
-#    my %records = ();
     my @records = ();
     foreach my $r (@original_records) {
 	my %r = %{$r};
@@ -193,34 +196,95 @@ sub ZoneRead {
 	    "type" => $type,
 	    "value" => $value,
 	};
-#	my %host = %{$records{$key} || {}};
-#	my @items = @{$host{$type} || []};
-#	push (@items, $value);
-#	$host{$type} = \@items;
-#	$records{$key} = \%host;
     }
 
-#    $ret{"records"} = \%records;
     $ret{"records"} = \@records;
 
     return %ret;
 }
 
-BEGIN { $TYPEINFO{ZoneFileUpdate} = ["function", "boolean", [ "map", "any", "any" ]];}
-sub ZoneFileUpdate {
-    my %zone_map = %{$_[0]};
-    my @actions = @{$zone_map{"update_actions"} || []};
-    foreach my $action (@actions) {
-	
-	# TODO perform the action
+sub TSIGKeyName2TSIGKey {
+    my $key_name = shift;
+
+    my $filename = "";
+    foreach my $key (@update_keys) {
+	if ($key->{"key"} eq $key_name)
+	{
+	    $filename = $key->{"filename"};
+	}
     }
+    if ($filename eq "")
+    {
+	y2error ("File with TSIG key not found");
+	return "" ;
+    }
+
+    my $contents = SCR::Read (".target.string", $filename);
+    if ($contents =~ /secret[ \t\n]+\"([^\"]+)\"/)
+    {
+	return $1;
+    }
+    y2error ("TSIG key not found in $filename");
+    return "";
+}
+
+BEGIN{$TYPEINFO{UpdateZones}=["function",["list",["map","any","any"]]];}
+sub UpdateZones {
+    y2milestone ("Updaging zones");
+    my @zone_descr = @{$_[0]};
+
+    my $ok = 1;
+    foreach my $zone_descr (@zone_descr) {
+	print Dumper ($zone_descr);
+
+	my $zone_name = $zone_descr->{"zone"};
+	my $actions_ref = $zone_descr->{"actions"};
+	my @actions = @{$actions_ref};
+	my $tsig_key = $zone_descr->{"tsig_key"};
+	my $tsig_key_value = TSIGKeyName2TSIGKey ($tsig_key);
+
+	my @commands = (
+	    "server 127.0.0.1",
+	    "key $tsig_key $tsig_key_value",
+	);
+	my @uc = map {
+	    my $a = $_;
+	    my $operation = $a->{"operation"};
+	    my $type = $a->{"type"};
+	    my $key = $a->{"key"};
+	    my $value = $a->{"value"};
+	    my $ttl = "";
+	    $ttl = 86400 if $operation eq "add";
+	    if (substr ($key, length ($key) -1, 1) ne ".")
+	    {
+		$key = "$key.$zone_name";
+	    }
+	    if (substr ($key, length ($key) -1, 1) ne ".")
+	    {
+		$key = "$key.";
+	    }
+	    "update $operation $key $ttl $type $value";
+	} @actions;
+	push @commands, @uc;
+	push @commands, "";
+	my $command = join ("\n", @commands);
+
+	my $tmp_dir = SCR::Read (".target.tmpdir");
+	my $tmp_file = "$tmp_dir/dns_upd";
+print Dumper ($command);
+	SCR::Write (".target.string", $tmp_file, $command);
+	my $xx = SCR::Execute (".target.bash_output",
+	    "/usr/bin/nsupdate <$tmp_file");
+	print Dumper ($xx);
+	# TODO perform the action
+
+    }
+    return $ok;
 }
 
 BEGIN { $TYPEINFO{ZoneFileWrite} = ["function", "boolean", [ "map", "any", "any"]];}
 sub ZoneFileWrite {
     my %zone_map = %{$_[0]};
-
-print Dumper (\%zone_map);
 
     my $zone_file = $zone_map{"file"} || "";
     $zone_file = AbsoluteZoneFileName ($zone_file);
@@ -244,35 +308,6 @@ print Dumper (\%zone_map);
     }
 
     my @records = @{$zone_map{"records"} || []};
-
-#    my @records = ();
-
-#    my %records = %{$zone_map{"records"} || {}};
-#    foreach my $key (sort (keys (%records))) {
-#	my $values_ref = $records{$key};
-#	my %values = %{$values_ref};
-#	my @types = keys (%values);
-#	my @preferred = ("A", "CNAME", "PTR");
-#	@preferred = grep {
-#	    contains ( \@preferred, $_);
-#	} @types;
-#	my @others = grep {
-#	    ! contains (\@preferred, $_);
-#	} @types;
-#	@types = ( @preferred, @others );
-#	foreach my $type (@types) {
-#	    my $res_rec_ref = $values{$type};
-#	    my @res_rec = @{$res_rec_ref};
-#	    foreach my $rr (@res_rec) {
-#		my %new_rec = (
-#		    "key" => $key,
-#		    "type" => $type,
-#		    "value" => $rr,
-#		);
-#		push (@records, \%new_rec);
-#	    }
-#	}
-#    }
 
     my %save = (
 	"TTL" => $ttl,
@@ -321,10 +356,17 @@ sub ZoneWrite {
 	SCR::Write ("$base_path.$o", undef);
     };
 
+    my @tsig_keys = ();
+
     foreach my $o (@{$zone_map{"options"}}) {
 	my $key = $o->{"key"};
 	my $val = $o->{"value"};
 	SCR::Write ("$base_path.$key", [$val]);
+	if ($key eq "allow-update"
+	    && $val =~ /^.*key[ \t]+([^ \t;]+)[ \t;]+.*$/)
+	{
+	    push @tsig_keys, $1;
+	}
     };
 
     my $zone_type = $zone_map{"type"} || "master";
@@ -332,13 +374,18 @@ sub ZoneWrite {
     if ($zone_type eq "master")
     {
 	# write the zone file
-	if ($zone_map{"soa_modified"})
+	if ($zone_map{"soa_modified"} || @tsig_keys == 0)
 	{
 	    ZoneFileWrite (\%zone_map);
 	}
 	else
 	{
-	    ZoneFileUpdate (\%zone_map);
+	    my %um = (
+		"actions" => $zone_map{"update_actions"},
+		"zone" => $zone_name,
+		"tsig_key" => $tsig_keys[0],
+	    );
+	    push @zones_update_actions, \%um;
 	}
 
 	# write existing keys
@@ -782,35 +829,6 @@ sub SetGlobalOptions {
     SetModified ();
 }
 
-BEGIN {$TYPEINFO{GetGlobalOption} = [ "function", "any", "any" ];}
-sub GetGlobalOption {
-    my $key = $_[0];
-
-# FIXME    return $options{$key};
-}
-
-BEGIN {$TYPEINFO{SetGlobalOption} = ["function", "void", "any", "any"];}
-sub SetGlobalOption {
-# FIXME    my $key = $_[0];
-#    my $value = $_[1];
-#
-#    $options{$key} = $value;
-}
-
-BEGIN {$TYPEINFO{RemoveGlobalOption} = ["function", "void", "any" ];}
-sub RemoveGlobalOption {
-# FIXME    my $key = $_[0];
-#
-#    delete ($options{$key});
-}
-
-BEGIN{$TYPEINFO{GetUpdaterKeys} = ["function", ["list", "string"]];}
-sub GetUpdaterKeys {
-    return map {
-	$_->{"key"};
-    } @update_keys;
-}
-
 BEGIN{$TYPEINFO{ListTSIGKeys}=["function",["list",["map","string","string"]]];}
 sub ListTSIGKeys {
     return @update_keys;
@@ -896,15 +914,50 @@ sub DeleteTSIGKey {
 BEGIN { $TYPEINFO{Read} = ["function", "boolean"]; }
 sub Read {
 
-    # Dhcp-server read dialog caption
+    # DNS server read dialog caption
     my $caption = _("Initializing DNS Server Configuration");
 
+    Progress::New( $caption, " ", 2, [
+	# progress stage
+	_("Check the environment"),
+	# progress stage
+	_("Read the settings"),
+    ],
+    [
+	# progress step
+	_("Checking the environment..."),
+	# progress step
+	_("Reading the settings..."),
+	# progress step
+	_("Finished")
+    ],
+    ""
+    );
 
-# Check packages
-# TODO
+    my $sl = 0.5;
 
-# Information about the daemon
+    Progress::NextStage ();
+    sleep ($sl);
 
+    # Check packages
+    if (! (Mode::config () || Require::AreAllPackagesInstalled (["bind"])))
+    {
+	my $installed = Require::RequireAndConflictTarget (["bind"], [],
+	# richtext, %1 is name of package
+	    _("For running DNS server, a DNS daemon is required.
+YaST2 will install package %1.
+"));
+	if (! $installed && ! Require::LastOperationCanceled ())
+	{
+	    # error popup
+	    Report::Error (_("Installing required packages failed."));
+	}
+    }
+ 
+    Progress::NextStage ();
+    sleep ($sl);
+
+    # Information about the daemon
     $start_service = Service::Enabled ("named");
     y2milestone ("Service start: $start_service");
     $chroot = SCR::Read (".sysconfig.named.NAMED_RUN_CHROOTED", "")
@@ -990,6 +1043,10 @@ sub Read {
 	\%zd;
     } @zone_headers;
     $modified = 0;
+
+    Progress::NextStage ();
+    sleep ($sl);
+
     return "true";
 }
 
@@ -1012,6 +1069,7 @@ sub Write {
     $ok = AdaptDDNS () && $ok;
 
     #save all zones
+    @zones_update_actions = ();
     foreach my $z (@zones) {
 	$ok = ZoneWrite ($z) && $ok;
     }
@@ -1022,6 +1080,19 @@ sub Write {
     #set daemon starting
     SCR::Write (".sysconfig.named.NAMED_RUN_CHROOTED", $chroot ? "yes" : "no");
     SCR::Write (".sysconfig.named", undef);
+
+    if (0 != @zones_update_actions)
+    {
+	my $ret = SCR::Execute (".target.bash", "/etc/init.d/named restart");
+	if ($ret != 0)
+	{
+	    $ok = 0;
+	}
+	else
+	{
+	    UpdateZones (\@zones_update_actions);
+	}
+    }
 
     if ($start_service)
     {

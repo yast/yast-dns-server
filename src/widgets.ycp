@@ -266,7 +266,7 @@ global define void soaInit (string id) ``{
  */
 global define void soaStore (string id, map event) ``{
     current_zone["soa"] = current_zone["soa"]:$[];
-    foreach (`r,
+    foreach (string r,
 	["serial", "refresh", "retry", "expiry", "minimum", "server", "mail"],
     ``{
 	current_zone["soa", r] = UI::QueryWidget (`id (r), `Value);
@@ -318,14 +318,34 @@ define map getSoaWidget () ``{
 		)
 	    )
 	),
-	"help" : "TODO",
+	"help" : HELPS["soa"]:"",
     ];
 }
 
 
 // soa button
 
+define void soaButtonInit (string key) ``{
+    // push button
+    UI::ReplaceWidget (`_tp_table_repl, `PushButton (`id(key), _("Edit &SOA")));
+}
+
+/**
+ * Handle function of a widget
+ * @param key any widget key of widget that is processed
+ * @param event map event that occured
+ * @return symbol symbol for ws or nil
+ */
 define symbol soaButtonHandle (string key, map event) ``{
+    if (0 == current_zone["soa_modified"]:0)
+    {
+	if (! Popup::YesNo (_("If you edit SOA record of the zone and
+it will be modified from outside, YaST will
+rewrite the chanegs. Continue?")))
+	{
+	    return nil;
+	}
+    }
     return `soa;
 }
 
@@ -335,9 +355,11 @@ define symbol soaButtonHandle (string key, map event) ``{
  */
 define map getSoaButton () ``{
     return $[
-	"widget" : `push_button,
+	"widget" : `custom,
+	"custom_widget" : `VBox (),
 	// push button
 	"label" : _("Edit &SOA"),
+	"init" : soaButtonInit,
 	"handle" : soaButtonHandle,
 	"handle_events" : [ "soa_button" ],
 	"help" : HELPS["soa_button"]:"",
@@ -345,7 +367,7 @@ define map getSoaButton () ``{
 }
 
 /**
- * handle function of a widget
+ * Handle function of a widget
  * @param key any widget key of widget that is processed
  * @param event map event that occured
  * @return symbol symbol for ws or nil
@@ -388,22 +410,6 @@ define string globalTableId2Key (map descr, any id) ``{
     return current_section[iid, "key"]:"";
 }
 
-/**
- * Delete function of the global table
- * @param opt_id any option id of selected option
- * @param opt_key any option key of selected option
- * @return boolean true if was really deleted
- */
-global define boolean globalTableEntryDelete (any opt_id, any opt_key) ``{
-    // message popup
-    if (! Popup::YesNo (_("Delete selected entry?")))
-	return false;
-// FIXME	settings["options"]
-//	    = filter (`k, `v, settings["options"]:$[], ``(k != opt_id));
-	DnsServer::SetModified ();
-	return true;
-}
-
 global define void globalTableInit (string id) ``{
     current_section = DnsServer::GetGlobalOptions ();
     TablePopup::TableInitWrapper (id);
@@ -416,6 +422,22 @@ global define void globalTableInit (string id) ``{
  */
 global define void globalTableStore (any widget, map event) ``{
     DnsServer::SetGlobalOptions (current_section);
+}
+
+/**
+ * Delete function of the global table
+ * @param opt_id any option id of selected option
+ * @param opt_key any option key of selected option
+ * @return boolean true if was really deleted
+ */
+global define boolean globalTableEntryDelete (any opt_id, any opt_key) ``{
+    integer oid = (integer)opt_id;
+    // message popup
+    if (! Popup::YesNo (_("Delete selected entry?")))
+	return false;
+    current_section[oid] = $[];
+    current_section = filter (map o, current_section, ``(o != $[]));
+    return true;
 }
 
 /**
@@ -563,7 +585,7 @@ define void advMenubuttonInit (string id) ``{
 	    // menubutton item
 	    `item (`id (`firewall), _("&Firewall configuration")),
 	    // menubutton item
-	    `item (`id (`ddns), _("&Dynamic DNS configuration")),
+	    `item (`id (`ddns), _("Manage &TSIG keys")),
 	    // menubutton item
 	    `item (`id (`show_log), _("&Display log")),
 	]));
@@ -608,8 +630,8 @@ define map getAdvancedMenubutton () ``{
 	"help" : HELPS["adv_mbutton"]:"",
 	"handle" : advMenubuttonHandle,
 	"handle_events" : [ `global_options, `show_log, `firewall, `ddns ],
-	"widget" : `text_entry, // FIXME support for non-displayed widgets
-	"label" : "&x",
+	"widget" : `custom, // support for non-displayed widgets would be better
+	"custom_widget" : `VBox (),
     ];
 }
 
@@ -877,6 +899,29 @@ global define any masterId2Key (map table, any opt_id) ``{
 }
 
 /**
+ * Delete function of the master table
+ * @param opt_id any option id of selected option
+ * @param opt_key any option key of selected option
+ * @return boolean true if was really deleted
+ */
+global define boolean masterTableEntryDelete (any opt_id, string opt_key) ``{
+    integer index = (integer)opt_id;
+    // message popup
+    if (! Popup::YesNo (_("Delete selected resource record?")))
+	return false;
+    current_zone_upd_ops = add (current_zone_upd_ops, $[
+	"operation" : "delete",
+	"type" : current_zone["records", index, "type"]:"",
+	"key" : current_zone["records", index, "key"]:"",
+	"value" : current_zone["records", index, "value"]:"",
+    ]);
+    current_zone["records", index] = $[];
+    current_zone["records"] = filter (map r, current_zone["records"]:[],
+	``(r != $[]));
+    return true;
+}
+
+/**
  * Function for getting contents of the master table
  * @param descr map description map of the table
  * @return list items for the table
@@ -898,6 +943,17 @@ global define list getMasterTableContents (map descr) ``{
     return ret;
 }
 
+define void MasterTableInit (string key) ``{
+    current_zone_upd_ops = current_zone["update_actions"]:[];
+    TablePopup::TableInitWrapper (key);
+}
+
+define void MasterTableStore (string key, map event) ``{
+    current_zone["update_actions"] = maplist (map m, current_zone_upd_ops, ``{
+	m["zone"] = current_zone["zone"]:"";
+	return m;
+    });
+}
 
 
 /**
@@ -909,6 +965,8 @@ global define map getMasterTableWidget () ``{
 	"add_delete_buttons" : true,
 	"up_down_buttons" : false
     ], $[
+	"init" : MasterTableInit,
+	"store" : MasterTableStore,
 	"options" : DnsServerUI::popups,
 	"ids" : getMasterTableContents,
 	"id2key" : masterId2Key,
@@ -918,6 +976,7 @@ global define map getMasterTableWidget () ``{
 	    "summary" : masterTableEntrySummary,
 	    "label_func" : masterTableLabelFunc,
 	],
+	"option_delete" : masterTableEntryDelete,
 	"add_items" : [ "A", "CNAME", "PTR", "NS", "MX" ],
 	"help" : HELPS["master_zone"]:"",
     ]);
@@ -1110,6 +1169,17 @@ define map getAdaptFirewallWidget () ``{
  */
 global define symbol AllowDdnsHandle (string id, map event) ``{
     boolean enabled = (boolean)UI::QueryWidget (`id (id), `Value);
+    while (enabled && size (DnsServer::ListTSIGKeys ()) == 0)
+    {
+	// yes-no popup
+	if (! Popup::YesNo (_("No TSIG key is defined. Define it now?")))
+	{
+	    UI::ChangeWidget (`id (id), `Value, false);
+	    UI::ChangeWidget (`id ("ddns_key"), `Enabled, false);
+	    return nil;
+	}
+	return `ddns;
+    }
     UI::ChangeWidget (`id ("ddns_key"), `Enabled, enabled);
     return nil;
 }
@@ -1121,13 +1191,16 @@ global define symbol AllowDdnsHandle (string id, map event) ``{
 global define void AllowDdnsInit (string id) ``{
     boolean allowed = false;
     string key = nil;
-    list<string> updater_keys = DnsServer::GetUpdaterKeys ();
+    list<map<string,string> > updater_keys_m = DnsServer::ListTSIGKeys ();
+    list<string> updater_keys = maplist (map m, updater_keys_m, ``(
+	m["key"]:""
+    ));
     UI::ReplaceWidget (`ddns_key_rp,
 	`ComboBox (
 	    `id ("ddns_key"),
 	    `opt (`hstretch),
 	    // combo box
-	    _("Updater &key"),
+	    _("TSIG &key"),
 	    updater_keys));
     foreach (map m, current_zone["options"]:[], ``{
 	if (m["key"]:"" == "allow-update")
@@ -1158,7 +1231,7 @@ global define void AllowDdnsInit (string id) ``{
 global define void AllowDdnsStore (string id, map event) ``{
     current_zone["options"] = maplist (map m, current_zone["options"]:[], ``{
 	if (m["key"]:"" == "allow-update"
-	    && regexpmatch (m["value"]:"", "^.*key[ \t]+DHCP_UPDATER.*$"))
+	    && regexpmatch (m["value"]:"", "^.*key[ \t]+[^ \t;]+[ \t;]+.*$"))
 	{
 	    return $[];
 	}
@@ -1190,7 +1263,7 @@ define map getAllowDdnsWidget () ``{
 	    ),
 	    `ReplacePoint (`id (`ddns_key_rp),
 		// combo box
-		`ComboBox (`id ("ddns_key"), `opt(`hstretch), _("Updater &key"))
+		`ComboBox (`id ("ddns_key"), `opt(`hstretch), _("TSIG &key"))
 	    )
 	),
 	"help" : HELPS["allow_ddns"]:"",
@@ -1295,7 +1368,7 @@ define map getDdnsKeysWidget () ``{
 	    `VSpacing (1),
 	    `Frame (_("Add new key"), `VBox (
 		`HBox (
-		    `TextEntry (`id (`k_new), _("New file")),
+		    `TextEntry (`id (`k_new), _("&File Name")),
 		    `VBox (
 			`Label (" "),
 			`PushButton (`id (`k_browse), Label::BrowseButton ())

@@ -164,7 +164,7 @@ define symbol runFirewallDialog () ``{
  * @return symbol for wizard sequencer
  */
 define symbol runDDNSDialog () ``{
-    y2milestone ("Running Dynamic DNS settings dialog");
+    y2milestone ("Running TSIG keys management dialog");
 
     list<string> w = ["ddns_keys"];
 
@@ -175,7 +175,7 @@ define symbol runDDNSDialog () ``{
     ), `HSpacing (2));
 
     // dialog caption
-    string caption = _("Dynamic DNS settings");
+    string caption = _("TSIG keys management");
 
     return CWM::ShowAndRun (w, DnsServerUI::widgets,
 	contents, caption, Label::BackButton (), Label::OKButton (),
@@ -222,8 +222,7 @@ global define symbol runMasterZoneDialog () ``{
 	`HBox (`HSpacing (2), "allow_ddns", `HSpacing (2)),
 	`VSpacing (1),
 	"master_table",
-	`VSpacing (1),
-	"soa_button"
+	`VSpacing (1)
     ), `HSpacing (1));
     // dialog caption
     string caption = _("DNS Master Zone Configuration");

@@ -30,6 +30,7 @@
     define list<string> current_zone_ns = [];
     define list<string> current_zone_mx = [];
     define list<string> current_zone_masters = [];
+    define list<map> current_zone_upd_ops = [];
 
     include "dns-server/misc.ycp";
     include "dns-server/helps.ycp";

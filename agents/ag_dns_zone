@@ -122,13 +122,13 @@ while ( <STDIN> )
 		    $line = <IN>;
 		    ($soa{"serial"}) = $line =~ /^[ \t]*([0-9]+)[ \t]/ if $line =~ /^[ \t]*([0-9]+)[ \t]/;
 		    $line = <IN>;
-		    ($soa{"refresh"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z])[ \t]/ if $line =~ /^[ \t]*([0-9]+[a-zA-Z])[ \t]/;
+		    ($soa{"refresh"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/ if $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/;
 		    $line = <IN>;
-		    ($soa{"retry"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z])[ \t]/ if $line =~ /^[ \t]*([0-9]+[a-zA-Z])[ \t]/;
+		    ($soa{"retry"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/ if $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/;
 		    $line = <IN>;
-		    ($soa{"expiry"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z])[ \t]/ if $line =~ /^[ \t]*([0-9]+[a-zA-Z])[ \t]/;
+		    ($soa{"expiry"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/ if $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/;
 		    $line = <IN>;
-		    ($soa{"minimum"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z])[ \t]/ if $line =~ /^[ \t]*([0-9]+[a-zA-Z])[ \t]/;
+		    ($soa{"minimum"}) = $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/ if $line =~ /^[ \t]*([0-9]+[a-zA-Z]*)[ \t]/;
 		    $data{"soa"} = \%soa;
 		    if ($comment ne "")
 		    {
@@ -136,11 +136,11 @@ while ( <STDIN> )
 			$comment = "";
 		    }
 		}
-		elsif ($line =~ /^[^ \t]*[ \t]*[0-9]*[ \t]*IN[ \t]*[A-Za-z]+[ \t]*[^ \t;\n][^;\n]*.*$/) #normal record
+		elsif ($line =~ /^[^ \t]*[ \t]*[0-9]*[ \t]*(IN)?[ \t]*[A-Za-z]+[ \t]*[^ \t;\n][^;\n]*.*$/) #normal record
 		{
 		    my %rec = ();
-		    
-		    ($rec{"key"}, $rec{"type"}, $rec{"value"}) = $line =~ /^([^ \t]*)[ \t]*[0-9]*[ \t]*IN[ \t]*([A-Za-z]+)[ \t]*([^;\n]+).*$/;
+		    my $in = "";
+		    ($rec{"key"}, $in, $rec{"type"}, $rec{"value"}) = $line =~ /^([^ \t]*)[ \t]*[0-9]*[ \t]*(IN)?[ \t]*([A-Za-z]+)[ \t]*([^;\n]+).*$/;
 
 		    if ($line =~ /^[^;]*;.*$/)
 		    {

@@ -51,45 +51,6 @@ global define string globalTableEntrySummary (any opt_id, string opt_key)``{
     return sformat ("%1", current_section[oid, "value"]:"");
 }
 
-    /**
-      * Ask for type of new record to the zone file
-      * @param type symbol type of zone
-      * @return symbol type of new record or nil if canceled
-      */
-    global define symbol askForRecType (symbol type) ``{
-	term buttons = `Empty ();
-	if (type == `normal)
-	    buttons = `VBox (
-		// zone record type
-		`Left (`RadioButton (`id (`a), _("A"), true)),
-		// zone record type
-		`Left (`RadioButton (`id (`cname), _("CNAME"), false))
-	    );
-	term t = `HBox (`HSpacing (1), `VBox (
-	    // heading
-	    `Heading (_("Select the Record Type to Add")),
-	    `VSpacing (1),
-	    `RadioButtonGroup (`id (`rt), buttons),
-	    `VSpacing (1),
-	    CWM::OkCancelBox (),
-	    `VSpacing (1)
-	), `HSpacing (1));
-	UI::OpenDialog (t);
-	UI::SetFocus (`id (`a));
-	symbol ret = nil;
-	while (ret == nil)
-	    ret = (symbol)UI::UserInput ();
-	if (ret == `_tp_ok)
-	{
-	    ret = (symbol)UI::QueryWidget (`id (`rt), `CurrentButton);
-	    UI::CloseDialog ();
-	    return ret;
-	}
-	UI::CloseDialog ();
-	return nil;
-    }
-
-
 
 // master domain table fallback handlers
 
@@ -100,8 +61,13 @@ global define string globalTableEntrySummary (any opt_id, string opt_key)``{
  */
 global define void masterPopupInit (any opt_id, string opt_key) ``{
     integer index = (integer)opt_id;
-    string key = current_zone["records", index, "key"]:"";
-    string value = current_zone["records", index, "value"]:"";
+    string key = "";
+    string value = "";
+    if (index != nil)
+    {
+	key = current_zone["records", index, "key"]:"";
+	value = current_zone["records", index, "value"]:"";
+    }
     UI::ChangeWidget (`key, `Value, key);
     UI::ChangeWidget (`value, `Value, value);
     UI::SetFocus (`key);
@@ -118,6 +84,12 @@ global define void masterPopupStore (any opt_id, string opt_key) ``{
     string value = (string)UI::QueryWidget (`value, `Value);
     if (index != nil)
     {
+	current_zone_upd_ops = add (current_zone_upd_ops, $[
+	    "operation" : "delete",
+	    "type" : opt_key,
+	    "key" : current_zone["records", index, "key"]:"",
+	    "value" : current_zone["records", index, "value"]:"",
+	]);
 	current_zone["records", index, "value"] = value;
 	current_zone["records", index, "key"] = key;
     }
@@ -130,6 +102,12 @@ global define void masterPopupStore (any opt_id, string opt_key) ``{
 	];
 	current_zone["records"] = add (current_zone["records"]:[], new_rec);
     }
+    current_zone_upd_ops = add (current_zone_upd_ops, $[
+	"operation" : "add",
+	"type" : opt_key,
+	"key" : key,
+	"value" : value,
+    ]);
 }
 
 /**
@@ -336,8 +314,8 @@ define map getAPopup () ``{
     return $[
 	"table" : $[
 	    "summary" : ASummary,
-	    // combo box item
-	    "label" : _("Domain Name Translation"),
+	    // combo box item, A is more technical description
+	    "label" : _("A - Domain Name Translation"),
 	],
 	"popup" : $[
 	    "widget" : `custom,
@@ -368,8 +346,8 @@ define map getCNAMEPopup () {
     return $[
 	"table" : $[
 	    "summary" : CNAMESummary,
-	    // combo box item
-	    "label" : _("Alias for Domain Name"),
+	    // combo box item, CNAME is more technical description
+	    "label" : _("CNAME - Alias for Domain Name"),
 	],
 	"popup" : $[
 	    "widget" : `custom,
@@ -400,8 +378,8 @@ define map getPTRPopup () ``{
     return $[
 	"table" : $[
 	    "summary" : PTRSummary,
-	    // combo box item
-	    "label" : _("Reverse translation"),
+	    // combo box item, PTR is more technical description
+	    "label" : _("PTR - Reverse translation"),
 	],
 	"popup" : $[
 	    "widget" : `custom,
@@ -431,8 +409,8 @@ define map getNSPopup () ``{
     return $[
 	"table" : $[
 	    "summary" : NSSummary,
-	    // combo box item
-	    "label" : _("Name Server"),
+	    // combo box item, NS is more technical description
+	    "label" : _("NS - Name Server"),
 	],
 	"popup" : $[
 	    "widget" : `custom,
@@ -464,8 +442,13 @@ global define string MXSummary (any opt_id, string key) ``{
 
 global define void MXInit (any opt_id, string key) ``{
     integer index = (integer)opt_id;
-    string key = current_zone["records", index, "key"]:"";
-    string value = current_zone["records", index, "value"]:"";
+    string key = "";
+    string value = "";
+    if (index != nil)
+    {
+	key = current_zone["records", index, "key"]:"";
+	value = current_zone["records", index, "value"]:"";
+    }
     list<string> l = splitstring (value, " ");
     l = filter (string s, l, ``(s != ""));
     string prio = l[0]:"";
@@ -486,6 +469,12 @@ global define void MXStore (any opt_id, string opt_key) ``{
     value = sformat ("%1 %2", prio, value);
     if (index != nil)
     {
+	current_zone_upd_ops = add (current_zone_upd_ops, $[
+	    "operation" : "delete",
+	    "type" : opt_key,
+	    "key" : current_zone["records", index, "key"]:"",
+	    "value" : current_zone["records", index, "value"]:"",
+	]);
 	current_zone["records", index, "value"] = value;
 	current_zone["records", index, "key"] = key;
     }
@@ -498,6 +487,12 @@ global define void MXStore (any opt_id, string opt_key) ``{
 	];
 	current_zone["records"] = add (current_zone["records"]:[], new_rec);
     }
+    current_zone_upd_ops = add (current_zone_upd_ops, $[
+	"operation" : "add",
+	"type" : opt_key,
+	"key" : key,
+	"value" : value,
+    ]);
 }
 
 define map getMXPopup () ``{
@@ -506,8 +501,8 @@ define map getMXPopup () ``{
 	    "summary" : MXSummary,
 	    "init" : MXInit,
 	    "store" : MXStore,
-	    // combo box item
-	    "label" : _("Mail Relay"),
+	    // combo box item, MX is more technical description
+	    "label" : _("MX - Mail Relay"),
 	],
 	"popup" : $[
 	    "widget" : `custom,
