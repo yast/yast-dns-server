@@ -3,6 +3,9 @@ Tue Sep  2 10:03:55 CEST 2003 - jsrain@suse.de
 
 - fixed deleting a DNS zone
 - ask user before deleting a DNS zone
+- fixed translation of exit without saving popup (was evaluated in
+  incorect textdomain)
+- using Popup::RealyAbort function
 
 -------------------------------------------------------------------
 Mon Sep  1 13:11:28 CEST 2003 - jsrain@suse.de
