@@ -1,0 +1,47 @@
+/**
+ * File:	modules/DnsServer.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Data for configuration of dns-server, input and output functions.
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ *
+ * Representation of the configuration of dns-server.
+ * Input and output routines.
+ */
+
+{
+
+    module "DnsServerUI";
+    textdomain "dns-server";
+
+    import "Progress";
+    import "Report";
+    import "Summary";
+    import "Runlevel";
+    import "Require";
+    import "Mode";
+
+
+    include "dns-server/helps.ycp";
+
+    include "dns-server/options.ycp";
+
+    /**
+      * Map of popups for CWM
+      */
+    global map popups = InitPopups ();
+
+    include "dns-server/widgets.ycp";
+
+    /**
+      * Map of widgets for CWM
+      */
+    global map widgets = InitWidgets ();
+
+//    include "dns-server/misc.ycp";
+    include "dns-server/dialogs.ycp";
+    include "dns-server/wizards.ycp";
+
+/* EOF */
+}

@@ -4,6 +4,8 @@
 
 yncludedir = @yncludedir@/dns-server
 
+YCPCFLAGS = -M . -I .
+
 client_DATA =			\
 	dns-server.ycp		\
 	dns-server_auto.ycp
@@ -23,6 +25,14 @@ desktop_DATA =			\
 	dns-server.desktop
 
 module_DATA =			\
-	DnsServer.ycp
+	DnsServer.pm		\
+	DnsServerUI.ycp
 
 EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(config_DATA) $(module_DATA) $(desktop_DATA)
+
+dns-server:
+	test -l dns-server || ln -s . dns-server
+
+ycpchook = dns-server
+
+include $(top_srcdir)/Makefile.am.common
