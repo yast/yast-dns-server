@@ -65,7 +65,7 @@ term ExpertStartUpDialog () {
 				    `Label (_("Current Status: ")),
 				    `ReplacePoint (`id ("service_status_rp"),
 					// service status - label
-					`Label (_("DNS server is running."))
+					`Label (_("DNS server is running"))
 				    ),
 				    `HStretch ()
 				),
@@ -97,9 +97,9 @@ void UpdateServiceStatusWidget () {
 	UI::ReplaceWidget (`id ("service_status_rp"),
 	    `Label (status
 		// service sttus - label
-		? _("DNS server is running.")
+		? _("DNS server is running")
 		// service sttus - label
-		: _("DNS server is not running.")
+		: _("DNS server is not running")
 	    )
 	);
     }
@@ -1578,7 +1578,7 @@ map<string,map<string,any> > new_widgets = $[
     "start_stop" : CWMServiceStart::CreateStartStopWidget ($[
 	"service_id" : "named",
 	// label - service status
-	"service_running_label" : _("DNS Server is running"),
+	"service_running_label" : _("DNS server is running"),
 	// label - service status
 	"service_not_running_label" : _("DNS server is not running"),
 	// push button
