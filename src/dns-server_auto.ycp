@@ -67,6 +67,9 @@ else if (func == "Export") {
 else if (func == "Packages") {
     ret = DnsServer::AutoPackages();
 }
+else if (func == "GetModified") {
+    ret = DnsServer::modified;
+}
 /* Read current state */
 else if (func == "Read") {
     import "Progress";
