@@ -1,5 +1,5 @@
 @HEADER-COMMENT@
-# neededforbuild yast2-devel-packages perl-gettext yast2-perl-bindings yast2-firewall yast2-ldap-server perl-X500-DN yast2-network perl-Digest-SHA1 perl-Parse-RecDescent yast2-country
+# neededforbuild yast2-devel-packages perl-gettext yast2-perl-bindings yast2-firewall yast2-ldap-server perl-X500-DN yast2-network perl-Digest-SHA1 perl-Parse-RecDescent yast2-country yast2-installation
 
 
 @HEADER@
