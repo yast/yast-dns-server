@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Aug 16 12:45:33 CEST 2004 - locilka@suse.cz
+
+- fixed "modified" functionality when firewall is changed
+- 2.10.4 
+
+-------------------------------------------------------------------
 Tue Aug 10 10:27:21 CEST 2004 - locilka@suse.cz
 
 - merged proofread messages

@@ -1151,7 +1151,7 @@ sub Write {
 
     my $ok = 1;
 
-    if (! $modified)
+    if ((! $modified) && (! SuSEFirewall->GetModified()))
     {
 	return Boolean($ok);
     }
@@ -1165,10 +1165,6 @@ sub Write {
     {
 	LdapPrepareToWrite ();
     }
-
-    #adapt firewall
-### FIXME:
-###    $ok = $self->AdaptFirewall () && $ok;
 
     # save ACLs
     $ok = SCR->Write (".dns.named.value.acl", \@acl) && $ok;
