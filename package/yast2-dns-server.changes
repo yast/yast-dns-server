@@ -1,4 +1,15 @@
 -------------------------------------------------------------------
+Thu Feb 24 08:31:34 CET 2005 - locilka@suse.cz
+
+- fixed testsuite because of new feature
+  INCOMPLETE_TRANSLATION_TRESHOLD
+- fixed bug #66421, chroot variable had been Exported wrong
+- logging setting in UI changed to use the same functions as CMDLn
+- added Perldoc documentation for DnsServerAPI module
+- fixed syntax of YCP, importing modules, <p></p> in helps and
+  shortcuts
+
+-------------------------------------------------------------------
 Mon Feb 21 10:40:13 CET 2005 - locilka@suse.cz
 
 - added global functional DnsServerAPI Perl module

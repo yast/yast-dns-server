@@ -15,6 +15,31 @@
 #                                                                         #
 ###                                                                     ###
 
+=head1 NAME
+
+DnsServerAPI - DNS server configuration funtional API
+
+=head1 PREFACE
+
+This package is the public functional YaST2 API to configure the Bind version 9
+
+=head1 SYNOPSIS
+
+use DnsServerAPI;
+
+$categories = DnsServerAPI::GetLoggingCategories();
+
+Note: All arrays or hashes returned or accepted by this module are references
+to them. However it is impossible to change the data through the references,
+because the references are, actually, references to copies of the data.
+
+=head1 DESCRIPTION
+
+=over 2
+
+=cut
+
+### Real code starts here ->
 package DnsServerAPI;
 
 use strict;
@@ -391,6 +416,17 @@ Use 'priority server-name'."));
     return 1;
 }
 
+=item *
+C<$integer = TimeToSeconds($string);>
+
+Gets the BIND time parameter and transforms it into seconds.
+
+EXAMPLE:
+
+my $time = TimeToSeconds("1W2d4H");
+
+=cut
+
 BEGIN{$TYPEINFO{TimeToSeconds} = ["function", "integer", "string"]};
 sub TimeToSeconds {
     my $class        = shift;
@@ -421,6 +457,19 @@ sub TimeToSeconds {
 
     return $totaltime;
 }
+
+=item *
+C<$string = SecondsToHighestTimeUnit($integer);>
+
+Gets the time in seconds and returns BIND time format with
+the highest possible time unit selected.
+
+EXAMPLE:
+
+my $bind_time = SecondsToHighestTimeUnit(259200);
+-> "3D"
+
+=cut
 
 BEGIN{$TYPEINFO{SecondsToHighestTimeUnit} = ["function", "string", "integer"]};
 sub SecondsToHighestTimeUnit {
@@ -594,6 +643,17 @@ sub GetDnsServiceStatus {
     return DnsServer->GetDnsServiceStatus ();
 }
 
+=item *
+C<$boolean = Read($time);>
+
+Reads current BIND configuration.
+
+EXAMPLE:
+
+my $success = Read();
+
+=cut
+
 BEGIN{$TYPEINFO{Read} = ["function", "boolean"]};
 sub Read {
     my $class = shift;
@@ -605,6 +665,17 @@ sub Read {
     return $ret;
 }
 
+=item *
+C<$boolean = Write($time);>
+
+Writes current BIND configuration.
+
+EXAMPLE:
+
+my $success = Write();
+
+=cut
+
 BEGIN{$TYPEINFO{Write} = ["function", "boolean"]};
 sub Write {
     my $class = shift;
@@ -615,6 +686,17 @@ sub Write {
 
     return $ret;
 }
+
+=item *
+C<@array = GetForwarders();>
+
+Returns list of general DNS forwarders.
+
+EXAMPLE:
+
+my $list_of_forwarders = GetForwarders();
+
+=cut
 
 BEGIN{$TYPEINFO{GetForwarders} = ["function", ["list", "string"]]};
 sub GetForwarders {
@@ -633,6 +715,17 @@ sub GetForwarders {
 
     return \@ret;
 }
+
+=item *
+C<$boolean = AddForwarder($ipv4);>
+
+Adds a new forwarder into the list of current forwarders.
+
+EXAMPLE:
+
+my $success = AddForwarder($forwarder_ip);
+
+=cut
 
 BEGIN{$TYPEINFO{AddForwarder} = ["function", "boolean", "string"]};
 sub AddForwarder {
@@ -664,6 +757,17 @@ sub AddForwarder {
     return 1;
 }
 
+=item *
+C<$boolean = RemoveForwarder($ipv4);>
+
+Removes forwarder from the list of current forwarders.
+
+EXAMPLE:
+
+my $success = RemoveForwarder($forwarder_ip);
+
+=cut
+
 BEGIN{$TYPEINFO{RemoveForwarder} = ["function", "boolean", "string"]};
 sub RemoveForwarder {
     my $class = shift;
@@ -692,6 +796,21 @@ sub RemoveForwarder {
     return 1;
 }
 
+=item *
+C<$boolean = IsLoggingSupported();>
+
+Checks whether the current configuration is supported by functions for getting
+or changing configuration by this module. User should be warned that his
+configuration could get demaged if he change it by this module.
+
+Only one logging channel is supported.
+
+EXAMPLE:
+
+my $is_supported = IsLoggingSupported($forwarder_ip);
+
+=cut
+
 BEGIN{$TYPEINFO{IsLoggingSupported} = ["function", "boolean"]};
 sub IsLoggingSupported {
     my $class = shift;
@@ -718,6 +837,26 @@ sub IsLoggingSupported {
     }
     return 1;
 }
+
+=item *
+C<$hash = GetLoggingChannel();>
+
+Returns hash with current logging channel.
+
+EXAMPLE:
+
+  my $channel = GetLoggingChannel();
+  if ($channel->{'destination'} eq 'syslog') {
+    print "logging to syslog is used";
+  } elsif ($channel->{'destination'} eq 'file') {
+    print
+      "logging to file is used\n".
+      " File: ".$channel->{'filename'}.
+      " Max. Versions: ".$channel->{'versions'}.
+      " Max. Size: ".$channel->{'size'};
+  }
+
+=cut
 
 BEGIN{$TYPEINFO{GetLoggingChannel} = ["function", ["map", "string", "string"]]};
 sub GetLoggingChannel {
@@ -761,6 +900,28 @@ sub GetLoggingChannel {
 
     return $logging_ret;
 }
+
+=item *
+C<$boolean = SetLoggingChannel($hash);>
+
+Returns hash with current logging channel.
+
+EXAMPLE:
+
+  if ($log_to_syslog) {
+    $success = SetLoggingChannel(
+      'destination' => 'syslog'
+    );
+  } else {
+    $success = SetLoggingChannel(
+      'destination' => 'file',
+      'filename'    => '/var/log/named.log',
+      'versions'    => '8',
+      'size'        => '10M',
+    );
+  }
+
+=cut
 
 BEGIN{$TYPEINFO{SetLoggingChannel} = ["function", "boolean", ["map", "string", "string"]]};
 sub SetLoggingChannel {
@@ -840,6 +1001,20 @@ Possible suffixes are 'k', 'K', 'm', 'M', 'g' or 'G'."));
     return 1;
 }
 
+=item *
+C<$array = GetLoggingCategories();>
+
+Returns list of used logging categories.
+
+EXAMPLE:
+
+  my $categories = GetLoggingCategories();
+  foreach my $category (@{$categories}) {
+    print "Using category: ".$category."\n";
+  }
+
+=cut
+
 BEGIN{$TYPEINFO{GetLoggingCategories} = ["function", ["list", "string"]]};
 sub GetLoggingCategories {
     my $class = shift;
@@ -861,6 +1036,18 @@ sub GetLoggingCategories {
     return \@used_categories;
 }
 
+=item *
+C<$boolean = SetLoggingCategories($array);>
+
+Returns list of used logging categories.
+
+EXAMPLE:
+
+  my @categories = ('default', 'xfer-in');
+  my $success = SetLoggingCategories(\@categories);
+
+=cut
+
 BEGIN{$TYPEINFO{SetLoggingCategories} = ["function", "boolean", ["list", "string"]]};
 sub SetLoggingCategories {
     my $class = shift;
@@ -876,6 +1063,12 @@ sub SetLoggingCategories {
     }
 
     my @new_logging;
+
+    # 'default' category should be used allways
+    # that's the default for BIND in SUSE
+    if (!DnsServer->contains($categories, 'default')) {
+	push @{$categories}, 'default';
+    }
     
     # defining the chanel
     my $logging = DnsServer->GetLoggingOptions();
@@ -934,6 +1127,27 @@ sub RemoveNamedOption {
     y2error("NOT IMPLEMENTED YET - SLES FUNCTIONALITY");
 }
 
+=item *
+C<$hash = GetACLs();>
+
+Returns hash of possible ACLs.
+
+EXAMPLE:
+
+  my $acls = GetACLs();
+  foreach $acl_name (keys %{$acls}) {
+    if (defined $acls->{$acl_name}->{'default'}) {
+	# names: 'any', 'none', 'localnets', 'localips'
+	print "Default: ".$acl_name."\n";
+    } else {
+	print
+	    "Custom: ".$acl_name." ".
+	    "Value: ".$acls->{$acl_name}->{'value'}."\n";
+    }
+  }
+
+=cut
+
 BEGIN{$TYPEINFO{GetACLs} = ["function", ["map", "string", ["map", "string", "string"]]]};
 sub GetACLs {
     my $class = shift;
@@ -964,6 +1178,22 @@ sub GetACLs {
     return $return_acls;
 }
 
+=item *
+C<$hash = GetZones($string);>
+
+Returns all DNS zones administered by this DNS server.
+
+EXAMPLE:
+
+  my $zones = GetZones();
+  foreach my $zone (keys %{$zones}) {
+    print
+      "Zone Name: ".$zone." ".
+      "Zone Type: ".$zones->{$zone}->{'type'}."\n"; # 'master' or 'slave'
+  }
+
+=cut
+
 BEGIN{$TYPEINFO{GetZones} = ["function", ["map", "string", ["map", "string", "string"]]]};
 sub GetZones {
     my $class = shift;
@@ -978,6 +1208,21 @@ sub GetZones {
 
     return $zones_return;
 }
+
+=item *
+C<$array = GetZoneMasterServers($string);>
+
+Returns list of master servers assigned to this slave zone.
+Master zones do not have any master servers defined.
+
+EXAMPLE:
+
+  my $zone = 'example.org';
+  foreach my $server @(GetZoneMasterServers($zone)) {
+    print "Zone ".$zone." uses ".$server." master server\n";
+  }
+
+=cut
 
 BEGIN{$TYPEINFO{GetZoneMasterServers} = ["function", ["list", "string"], "string"]};
 sub GetZoneMasterServers {
@@ -1005,6 +1250,19 @@ Zone '%1' is type '%2'."), $_->{'zone'}, $_->{'type'}));
 
     return \@masters;
 }
+
+=item *
+C<$boolean = SetZoneMasterServers($string,$array);>
+
+Sets masterservers for slave zone.
+
+EXAMPLE:
+
+  my @masterservers = ('192.168.32.1','192.168.32.2');
+  my $zone = 'example.org';
+  my $success = SetZoneMasterServers($zone, \@masterservers);
+
+=cut
 
 BEGIN{$TYPEINFO{SetZoneMasterServers} = ["function", "boolean", "string", ["list", "string"]]};
 sub SetZoneMasterServers {
@@ -1034,6 +1292,32 @@ Zone '%1' is type '%2'."), $_->{'zone'}, $_->{'type'}));
 
     return 1;
 }
+
+=item *
+C<$boolean = AddZone($string,$string,$hash);>
+
+Function creates new DNS zone. Option 'masterserver' is needed
+for 'slave' zone.
+
+EXAMPLE:
+
+  # 'master' zone
+  $success = AddZone(
+    'example.org', # zone name
+    'master',      # zone type
+    {}             # without options
+  );
+  
+  # 'slave' zone
+  $success = AddZone(
+    'example.org', # zone name
+    'slave',       # zone type
+    {              # 'masterserver' must be defined for 'slave' zone
+	'masterserver' => '192.168.64.2'
+    }
+  );
+
+=cut
 
 BEGIN{$TYPEINFO{AddZone} = ["function", "boolean", "string", "string", ["map", "string", "string"]]};
 sub AddZone {
@@ -1084,6 +1368,17 @@ sub AddZone {
     return 1;
 }
 
+=item *
+C<$boolean = RemoveZone($string);>
+
+Function removes a zone.
+
+EXAMPLE:
+
+$success = RemoveZone('example.org');
+
+=cut
+
 BEGIN{$TYPEINFO{RemoveZone} = ["function", "boolean", "string"]};
 sub RemoveZone {
     my $class = shift;
@@ -1102,6 +1397,20 @@ sub RemoveZone {
 
     return 1;
 }
+
+=item *
+C<$array = GetZoneTransportACLs($string);>
+
+Function returns list of ACLs used for Zone Transportation.
+
+EXAMPLE:
+
+  my $acls = GetZoneTransportACLs('example.org');
+  foreach my $acl_name (@{$acls}) {
+    print "ACL used: ".$acl_name."\n";
+  }
+
+=cut
 
 BEGIN{$TYPEINFO{GetZoneTransportACLs} = ["function", ["list", "string"], "string"]};
 sub GetZoneTransportACLs {
@@ -1161,6 +1470,18 @@ sub SetZoneTransportACLs {
     return 1;
 }
 
+=item *
+C<$boolean = AddZoneTransportACL($string,$string);>
+
+Adds ACL into ACLs allowed for Zone Transportation.
+ACL must be known (default or custom).
+
+EXAMPLE:
+
+my $success = AddZoneTransportACL('example.org','localnets');
+
+=cut
+
 BEGIN{$TYPEINFO{AddZoneTransportACL} = ["function", "boolean", "string", "string"]};
 sub AddZoneTransportACL {
     my $class = shift;
@@ -1173,6 +1494,18 @@ sub AddZoneTransportACL {
     my @used_acls = ToSet(@{$class->GetZoneTransportACLs($zone)}, $acl);
     $class->SetZoneTransportACLs($zone, \@used_acls);
 }
+
+=item *
+C<$boolean = RemoveZoneTransportACL($string,$string);>
+
+Removes ACL from ACLs allowed for Zone Transportation.
+ACL must be known (default or custom).
+
+EXAMPLE:
+
+my $success = RemoveZoneTransportACL('example.org','localnets');
+
+=cut
 
 BEGIN{$TYPEINFO{RemoveZoneTransportACL} = ["function", "boolean", "string", "string"]};
 sub RemoveZoneTransportACL {
@@ -1217,6 +1550,18 @@ sub GetZoneRecords {
     return \@records;
 }
 
+=item *
+C<$array = GetZoneNameServers($string);>
+
+Function returns list of Zone Name Servers.
+Only Zone base name servers are returned.
+
+EXAMPLE:
+
+my $nameservers = GetZoneNameServers('example.org');
+
+=cut
+
 BEGIN{$TYPEINFO{GetZoneNameServers} = ["function", ["list", "string"], "string"]};
 sub GetZoneNameServers {
     my $class = shift;
@@ -1233,6 +1578,23 @@ sub GetZoneNameServers {
 
     return \@nameservers;
 }
+
+=item *
+C<$array = GetZoneMailServers($string);>
+
+Function returns list of hashes of Zone Mail Servers.
+Only Zone base mail servers are returned.
+
+EXAMPLE:
+
+  my $mailservers = GetZoneMailServers('example.org');
+  foreach my $mailserver (@{$mailservers}) {
+    print
+	"Mail Server: ".$mailserver->{'name'}." ".
+	"Priority: ".$mailserver->{'priority'};
+  }
+
+=cut
 
 BEGIN{$TYPEINFO{GetZoneMailServers} = ["function", ["list", ["map", "string", "string"]], "string"]};
 sub GetZoneMailServers {
@@ -1260,6 +1622,25 @@ sub GetZoneMailServers {
     return \@mailservers;
 }
 
+=item *
+C<$array = GetZoneRRs($string);>
+
+Returns list of hashes with all zone records inside.
+Base Zone Name and Mail Servers are filtered out.
+
+EXAMPLE:
+
+  my $records = GetZoneRRs('example.org');
+  foreach my $record (@{$records}) {
+    print
+	"Record:\n".
+	"  Key: ".$record->{'key'}."\n".     # DNS Query
+	"  Type: ".$record->{'type'}."\n".   # Resource Record Type
+	"  Value: ".$record->{'value'}."\n"; # DNS Reply
+  }
+
+=cut
+
 BEGIN{$TYPEINFO{GetZoneRRs} = ["function", ["list", ["map", "string", "string"]], "string"]};
 sub GetZoneRRs {
     my $class = shift;
@@ -1281,6 +1662,31 @@ sub GetZoneRRs {
 
     return \@records;
 }
+
+=item *
+C<$boolean = AddZoneRR($string,$string,$string,$string);>
+
+Adds Zone Resource Record.
+
+EXAMPLE:
+
+  # absolute hostname
+  $success = AddZoneRR(
+    'example.org',         # zone name
+    'A',                   # record type
+    'dhcp25.example.org.', # record key / DNS query
+    '192.168.2.25',        # record value / DNS reply
+  );
+
+  # hostname relative to the zone name
+  $success = AddZoneRR(
+    '2.168.192.id-addr.arpa', # zone name
+    'PTR',                    # record type
+    '25',                     # record key / DNS query
+    'dhcp25.example.org.',    # record value / DNS reply
+  );
+
+=cut
 
 BEGIN{$TYPEINFO{AddZoneRR} = ["function","boolean","string","string","string","string"]};
 sub AddZoneRR {
@@ -1345,6 +1751,31 @@ sub AddZoneRR {
 
     return 1;
 }
+
+=item *
+C<$boolean = RemoveZoneRR($string,$string,$string,$string);>
+
+Removes Zone Resource Record.
+
+EXAMPLE:
+
+  # absolute hostname
+  $success = RemoveZoneRR(
+    'example.org',         # zone name
+    'A',                   # record type
+    'dhcp25.example.org.', # record key / DNS query
+    '192.168.2.25',        # record value / DNS reply
+  );
+
+  # hostname relative to the zone name
+  $success = RemoveZoneRR(
+    '2.168.192.id-addr.arpa',  # zone name
+    'MX',                      # record type
+    '2.168.192.id-addr.arpa.', # record key / DNS query
+    '10 mx1.example.org.',     # record value / DNS reply
+  );
+
+=cut
 
 BEGIN{$TYPEINFO{RemoveZoneRR} = ["function","boolean","string","string","string","string"]};
 sub RemoveZoneRR {
@@ -1478,6 +1909,20 @@ sub RemoveZoneRR {
     return 1;
 }
 
+=item *
+C<$boolean = AddZoneNameServer($zone,$nameserver);>
+
+Adds zone nameserver into the zone.
+
+EXAMPLE:
+
+  # relative name of the nameserver to the zone name
+  $success = AddZoneNameServer('example.org','ns1');
+  # absolute name of the nameserver ended with a dot
+  $success = AddZoneNameServer('example.org','ns2.example.org.');
+
+=cut
+
 BEGIN{$TYPEINFO{AddZoneNameServer} = ["function","boolean","string","string"]};
 sub AddZoneNameServer {
     my $class = shift;
@@ -1490,6 +1935,20 @@ sub AddZoneNameServer {
     return $class->AddZoneRR($zone, 'NS', $zone.'.', $server);
 }
 
+=item *
+C<$boolean = RemoveZoneNameServer($zone,$nameserver);>
+
+Removes zone nameserver from the zone.
+
+EXAMPLE:
+
+  # relative name of the nameserver to the zone name
+  $success = RemoveZoneNameServer('example.org','ns2');
+  # absolute name of the nameserver ended with a dot
+  $success = RemoveZoneNameServer('example.org','ns1.example.org.');
+
+=cut
+
 BEGIN{$TYPEINFO{RemoveZoneNameServer} = ["function","boolean","string","string"]};
 sub RemoveZoneNameServer {
     my $class = shift;
@@ -1501,6 +1960,20 @@ sub RemoveZoneNameServer {
 
     return $class->RemoveZoneRR($zone, 'NS', $zone.'.', $server);
 }
+
+=item *
+C<$boolean = AddZoneMailServer($zone,$mailserver,$priority);>
+
+Adds zone nameserver into the zone.
+
+EXAMPLE:
+
+  # relative name of the mailserver to the zone name
+  $success = AddZoneMailServer('example.org','mx1',0);
+  # absolute name of the mailserver ended with a dot
+  $success = AddZoneMailServer('example.org','mx2.example.org.',5555);
+
+=cut
 
 BEGIN{$TYPEINFO{AddZoneMailServer} = ["function","boolean","string","string","integer"]};
 sub AddZoneMailServer {
@@ -1515,6 +1988,20 @@ sub AddZoneMailServer {
     return $class->AddZoneRR($zone, 'MX', $zone.'.', $prio.' '.$server);
 }
 
+=item *
+C<$boolean = RemoveZoneMailServer($zone,$mailserver,$priority);>
+
+Removes zone mailserver from the zone.
+
+EXAMPLE:
+
+  # relative name of the mailserver to the zone name
+  $success = RemoveZoneMailServer('example.org','mx1',0);
+  # absolute name of the mailserver ended with a dot
+  $success = RemoveZoneMailServer('example.org','mx2.example.org.',5555);
+
+=cut
+
 BEGIN{$TYPEINFO{RemoveZoneMailServer} = ["function","boolean","string","string","integer"]};
 sub RemoveZoneMailServer {
     my $class = shift;
@@ -1527,6 +2014,21 @@ sub RemoveZoneMailServer {
 
     return $class->RemoveZoneRR($zone, 'MX', $zone.'.', $prio.' '.$server);
 }
+
+=item *
+C<$hash = GetZoneSOA($zone);>
+
+Adds zone nameserver into the zone.
+
+EXAMPLE:
+
+  # relative name of the mailserver to the zone name
+  my $SOA = GetZoneSOA('example.org');
+  foreach my $key ('minimum', 'expiry', 'serial', 'retry', 'refresh', 'mail', 'server', 'ttl') {
+    print $key."=".$SOA->{$key}."\n";
+  }
+
+=cut
 
 BEGIN{$TYPEINFO{GetZoneSOA} = ["function",["map","string","string"],"string"]};
 sub GetZoneSOA {
@@ -1555,6 +2057,28 @@ sub GetZoneSOA {
 
     return $return;
 }
+
+=item *
+C<$hash = SetZoneSOA($zone, $soa);>
+
+Adds zone nameserver into the zone.
+
+EXAMPLE:
+
+  # relative name of the mailserver to the zone name
+  my $SOA = {
+    'minimum' => '1d1H',
+    'expiry'  => '1W2d',
+    'serial'  => '1998121001',
+    'retry'   => '3600',
+    'refresh' => '3h5M4S',
+    'mail'    => 'root.ns1.example.org.',
+    'server'  => 'ns1.example.org.',
+    'ttl'     => '2d1h',
+  };
+  my $success = SetZoneSOA('example.org', $SOA);
+
+=cut
 
 BEGIN{$TYPEINFO{SetZoneSOA} = ["function","boolean","string",["map","string","string"]]};
 sub SetZoneSOA {
@@ -1595,6 +2119,18 @@ sub SetZoneSOA {
     return 1;
 }
 
+=item *
+C<$reversezone = GetReverseZoneNameForIP($hostname);>
+
+Returns reverse zone for IPv4 if such zone is
+administered by this DNS server.
+
+EXAMPLE:
+
+  my $reversezone = GetReverseZoneNameForIP('192.168.58.12');
+
+=cut
+
 BEGIN{$TYPEINFO{GetReverseZoneNameForIP} = ["function","string","string"]};
 sub GetReverseZoneNameForIP {
     my $class = shift;
@@ -1624,6 +2160,18 @@ sub GetReverseZoneNameForIP {
     return $matchingzone;
 }
 
+=item *
+C<$reverseip = GetReverseIPforIPv4($ipv4);>
+
+Returns reverse ip for IPv4.
+
+EXAMPLE:
+
+  my $reverseip = GetReverseIPforIPv4('192.168.58.12');
+  -> '12.58.168.192.id-addr.arpa'
+
+=cut
+
 BEGIN{$TYPEINFO{GetReverseIPforIPv4} = ["function","string","string"]};
 sub GetReverseIPforIPv4 {
     my $class = shift;
@@ -1636,6 +2184,19 @@ sub GetReverseIPforIPv4 {
 
     return $reverseip;
 }
+
+=item *
+C<$reverseip = AddHost($zone, $hostname, $ipv4);>
+
+Function adds forward and reverse records into the administered zones.
+Zones must be both defined and they must be 'master's for the zone.
+
+EXAMPLE:
+
+  $success = AddHost('example.org','dhcp25','192.168.58.25');
+  $success = AddHost('example.org','dhcp27.example.org.','192.168.58.27');
+
+=cut
 
 # Adds an A host and its PTR ONLY if reverse zone exists
 BEGIN{$TYPEINFO{AddHost} = ["function","boolean","string","string","string"]};
@@ -1671,6 +2232,20 @@ Host name '%2' cannot be added."), $value, $key));
     return 1;
 }
 
+=item *
+C<$boolean = RemoveHost($zone, $hostname, $ipv4);>
+
+Function removes forward and reverse records from the administered zones.
+Forward zone must be defined, reverse zone is not needed. Both zones must
+be administered by this DNS server ('master's);
+
+EXAMPLE:
+
+  $success = RemoveHost('example.org','dhcp25.example.org.','192.168.58.25');
+  $success = RemoveHost('example.org','dhcp27','192.168.58.27');
+
+=cut
+
 # Removes an A host and also its PTR if reverse zone exists
 BEGIN{$TYPEINFO{RemoveHost} = ["function","boolean","string","string","string"]};
 sub RemoveHost {
@@ -1698,6 +2273,25 @@ sub RemoveHost {
 
     return 1;
 }
+
+=item *
+C<$reverseip = GetZoneHosts($zone);>
+
+Returns list of Zone Hosts which have the forward and also
+the reverse record administered by this DNS server. If zone
+is not set, all zones administered by this DNS server would be checked.
+
+EXAMPLE:
+
+  my $hosts = GetZoneHosts();
+  foreach my $host (@{$hosts}) {
+    print
+      "zone: ".$host->{'zone'}." ".
+      "hostname: ".$host->{'key'}." ".
+      "ipv4: ".$host->{'value'};
+  }
+
+=cut
 
 BEGIN{$TYPEINFO{GetZoneHosts} = ["function", ["list", ["map", "string", "string"]], "string"]};
 sub GetZoneHosts {

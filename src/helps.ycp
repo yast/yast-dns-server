@@ -46,7 +46,7 @@ To run the DNS server every time your computer is started, set
     "chroot" : _("<p><b><big>Chroot Jail</big></b><br>
 To run the DNS server in chroot jail, set
 <b>Run DNS Server in Chroot Jail</b>. Starting any daemon in a chroot jail
-is more secure and strongly recommended."),
+is more secure and strongly recommended.</p>"),
 
     // help 3/4
     "zones" : _("<p><b><big>Editing DNS Zones</big></b><br>
@@ -207,7 +207,7 @@ of these check boxes.</p>
 
     /* Expert Mode Configuration - Forwarders 3/3 */
 _("<p>To add a new forwarder, set its <b>IP Address</b> and click <b>Add</b>.
-To delete a configured forwarder, select it and click <b>Delete</b>."),
+To delete a configured forwarder, select it and click <b>Delete</b>.</p>"),
 
     /* Expert Mode Configuration - Basic Options 1/2 */
 "basic_options" : _("<p><b><big>Edit DNS Server Options</big></b><br>
@@ -234,7 +234,7 @@ Select <b>Log to System Log</b> to save DNS server log messages to system log.
 To save the DNS server log messages to a separate file, select <b>Log to File</b> and specify the <b>File Name</b> to which to save the log and 
 the <b>Maximum Size</b> of the log file.
 The DNS server automatically rotates the log files. Use <b>Maximum Versions</b>
-to specify how many files with the log should be saved.
+to specify how many files with the log should be saved.</p>
 ") +
 
     /* Expert Mode Configuration - Logging 3/3 */
@@ -442,7 +442,7 @@ Check the entered settings before finishing the configuration.</p>
 
 // Final step of the installation wizard - 2/5
 _("<p>Select <b>Open Port in Firewall</b> to adapt the
-SuSEfirewall2 settings to allow all connections to your DNS server.") +
+SuSEfirewall2 settings to allow all connections to your DNS server.</p>") +
 
 // Final step of the installation wizard - 3/5
 _("<p><b><big>Booting</big></b><br>

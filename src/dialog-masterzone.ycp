@@ -21,6 +21,12 @@ import "DnsRoutines";
 import "DnsServerAPI";
 import "ProductFeatures";
 import "Confirm";
+import "Hostname";
+import "IP";
+import "Popup";
+import "DnsTsigKeys";
+import "Mode";
+import "Report";
 
 string ToRelativeName (string absolute_name, string zone_name) {
     if (absolute_name == nil || zone_name == nil) {
@@ -1524,7 +1530,7 @@ symbol runSlaveZoneTabDialog () {
 	),
 	`VSpacing ( 1 ),
 	// TRANSLATORS: Text entry
-	`Left (`TextEntry (`id ("master"), _("Master DNS Server IP"))),
+	`Left (`TextEntry (`id ("master"), _("&Master DNS Server IP"))),
 	`VSpacing (2),
 	`Left (`CheckBox (`id ("enable_zone_transport"), `opt (`notify),
 	    // check box
