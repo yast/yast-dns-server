@@ -1017,11 +1017,14 @@ void InitExpertLoggingPage (string key) {
 
 	    integer sz = tointeger (regexpsub (s, "size[ \t]+([0123456789]+)","\\1"));
 	    string  su = tolower (regexpsub (s, "size[ \t]+[0123456789]+([kKmMgG])","\\1"));
-	    # no unit = in Bytes
-	    if      (su == "")  { sz = tointeger(sz / 1024 / 1024 + 0.5); }
-	    else if (su == "k") { sz = tointeger(sz / 1024 + 0.5); }
-	    # else if (su == "m") {} # M is the default unit
-	    else if (su == "g") { sz = sz * 1024; }
+	    
+	    if (su != nil) {
+		# no unit = in Bytes
+		if (su == "")  { sz = tointeger(sz / 1024 / 1024 + 0.5); }
+		else if (su == "k") { sz = tointeger(sz / 1024 + 0.5); }
+		# else if (su == "m") {} # M is the default unit
+		else if (su == "g") { sz = sz * 1024; }
+	    }
 	    if (sz != nil)
 		UI::ChangeWidget (`id ("max_size"), `Value, sz);
 
@@ -1595,6 +1598,8 @@ map<string,map<string,any> > new_widgets = $[
 	"set_use_ldap" : DnsServer::SetUseLdap,
 	// checkbox label
 	"use_ldap_checkbox" : _("&LDAP Support Active"),
+	// FIXME: help for SLES
+	"help" : "",
     ]),
     "forwarders" : $[
 	"widget"	: `custom,

@@ -18,6 +18,7 @@
     import "CWM";
     import "Wizard";
     import "Message";
+    import "SuSEFirewall";
 
     /**
       * Ask user if exit without saving
@@ -137,7 +138,7 @@ All changes will be lost."));
 /** define symbol runFirewallDialog () ``{
     y2milestone ("Running firewall settings dialog");
 
-    if (! SuSEFirewall::start)
+    if (! SuSEFirewall::IsStarted())
     {
 	// message popup
 	Popup::Message (_("Firewall is not configured."));

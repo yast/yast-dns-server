@@ -1419,7 +1419,7 @@ qwerty = _("At least one name server must be defined.");
 
     // FIXME: Only one help is used for all tabs. Maybe would be better to change the help for every single tab.
     Wizard::SetContentsButtons ( caption, contents, HELPS[ help_identificators[current_tab]:"" ]:"",
-	Label::BackButton (), Label::OKButton () );
+	Label::CancelButton (), Label::OKButton () );
     InitMasterZoneTab ( current_tab );
 
     map event = nil;
