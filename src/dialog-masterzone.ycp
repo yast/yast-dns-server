@@ -713,7 +713,7 @@ void InitSoaTab () {
 
     foreach (string id, string value, map_ids_to_values, {
 	integer time_int = 0;
-	if (id == "ttl") {
+	if (id == "zone_settings_ttl") {
 	    time_int = DnsServerAPI::TimeToSeconds((string) current_zone[value]:"0S");
 	} else {
 	    time_int = DnsServerAPI::TimeToSeconds((string) current_zone["soa", value]:"0S");
