@@ -477,6 +477,7 @@ sub ZoneFileWriteLdap {
     else
     {
 	y2milestone ("Modifying existing record");
+	delete $ldap_record{"objectclass"}; # objectclass can be changed by mail-server
 	SCR->Write (".ldap.modify", \%ldap_cmd, \%ldap_record);
     }
 
