@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Jul 14 14:32:57 CEST 2004 - locilka@suse.de
+
+- Fixed Bugzilla bug #42991
+  Value of logging file size was saved in MBytes but without
+  "M" unit, what meant that the values was in fact in Bytes.
+
+-------------------------------------------------------------------
 Mon Jul 12 12:59:07 CEST 2004 - locilka@suse.de
 
 - fixed zone modifications in LDAP (#42792)

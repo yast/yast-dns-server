@@ -696,9 +696,17 @@ void InitExpertLoggingPage (string key) {
 	    string fn = regexpsub (s, "file[ \t]+\"([^\"]+)\"", "\\1");
 	    if (fn != nil)
 		UI::ChangeWidget (`id ("logfile_path"), `Value, fn);
-	    integer sz = tointeger (regexpsub (s, "size[ \t]+([^ \t]+)","\\1"));
+
+	    integer sz = tointeger (regexpsub (s, "size[ \t]+([0123456789]+)","\\1"));
+	    string  su = tolower (regexpsub (s, "size[ \t]+[0123456789]+([kKmMgG])","\\1"));
+	    # no unit = in Bytes
+	    if      (su == "")  { sz = tointeger(sz / 1024 / 1024 + 0.5); }
+	    else if (su == "k") { sz = tointeger(sz / 1024 + 0.5); }
+	    # else if (su == "m") {} # M is the default unit
+	    else if (su == "g") { sz = sz * 1024; }
 	    if (sz != nil)
 		UI::ChangeWidget (`id ("max_size"), `Value, sz);
+
 	    integer vc = tointeger (regexpsub (s, "versions[ \t]+([^ \t]+)","\\1"));
 	    if (vc != nil)
 		UI::ChangeWidget (`id ("max_versions"), `Value, vc);
@@ -731,7 +739,7 @@ void StoreExpertLoggingPage (string key, map event) {
     {
 	channel = "log_file";
 	string fn = (string)UI::QueryWidget (`id ("logfile_path"), `Value);
-	integer sz = (integer)UI::QueryWidget (`id ("max_size"), `Value);
+	string sz = tostring(UI::QueryWidget (`id ("max_size"), `Value)) + "M";
 	integer vc = (integer)UI::QueryWidget (`id ("max_versions"), `Value);
 	logging = add (logging, $[
 	    "key" : "channel",
