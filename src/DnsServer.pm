@@ -163,7 +163,8 @@ sub ZoneRead {
     my %in_a = ();
     my $previous_key = "$zone.";
 
-    my %records = ();
+#    my %records = ();
+    my @records = ();
     foreach my $r (@original_records) {
 	my %r = %{$r};
 	my $key = $r{"key"} || "";
@@ -178,14 +179,20 @@ sub ZoneRead {
 	{
 	    $previous_key = $key;
 	}
-	my %host = %{$records{$key} || {}};
-	my @items = @{$host{$type} || []};
-	push (@items, $value);
-	$host{$type} = \@items;
-	$records{$key} = \%host;
+	push @records, {
+	    "key" => $key,
+	    "type" => $type,
+	    "value" => $value,
+	};
+#	my %host = %{$records{$key} || {}};
+#	my @items = @{$host{$type} || []};
+#	push (@items, $value);
+#	$host{$type} = \@items;
+#	$records{$key} = \%host;
     }
 
-    $ret{"records"} = \%records;
+#    $ret{"records"} = \%records;
+    $ret{"records"} = \@records;
 
     return %ret;
 }
@@ -224,34 +231,36 @@ sub ZoneFileWrite {
 	$soa{$key} = $value;
     }
 
-    my @records = ();
+    my @records = @{$zone_map{"records"} || []};
 
-    my %records = %{$zone_map{"records"} || {}};
-    foreach my $key (sort (keys (%records))) {
-	my $values_ref = $records{$key};
-	my %values = %{$values_ref};
-	my @types = keys (%values);
-	my @preferred = ("A", "CNAME", "PTR");
-	@preferred = grep {
-	    contains ( \@preferred, $_);
-	} @types;
-	my @others = grep {
-	    ! contains (\@preferred, $_);
-	} @types;
-	@types = ( @preferred, @others );
-	foreach my $type (@types) {
-	    my $res_rec_ref = $values{$type};
-	    my @res_rec = @{$res_rec_ref};
-	    foreach my $rr (@res_rec) {
-		my %new_rec = (
-		    "key" => $key,
-		    "type" => $type,
-		    "value" => $rr,
-		);
-		push (@records, \%new_rec);
-	    }
-	}
-    }
+#    my @records = ();
+
+#    my %records = %{$zone_map{"records"} || {}};
+#    foreach my $key (sort (keys (%records))) {
+#	my $values_ref = $records{$key};
+#	my %values = %{$values_ref};
+#	my @types = keys (%values);
+#	my @preferred = ("A", "CNAME", "PTR");
+#	@preferred = grep {
+#	    contains ( \@preferred, $_);
+#	} @types;
+#	my @others = grep {
+#	    ! contains (\@preferred, $_);
+#	} @types;
+#	@types = ( @preferred, @others );
+#	foreach my $type (@types) {
+#	    my $res_rec_ref = $values{$type};
+#	    my @res_rec = @{$res_rec_ref};
+#	    foreach my $rr (@res_rec) {
+#		my %new_rec = (
+#		    "key" => $key,
+#		    "type" => $type,
+#		    "value" => $rr,
+#		);
+#		push (@records, \%new_rec);
+#	    }
+#	}
+#    }
 
     my %save = (
 	"TTL" => $ttl,
@@ -576,6 +585,7 @@ sub FetchCurrentZone {
 BEGIN {$TYPEINFO{StoreCurrentZone} = [ "function", "boolean", ["map", "string", "any"] ]; }
 sub StoreCurrentZone {
     %current_zone = %{$_[0]};
+    SetModified ();
     return 1;
 }
 
@@ -587,6 +597,7 @@ sub FetchZones {
 BEGIN {$TYPEINFO{StoreZones} = [ "function", "void", [ "list", ["map", "any", "any"] ] ]; }
 sub StoreZones {
     @zones = @{$_[0]};
+    SetModified ();
 }
 
 BEGIN{$TYPEINFO{GetGlobalOptions}=["function",["list",["map","any","any"]]];}
@@ -597,6 +608,7 @@ sub GetGlobalOptions {
 BEGIN{$TYPEINFO{SetGlobalOptions}=["function","void",["list",["map","any","any"]]];}
 sub SetGlobalOptions {
     @options = @{$_[0]};
+    SetModified ();
 }
 
 BEGIN {$TYPEINFO{GetGlobalOption} = [ "function", "any", "any" ];}

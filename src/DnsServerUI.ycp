@@ -25,7 +25,9 @@
     import "Popup";
 
     define map<string,any> current_zone = $[];
-    define list<map<string,string> > current_section = [];
+    define list<map> current_section = [];
+    define list<string> current_zone_ns = [];
+    define list<string> current_zone_mx = [];
 
 
     global define map createNewZone(string zone_type) ``{return $[];}

@@ -341,32 +341,29 @@ define map getSoaButton () ``{
     ];
 }
 
-// log popup
+/**
+ * handle function of a widget
+ * @param key any widget key of widget that is processed
+ * @param event map event that occured
+ * @return symbol symbol for ws or nil
+ */
+define symbol NsMxButtonHandle (string key, map event) ``{
+    return `ns_mx;
+}
 
-    /**
-      * Handle function of the log button
-      * @param key any key of the widget
-      * @param event map event that occured
-      * @return value for wizard sequencer, always nil
-      */
-    global define any showLogPopup (any key, map event) ``{
-	LogView::Display ($[
-	    "file" : "/var/log/messages",
-	    "grep" : "named",
-	    "save" : true,
-	    "actions" : [
-		// menubutton entry, try to keep short
-		[ _("Restart DNS Server"),
-		    ``{SCR::Execute (.target.bash,
-			"/etc/init.d/named restart");}],
-		// menubutton entry, try to keep short
-		[ _("Save Settings and Restart DNS Server"),
-		    ``{DnsServer::Write ();} ],
-	    ],
-	]);
-	return nil;
-    }
-
+/**
+ * Get the widget description map
+ * @return list of items for the table
+ */
+define map  getNsMxButton () ``{
+    return $[
+	"widget" : `push_button,
+	// push button
+	"label" : _("Edit &NS and &MX records"),
+	"handle" : NsMxButtonHandle,
+	"handle_events" : [ "ns_mx_button" ],
+    ];
+}
 // global table widget
 
 /**
@@ -375,9 +372,17 @@ define map getSoaButton () ``{
  * @return list of items for the table
  */
 global define list getGlobalTableContents (map descr) ``{
-    map options = DnsServer::GetGlobalOptions ();
-    list ret = maplist (any k, any v, options, ``(k));
-    return ret;
+    list options = DnsServer::GetGlobalOptions ();
+    integer index = -1;
+    return maplist (any o, current_section, ``{
+	index = index + 1;
+	return index;
+    });
+}
+
+define string globalTableId2Key (map descr, any id) ``{
+    integer iid = (integer)id;
+    return current_section[iid, "key"]:"";
 }
 
 /**
@@ -397,6 +402,7 @@ global define boolean globalTableEntryDelete (any opt_id, any opt_key) ``{
 }
 
 global define void globalTableInit (string id) ``{
+    current_section = DnsServer::GetGlobalOptions ();
     TablePopup::TableInitWrapper (id);
 }
 
@@ -406,11 +412,7 @@ global define void globalTableInit (string id) ``{
  * @param event map event that occured
  */
 global define void globalTableStore (any widget, map event) ``{
-	if (event["ID"]:nil == `zones)
-	{
-// FIXME	    all_zones = eval (settings["zones"]:[]);
-	    DnsServer::SetModified ();
-	}
+    DnsServer::SetGlobalOptions (current_section);
 }
 
 /**
@@ -423,35 +425,36 @@ global define map getGlobalTableWidget () ``{
 	"up_down" : false,
 	"unique_keys" : true,
     ], $[
-//	"init" : globalTableInit,
-//	"store" : globalTableStore,
-//	"options" : DnsServerUI::popups,
-//	"ids" : getGlobalTableContents,
-//	"fallback" : $[
-//	    "init" : globalPopupInit,
-//	    "store" : globalPopupStore,
-//	    "summary" : globalTableEntrySummary,
-//	],
-//	"option_delete" : globalTableEntryDelete,
-/*	"add_items" : [ "hostname", "version", "directory", "named-xfer",
-		"dump-file", "memstatistics-file", "pid-file",
-		"statistics-file", "auth-nxdomain", "deallocate-on-exit",
-		"dialup", "fake-iquery", "fetch-glue", "has-old-clients",
-		"host-statistics", "host-statistics-max", "multiple-cnames",
-		"notify", "suppress-initial-notify", "recursion",
-		"rfc2308-type1", "use-id-pool", "treat-cr-as-space",
-		"also-notify", "forward", "forwarders", "check-names",
-		"allow-query", "allow-recursion", "allow-transfer",
-		"blackhole", "listen-on", "query-source", "lame-ttl",
-		"max-transfer-time-in", "max-ncache-ttl", "min-roots",
-		"serial-queries", "transfer-format", "transfers-in",
-		"transfers-out", "transfers-per-ns", "transfer-source",
-		"maintain-ixfr-base", "max-ixfr-log-size", "coresize",
-		"datasize", "files", "stacksize", "cleaning-interval",
-		"heartbeat-interval", "interface-interval",
-		"statistics-interval", "topology", "sortlist", "rrset-order",
-		"preferred-glue",
-	],*/
+	"init" : globalTableInit,
+	"store" : globalTableStore,
+	"options" : DnsServerUI::popups,
+	"ids" : getGlobalTableContents,
+	"id2key" : globalTableId2Key,
+	"fallback" : $[
+	    "init" : globalPopupInit,
+	    "store" : globalPopupStore,
+	    "summary" : globalTableEntrySummary,
+	],
+	"option_delete" : globalTableEntryDelete,
+	"add_items" : [ "hostname", "version", "directory", "named-xfer",
+	    "dump-file", "memstatistics-file", "pid-file",
+	    "statistics-file", "auth-nxdomain", "deallocate-on-exit",
+	    "dialup", "fake-iquery", "fetch-glue", "has-old-clients",
+	    "host-statistics", "host-statistics-max", "multiple-cnames",
+	    "notify", "suppress-initial-notify", "recursion",
+	    "rfc2308-type1", "use-id-pool", "treat-cr-as-space",
+	    "also-notify", "forward", "forwarders", "check-names",
+	    "allow-query", "allow-recursion", "allow-transfer",
+	    "blackhole", "listen-on", "query-source", "lame-ttl",
+	    "max-transfer-time-in", "max-ncache-ttl", "min-roots",
+	    "serial-queries", "transfer-format", "transfers-in",
+	    "transfers-out", "transfers-per-ns", "transfer-source",
+	    "maintain-ixfr-base", "max-ixfr-log-size", "coresize",
+	    "datasize", "files", "stacksize", "cleaning-interval",
+	    "heartbeat-interval", "interface-interval",
+	    "statistics-interval", "topology", "sortlist", "rrset-order",
+	    "preferred-glue",
+	],
     ]);
     return ret;
 }
@@ -473,10 +476,10 @@ global define void zonesInit (any key) ``{
 }
 
 /**
- * Handle function of a widget
+ * handle function of a widget
  * @param key any widget key of widget that is processed
  * @param event map event that occured
- * @return symbol symbol for WS or nil
+ * @return symbol symbol for ws or nil
  */
 global define symbol zonesHandle (any key, map event) ``{
     UI::SetFocus (`id (`zones));
@@ -484,32 +487,32 @@ global define symbol zonesHandle (any key, map event) ``{
     if (event["ID"]:nil == `add || event["ID"]:nil == `edit
 	|| event["ID"]:nil == `zones)
     {
-            if (event["ID"]:nil == `add)
-            {
-                DnsServer::SelectZone(-1);
-                current_zone = DnsServer::FetchCurrentZone();
-		y2milestone ("New zone: %1", current_zone);
-		return `add;
-            }
-            else
-            {
-                DnsServer::SelectZone(current);
-                current_zone = DnsServer::FetchCurrentZone();
-		y2milestone ("Fetched zone: %1", current_zone);
-		return `edit;
-            }
+	if (event["ID"]:nil == `add)
+	{
+	    DnsServer::SelectZone(-1);
+	    current_zone = DnsServer::FetchCurrentZone();
+	    y2milestone ("New zone: %1", current_zone);
+	    return `add;
+	}
+	else
+        {
+	    DnsServer::SelectZone(current);
+	    current_zone = DnsServer::FetchCurrentZone();
+	    y2milestone ("Fetched zone: %1", current_zone);
+	    return `edit;
+	}
     }
     else if (event["ID"]:nil == `delete)
     {
-	    // yes-no popup
-	    if (Popup::YesNo (_("Delete selected zone?")))
-	    {
+	// yes-no popup
+	if (Popup::YesNo (_("Delete selected zone?")))
+	{
 /*		all_zones[current] = nil;
 		all_zones = filter (`k, all_zones, ``(k != nil));*/
 //                DnsServer::RemoveZoneIndex(current, false);
 		zonesInit (key);
 //		zones_modified = true;
-	    }
+	}
     }
     return nil;
 }
@@ -547,202 +550,377 @@ global define map getZoneListWidget () ``{
 
 // global menu button
 
+/**
+ * Initialize function of a widget
+ * @param key any widget key of widget that is processed
+ */
 define void advMenubuttonInit (string id) ``{
     UI::ReplaceWidget (`zones_rp, `MenuButton (`id (`adv_menubutton),
 	// menu button
 	_("Ad&vanced"), [
 	    // menubutton item
-	    `item (`id (`global_options), _("Edit global options")),
+	    `item (`id (`global_options), _("&Edit global options")),
+	    // menubutton item
+	    `item (`id (`show_log), _("&Display log")),
 	]));
 }
 
+/**
+ * handle function of a widget
+ * @param key any widget key of widget that is processed
+ * @param event map event that occured
+ * @return symbol symbol for ws or nil
+ */
 define symbol advMenubuttonHandle (string id, map event) ``{
-    return (symbol)(event["ID"]:nil);
+    symbol e = (symbol)(event["ID"]:nil);
+    if (e == `global_options)
+	return e;
+    if (e == `show_log)
+    {
+	LogView::Display ($[
+	    "file" : "/var/log/messages",
+	    "grep" : "named",
+	    "save" : true,
+	    "actions" : [
+		// menubutton entry, try to keep short
+		[ _("Restart DNS Server"),
+		    ``{SCR::Execute (.target.bash,
+			"/etc/init.d/named restart");}],
+		// menubutton entry, try to keep short
+		[ _("Save Settings and Restart DNS Server"),
+		    ``{DnsServer::Write ();} ],
+	    ],
+	]);
+
+    }
+
+    return nil;
 }
 
+/**
+ * Get map of widget
+ * @return map of widget
+ */
 define map getAdvancedMenubutton () ``{
     return $[
 	"init" : advMenubuttonInit,
 	"help" : "TODO",
 	"handle" : advMenubuttonHandle,
-	"handle_events" : [ `global_options ],
+	"handle_events" : [ `global_options, `show_log ],
+    ];
+}
+
+// name servers widget
+
+/**
+ * handle function of a widget
+ * @param key any widget key of widget that is processed
+ * @param event map event that occured
+ * @return symbol symbol for ws or nil
+ */
+global define symbol nsHandle (string id, map event) ``{
+    if (event["ID"]:nil == `ns_add)
+    {
+	string new = nil;
+	UI::OpenDialog (`VBox (
+	    `TextEntry (`id (`address), _("&Name server")),
+	    `HBox (
+		`HStretch (),
+		`PushButton (`id (`ok), Label::OKButton ()),
+		`PushButton (`id (`cancel), Label::CancelButton ()),
+		`HStretch ()
+	    )
+	));
+	any ret = nil;
+	while (ret == nil)
+	{
+	    ret = UI::UserInput ();
+	    if (ret == `ok)
+		new = (string)UI::QueryWidget (`id (`address), `Value);
+	}
+	UI::CloseDialog ();
+	if (new == nil)
+	    return nil;
+	current_zone_ns = add (current_zone_ns, new);
+    }
+    else if (event["ID"]:nil == `ns_delete)
+    {
+	string selected = (string)
+	    UI::QueryWidget (`id (`ns_addresses), `CurrentItem);
+	if (selected == nil)
+	{
+	    // popup message
+	    Popup::Message (_("No name server selected"));
+	    return nil;
+	}
+	current_zone_ns = filter (string s, current_zone_ns, ``(
+	    s != selected));
+    }
+    UI::ReplaceWidget (`ns_addresses_rp, `SelectionBox (`id (`ns_addresses),
+	// selection box label
+	_("&Name servers"),
+	current_zone_ns));
+    return nil;
+}
+
+/**
+ * Initialize function of a widget
+ * @param key any widget key of widget that is processed
+ */
+global define void nsInit (string id) ``{
+    string zone_name = current_zone["zone"]:"";
+    list records = filter (map r, current_zone["records"]:[], ``(
+	r["type"]:"" == "NS"
+	&& (r["key"]:"" == sformat ("%1.", zone_name)
+	    || r["key"]:"" == zone_name)
+    ));
+    current_zone_ns = maplist (map r, records, ``(r["value"]:""));
+    current_zone_ns = filter (string z, current_zone_ns, ``(z != ""));
+    nsHandle (id, $[]);
+}
+
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
+global define void nsStore (string id, map event) ``{
+    string zone_name = current_zone["zone"]:"";
+    list records = filter (map r, current_zone["records"]:[], ``(
+	! (r["type"]:"" == "NS"
+	&& (r["key"]:"" == sformat ("%1.", zone_name)
+	    || r["key"]:"" == zone_name))
+    ));
+    list new_rec = maplist (string a, current_zone_ns, ``(
+	$[
+	    "key" : sformat ("%1.", zone_name),
+	    "type" : "NS",
+	    "value" : a,
+	]
+    ));
+    current_zone["records"] = merge (new_rec, records);
+}
+
+/**
+ * Get map of widget
+ * @return map of widget
+ */
+define map getNameServersWidget () ``{
+    return $[
+	"widget" : `custom,
+	"custom_widget" : `VBox (
+	    `ReplacePoint (`id (`ns_addresses_rp),
+		`SelectionBox (`id (`ns_addresses),
+		    // selection box label
+		    _("&Name servers"), [])
+	    ),
+	    `HBox (
+		`HStretch (),
+		`PushButton (`id (`ns_add), `opt (`key_F3),
+		    Label::AddButton ()),
+		`PushButton (`id (`ns_delete), `opt(`key_F5),
+		    Label::DeleteButton ()),
+		`HStretch ()
+	    )
+	),
+	"init" : nsInit,
+	"handle" : nsHandle,
+	"store" : nsStore,
+	"handle_events" : [ `ns_add, `ns_delete ],
+    ];
+}
+
+// mail relays widget
+
+/**
+ * handle function of a widget
+ * @param key any widget key of widget that is processed
+ * @param event map event that occured
+ * @return symbol symbol for ws or nil
+ */
+global define symbol mxHandle (string id, map event) ``{
+    if (event["ID"]:nil == `mx_add)
+    {
+	string new = nil;
+	UI::OpenDialog (`VBox (
+	    `TextEntry (`id (`address), _("&Mail relay")),
+	    `IntField (`id (`priority), _("&Priority"), 0, 100, 10),
+	    `HBox (
+		`HStretch (),
+		`PushButton (`id (`ok), Label::OKButton ()),
+		`PushButton (`id (`cancel), Label::CancelButton ()),
+		`HStretch ()
+	    )
+	));
+	any ret = nil;
+	integer priority = 0;
+	while (ret == nil)
+	{
+	    ret = UI::UserInput ();
+	    if (ret == `ok)
+		new = (string)UI::QueryWidget (`id (`address), `Value);
+	}
+	priority = (integer)UI::QueryWidget (`id (`priority), `Value);
+	UI::CloseDialog ();
+	if (new == nil)
+	    return nil;
+	new = sformat ("%1 %2", priority, new);
+	current_zone_mx = add (current_zone_mx, new);
+    }
+    else if (event["ID"]:nil == `mx_delete)
+    {
+	string selected = (string)
+	    UI::QueryWidget (`id (`mx_addresses), `CurrentItem);
+	if (selected == nil)
+	{
+	    // popup message
+	    Popup::Message (_("No name server selected"));
+	    return nil;
+	}
+	current_zone_mx = filter (string s, current_zone_mx, ``(
+	    s != selected));
+    }
+    UI::ReplaceWidget (`mx_addresses_rp, `SelectionBox (`id (`mx_addresses),
+	// selection box label
+	_("&Mail relays"),
+	current_zone_mx));
+    return nil;
+    return nil;
+}
+
+/**
+ * Initialize function of a widget
+ * @param key any widget key of widget that is processed
+ */
+global define void mxInit (string id) ``{
+    string zone_name = current_zone["zone"]:"";
+    list records = filter (map r, current_zone["records"]:[], ``(
+	r["type"]:"" == "MX"
+	&& (r["key"]:"" == sformat ("%1.", zone_name)
+	    || r["key"]:"" == zone_name)
+    ));
+    current_zone_mx = maplist (map r, records, ``(r["value"]:""));
+    current_zone_mx = filter (string z, current_zone_mx, ``(z != ""));
+    mxHandle (id, $[]);
+}
+
+/**
+ * Store settings of the widget
+ * @param id string widget id
+ * @param event map event that caused storing process
+ */
+global define void mxStore (string id, map event) ``{
+    string zone_name = current_zone["zone"]:"";
+    list records = filter (map r, current_zone["records"]:[], ``(
+	! (r["type"]:"" == "MX"
+	&& (r["key"]:"" == sformat ("%1.", zone_name)
+	    || r["key"]:"" == zone_name))
+    ));
+    list new_rec = maplist (string a, current_zone_mx, ``(
+	$[
+	    "key" : sformat ("%1.", zone_name),
+	    "type" : "MX",
+	    "value" : a,
+	]
+    ));
+    current_zone["records"] = merge (new_rec, records);
+    return;
+}
+
+/**
+ * Get map of widget
+ * @return map of widget
+ */
+define map getMailRelaysWidget () ``{
+    return $[
+	"widget" : `custom,
+	"custom_widget" : `VBox (
+	    `ReplacePoint (`id (`mx_addresses_rp),
+		`SelectionBox (`id (`mx_addresses),
+		    `opt (`notify, `immediate),
+		    // selection box label
+		    _("&Mail relays"), [])
+	    ),
+	    `HBox (
+		`HStretch (),
+		`PushButton (`id (`priority), _("Set &priority")),
+		`HStretch ()
+	    ),
+	    `HBox (
+		`HStretch (),
+		`PushButton (`id (`mx_add), `opt (`key_F3),
+		    Label::AddButton ()),
+		`PushButton (`id (`mx_delete), `opt(`key_F5),
+		    Label::DeleteButton ()),
+		`HStretch ()
+	    )
+	),
+	"init" : mxInit,
+	"handle" : mxHandle,
+	"store" : mxStore,
     ];
 }
 
 // master domain options
 
-    /**
-      * Convert id to key
-      * @param table map widget description map
-      * @param opt_id any option id
-      * @return any option key
-      */
-    global define any masterId2Key (map table, any opt_id) ``{
-	if (is(opt_id, string) && substring ((string)opt_id, 0, 7) == "____sep")
-	    return "____sep";
-	else
-	    return opt_id;
-    }
+/**
+ * Convert id to key
+ * @param table map widget description map
+ * @param opt_id any option id
+ * @return any option key
+ */
+global define any masterId2Key (map table, any opt_id) ``{
+    integer index = (integer)opt_id;
+    return current_zone["records", index, "type"]:"A";
+}
 
-    /**
-      * Function for getting contents of the master table
-      * @param descr map description map of the table
-      * @return list items for the table
-      */
-    global define list getMasterTableContents (map descr) ``{
-	list ret = [ "__soa", "_NS"];
-/* FIXME        string zone = current_zone["zone"]:"";
-	if (getZoneType (zone) == `normal)
-	    ret = add (ret, "_MX");
-	list hosts = maplist (`k, `v, current_zone["records"]:$[], ``(k));
-	ret = add (ret, "____sep2");
-	ret = merge (ret, hosts);*/
-	return ret;
-    }
-
-    /**
-      * Store function of a widget
-      * @param widget any widget key of widget that is processed
-      * @param event map event that occured
-      */
-    global define void masterTableStore (any widget, map event) ``{
-	return;
-/* FIXME        if (event["ID"]:nil == `next)
+/**
+ * Function for getting contents of the master table
+ * @param descr map description map of the table
+ * @return list items for the table
+ */
+global define list getMasterTableContents (map descr) ``{
+    string zone_name = current_zone["zone"]:"";
+    integer index = -1;
+    list ret = maplist (map m, current_zone["records"]:[], ``{
+	index = index + 1;
+/*	if ((m["type"]:"" == "NS" || m["type"]:"" == "MX")
+	    && (m["key"]:"" == sformat ("%1.", zone_name)
+		|| m["key"]:"" == zone_name))
 	{
-	    current_zone["changed"] = true;
-	    zones_modified = true;
-	    if (current_id == -1)
-		all_zones = add (all_zones, current_zone);
-	    else
-		all_zones[current_id] = current_zone;
+	    return nil;
 	}*/
-    }
+	return index;
+    });
+    ret = filter (integer r, ret, ``(r != nil));
+    return ret;
+}
 
-    /**
-      * Handle function of a widget
-      * @param widget any widget key of widget that is processed
-      * @param event map event that occured
-      * @return symbol for wizard sequencer or nil
-      */
-    global define symbol masterTableHandle (any widget, map event) ``{
-	return nil; /* FIXME
-        if (event["ID"]:nil == `_tp_table)
-        {
-            if (event["EventReason"]:"" == "Activated"
-                && event["EventType"]:"" == "WidgetEvent")
-            {
-                event["ID"] = `_tp_edit;
-            }
-        }
 
-	string current = UI::QueryWidget (`id (`_tp_table), `CurrentItem);
-	if ((event["ID"]:nil == `_tp_add)
-	    || (event["ID"]:nil == `_tp_edit
-		&& substring (current, 0, 1) != "_"))
-	{
-	    map host = $[];
-	    map ret = nil;
-	    symbol type = nil;
-	    if (event["ID"]:nil == `_tp_add)
-	    {
-		current = "";
-		string zone = current_zone["zone"]:"";
-		if (getZoneType (zone) == `reverse)
-		    type = `ptr;
-		else
-		    type = askForRecType (`normal);
-		if (type == nil)
-		{
-		    UI::SetFocus (`id (`_tp_table));
-		    return type;
-		}
-	    }
-	    else
-	    {
-		host = current_zone["records", current]:$[];
-		host["key"] = current;
-		if (host["A"]:[] != [])
-		    type = `a;
-		else if (host["CNAME"]:[] != [])
-		    type = `cname;
-		else if (host["PTR"]:[] != [])
-		    type = `ptr;
-	    }
 
-	    if (type == `a)
-		ret = editA (host);
-	    else if (type == `cname)
-		ret = editCNAME (host);
-	    else if (type == `ptr)
-		ret = editPTR (host);
-	    else
-		Popup::Message (_("Unknown record type"));
-
-	    if (ret == nil)
-	    {
-		UI::SetFocus (`id (`_tp_table));
-		return nil;
-	    }
-	    string new_name = host["key"]:"";
-	    host = remove (host, "key");
-	    if (current != "")
-	    {
-		current_zone["records"]
-		    = remove (current_zone["records"]:$[], current);
-	    }
-	    current_zone["records"] = current_zone["records"]:$[];
-	    current_zone["records", new_name] = host;
-	    TablePopup::TableInit (
-		DnsServerUI::widgets["master_table"]:$[], widget);
-	    return nil;
-	}
-	else if (event["ID"]:nil == `_tp_delete)
-	{
-	    current_zone["records"]
-		= remove (current_zone["records"]:$[], current);
-	    TablePopup::TableInit (
-		DnsServerUI::widgets["master_table"]:$[], widget);
-	    return nil;
-	}
-	any retval = TablePopup::TableHandle (DnsServerUI::widgets["master_table"]:$[],
-	    widget, event);
-	if (event == `_tp_edit && current == "_zone")
-	{
-	    TablePopup::TableInit (
-		DnsServerUI::widgets["master_table"]:$[], widget);
-	}
-	return retval;
-*/    }
-
-    /**
-      * Get map of widget
-      * @return map of widget
-      */
-    global define map getMasterTableWidget () ``{
-        map ret = TablePopup::CreateTableDescr ($[
-	    "add_delete_buttons" : true,
-	    "up_down_buttons" : false
-	], $[
-/* FIXME           "init" : ``(TablePopup::TableInit (
-                DnsServerUI::widgets["master_table"]:$[])),
-            "handle" : ``(DnsServer::masterTableHandle ()),
-            "store" : ``(DnsServer::masterTableStore ()),
-            "options" : DnsServer::popups,
-            "ids" : ``(DnsServer::getMasterTableContents ()),
-	    "id2key" : ``(DnsServer::masterId2Key ()),
-            "fallback" : $[
-                "init" : ``(DnsServer::masterPopupInit ()),
-                "store" : ``(DnsServer::masterPopupStore ()),
-                "summary" : ``(DnsServer::masterTableEntrySummary ()),
-            ],
-            "add_items" : [ "check-names", "allow-update", "allow-query",
-		"allow-transfer", "forward", "forwarders", "dialup", "notify",
-		"also-notify", "pubkey",
-	    ],
-	    "help" : HELPS["master_zone"]:"",*/
-        ]);
-        return ret;
-    }
+/**
+ * Get map of widget
+ * @return map of widget
+ */
+global define map getMasterTableWidget () ``{
+    map ret = TablePopup::CreateTableDescr ($[
+	"add_delete_buttons" : true,
+	"up_down_buttons" : false
+    ], $[
+	"options" : DnsServerUI::popups,
+	"ids" : getMasterTableContents,
+	"id2key" : masterId2Key,
+	"fallback" : $[
+	    "init" : masterPopupInit,
+	    "store" : masterPopupStore,
+	    "summary" : masterTableEntrySummary,
+	    "label_func" : masterTableLabelFunc,
+	],
+	"add_items" : [ "A", "CNAME", "PTR", "NS", "MX" ],
+	"help" : HELPS["master_zone"]:"",
+    ]);
+    return ret;
+}
 
 // slave table
 
@@ -791,14 +969,6 @@ define map getAdvancedMenubutton () ``{
       */
     global define map InitWidgets () ``{
 	return $[
-	    "log_button" : $[
-		"widget" : `push_button,
-		// push button
-		"label" : _("&Display Log"),
-		"handle" : showLogPopup,
-		"handle_events" : [ "log_button" ],
-		"help" : HELPS["log_button"]:"",
-	    ],
 	    "global_table" : getGlobalTableWidget (),
 	    "zones" : getZoneListWidget (),
 	    "master_table" : getMasterTableWidget (),
@@ -811,6 +981,9 @@ define map getAdvancedMenubutton () ``{
 	    "soa" : getSoaWidget (),
 	    "soa_button" : getSoaButton (),
 	    "advanced_mbutton" : getAdvancedMenubutton (),
+	    "ns_widget" : getNameServersWidget (),
+	    "mx_widget" : getMailRelaysWidget (),
+	    "ns_mx_button" : getNsMxButton (),
 	];
     }
 
