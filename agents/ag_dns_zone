@@ -40,6 +40,11 @@ while ( <STDIN> )
 	    {
 		print OUT "\$TTL $data{\"TTL\"}\n";
 	    }
+	    # write the ORIGIN record now
+	    if (exists ($data{"ORIGIN"}))
+	    {
+		print OUT "\$ORIGIN $data{\"ORIGIN\"}\n";
+	    }
 
 	    # write the SOA record now
 	    if (exists ($data{"soa"}))
@@ -78,10 +83,22 @@ while ( <STDIN> )
 		{
 		    print OUT "$record{\"comment\"}";
 		}
-		$key = tabToFile ($record{"key"});
-		$type = tabToFile ("IN " . $record{"type"});
+		$type = $record{"type"};
 		$value = $record{"value"};
-		print OUT "$key\t$type\t$value\n";
+		if ($record{"type"} eq "TTL")
+		{
+		    print OUT "\$TTL $value\n";
+		}
+		elsif ($record{"type"} eq "ORIGIN")
+		{
+		    print OUT "\$ORIGIN $value\n";
+		}
+		else
+		{
+		    $key = tabToFile ($record{"key"});
+		    $type = tabToFile ("IN " . $type);
+		    print OUT "$key\t$type\t$value\n";
+		}
 	    }
 
 	    close (OUT);
@@ -112,9 +129,36 @@ while ( <STDIN> )
 		if ($line =~ /^\$TTL[ \t]*[0-9]+[A-Za-z]*.*$/) # TTL record
 		{
 		    ($ttl) = $line =~ m/^\$TTL[ \t]*([0-9]+[A-Za-z]*).*$/;
-		    $data{"TTL"} = $ttl if (! defined ($data{"TTL"}));
+		    if (! defined ($data{"TTL"}))
+		    {
+			$data{"TTL"} = $ttl;
+		    }
+		    else
+		    {
+			my %rec = (
+			    "type" => "TTL",
+			    "value" => $ttl,
+			);
+			push (@records, \%rec);
+		    }
 		}
-		elsif ($line =~ /^\$.*/) # probably $ORIGIN
+		elsif ($line =~ /^\$ORIGIN[ \t]+([^ \t]+)[ \t]*$/) # ORIGIN rec.
+		{
+		    $origin = $1;
+		    if (! defined ($data{"ORIGIN"}))
+		    {
+			$data{"ORIGIN"} = $origin;
+		    }
+		    else
+		    {
+			my %rec = (
+			    "type" => "ORIGIN",
+			    "value" => $origin,
+			);
+			push (@records, \%rec);
+		    }
+		}
+		elsif ($line =~ /^\$.*/)
 		{
 		    # ignore this line
 		}

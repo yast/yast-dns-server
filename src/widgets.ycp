@@ -256,7 +256,7 @@ global define void soaInit (string id) ``{
 	    UI::ChangeWidget (`id (r), `Value, current_zone["soa", r]:"");
     });
     string mail = current_zone["soa", "mail"]:"";
-    if (regexpmatch (mail, "^[^@\.]+\..*$"));
+    if (regexpmatch (mail, "^[^@\.]+\..*$"))
 	mail = regexpsub (mail, "^([^@\.]+)\.(.*)$", "\\1@\\2");
     UI::ChangeWidget (`id ("mail"), `Value, mail);
     UI::ChangeWidget (`id ("ttl"), `Value, current_zone["ttl"]:"");
@@ -357,7 +357,7 @@ define void soaButtonInit (string key) ``{
  * @return symbol symbol for ws or nil
  */
 define symbol soaButtonHandle (string key, map event) ``{
-    if (0 == current_zone["soa_modified"]:0)
+/*    if (0 == current_zone["soa_modified"]:0)
     {
 	if (! Popup::YesNo (_("If you edit SOA record of the zone and
 it will be modified from outside, YaST will
@@ -365,7 +365,7 @@ rewrite the chanegs. Continue?")))
 	{
 	    return nil;
 	}
-    }
+    }*/
     return `soa;
 }
 
@@ -958,6 +958,8 @@ global define list getMasterTableContents (map descr) ``{
     integer index = -1;
     list ret = maplist (map m, current_zone["records"]:[], ``{
 	index = index + 1;
+	if (m["type"]:"" == "TTL" || m["type"]:"" == "ORIGIN")
+	    return -1;
 /*	if ((m["type"]:"" == "NS" || m["type"]:"" == "MX")
 	    && (m["key"]:"" == sformat ("%1.", zone_name)
 		|| m["key"]:"" == zone_name))
@@ -966,7 +968,7 @@ global define list getMasterTableContents (map descr) ``{
 	}*/
 	return index;
     });
-    ret = filter (integer r, ret, ``(r != nil));
+    ret = filter (integer r, ret, ``(r != nil && r != -1));
     return ret;
 }
 
@@ -1196,7 +1198,7 @@ define map getAdaptFirewallWidget () ``{
  */
 global define symbol AllowDdnsHandle (string id, map event) ``{
     boolean enabled = (boolean)UI::QueryWidget (`id (id), `Value);
-    while (enabled && size (DnsServer::ListTSIGKeys ()) == 0)
+    while (enabled && size (DnsTsigKeys::ListTSIGKeys ()) == 0)
     {
 	// yes-no popup
 	if (! Popup::YesNo (_("No TSIG key is defined. Define it now?")))
@@ -1218,7 +1220,7 @@ global define symbol AllowDdnsHandle (string id, map event) ``{
 global define void AllowDdnsInit (string id) ``{
     boolean allowed = false;
     string key = nil;
-    list<map<string,string> > updater_keys_m = DnsServer::ListTSIGKeys ();
+    list<map<string,string> > updater_keys_m = DnsTsigKeys::ListTSIGKeys ();
     list<string> updater_keys = maplist (map m, updater_keys_m, ``(
 	m["key"]:""
     ));
@@ -1307,7 +1309,7 @@ define map getAllowDdnsWidget () ``{
  * @param id any widget id
  */
 global define void DdnsKeysInit (string id) ``{
-    list<map<string,string> > keys = DnsServer::ListTSIGKeys ();
+    list<map<string,string> > keys = DnsTsigKeys::ListTSIGKeys ();
     list items = maplist (map<string,string> k, keys, ``(
 	`item (`id (k["key"]:""), k["key"]:"", k["filename"]:"")
     ));
@@ -1334,7 +1336,7 @@ global define symbol DdnsKeysHandle (string id, map event) ``{
     }
     else if (event["ID"]:nil == `k_add)
     {
-	list<string> keys = DnsServer::AnalyzeTSIGKeyFile (filename);
+	list<string> keys = DnsTsigKeys::AnalyzeTSIGKeyFile (filename);
 	if (size (keys) == 0)
 	{
 	    // message popup
@@ -1342,7 +1344,7 @@ global define symbol DdnsKeysHandle (string id, map event) ``{
 	    return nil;
 	}
 	boolean collision = false;
-	foreach (map<string,string> k, DnsServer::ListTSIGKeys (), ``{
+	foreach (map<string,string> k, DnsTsigKeys::ListTSIGKeys (), ``{
 	    if (contains (keys, k["key"]:""))
 		collision = true;
 	});
@@ -1356,7 +1358,7 @@ Old keys will be removed. Continue?")))
 		return nil;
 	    }
 	}
-	if (! DnsServer::AddTSIGKey (filename))
+	if (! DnsTsigKeys::AddTSIGKey (filename))
 	{
 	    // message popup
 	    Popup::Message (_("Adding new TSIG key failed"));
@@ -1366,11 +1368,56 @@ Old keys will be removed. Continue?")))
     else if (event["ID"]:nil == `k_delete)
     {
 	string key = (string)UI::QueryWidget (`id (`keys), `CurrentItem);
-	if (! DnsServer::DeleteTSIGKey (key))
+	if (! DnsTsigKeys::DeleteTSIGKey (key))
 	{
 	    Report::Error (_("Error occured while removing TSIG key"));
 	    return nil;
 	}
+    }
+    else if (event["ID"]:nil == `k_create)
+    {
+	UI::OpenDialog (`VBox (
+	    `HBox (
+		// text entry
+		`TextEntry (`id (`filename), _("&File Name")),
+		`VBox (
+		    `Label (" "),
+		    `PushButton (`id (`browse), Label::BrowseButton ())
+		)
+	    ),
+	    // text entry
+	    `TextEntry (`id (`key_id), _("Key identifier")),
+	    `HBox (
+		`HStretch (),
+		`PushButton (`id (`ok), Label::OKButton ()),
+		`PushButton (`id (`cancel), Label::CancelButton ()),
+		`HStretch ()
+	    )
+	));
+	symbol ret = nil;
+	while (ret == nil)
+	{
+	    ret = (symbol)UI::UserInput ();
+	    if (ret == `browse)
+	    {
+		string filename = (string)
+		    UI::QueryWidget (`id (`filename), `Value);
+	        filename = (string)UI::AskForSaveFileName (filename, "",
+		    // popup headline
+	            _("Select file for creatint the authentication key"));
+	        if (filename != nil)
+		    UI::ChangeWidget (`id (`filename), `Value, filename);
+		ret = nil;
+	    }
+	}
+	string filename = (string)UI::QueryWidget (`id (`filename), `Value);
+	string key = (string)UI::QueryWidget (`id (`key_id), `Value);
+	UI::CloseDialog ();
+	if (ret != `ok)
+	    return nil;
+	if (! Popup::YesNo (_("The key will be created now. Continue?")))
+	    return nil;
+	SCR::Execute (.target.bash, sformat ("touch %1", filename));
     }
     DdnsKeysInit (id);
     return nil;
@@ -1402,9 +1449,9 @@ define map getDdnsKeysWidget () ``{
 		    )
 		),
 		`HBox (
-		    `HStretch (),
 		    `PushButton (`id (`k_add), Label::AddButton ()),
-		    `HStretch ()
+		    `HStretch (),
+		    `PushButton (`id (`k_create), _("Create &new key"))
 		)
 	    ))
 	),

@@ -23,6 +23,10 @@ desktop_DATA =			\
 
 module_DATA =			\
 	DnsServer.pm		\
+	DnsData.pm		\
+	DnsRoutines.pm		\
+	DnsZones.pm		\
+	DnsTsigKeys.pm		\
 	DnsServerUI.ycp
 
 EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA)

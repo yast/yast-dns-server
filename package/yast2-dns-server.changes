@@ -1,5 +1,5 @@
 -------------------------------------------------------------------
-Fri Feb 20 08:37:27 CET 2004 - jsrain@suse.de
+Fri Feb 20 15:49:14 CET 2004 - jsrain@suse.de
 
 - fixed reading of zone files modified by nsupdate
 - not displaying zones that don't make sense to be edited
@@ -7,6 +7,8 @@ Fri Feb 20 08:37:27 CET 2004 - jsrain@suse.de
 - fixed setting of NS and CNAME records for zones
 - updated the SOA dialog, proposing better primary server and
   administrative contact
+- split to multiple perl modules
+- enhanced Dynamic DNS support
 
 -------------------------------------------------------------------
 Thu Feb 19 13:28:23 CET 2004 - jsrain@suse.de
