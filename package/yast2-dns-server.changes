@@ -1,7 +1,9 @@
 -------------------------------------------------------------------
-Mon Feb  9 07:38:52 CET 2004 - jsrain@suse.de
+Mon Feb  9 14:16:17 CET 2004 - jsrain@suse.de
 
 - removed .y2cc file
+- backend part rewritten to Perl
+- 2.9.1
 
 -------------------------------------------------------------------
 Wed Oct 29 10:43:33 CET 2003 - jsrain@suse.de

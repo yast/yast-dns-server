@@ -12,6 +12,12 @@ use YaST::YCP qw(Boolean);
 use Data::Dumper;
 use Time::localtime;
 
+use Locale::gettext;
+use POSIX;     # Needed for setlocale()
+
+setlocale(LC_MESSAGES, "");
+textdomain("dns-server");
+
 #use io_routines;
 #use check_routines;
 
@@ -50,10 +56,9 @@ my %firewall_settings = ();
 my $write_only = 0;
 
 
-# FIXME remove this func
-
+# FIXME this should be defined only once for all modules
 sub _ {
-    return $_[0];
+    return gettext ($_[0]);
 }
 
 
@@ -144,7 +149,8 @@ sub ZoneRead {
 
     my %zonemap = %{SCR::Read (".dns.zone", "/var/lib/named/$file")};
     my %soa = %{$zonemap{"soa"} || {}};
-    $soa{"serial"} = UpdateSerial ($soa{"serial"} || "");
+# FIXME this must be called somewhere else
+#    $soa{"serial"} = UpdateSerial ($soa{"serial"} || "");
     my %ret = (
 	"zone" => $zone,
 	"ttl" => $zonemap{"TTL"} || "2W",
@@ -280,7 +286,7 @@ sub ZoneWrite {
     my $base_path = ".dns.named.value.\"zone \\\"$zone_name\\\" in\"";
     SCR::Write (".dns.named.section.\"zone \\\"$zone_name\\\" in\"", "");
 
-    my @old_options = SCR::Dir ($base_path) || ();
+    my @old_options = @{SCR::Dir ($base_path) || []};
     my @save_options = @old_options;
 
     my $zone_type = $zone_map{"type"} || "master";
@@ -367,7 +373,7 @@ sub SaveGlobals {
     }
 
     # delete all removed options
-    my @old_options = SCR::Dir (".dns.named.value.options") || ();
+    my @old_options = @{SCR::Dir (".dns.named.value.options") || []};
     my @current_options = keys (%options);
     my @del_options = grep {
 	! contains (\@current_options, $_);
@@ -592,6 +598,11 @@ sub RemoveGlobalOption {
 ##------------------------------------
 BEGIN { $TYPEINFO{Read} = ["function", "boolean"]; }
 sub Read {
+
+    # Dhcp-server read dialog caption
+    my $caption = _("Initializing DNS Server Configuration");
+
+
 # Check packages
 # TODO
 
@@ -794,8 +805,8 @@ sub Summary {
     } @zones_descr;
 
     my $zones_list = join (", ", @zones_descr);
-    #  summary string, $zones_list is list of DNS zones (their names)
-    push (@ret, _("Configured Zones: $zones_list"));
+    #  summary string, %s is list of DNS zones (their names), coma separated
+    push (@ret, sprintf (_("Configured Zones: %s"), $zones_list));
     return @ret;
 }
 

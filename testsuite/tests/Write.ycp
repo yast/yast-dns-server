@@ -59,6 +59,7 @@
 		    "options" : $[
 			"directory" : "\"/var/lib/named\"",
 			"notify" : "no",
+			"xxx" : "yyy",
 		    ],
 		    "zone \"localhost\" in" : $[
 			"type" : "master",

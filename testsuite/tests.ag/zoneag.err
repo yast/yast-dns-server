@@ -1,18 +1,7 @@
 [liby2] genericfrontend.cc(main):XXX Launched YaST2 component 'y2base'
-[liby2] Y2ComponentCreator.cc(provideNamespace):XXX default provideNamespace (Pkg), should not happen
-[liby2] Y2ComponentCreator.cc(provideNamespace):XXX default provideNamespace (Pkg), should not happen
-[liby2] Y2ComponentCreator.cc(provideNamespace):XXX default provideNamespace (Pkg), should not happen
-[liby2] Y2ComponentCreator.cc(provideNamespace):XXX default provideNamespace (Pkg), should not happen
-[liby2] Y2ComponentCreator.cc(provideNamespace):XXX default provideNamespace (Pkg), should not happen
-[Y2PM] Y2PM.cc(packageManager):XXX Launch PackageManager...
 [packagemanager] PkgDu.cc(newcount):XXX --[1]----------------------------
 [packagemanager] PkgDu.cc(newcount):XXX ---------------------------------
-[Y2PM] Y2PM.cc(packageManager):XXX Created PackageManager @0x8087d18
-[Y2PM] Y2PM.cc(selectionManager):XXX Launch SelectionManager...
-[Y2PM] Y2PM.cc(selectionManager):XXX Created SelectionManager @0x808d118
-[wfm] Y2CCScript.cc(create):XXX Parsing finished
 [liby2] genericfrontend.cc(main):XXX YAST_IS_RUNNING is yes
-[wfm] Y2WFMComponent.cc(SetLanguage):XXX GET encoding for cs_CZ:  ISO-8859-2
 [YCP] tests.ag/zoneag.ycp:35 Zone: $["TTL":"2W", "records":[$["key":"", "type":"MX", "value":"10 dns.domain.cz."], $["key":"", "type":"MX", "value":"20 sns.domain.cz."], $["key":"", "type":"NS", "value":"dns.domain.cz."], $["key":"", "type":"NS", "value":"sns.domain.cz."], $["key":"dns", "type":"A", "value":"1.2.3.4"], $["key":"sns", "type":"A", "value":"1.2.3.5"], $["key":"other", "type":"A", "value":"1.2.3.6"], $["key":"other2", "type":"A", "value":"1.2.3.7"], $["key":"", "type":"MX", "value":"10 other.domain.cz."], $["key":"alias", "type":"CNAME", "value":"dns"], $["key":"alias2", "type":"CNAME", "value":"other2.domain.cz."]], "soa":$["expiry":"1W", "mail":"root.domain.cz.", "minimum":"1D", "refresh":"1H", "retry":"1H", "serial":2003080400, "server":"dns.domain.cz", "zone":"@"]]
 [YCP] tests.ag/zoneag.ycp:38 Write ret: true
 [YCP] tests.ag/zoneag.ycp:41 New file: $TTL 2W
