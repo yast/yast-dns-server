@@ -1,6 +1,7 @@
 Dump	=======================
 Return	nil
 Dump	=======================
+Execute	.target.bash "/etc/init.d/named stop" 0
 Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
 Dir	.dns.named.value.options: ["directory", "notify", "xxx"]
 Write	.dns.named.value.options.xxx nil true

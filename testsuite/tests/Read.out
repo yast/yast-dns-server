@@ -1,5 +1,8 @@
 Dump	=======================
 Execute	.target.bash "rpm -q bind" 0
+Execute	.target.bash "/etc/init.d/named status" 0
+Execute	.target.bash "/etc/init.d/named stop" 0
+Execute	.target.bash "/etc/init.d/named restart" 0
 Read	.init.scripts.exists "named" true
 Read	.init.scripts.runlevel "named" $["named":$["start":[], "stop":[]]]
 Read	.sysconfig.named.NAMED_RUN_CHROOTED "" 0

@@ -18,53 +18,7 @@ use POSIX ();     # Needed for setlocale()
 POSIX::setlocale(LC_MESSAGES, "");
 textdomain("dns-server");
 
-#use io_routines;
-#use check_routines;
-
 our %TYPEINFO;
-
-# persistent variables
-
-my $start_service = 0;
-
-my $chroot = 0;
-
-my @allowed_interfaces = ();
-
-my @zones = ();
-
-my @options = ();
-
-my @logging = ();
-
-my $ddns_file_name = "";
-
-my @update_keys = ();
-
-#transient variables
-
-my $modified = 0;
-
-my $save_all = 0;
-
-my @files_to_delete = ();
-
-my %current_zone = ();
-
-my $current_zone_index = -1;
-
-my $adapt_firewall = 0;
-
-my %firewall_settings = ();
-
-my $write_only = 0;
-
-my @new_includes = ();
-
-my @deleted_includes = ();
-
-my @zones_update_actions = ();
-
 
 
 # FIXME this should be defined only once for all modules
@@ -78,76 +32,18 @@ YaST::YCP::Import ("Mode");
 YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Require");
 YaST::YCP::Import ("Service");
+YaST::YCP::Import ("DnsZones");
+YaST::YCP::Import ("DnsTSIGKeys");
+
+use DnsData qw(@tsig_keys $start_service $chroot @allowed_interfaces
+@zones @options @logging $ddns_file_name
+$modified $save_all @files_to_delete %current_zone $current_zone_index
+$adapt_firewall %firewall_settings $write_only @new_includes @deleted_includes
+@zones_update_actions);
+use DnsRoutines;
 
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
-
-BEGIN{$TYPEINFO{GetFQDN} = ["function", "string"];}
-sub GetFQDN {
-    my $out = SCR::Execute (".target.bash_output", "/bin/hostname --fqdn");
-    if ($out->{"exit"} ne 0)
-    {
-	return "@";
-    }
-    my $stdout = $out->{"stdout"};
-    my ($ret, $rest) = split ("\n", $stdout, 2);
-    return $ret;
-}
-
-BEGIN { $TYPEINFO{AbsoluteZoneFileName} = ["function", "string", "string" ]; }
-sub AbsoluteZoneFileName {
-    my $file_name = $_[0];
-
-    if (substr ($file_name, 0, 1) eq "/")
-    {
-	return $file_name;
-    }
-    return "/var/lib/named/$file_name";
-}
-
-sub UpdateSerial {
-    my $serial = $_[0];
-
-    if (! defined ($serial))
-    {
-	$serial = "0000000000";
-    }
-
-    my $year = 1900 + localtime->year();
-    my $month = 1 + localtime->mon();
-    my $day = localtime->mday();
-
-    while (length ($month) < 2)
-    {
-	$month = "0$month";
-    }
-    while (length ($day) < 2)
-    {
-	$day = "0$day";
-    }
-    while (length ($year) > 4)
-    {
-	$year = substr ($year, 1);
-    }
-    my $date = "$year$month$day";
-    my $suffix = "00";
-    if (substr ($serial, 0, 8) eq $date)
-    {
-	$suffix = substr ($serial, 8, 2);
-	$suffix = $suffix + 1;
-	while (length ($suffix) < 2)
-	{
-	    $suffix = "0$suffix";
-	}
-	while (length ($suffix) > 2)
-	{
-	    $suffix = substr ($suffix, 1);
-	}
-    }
-    $serial = "$date$suffix";
-    y2milestone ("New serial $serial");
-    $serial;
-}
 
 sub contains {
     my @list = @{$_[0]};
@@ -166,171 +62,6 @@ sub contains {
 
 ##------------------------------------
 # Routines for reading/writing configuration
-
-BEGIN { $TYPEINFO{ZoneRead} = ["function", [ "map", "any", "any" ], "string", "string" ]; }
-sub ZoneRead {
-    my $zone = $_[0];
-    my $file = $_[1];
-
-    my %zonemap = %{SCR::Read (".dns.zone", "/var/lib/named/$file")};
-    my %soa = %{$zonemap{"soa"} || {}};
-# FIXME this must be called somewhere else
-#    $soa{"serial"} = UpdateSerial ($soa{"serial"} || "");
-    my %ret = (
-	"zone" => $zone,
-	"ttl" => $zonemap{"TTL"} || "2D",
-	"soa" => \%soa,
-    );
-    my @original_records = @{$zonemap{"records"}};
-    my %in_mx = ();
-    my %in_prt = ();
-    my %in_cname = ();
-    my %in_a = ();
-    my $previous_key = "$zone.";
-
-    my @records = ();
-    foreach my $r (@original_records) {
-	my %r = %{$r};
-	my $key = $r{"key"} || "";
-	my $type = $r{"type"} || "";
-	my $value = $r{"value"} || "";
-
-	if ($key eq "")
-	{
-	    $key = $previous_key;
-	}
-	else
-	{
-	    $previous_key = $key;
-	}
-	push @records, {
-	    "key" => $key,
-	    "type" => $type,
-	    "value" => $value,
-	};
-    }
-
-    $ret{"records"} = \@records;
-
-    return %ret;
-}
-
-sub TSIGKeyName2TSIGKey {
-    my $key_name = shift;
-
-    my $filename = "";
-    foreach my $key (@update_keys) {
-	if ($key->{"key"} eq $key_name)
-	{
-	    $filename = $key->{"filename"};
-	}
-    }
-    if ($filename eq "")
-    {
-	y2error ("File with TSIG key not found");
-	return "" ;
-    }
-
-    my $contents = SCR::Read (".target.string", $filename);
-    if ($contents =~ /secret[ \t\n]+\"([^\"]+)\"/)
-    {
-	return $1;
-    }
-    y2error ("TSIG key not found in $filename");
-    return "";
-}
-
-BEGIN{$TYPEINFO{UpdateZones}=["function",["list",["map","any","any"]]];}
-sub UpdateZones {
-    y2milestone ("Updaging zones");
-    my @zone_descr = @{$_[0]};
-
-    my $ok = 1;
-    foreach my $zone_descr (@zone_descr) {
-	print Dumper ($zone_descr);
-
-	my $zone_name = $zone_descr->{"zone"};
-	my $actions_ref = $zone_descr->{"actions"};
-	my @actions = @{$actions_ref};
-	my $tsig_key = $zone_descr->{"tsig_key"};
-	my $tsig_key_value = TSIGKeyName2TSIGKey ($tsig_key);
-
-	my @commands = (
-	    "server 127.0.0.1",
-	    "key $tsig_key $tsig_key_value",
-	);
-	my @uc = map {
-	    my $a = $_;
-	    my $operation = $a->{"operation"};
-	    my $type = $a->{"type"};
-	    my $key = $a->{"key"};
-	    my $value = $a->{"value"};
-	    my $ttl = "";
-	    $ttl = 86400 if $operation eq "add";
-	    if (substr ($key, length ($key) -1, 1) ne ".")
-	    {
-		$key = "$key.$zone_name";
-	    }
-	    if (substr ($key, length ($key) -1, 1) ne ".")
-	    {
-		$key = "$key.";
-	    }
-	    "update $operation $key $ttl $type $value";
-	} @actions;
-	push @commands, @uc;
-	push @commands, "";
-	my $command = join ("\n", @commands);
-
-	my $tmp_dir = SCR::Read (".target.tmpdir");
-	my $tmp_file = "$tmp_dir/dns_upd";
-print Dumper ($command);
-	SCR::Write (".target.string", $tmp_file, $command);
-	my $xx = SCR::Execute (".target.bash_output",
-	    "/usr/bin/nsupdate <$tmp_file");
-	print Dumper ($xx);
-	# TODO perform the action
-
-    }
-    return $ok;
-}
-
-BEGIN { $TYPEINFO{ZoneFileWrite} = ["function", "boolean", [ "map", "any", "any"]];}
-sub ZoneFileWrite {
-    my %zone_map = %{$_[0]};
-
-    my $zone_file = $zone_map{"file"} || "";
-    $zone_file = AbsoluteZoneFileName ($zone_file);
-    my $zone_name = $zone_map{"zone"} || "@";
-    my $ttl = $zone_map{"ttl"} || "2D";
-
-    my $fqdn = GetFQDN ();
-    $fqdn = "$fqdn.";
-    my $adm_mail = "root.$fqdn";
-    my %soa = (
-	"expiry" => "1W",
-	"mail" => $adm_mail,
-	"minimum" => "1D",
-	"refresh" => "3H",
-	"retry" => "1H",
-	"server" => $fqdn,
-	"zone" => "@",
-	"serial" => UpdateSerial (""),
-    );
-    my %current_soa = %{$zone_map{"soa"}};
-    while ((my $key, my $value) = each %current_soa)
-    {
-	$soa{$key} = $value;
-    }
-
-    my @records = @{$zone_map{"records"} || []};
-
-    my %save = (
-	"TTL" => $ttl,
-	"soa" => \%soa,
-	"records" => \@records,
-    );
-    return SCR::Write (".dns.zone", [$zone_file, \%save]);
-}
 
 BEGIN { $TYPEINFO{ZoneWrite} = ["function", "boolean", [ "map", "any", "any" ] ]; }
 sub ZoneWrite {
@@ -389,16 +120,22 @@ sub ZoneWrite {
     if ($zone_type eq "master")
     {
 	# write the zone file
-	if ($zone_map{"soa_modified"} || @tsig_keys == 0)
+	if (@tsig_keys == 0)
 	{
-	    ZoneFileWrite (\%zone_map);
+	    DnsZones::ZoneFileWrite (\%zone_map);
 	}
 	else
 	{
+	    y2error ("Updating zone dynamically");
+	    if ($zone_map{"soa_modified"})
+	    {
+		DnsZones::UpdateSOA (\%zone_map);
+	    }
 	    my %um = (
 		"actions" => $zone_map{"update_actions"},
 		"zone" => $zone_name,
 		"tsig_key" => $tsig_keys[0],
+		"ttl" => $zone_map{"ttl"},
 	    );
 	    push @zones_update_actions, \%um;
 	}
@@ -477,23 +214,6 @@ sub AdaptFirewall {
     return $ret;
 }
 
-sub NormalizeFilename {
-    my $filename = $_[0];
-
-    while ($filename ne "" && (substr ($filename, 0, 1) eq " "
-	|| substr ($filename, 0, 1) eq "\""))
-    {
-	$filename = substr ($filename, 1);
-    }
-    while ($filename ne ""
-	&& (substr ($filename, length ($filename) - 1, 1) eq " "
-	    || substr ($filename, length ($filename) - 1, 1) eq "\""))
-    {
-	$filename = substr ($filename, 0, length ($filename) - 1);
-    }
-    return $filename;
-}
-
 sub ReadDDNSKeys {
     my @globals = SCR::Dir (".dns.named.value");
     my %globals = ();
@@ -501,7 +221,7 @@ sub ReadDDNSKeys {
 	$globals{$g} = 1;
     }
     @globals = keys (%globals);
-    @update_keys = ();
+    @DnsTsigKeys::tsig_keys = ();
     foreach my $key (@globals) {
         if ($key eq "include")
         {
@@ -509,10 +229,10 @@ sub ReadDDNSKeys {
 	    foreach my $filename (@filenames) {
 		y2milestone ("Reading include file $filename");
 		$filename = NormalizeFilename ($filename);
-		my @tsig_keys = AnalyzeTSIGKeyFile ($filename);
+		my @tsig_keys = DnsTsigKeys::AnalyzeTSIGKeyFile ($filename);
 		foreach my $tsig_key (@tsig_keys) {
 		    y2milestone ("Having key $tsig_key, file $filename");
-		    push @update_keys, {
+		    push @DnsTsigKeys::tsig_keys, {
 			"filename" => $filename,
 			"key" => $tsig_key,
 		    };
@@ -585,11 +305,6 @@ sub AdaptDDNS {
     @includes = sort (keys (%includes));
     $includes = join (" ", @includes);
     SCR::Write (".sysconfig.named.NAMED_CONF_INCLUDE_FILES", $includes);
-
-    unshift @options, {
-        "key" => "include",
-        "value" => "\"$ddns_file_name\"",
-    };
 
     return 1;
 }
@@ -681,7 +396,7 @@ sub RemoveZone {
     if ($delete_file)
     {
 	my %zone_map = %{$zones[$zone_index]};
-	my $filename = AbsoluteZoneFileName ($zone_map{"file"});
+	my $filename = DnsZones::AbsoluteZoneFileName ($zone_map{"file"});
 	push (@files_to_delete, $filename) if (defined ($filename));
     }
 
@@ -714,20 +429,7 @@ sub SelectZone {
 
     if ($zone_index == -1)
     {
-	my $serial =  UpdateSerial ("");
-	my $fqdn = GetFQDN ();
-	$fqdn = "$fqdn.";
-	my $adm_mail = "root.$fqdn";
-	my %new_soa = (
-	    "expiry" => "1W",
-	    "mail" => $adm_mail,
-	    "minimum" => "1D",
-	    "refresh" => "3H",
-	    "retry" => "1H",
-	    "serial" => $serial,
-	    "server" => $fqdn,
-	    "zone" => "@",
-	);
+	my %new_soa = %{DnsZones::GetDefaultSOA ()};
 	%current_zone = (
 	    "soa_modified" => 1,
 	    "modified" => 1,
@@ -847,86 +549,37 @@ sub SetGlobalOptions {
     SetModified ();
 }
 
-BEGIN{$TYPEINFO{ListTSIGKeys}=["function",["list",["map","string","string"]]];}
-sub ListTSIGKeys {
-    return @update_keys;
-}
-
-# FIXME multiple keys in one file
-BEGIN{$TYPEINFO{AnalyzeTSIGKeyFile}=["function",["list","string"],"string"];}
-sub AnalyzeTSIGKeyFile {
-    my $filename = $_[0];
-
-    y2milestone ("Reading TSIG file $filename");
-    $filename = NormalizeFilename ($filename);
-    my $contents = SCR::Read (".target.string", $filename);
-    if ($contents =~ /.*key[ \t]+([^ \t}{;]+).* {/)
+BEGIN{$TYPEINFO{StopDnsService} = ["function", "boolean"];}
+sub StopDnsService {
+    my $ret = SCR::Execute (".target.bash", "/etc/init.d/named stop");
+    if ($ret == 0)
     {
-	return ($1);
+	return 1;
     }
-    return ();
+    y2error ("Stopping DNS daemon failed");
+    return 0;
 }
 
-BEGIN{$TYPEINFO{AddTSIGKey}=["function", "boolean", "string"];}
-sub AddTSIGKey {
-    my $filename = $_[0];
-
-    my @tsig_keys = AnalyzeTSIGKeyFile ($filename);
-    y2milestone ("Reading TSIG file $filename");
-    $filename = NormalizeFilename ($filename);
-    my $contents = SCR::Read (".target.string", $filename);
-    if (0 != @tsig_keys)
+BEGIN{$TYPEINFO{GetDnsServiceStatus} = ["function", "boolean"];}
+sub GetDnsServiceStatus {
+    my $ret = SCR::Execute (".target.bash", "/etc/init.d/named status");
+    if ($ret == 0)
     {
-	foreach my $tsig_key (@tsig_keys) {
-	    y2milestone ("Having key $tsig_key, file $filename");
-	    # remove the key if already exists
-	    my @current_keys = grep {
-		$_->{"key"} eq $tsig_key;
-	    } @update_keys;
-	    if (@current_keys > 0)
-	    {
-		DeleteTSIGKey ($tsig_key);
-	    }
-	    #now add new one
-	    my %new_include = (
-		"filename" => $filename,
-		"key" => $tsig_key,
-	    );
-	    push @update_keys, \%new_include;
-	    push @new_includes, \%new_include;
-	}
-	return Boolean (1);
+	return 1;
     }
-    return Boolean (0);
+    return 0;
 }
 
-BEGIN{$TYPEINFO{DeleteTSIGKey}=["function", "boolean", "string"];}
-sub DeleteTSIGKey {
-    my $key = $_[0];
-    
-    y2milestone ("Removing TSIG key $key");
-    #add it to deleted list
-    my @current_keys = grep {
-	$_->{"key"} eq $key;
-    } @update_keys;
-    if (@current_keys == 0)
+BEGIN{$TYPEINFO{StartDnsService} = ["function", "boolean"];}
+sub StartDnsService { 
+    my $ret = SCR::Execute (".target.bash", "/etc/init.d/named restart");
+    if ($ret == 0)
     {
-	y2error ("Key not found");
-	return Boolean(0);
+        return 1;
     }
-    foreach my $k (@current_keys) {
-	push @deleted_includes, $k;
-    }
-    #remove it from current list
-    @new_includes = grep {
-	$_->{"key"} ne $key;
-    } @new_includes;
-    @update_keys = grep {
-	$_->{"key"} ne $key;
-    } @update_keys;
-
-    return Boolean (1);
-}
+    y2error ("Starting DNS daemon failed");
+    return 0;
+}   
 
 ##------------------------------------
 BEGIN { $TYPEINFO{Read} = ["function", "boolean"]; }
@@ -935,15 +588,19 @@ sub Read {
     # DNS server read dialog caption
     my $caption = _("Initializing DNS Server Configuration");
 
-    Progress::New( $caption, " ", 2, [
+    Progress::New( $caption, " ", 3, [
 	# progress stage
 	_("Check the environment"),
 	# progress stage
-	_("Read the settings"),
+	_("Flush caches of the DNS daemon"),
+	# progress stage
+	_("Restart the DNS daemon"),
     ],
     [
 	# progress step
 	_("Checking the environment..."),
+	# progress step
+	_("Flushing caches of the DNS daemon..."),
 	# progress step
 	_("Reading the settings..."),
 	# progress step
@@ -972,6 +629,16 @@ YaST2 will install package %1.
 	}
     }
  
+    Progress::NextStage ();
+    sleep ($sl);
+
+    my $started = GetDnsServiceStatus ();
+    StopDnsService ();
+    if ($started)
+    {
+	StartDnsService ();
+    }
+
     Progress::NextStage ();
     sleep ($sl);
 
@@ -1026,7 +693,7 @@ YaST2 will install package %1.
 	my %zd = ();
 	if ($zonetype eq "master")
 	{
-	    %zd = ZoneRead ($zonename, $filename);
+	    %zd = %{DnsZones::ZoneRead ($zonename, $filename)};
 	}
 	elsif ($zonetype eq "slave" || $zonetype eq "stub")
 	{
@@ -1070,12 +737,51 @@ YaST2 will install package %1.
 
 BEGIN { $TYPEINFO{Write} = ["function", "boolean"]; }
 sub Write {
+
+    # DNS server read dialog caption
+    my $caption = _("Initializing DNS Server Configuration");
+
+    Progress::New( $caption, " ", 4, [
+	# progress stage
+	_("Flush caches of the DNS daemon"),
+	# progress stage
+	_("Save configuration files"),
+	# progress stage
+	_("Restart the DNS daemon"),
+	# progress stage
+	_("Update zone files"),
+    ],
+    [
+	# progress step
+	_("Flushing caches of the DNS daemon..."),
+	# progress step
+	_("Saving configuration files..."),
+	# progress step
+	_("Restarting the DNS daemon..."),
+	# progress step
+	_("Updating zone files..."),
+	# progress step
+	_("Finished")
+    ],
+    ""
+    );
+
+    my $sl = 0.5;
+
+    Progress::NextStage ();
+    sleep ($sl);
+
     my $ok = 1;
 
     if (! $modified)
     {
 	return "true";
     }
+
+    $ok = StopDnsService () && $ok;
+
+    Progress::NextStage ();
+    sleep ($sl);
 
     #adapt firewall
     $ok = AdaptFirewall () && $ok;
@@ -1099,18 +805,33 @@ sub Write {
     SCR::Write (".sysconfig.named.NAMED_RUN_CHROOTED", $chroot ? "yes" : "no");
     SCR::Write (".sysconfig.named", undef);
 
+    Progress::NextStage ();
+    sleep ($sl);
+
+    my $ret = 0;
     if (0 != @zones_update_actions)
     {
-	my $ret = SCR::Execute (".target.bash", "/etc/init.d/named restart");
+	$ret = SCR::Execute (".target.bash", "/etc/init.d/named restart");
+    }
+
+    Progress::NextStage ();
+    sleep ($sl);
+
+    if (0 != @zones_update_actions)
+    {
 	if ($ret != 0)
 	{
 	    $ok = 0;
 	}
 	else
 	{
-	    UpdateZones (\@zones_update_actions);
+	    sleep (0.1);
+	    DnsZones::UpdateZones (\@zones_update_actions);
 	}
     }
+
+    Progress::NextStage ();
+    sleep ($sl);
 
     if ($start_service)
     {
@@ -1133,6 +854,9 @@ sub Write {
 	}
 	Service::Disable ("named");
     }
+
+    Progress::NextStage ();
+    sleep ($sl);
 
     return $ok;
 }

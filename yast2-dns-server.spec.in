@@ -25,8 +25,7 @@ Summary:	Configuration of dns-server
 @yncludedir@/dns-server/*
 @clientdir@/dns-server.ycp
 @clientdir@/dns-server_*.ycp
-@moduledir@/DnsServerUI.y*
-@moduledir@/DnsServer.pm
+@moduledir@/*
 @desktopdir@/dns-server.desktop
 @scrconfdir@/dns_named.scr
 @scrconfdir@/dns_zone.scr

@@ -16,6 +16,8 @@
     textdomain "dns-server";
 
     import "DnsServer";
+    import "DnsTsigKeys";
+    import "DnsZones";
     import "Mode";
     import "Popup";
     import "Progress";
