@@ -33,11 +33,11 @@
 	    "save" : true,
 	    "actions" : [
 		// menubutton entry, try to keep short
-		[ _("Restart DNS server"),
+		[ _("Restart DNS Server"),
 		    ``{SCR::Execute (.target.bash,
 			"/etc/init.d/named restart");}],
 		// menubutton entry, try to keep short
-		[ _("Save settings and restart DNS server"),
+		[ _("Save Settings and Restart DNS Server"),
 		    ``{DnsServer::Write ();} ],
 	    ],
 	]);
@@ -195,7 +195,7 @@
 	    else
 	    {
 		// message popup
-		Popup::Message (_("YaST2 cannot edit this type of zone"));
+		Popup::Message (_("YaST2 cannot edit this type of zone."));
 		return nil;
 	    }
             return `edit;
@@ -456,7 +456,7 @@
 	    "log_button" : $[
 		"widget" : `push_button,
 		// push button
-		"label" : _("&Display log"),
+		"label" : _("&Display Log"),
 		"handle" : ``(DnsServer::showLogPopup ()),
 		"handle_events" : [ "log_button" ],
 		"help" : HELPS["log_button"]:"",

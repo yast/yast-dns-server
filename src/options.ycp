@@ -30,7 +30,7 @@
 	);
 	term t = `HBox (`HSpacing (1), `VBox (
 	    // heading
-	    `Heading (_("Select the type of new zone")),
+	    `Heading (_("Select the New Zone Type")),
 	    `VSpacing (1),
 	    `RadioButtonGroup (`id (`rt), buttons),
 	    `VSpacing (1),
@@ -68,7 +68,7 @@
 	    );
 	term t = `HBox (`HSpacing (1), `VBox (
 	    // heading
-	    `Heading (_("Select type of record to add")),
+	    `Heading (_("Select the Record Type to Add")),
 	    `VSpacing (1),
 	    `RadioButtonGroup (`id (`rt), buttons),
 	    `VSpacing (1),
@@ -98,17 +98,17 @@
     global define map editA (map orig) ``{
 	term t = `HBox (`HSpacing (1), `VBox (
 	    // heading
-	    `Heading (_("Edit the DNS zone record")),
+	    `Heading (_("Edit the DNS Zone Record")),
 	    `HSpacing (50),
 	    `VSpacing (1),
 	    // text entry
 	    `TextEntry (`id (`name), _("&Host name")),
 	    `VSpacing (2),
 	    // text entry
-	    `TextEntry (`id (`ip), _("&IP addresses")),
+	    `TextEntry (`id (`ip), _("&IP Addresses")),
 	    `VSpacing (1),
 	    // text entry
-	    `TextEntry (`id (`mx), _("&Mail servers")),
+	    `TextEntry (`id (`mx), _("&Mail Servers")),
 	    `VSpacing (1),
 	    CWM::OkCancelBox (),
 	    `VSpacing (1)
@@ -148,11 +148,11 @@
       */
     global define map editPTR (map orig) ``{
 	term t = `HBox (`HSpacing (1), `VBox (
-	    `Heading (_("Edit the DNS zone record")),
+	    `Heading (_("Edit the DNS Zone Record")),
 	    `HSpacing (30),
 	    `VSpacing (1),
 	    // text entry
-	    `TextEntry (`id (`ip), _("&IP address")),
+	    `TextEntry (`id (`ip), _("&IP Address")),
 	    `VSpacing (1),
 	    // text entry
 	    `TextEntry (`id (`name), _("&Host name")),
@@ -188,14 +188,14 @@
     global define map editCNAME (map orig) ``{
 	term t = `HBox (`HSpacing (1), `VBox (
 	    // heading
-	    `Heading (_("Edit the DNS zone record")),
+	    `Heading (_("Edit the DNS Zone Record")),
 	    `HSpacing (30),
 	    `VSpacing (1),
 	    // text entry
 	    `TextEntry (`id (`alias), _("&Alias")),
 	    `VSpacing (1),
 	    // text entry
-	    `TextEntry (`id (`name), _("&Base host name")),
+	    `TextEntry (`id (`name), _("&Base Host Name")),
 	    `VSpacing (1),
 	    CWM::OkCancelBox (),
 	    `VSpacing (1)
@@ -687,10 +687,10 @@
 		    `VWeight (1, `VStretch ()),
 		    `VWeight (1,
 			// text entry
-			`TextEntry (`id ("server"), _("Primary &source"))),
+			`TextEntry (`id ("server"), _("Primary &Source"))),
 		    `VWeight (1,
 			// text entry
-			`TextEntry (`id ("mail"), _("&Administrator's mail")))
+			`TextEntry (`id ("mail"), _("&Administrator's Mail")))
 		),
 		`HSpacing (1),
 		`VBox (
@@ -702,7 +702,7 @@
 			`TextEntry (`id ("retry"), _("Re&try"))),
 		    `VWeight (1,
 			// text entry
-			`TextEntry (`id ("expiry"), _("E&xpiry"))),
+			`TextEntry (`id ("expiry"), _("E&xpiration"))),
 		    `VWeight (1,
 			// text entry
 			`TextEntry (`id ("minimum"), _("Mi&nimum")))
@@ -714,7 +714,7 @@
 	    "__start_service" : $[
 		"table" : $[
 		    // table cell, label
-		    "label" : _("Start DNS server at boot time"),
+		    "label" : _("Start DNS Server at Boot"),
 		    "summary" : ``(DnsServer::startServiceSummary ()),
 		    "optional" : false,
 		],
@@ -727,7 +727,7 @@
 	    "__zones" : $[
 		"table" : $[
 		    // table cell
-		    "label" : _("DNS zones"),
+		    "label" : _("DNS Zones"),
 		    "handle" : `zones,
 		    "optional" : false,
 		],
@@ -735,7 +735,7 @@
 	    "_zone" : $[
 		"table" : $[
 		    // table cell, label
-		    "label" : _("Zone name"),
+		    "label" : _("Zone Name"),
 		    "optional" : false,
 		]
 	    ],
@@ -750,14 +750,14 @@
 	    "_ttl" : $[
 		"table" : $[
 		    // table cell, label
-		    "label" : _("Time to live"),
+		    "label" : _("Time to Live"),
 		    "optional" : false,
 		]
 	    ],
 	    "_NS" : $[
 		"table" : $[
 		    // table cell, label
-		    "label" : _("Domain name servers"),
+		    "label" : _("Domain Name Servers"),
 		    "optional" : false,
 		    "summary" : ``(DnsServer::NsMxSummary ()),
 		],
@@ -766,7 +766,7 @@
 	    "_MX" : $[
 		"table" : $[
 		    // table cell, label
-		    "label" : _("Domain mail servers"),
+		    "label" : _("Domain Mail Servers"),
 		    "optional" : false,
 		    "summary" : ``(DnsServer::NsMxSummary ()),
 		],
@@ -775,7 +775,7 @@
 	    "masters" : $[
 		"table" : $[
 		    // table cell, label
-		    "label" : _("Domain master name servers"),
+		    "label" : _("Domain Master Name Servers"),
 		    "optional" : false,
 		    "summary" : ``(DnsServer::MastersSummary ()),
 		],
@@ -787,7 +787,7 @@
 	    "__chroot" : $[
 		"table" : $[
 		    // table cell, label
-		    "label" : _("Start DNS server in chroot jail"),
+		    "label" : _("Start DNS Server in chroot Jail"),
 		    "optional" : false,
 		    "summary" : ``(DnsServer::ChrootSummary ()),
 		],
@@ -800,7 +800,7 @@
 	    "__save_all" : $[
 		"table" : $[
 		    // table cell, label
-		    "label" : _("Force saving all settings"),
+		    "label" : _("Force Saving All Settings"),
 		    "optional" : false,
 		    "summary" : ``(DnsServer::SaveAllSummary ()),
 		],
