@@ -59,7 +59,7 @@
     import "DnsServer";
     import "Mode";
 
-    Mode::test = true;
+    Mode::SetMode("test");
 
     Progress::off ();
 

@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Nov  1 08:29:03 CET 2004 - locilka@suse.cz
+
+- Adjusted for changes in Mode.
+- 2.11.0
+
+-------------------------------------------------------------------
 Fri Oct 22 09:28:39 CEST 2004 - locilka@suse.cz
 
 - fixed checking for LDAP Support to show the messages about failed

@@ -83,7 +83,7 @@ term ExpertStartUpDialog () {
 }
 
 void UpdateServiceStatusWidget () {
-    if (Mode::config)
+    if (Mode::config ())
     {
 	UI::ChangeWidget (`id ("start_dns_now"), `Enabled, false);
 	UI::ChangeWidget (`id ("stop_dns_now"), `Enabled, false);
@@ -167,7 +167,7 @@ Continue?
 //	}
 	boolean use_ldap = (boolean)UI::QueryWidget (`id ("use_ldap"), `Value);
 	DnsServer::SetUseLdap (use_ldap);
-	if (! Mode::config)
+	if (! Mode::config ())
 	{
 	    DnsServer::InitYapiConfigOptions ($["use_ldap" : use_ldap]);
 	    DnsServer::LdapInit (true);
