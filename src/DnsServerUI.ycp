@@ -24,6 +24,9 @@
     import "Mode";
     import "Popup";
 
+    define map<string,any> current_zone = $[];
+    define list<map<string,string> > current_section = [];
+
 
     global define map createNewZone(string zone_type) ``{return $[];}
 

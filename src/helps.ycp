@@ -9,34 +9,45 @@
 
 {
 
-    textdomain "dns-server";
+textdomain "dns-server";
 
-    /**
-      * All helps are here
-      */
-    global map HELPS = $[
+/**
+ * All helps are here
+ */
+global map HELPS = $[
 
-	/* Read dialog help 1/2 */
-	"read" : _("<p><b><big>Initializing DNS Server Configuration</big></b>
-<br>
-Please wait...<br></p>
-") +
+    /* Read dialog help 1/2 */
+    "read" : _("<p><b><big>Initializing DNS Server Configuration</big></b><br>
+Please wait...<br></p>") +
 
-	/* Read dialog help 2/2 */
-	_("<p><b><big>Aborting Initialization:</big></b><br>
+    /* Read dialog help 2/2 */
+    _("<p><b><big>Aborting Initialization:</big></b><br>
 Safely abort the configuration utility by pressing <b>Abort</b> now.</p>
 "),
 
-	/* Write dialog help 1/2 */
-	"write" : _("<p><b><big>Saving DNS Server Configuration</big></b><br>
+    /* Write dialog help 1/2 */
+    "write" : _("<p><b><big>Saving DNS Server Configuration</big></b><br>
 Please wait...<br></p>
 ") +
 
-	/* Write dialog help 2/2 */
-	_("<p><b><big>Aborting Saving:</big></b><br>
+    /* Write dialog help 2/2 */
+    _("<p><b><big>Aborting Saving:</big></b><br>
 Abort the save procedure by pressing <b>Abort</b>.
 An additional dialog informs you whether it is safe to do so.</p>
 "),
+
+    // main dialog
+    // help text 1/3
+    "start" : _("<p><b><big>Start DNS Server</big></b><br>
+If you want to run DNS server every time your computer is started, set
+<b>Start DNS Server</b>.</p>"),
+
+    // help text 2/3
+    "chroot" : _("<p><b><big>Chroot jail</big></b><br>
+To run DNS server in chroot jail, set
+<b>Run DNS sevrer in chroot jail</b>. Starting any daemon in chroot jail
+is more secure and strongly recommended."),
+
 
 	// help 1/1
 	"log_button" : _("<p><b><big>Displaying a Log</big></b><br>
