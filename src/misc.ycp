@@ -290,7 +290,7 @@ Packages %2 will be removed.</p>
 	    string filename
 		= SCR::Read (add (add (.dns.named.value, z), "file"));
 	    SCR::Execute (.target.bash, sformat (
-		"test -f %1 && /usr/bin/rm %1",
+		"test -f %1 && /bin/rm %1",
 		filename));
 	    SCR::Write (add (.dns.named.section, z), nil);
 	});
