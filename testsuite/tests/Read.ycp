@@ -1,0 +1,108 @@
+/**
+ * File:
+ *  rw.ycp
+ *
+ * Module:
+ *  DHCP server configurator
+ *
+ * Summary:
+ *  Read and write testsuite
+ *
+ * Authors:
+ *  Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ *
+ */
+
+{
+    include "testsuite.ycp";
+    import "Progress";
+    import "DnsServer";
+    import "Mode";
+
+    Mode::test = true;
+
+    Progress::off ();
+
+    map READ = $[
+	// Runlevel
+        "init": $[
+            "scripts": $[
+                "exists": true,
+                "runlevel": $[
+                    "named": $[
+                        "start": [],
+                        "stop":  [],
+                        ],
+                    ],
+                // their contents is not important for ServiceAdjust
+                "comment": $[
+                    "named": $[],
+                    ],
+                ],
+            ],
+
+	"target" : $[
+	    "stat" : $[],
+	    "ycp" : $[],
+	],
+	"dns" : $[
+	    "named" : $[
+		"section" : $[
+		    "options" : "",
+		    "zone \"localhost\" in" : "",
+		],
+		"value" : $[
+		    "options" : $[
+			"directory" : "\"/var/lib/named\"",
+			"notify" : "no",
+		    ],
+		    "zone \"localhost\" in" : $[
+			"type" : "master",
+			"file" : "\"localhost.zone\"",
+		    ],
+		],
+	    ],
+	    "zone" : $[
+		"TTL":"1W",
+		"records":[
+		    $[
+			"key":"",
+			"type":"NS",
+			"value":"@"
+		    ], $[
+			"key":"",
+			"type":"A",
+			"value":"127.0.0.1"
+		    ], $[
+			"key" : "localhost2",
+			"type" : "A",
+			"value" : "127.0.0.2"
+		    ],
+		],
+		"soa":$[
+		    "expiry":"6W",
+		    "mail":"root",
+		    "minimum":"1W",
+		    "refresh":"2D",
+		    "retry":"4H",
+		    "serial":42,
+		    "server":"@",
+		    "zone":"@"
+		]
+	    ],
+	],
+    ];
+    map WRITE = $[];
+    map EXEC = $[
+	"target" : $[
+	    "bash_output" : $["exit" : 1, "stdout" : "", "stderr" : ""],
+	],
+    ];
+
+    DUMP ("=======================");
+    TEST (``(DnsServer::Read ()), [READ, WRITE, EXEC], 0);
+    DUMP ("=======================");
+    TEST (``(DnsServer::Export ()), [READ, WRITE, EXEC], 0);
+}

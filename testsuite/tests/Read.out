@@ -1,0 +1,18 @@
+Dump	=======================
+Execute	.target.bash_output "/bin/hostname -f" $["exit":1, "stderr":"", "stdout":""]
+Log	Hostname detection failed, using localhost
+Execute	.target.bash "rpm -q bind8" 0
+Execute	.target.bash "rpm -q bind9" 0
+Read	.init.scripts.exists "named" true
+Read	.init.scripts.runlevel "named" $["named":$["start":[], "stop":[]]]
+Read	.sysconfig.named.NAMED_RUN_CHROOTED 0
+Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
+Dir	.dns.named.value.options: ["directory", "notify"]
+Read	.dns.named.value.options."directory" "\"/var/lib/named\""
+Read	.dns.named.value.options."notify" "no"
+Read	.dns.named.value."zone \"localhost\" in"."type" "master"
+Read	.dns.named.value."zone \"localhost\" in"."file" "\"localhost.zone\""
+Read	.dns.zone ["/var/lib/named/localhost.zone"] $["TTL":"1W", "records":[$["key":"", "type":"NS", "value":"@"], $["key":"", "type":"A", "value":"127.0.0.1"], $["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":42, "server":"@", "zone":"@"]]
+Return	true
+Dump	=======================
+Return	$["chroot":false, "options":$["directory":"\"/var/lib/named\"", "notify":"no"], "start_service":false, "zones":[$["file":"localhost.zone", "records":$["localhost2":$["A":["127.0.0.2"], "MX":[]]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":42, "server":"@", "zone":"@"], "ttl":"1W", "type":"master", "zone":"localhost", "zone_rec":$["A":["127.0.0.1"], "MX":[], "NS":["@"]]]]]
