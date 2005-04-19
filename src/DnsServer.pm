@@ -1017,7 +1017,7 @@ sub Read {
 	return 0;
     }
 
-    if (ProductFeatures->ui_mode eq "expert") {
+    if (ProductFeatures->GetFeature ("globals", "ui_mode") eq "expert") {
 	$self->LdapInit (0);
     }
  

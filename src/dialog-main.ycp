@@ -1656,7 +1656,7 @@ map<string, map<string, any> > tabs = $[
 	// Tree Menu Item - DNS - expert settings
 	"tree_item_label"	: _("Start-Up"),
 	// FIXME: new startup
-	"widget_names"		: ((ProductFeatures::ui_mode == "expert") ?
+	"widget_names"		: ((ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") ?
 		// expert mode
 		[ "auto_start_up", "firewall", "use_ldap", "start_stop" ]
 		:
@@ -1732,7 +1732,7 @@ symbol runExpertDialog () {
     list<string> normal_dialog  = [ "start_up", "forwarders", "logging", "zones" ];
 
     return DialogTree::ShowAndRun ($[
-	"ids_order" : ((ProductFeatures::ui_mode == "expert") ? expert_dialogs : normal_dialog),
+	"ids_order" : ((ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") ? expert_dialogs : normal_dialog),
 	"initial_screen" : "start_up",
 	"screens" :  tabs,
 	"widget_descr" : new_widgets,
