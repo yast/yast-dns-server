@@ -96,7 +96,7 @@ term GetMasterZoneEditorTabBasics () {
 	sort (merge (acl, ["any", "none", "localhost", "localnets"]));
 
     term expert_settings = `Empty();
-    if (ProductFeatures::ui_mode == "expert") {
+    if (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") {
 	expert_settings = `VBox (
 	    `Left (`CheckBox (`id ("allow_ddns"), `opt (`notify),
 		// check box
@@ -201,7 +201,7 @@ void InitZoneBasicsTab () {
             }
         }
     });
-    if (ProductFeatures::ui_mode == "expert") {
+    if (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") {
 	UI::ChangeWidget (`id ("allow_ddns"), `Value, allowed);
 	UI::ChangeWidget (`id ("ddns_key"), `Enabled, allowed);
 
@@ -229,7 +229,7 @@ void StoreZoneBasicsTab () {
         m != $[]
     ));
 
-    if (ProductFeatures::ui_mode == "expert") {
+    if (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") {
 	string key = (string)UI::QueryWidget (`id ("ddns_key"), `Value);
 	boolean allowed = (boolean)UI::QueryWidget (`id ("allow_ddns"), `Value);
 	if (allowed) {
@@ -248,7 +248,7 @@ void StoreZoneBasicsTab () {
 symbol HandleZoneBasicsTab (map event) {
     any ret = event["ID"]:nil;
 
-    if (ProductFeatures::ui_mode == "expert") {
+    if (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") {
 	if (ret == "allow_ddns" && Mode::config ()) {
 	    // popup message
 	    Popup::Message (_("This function is not available during

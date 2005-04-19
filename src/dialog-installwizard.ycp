@@ -164,7 +164,7 @@ symbol runInstallWizardFinishDialog () {
     term firewall_layout = firewall_widget["custom_widget"]:`VBox ();
     string firewall_help = firewall_widget["help"]:"";
 
-    term ldap_support = ((ProductFeatures::ui_mode == "expert") ?
+    term ldap_support = ((ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") ?
 	`VBox (
 	    `VSpacing ( 1 ),
 	    // check box
@@ -221,7 +221,7 @@ symbol runInstallWizardFinishDialog () {
 
     boolean use_ldap = false;
     // only expert allows to store data in ldap
-    if (ProductFeatures::ui_mode == "expert") {
+    if (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") {
 	use_ldap = DnsServer::GetUseLdap ();
 	UI::ChangeWidget (`id ("use_ldap"), `Value, use_ldap);
     }
