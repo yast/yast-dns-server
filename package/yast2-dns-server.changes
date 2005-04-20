@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Apr 20 11:17:58 CEST 2005 - locilka@suse.cz
+
+- Fixed bug #78575
+  Added 'lan', 'ldap', 'ldap-server' and 'ldap-client' into the
+  AutoInstallation requirements to be configured before dns-server
+  Added <use_ldap /> tag into the AutoYaST profile
+
+-------------------------------------------------------------------
 Tue Apr 19 11:08:28 CEST 2005 - locilka@suse.cz
 
 - Applied new functional interface of ProductFeatures
