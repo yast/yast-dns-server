@@ -1419,6 +1419,7 @@ sub Export {
     my %ret = (
 	"start_service" => $start_service,
 	"chroot" => $chroot,
+	"use_ldap" => $use_ldap,
 	"allowed_interfaces" => \@allowed_interfaces,
 	"zones" => \@zones,
 	"options" => \@options,
@@ -1433,6 +1434,7 @@ sub Import {
 
     $start_service = $settings{"start_service"} || 0;
     $chroot = $settings{"chroot"} || 1;
+    $use_ldap = $settings{"use_ldap"} || 0;
     @allowed_interfaces = @{$settings{"allowed_interfaces"} || []};
     @zones = @{$settings{"zones"} || []}; 
     @options = @{$settings{"options"} || []};
@@ -1446,7 +1448,7 @@ sub Import {
     $adapt_firewall = 0;
     $write_only = 0;
 
-    if (Mode->autoinst ())
+    if (Mode->autoinst() && $use_ldap)
     {
 	# Initialize LDAP if needed
 	$self->InitYapiConfigOptions ({"use_ldap" => $use_ldap});
