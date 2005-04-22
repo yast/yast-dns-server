@@ -1538,7 +1538,9 @@ sub LdapInit {
     y2milestone ("Initializing LDAP support");
 
     # grab info about the LDAP server
-    Ldap->Read ();
+    if (!Mode->autoinst() && !Mode->config()) {
+	Ldap->Read ();
+    }
     my $ldap_data_ref = Ldap->Export ();
 
     my $server = $ldap_data_ref->{"ldap_server"};

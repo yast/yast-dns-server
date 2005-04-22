@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Apr 22 13:51:31 CEST 2005 - locilka@suse.cz
+
+- Fixed bug #78569
+  Mode::config() and Mode::autoins() don't call Ldap::Read() now
+
+-------------------------------------------------------------------
 Wed Apr 20 11:17:58 CEST 2005 - locilka@suse.cz
 
 - Fixed bug #78575
