@@ -123,8 +123,11 @@ sub ZoneWrite {
     }
 
     my $zone_file = $zone_map{"file"} || "";
-    if ($zone_file eq "")
-    {
+    # creating temporary zone file if zone is slave
+    if ($zone_file eq "" && defined $zone_map{"type"} && $zone_map{"type"} eq "slave") {
+	$zone_file = "slave/$zone_name";
+    # otherwise it is master
+    } elsif ($zone_file eq "") {
 	$zone_file = "master/$zone_name";
     }
 
@@ -250,6 +253,13 @@ sub ZoneWrite {
 	    $zone_map{"masters"} = "{$masters;}";
 	}
         SCR->Write ("$base_path.masters", [$zone_map{"masters"} || ""]);
+
+	# temporary file for slave zone
+	if ($zone_type eq "slave") {
+	    # only creating record in named.conf
+	    # named should create the temporary file by itself
+	    SCR->Write ("$base_path.file", ["\"$zone_file\""]);
+	}
     }
     elsif ($zone_type eq "hint")
     {
