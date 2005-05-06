@@ -93,7 +93,7 @@ To edit the SOA (Start of Authority) record of the zone, click
     "zone_masters" : _("<p><b><big>Master Servers</big></b><br>
 Set the IP addresses of the master name servers for this zone. Use <b>Add</b>
 to add a new master name server. Select an existing one then click <b>Delete</b>
-to remove an exising one.</p>"),
+to remove an existing one.</p>"),
 
     // help 1/2
     "zone_type" : _("<p><b><big>Zone Type</big></b><br>
