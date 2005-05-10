@@ -35,6 +35,9 @@ import "Hostname";
 import "Confirm";
 import "DnsServerAPI";
 
+/* String defines the initial screen for the expert dialog */
+string initial_screen = "start_up";
+
 /**
  * Dialog Expert Settings - Start Up
  * @return term for Get_ExpertDialog()
@@ -1524,6 +1527,8 @@ symbol HandleExpertZonesPage (string key, map event) {
     }
     else if (ret == "edit_zone")
     {
+	// next time, the initial screen will be "zones"
+	initial_screen = "zones";
 	DnsServer::SelectZone (index);
 	current_zone = DnsServer::FetchCurrentZone ();
 	return `edit_zone;
@@ -1733,7 +1738,7 @@ symbol runExpertDialog () {
 
     return DialogTree::ShowAndRun ($[
 	"ids_order" : ((ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") ? expert_dialogs : normal_dialog),
-	"initial_screen" : "start_up",
+	"initial_screen" : initial_screen,
 	"screens" :  tabs,
 	"widget_descr" : new_widgets,
 	"back_button" : "",
