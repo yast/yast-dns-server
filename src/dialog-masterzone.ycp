@@ -433,23 +433,27 @@ term GetMasterZoneEditorTabMailServers () {
     term contents =
 	`VBox (
 	    `VSquash (
-		`HBox (
-		    `HWeight ( 7,
-			// Frame label - adding mail server
-			`Frame ( _("Mail Server to Add"),
-			    `HBox (
-				// Textentry - addind mail server - Name
-				`TextEntry ( `id ( "add_mail_server" ), _("&Address") ),
-				// IntField - adding mail server - Priority
-				`IntField ( `id ( "add_priority" ), _("&Priority"), 0, 65535, 0 )
+		`Frame (
+		    // Frame label - adding mail server
+		    _("Mail Server to Add"),
+		    `VBox (
+			`HBox (
+			    `HWeight ( 7,
+				`HBox (
+				    // Textentry - addind mail server - Name
+				    `TextEntry ( `id ( "add_mail_server" ), _("&Address") ),
+				    // IntField - adding mail server - Priority
+				    `IntField ( `id ( "add_priority" ), _("&Priority"), 0, 65535, 0 )
+				)
+			    ),
+			    `HWeight ( 2,
+				`VBox (
+				    `VStretch(),
+				    `VSquash ( `PushButton ( `id ( "add_mx" ), `opt ( `hstretch ), Label::AddButton () ) )
+				)
 			    )
-			)
-		    ),
-		    `HWeight ( 2,
-			`VBox (
-			    `VStretch (),
-			    `VSquash ( `PushButton ( `id ( "add_mx" ), `opt ( `hstretch ), Label::AddButton () ) )
-			)
+			),
+			`VSpacing (0.5)
 		    )
 		)
 	    ),
@@ -841,35 +845,39 @@ term GetMasterZoneEditorTabRecords () {
     term contents =
 	`VBox (
 	    `VSquash (
-		`HBox (
-		    `HWeight ( 9,
-			// Frame label - Adding/Changing IP/CNAME/Type... zone settings
-			`Frame ( _("Record Settings"),
-			    `HBox (
-				// Textentry - zone settings - Record Name
-				`TextEntry ( `id ( "add_record_name" ), _("&Record Key") ),
-				// Combobox - zone settings - Record Type
-				`ComboBox ( `id ( "add_record_type" ), _("T&ype"), add_records ),
-				// Textentry - zone settings - Record Value
-				`TextEntry ( `id ( "add_record_val" ), _("Val&ue") )
+		// Frame label - Adding/Changing IP/CNAME/Type... zone settings
+		`Frame ( _("Record Settings"),
+		    `VBox (
+			`HBox (
+			    `HWeight ( 9,
+				`HBox (
+				    // Textentry - zone settings - Record Name
+				    `TextEntry ( `id ( "add_record_name" ), _("&Record Key") ),
+				    // Combobox - zone settings - Record Type
+				    `ComboBox ( `id ( "add_record_type" ), _("T&ype"), add_records ),
+				    // Textentry - zone settings - Record Value
+				    `TextEntry ( `id ( "add_record_val" ), _("Val&ue") )
+				)
+			    ),
+			    `HWeight ( 2,
+				`VBox (
+				    `VStretch (),
+				    // Pushbutton - Change Record
+				    `VSquash ( `PushButton ( `id ( "change_record" ), `opt ( `hstretch ), _("C&hange") ) ),
+				    `VSquash ( `PushButton ( `id ( "add_record" ), `opt ( `hstretch ), Label::AddButton () ) )
+				)
 			    )
-			)
-		    ),
-		    `HWeight ( 2,
-			`VBox (
-			    `VStretch (),
-			    // Pushbutton - Change Record
-			    `VSquash ( `PushButton ( `id ( "change_record" ), `opt ( `hstretch ), _("C&hange") ) ),
-			    `VSquash ( `PushButton ( `id ( "add_record" ), `opt ( `hstretch ), Label::AddButton () ) )
-			)
+			),
+			`VSpacing (0.5)
 		    )
 		)
 	    ),
+	    `VSpacing (0.5),
+	    // Table label - Records listing
+	    `Left ( `Label (_("Configured Resource Records") ) ),
 	    `HBox (
 		`HWeight ( 9,
 		    `VBox (
-			// Table label - Records listing
-			`Left ( `Label (_("Configured Resource Records") ) ),
 			`Table ( `id ( "records_list" ),
 			    `opt (`notify, `immediate),
 			    `header (
@@ -885,7 +893,6 @@ term GetMasterZoneEditorTabRecords () {
 		),
 		`HWeight ( 2,
 		    `VBox (
-			`VSquash( `VSpacing ( 1 ) ),
 			`VSquash ( `PushButton ( `id ( "delete_record" ), `opt ( `hstretch ), Label::DeleteButton () ) ),
 			`VStretch ()
 		    )
@@ -1397,7 +1404,7 @@ symbol runMasterZoneTabDialog () {
 	    `VBox( `opt ( `hvstretch ),
 		`HBox (
 		    // Label - connected with Textentry which shows current edited zone
-		    `HSquash ( `Label ( _("Settings for Zone: ") ) ),
+		    `HSquash ( `Label ( _("Settings for Zone ") ) ),
 		    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "", zone_name ) ),
 		    `HStretch ()
 		),
@@ -1524,7 +1531,7 @@ symbol runSlaveZoneTabDialog () {
     term contents = `VBox (
 	`HBox (
 	    // Label - connected with Textentry which shows current edited zone
-	    `HSquash ( `Label ( _("Settings for Zone: ") ) ),
+	    `HSquash ( `Label ( _("Settings for Zone ") ) ),
 	    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "", zone_name ) ),
 	    `HStretch ()
 	),
@@ -1586,8 +1593,7 @@ symbol runSlaveZoneTabDialog () {
 		    // TRANSLATORS: Popup error text
 		    _("Every slave zone must have its master server IP defined.
 Configuration of a DNS server without a master server would fail.
-If you continue, the current zone will be removed.
-")
+If you continue, the current zone will be removed.")
 		)) {
 		    // removing current zone - zone needs master server
 		    zones = filter (map z, zones, ``(z != current_zone));

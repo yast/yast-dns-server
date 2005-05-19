@@ -221,7 +221,7 @@ define map getZoneTypeWidget () ``{
 	],
 	"vspacing" : 1,
 	// frame containing radio buttons group
-	"label" : _("Zone Type"),
+	"label" : _("Type"),
 	"help" : HELPS["zone_type"]:"",
 	"init" : zoneTypeInit,
 	"store" : zoneTypeStore,
@@ -257,7 +257,7 @@ global define map getZoneNameWidget () ``{
     return $[
 	"widget" : `textentry,
 	// text entry
-	"label" : _("Zone &Name"),
+	"label" : _("Zone"),
 	"init" : zoneNameInit,
 	"store" : zoneNameStore,
 	"help" : HELPS["zone_name"]:"",
@@ -1443,8 +1443,8 @@ global define void AllowDdnsStore (string id, map event) ``{
     global define boolean confirmAbort () ``{
 	return Popup::YesNo (
     // Yes-No popup
-_("Really leave the DNS server configuration without saving?
-All changes will be lost."));
+_("All changes will be lost.
+Really leave the DNS server configuration without saving?"));
     }
 
     /**

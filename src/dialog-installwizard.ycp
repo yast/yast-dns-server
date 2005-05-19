@@ -25,7 +25,7 @@ symbol runInstallWizardForwardersDialog () {
     string caption =
 	// Dialog caption (before a dash)
 	_("DNS Server Installation") +
-	" - " +
+	": " +
 	// Dialog caption (after a dash)
 	_("Forwarder Settings");
 
@@ -74,7 +74,7 @@ symbol runInstallWizardZonesDialog () {
     string caption =
 	// Dialog caption (before a dash)
 	_("DNS Server Installation") +
-	" - " +
+	": " +
 	// Dialog caption (after a dash)
 	_("DNS Zones");
 
@@ -136,7 +136,7 @@ symbol runInstallWizardFinishDialog () {
     string caption =
 	// Dialog caption (before a dash)
 	_("DNS Server Installation") +
-	" - " +
+	": " +
 	// Dialog caption (after a dash)
 	_("Finish Wizard");
 
