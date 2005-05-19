@@ -195,14 +195,11 @@ term ExpertForwardersDialog () {
     term dialog =
 	`VBox (
 	    // label
-	    `Left (`Label (_("Select forwarder settings"))),
-	    `VSpacing (1),
 	    `VBox (
 		`RadioButtonGroup( `id ( "who_sets_forwarder" ),
 		    `VBox (
 			// Radiobutton DNS-Forwarders
-			`Left( `RadioButton( `id ( "ppp_forwarder" ), _("&PPP Daemon Sets Forwarders (used with dial-up
-connections if supported by provider)") ) ),
+			`Left( `RadioButton( `id ( "ppp_forwarder" ), _("&PPP Daemon Sets Forwarders") ) ),
 			// Radiobutton DNS-Forwarders
 			`Left( `RadioButton( `id ( "manually_forwarder" ), _("Set Forwarders &Manually"), true ) )
 		    )
@@ -210,28 +207,32 @@ connections if supported by provider)") ) ),
 	    ),
 	    `VSpacing ( 1 ),
 	    // Frame label for DNS-Forwarders options
-/*	    `Frame ( _("Options"),
-		`Left (
-		    `VBox (
-			// Checkbox - DNS-Forwarders options
-			`Left ( `CheckBox ( `id ( "forward_first" ), `opt (`notify), _("Forward &First") ) ),
-			// Checkbox - DNS-Forwarders options
-			`Left ( `CheckBox ( `id ( "forward_only" ),  `opt (`notify), _("Fo&rward Only") ) )
-		    )
-		)
-	    ),
-	    `VSpacing ( 0.5 ),*/
+//	    `Frame ( _("Options"),
+//		`Left (
+//		    `VBox (
+//			// Checkbox - DNS-Forwarders options
+//			`Left ( `CheckBox ( `id ( "forward_first" ), `opt (`notify), _("Forward &First") ) ),
+//			// Checkbox - DNS-Forwarders options
+//			`Left ( `CheckBox ( `id ( "forward_only" ),  `opt (`notify), _("Fo&rward Only") ) )
+//		    )
+//		)
+//	    ),
+//	    `VSpacing ( 0.5 ),
 	    `VSquash (
-		`HBox (
-		    `HWeight ( 9,
-			// Frame label for DNS-Forwarders adding IP
-			`Frame ( _("Add IP Address"),
-			    // Textentry for DNS-Forwarders adding IP
-			    `TextEntry ( `id ( "forwarders_new_ip_address" ), `opt ( `hstretch ), _("IP A&ddress"), "" )
-			)
-		    ),
-		    `HWeight ( 2,
-			`Bottom ( `PushButton ( `id ( "forwarders_add_ip_address" ), `opt ( `hstretch ), Label::AddButton() ) )
+		`Frame (
+		    // Frame label for DNS-Forwarders adding IP
+		    _("Add IP Address"),
+		    `VBox (
+			`HBox (
+			    `HWeight ( 9,
+				// Textentry for DNS-Forwarders adding IP
+				`TextEntry ( `id ( "forwarders_new_ip_address" ), `opt ( `hstretch ), _("IP A&ddress"), "" )
+			    ),
+			    `HWeight ( 2,
+				`Bottom ( `PushButton ( `id ( "forwarders_add_ip_address" ), `opt ( `hstretch ), Label::AddButton() ) )
+			    )
+			),
+			`VSpacing (0.5)
 		    )
 		)
 	    ),
@@ -642,10 +643,12 @@ term ExpertBasicOptionsDialog () {
 	`Top (
 	    `VBox (
 		`VSquash (
+		    // Frame label for Basic-Options
+		    `Frame ( _("Add or Change Option"),
+		    `VBox (
 		    `HBox (
 			`HWeight ( 9,
-			    // Frame label for Basic-Options
-			    `Frame ( _("Add or Change Option"),
+			    `Bottom (
 				`VBox (
 				    `HBox (
 					`HWeight ( 3,
@@ -658,19 +661,22 @@ term ExpertBasicOptionsDialog () {
 					    // Textentry for setting the basic-option value
 					    `TextEntry ( `id ( "basic_option_value" ), _("&Value"), "" )
 					)
-				    ),
-				    `VSpacing ( 2 )
+				    )
 				)
 			    )
 			),
 			`HWeight ( 2,
+			    `Bottom (
 			    `VBox (
-				`VStretch (),
 				`VSquash ( `PushButton ( `id ( "add_basic_option" ), `opt ( `hstretch ), Label::AddButton () ) ),
 				// Pushbutton for changing the basic-option
 				`VSquash ( `PushButton ( `id ( "change_basic_option" ), `opt ( `hstretch ), _("C&hange") ) )
 			    )
+			    )
 			)
+		    ),
+		    `VSpacing (0.5)
+		    )
 		    )
 		),
 		`VSpacing ( 0.5 ),
@@ -1119,10 +1125,11 @@ term Expert_ACLs_Dialog () {
 	`Top (
 	    `VBox (
 		`VSquash (
+		    // Frame label - adding ACL-optiopn
+		    `Frame ( _("Option Setup"),
+		    `VBox (
 		    `HBox (
 			`HWeight ( 9,
-			    // Frame label - adding ACL-optiopn
-			    `Frame ( _("Option Setup"),
 				`VBox (
 				    `HBox (
 					`HWeight ( 3,
@@ -1133,10 +1140,8 @@ term Expert_ACLs_Dialog () {
 					    // Textentry - adding ACL-optiopn - value
 					    `TextEntry ( `id ( "new_acl_value" ), `opt ( `hstretch ), _("&Value") )
 					)
-				    ),
-				    `VSpacing ( 1 )
+				    )
 				)
-			    )
 			),
 			`HWeight ( 2,
 			    `VBox (
@@ -1144,6 +1149,9 @@ term Expert_ACLs_Dialog () {
 				`VSquash ( `PushButton ( `id ( "add_acl" ), `opt ( `hstretch ), Label::AddButton () ) )
 			    )
 			)
+		    ),
+		    `VSpacing (0.5)
+		    )
 		    )
 		),
 		`VSpacing ( 1 ),
@@ -1364,17 +1372,18 @@ term ExpertZonesDialog () {
 	`Top (
 	    `VBox (
 		`VSquash (
+		    `Frame ( _("A&dd New Zone "),
 		    `HBox (
 			`HWeight ( 9,
 			    // Frame label - DNS adding zone
-			    `Frame ( _("A&dd New Zone "),
+			    
 				`VBox (
-				    `VSpacing ( 0.5 ),
+				    //`VSpacing ( 0.5 ),
 				    `HBox (
 					// Textentry - DNS adding zone - Name
-					`TextEntry ( `id ( "new_zone_name" ), `opt ( `hstretch ), _("Zone &Name"), "example.com" ),
+					`TextEntry ( `id ( "new_zone_name" ), `opt ( `hstretch ), _("Name"), "example.com" ),
 					// Combobox - DNS adding zone - Type
-					`ComboBox ( `id ( "new_zone_type" ), _("Zone &Type") , [
+					`ComboBox ( `id ( "new_zone_type" ), _("Type") , [
 					    // Combobox - DNS adding zone - Type Master
 					    `item ( `id ( "master" ), _("Master") ),
 					    // Combobox - DNS adding zone - Type Slave
@@ -1383,14 +1392,17 @@ term ExpertZonesDialog () {
 				    ),
 				    `VSpacing ( 0.5 )
 				)
-			    )
 			),
 			`HWeight ( 2,
 			    `VBox (
-				`VStretch (),
-				`VSquash ( `PushButton ( `id ( "add_zone" ), `opt ( `hstretch ), Label::AddButton () ) )
+				`VSpacing (1),
+				//`VSquash (
+				`PushButton ( `id ( "add_zone" ), `opt ( `hstretch ), Label::AddButton () ),
+				//),
+				`VSpacing ( 0.5 )
 			    )
 			)
+		    )
 		    )
 		),
 		`VSpacing ( 1 ),
@@ -1651,13 +1663,15 @@ map<string, map<string, any> > tabs = $[
 	// FIXME: new startup
 	"contents"		: `VBox (
 	    "auto_start_up",
+	    `VSpacing(),
 	    "firewall",
 	    "use_ldap",
+	    `VSpacing(),
 	    "start_stop",
 	    `VStretch ()
 	),
 	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("Start-Up"),
+	"caption"		: dns_server_label + ": " + _("Start-Up"),
 	// Tree Menu Item - DNS - expert settings
 	"tree_item_label"	: _("Start-Up"),
 	// FIXME: new startup
@@ -1672,7 +1686,7 @@ map<string, map<string, any> > tabs = $[
     "forwarders" : $[
 	"contents"		: ExpertForwardersDialog(),
 	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("Forwarders"),
+	"caption"		: dns_server_label + ": " + _("Forwarders"),
 	// Tree Menu Item - DNS - expert settings
 	"tree_item_label"	: _("Forwarders"),
 	"widget_names"		: [ "forwarders" ],
@@ -1680,7 +1694,7 @@ map<string, map<string, any> > tabs = $[
     "basic_options" : $[
 	"contents"		: ExpertBasicOptionsDialog(),
 	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("Basic Options"),
+	"caption"		: dns_server_label + ": " + _("Basic Options"),
 	// Tree Menu Item - DNS - expert settings
 	"tree_item_label"	: _("Basic Options"),
 	"widget_names"		: [ "basic_options" ],
@@ -1688,7 +1702,7 @@ map<string, map<string, any> > tabs = $[
     "logging" : $[
 	"contents"		: Expert_Logging_Dialog(),
 	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("Logging"),
+	"caption"		: dns_server_label + ": " + _("Logging"),
 	"tree_item_label"	: _("Logging"),
 	// Tree Menu Item - DNS - expert settings
 	"widget_names"		: [ "logging" ],
@@ -1696,7 +1710,7 @@ map<string, map<string, any> > tabs = $[
     "acls" : $[
 	"contents"		: Expert_ACLs_Dialog(),
 	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("ACLs"),
+	"caption"		: dns_server_label + ": " + _("ACLs"),
 	// Tree Menu Item - DNS - expert settings
 	"tree_item_label"	: _("ACLs"),
 	"widget_names"		: [ "acls" ],
@@ -1708,7 +1722,7 @@ map<string, map<string, any> > tabs = $[
 					`VSpacing (1)
 				    ), `HSpacing (2)),
 	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("TSIG Keys"),
+	"caption"		: dns_server_label + ": " + _("TSIG Keys"),
 	// Tree Menu Item - DNS - expert settings
 	"tree_item_label"	: _("TSIG Keys"),
 	"widget_names"		: ["tsig_keys"],
@@ -1717,7 +1731,7 @@ map<string, map<string, any> > tabs = $[
     "zones" : $[
 	"contents"		: ExpertZonesDialog(),
 	// Dialog Label - DNS - expert settings
-	"caption"		: dns_server_label + " - " + _("DNS Zones"),
+	"caption"		: dns_server_label + ": " + _("DNS Zones"),
 	// Tree Menu Item - DNS - expert settings
 	"tree_item_label"	: _("DNS Zones"),
 	"widget_names"		: [ "zones" ],

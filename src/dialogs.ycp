@@ -28,8 +28,8 @@
 	if (! DnsServer::WasModified ())
 	    return true;
 	// yes-no popup
-	return Popup::YesNo (_("Really exit?
-All changes will be lost."));
+	return Popup::YesNo (_("All changes will be lost.
+Really exit?"));
     }
 
     /**
