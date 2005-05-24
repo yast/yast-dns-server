@@ -707,7 +707,7 @@
 	    "startup" : $[
 		"handler" : DNSHandlerStartup,
 		
-		"help" : _("Start-Up Settings"),
+		"help" : _("Start-up settings"),
 		"example" : [
 		    "startup show",
 		    "startup atboot; startup manual"
@@ -716,7 +716,7 @@
 	    "forwarders" : $[
 		"handler" : DNSHandlerForwarders,
 		// TRANSLATORS: commandline short help for command
-		"help" : _("DNS Forwarders"),
+		"help" : _("DNS forwarders"),
 		"example" : [
 		    "forwarders show",
 		    "forwarders add ip=125.11.235.1",
@@ -726,7 +726,7 @@
 	    "logging" : $[
 		"handler" : DNSHandlerLogging,
 		// TRANSLATORS: commandline short help for command
-		"help" : _("Logging Settings"),
+		"help" : _("Logging settings"),
 		"example" : [
 		    "logging show",
 		    "logging set updates=no transfers=yes",
@@ -737,7 +737,7 @@
 	    "zones" : $[
 		"handler" : DNSHandlerZones,
 		// TRANSLATORS: commandline short help for command
-		"help" : _("DNS Zones"),
+		"help" : _("DNS zones"),
 		"example" : [
 		    "zones show",
 		    "zones add name=example.org zonetype=master",
@@ -791,7 +791,7 @@
 	    "soa" : $[
 		"handler" : DNSHandlerSOA,
 		// TRANSLATORS: commandline short help for command, base cmdline command
-		"help" : _("Start of Authority (SOA)"),
+		"help" : _("Start of authority (SOA)"),
 		"example" : [
 		    "soa show zone=example.org",
 		    "soa set zone=example.org serial=2006081623 ttl=2D3H20S",
@@ -826,7 +826,7 @@
 	"options" : $[
 	    "show" : $[
 		// TRANSLATORS: commandline short help for command
-		"help" : _("Show Current Settings"),
+		"help" : _("Show current settings"),
 	    ],
 	    "atboot" : $[
 		// TRANSLATORS: commandline short help for command
@@ -861,7 +861,7 @@
 	    "file" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("File name for logging (full path)"),
+		"help" : _("Filename for logging (full path)"),
 	    ],
 	    "maxsize" : $[
 		"type" : "string",
@@ -876,7 +876,7 @@
 	    "name" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("Zone Name"),
+		"help" : _("Zone name"),
 	    ],
 	    "zonetype" : $[
 		"type" : "string",
@@ -891,7 +891,7 @@
 	    "zone" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("Zone Name"),
+		"help" : _("Zone name"),
 	    ],
 	    "enable" : $[
 		"type" : "string",
@@ -966,7 +966,7 @@
 	    "hostname" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("Host name for the DNS record"),
+		"help" : _("Hostname for the DNS record"),
 	    ],
 	    "queries" : $[
 		"type" : "string",
