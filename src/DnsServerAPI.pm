@@ -17,7 +17,7 @@
 
 =head1 NAME
 
-DnsServerAPI - DNS server configuration funtional API
+DnsServerAPI - DNS server configuration functional API
 
 =head1 PREFACE
 
