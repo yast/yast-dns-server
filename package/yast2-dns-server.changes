@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Jun 29 11:18:01 CEST 2005 - locilka@suse.cz
+
+- Ehancing POD help for the DnsServerAPI.pm
+  to get better formatted examples 
+
+-------------------------------------------------------------------
 Thu May 19 12:18:09 CEST 2005 - locilka@suse.cz
 
 - Changing texts to be YaST2 Style Guide Compatible
