@@ -427,7 +427,7 @@ Gets the BIND time parameter and transforms it into seconds.
 
 EXAMPLE:
 
-my $time = TimeToSeconds("1W2d4H");
+    my $time = TimeToSeconds("1W2d4H");
 
 =cut
 
@@ -470,8 +470,8 @@ the highest possible time unit selected.
 
 EXAMPLE:
 
-my $bind_time = SecondsToHighestTimeUnit(259200);
--> "3D"
+    my $bind_time = SecondsToHighestTimeUnit(259200);
+    -> "3D"
 
 =cut
 
@@ -658,7 +658,7 @@ Reads current BIND configuration.
 
 EXAMPLE:
 
-my $success = Read();
+    my $success = Read();
 
 =cut
 
@@ -680,7 +680,7 @@ Writes current BIND configuration.
 
 EXAMPLE:
 
-my $success = Write();
+    my $success = Write();
 
 =cut
 
@@ -702,7 +702,7 @@ Returns list of general DNS forwarders.
 
 EXAMPLE:
 
-my $list_of_forwarders = GetForwarders();
+    my $list_of_forwarders = GetForwarders();
 
 =cut
 
@@ -731,7 +731,7 @@ Adds a new forwarder into the list of current forwarders.
 
 EXAMPLE:
 
-my $success = AddForwarder($forwarder_ip);
+    my $success = AddForwarder($forwarder_ip);
 
 =cut
 
@@ -772,7 +772,7 @@ Removes forwarder from the list of current forwarders.
 
 EXAMPLE:
 
-my $success = RemoveForwarder($forwarder_ip);
+    my $success = RemoveForwarder($forwarder_ip);
 
 =cut
 
@@ -815,7 +815,7 @@ Only one logging channel is supported.
 
 EXAMPLE:
 
-my $is_supported = IsLoggingSupported($forwarder_ip);
+    my $is_supported = IsLoggingSupported($forwarder_ip);
 
 =cut
 
@@ -1387,7 +1387,7 @@ Function removes a zone.
 
 EXAMPLE:
 
-$success = RemoveZone('example.org');
+    $success = RemoveZone('example.org');
 
 =cut
 
@@ -1490,7 +1490,7 @@ ACL must be known (default or custom).
 
 EXAMPLE:
 
-my $success = AddZoneTransportACL('example.org','localnets');
+    my $success = AddZoneTransportACL('example.org','localnets');
 
 =cut
 
@@ -1515,7 +1515,7 @@ ACL must be known (default or custom).
 
 EXAMPLE:
 
-my $success = RemoveZoneTransportACL('example.org','localnets');
+    my $success = RemoveZoneTransportACL('example.org','localnets');
 
 =cut
 
@@ -1570,7 +1570,7 @@ Only Zone base name servers are returned.
 
 EXAMPLE:
 
-my $nameservers = GetZoneNameServers('example.org');
+    my $nameservers = GetZoneNameServers('example.org');
 
 =cut
 
