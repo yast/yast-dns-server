@@ -22,5 +22,5 @@ Icon=yast-dns-server
 Exec=/sbin/yast2 dns-server 
 
 Name=DNS Server
-GenericName=Configure DNS server
+GenericName=Configure a DNS server
 X-KDE-SubstituteUID=true

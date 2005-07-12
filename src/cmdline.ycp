@@ -33,7 +33,7 @@
     void Missing (string missing_parameter) {
 	CommandLine::Error(sformat(
 	    // TRANSLATORS: command line error message, %1 is a missing required parameter
-	    _("Parameter '%1' is required."), missing_parameter
+	    _("Parameter %1 is required."), missing_parameter
 	));
     }
 
@@ -41,7 +41,7 @@
     void UnknownValue (string cmdline_parameter) {
 	CommandLine::Error(sformat(
 	    // TRANSLATORS: command line error message, %1 is a parameter name
-	    _("Unknown value for parameter '%1'."), cmdline_parameter
+	    _("Unknown value for parameter %1."), cmdline_parameter
 	));
     }
 
@@ -50,14 +50,14 @@
 	// both cannot be together
 	if (options["atboot"]:nil!=nil && options["manual"]:nil!=nil) {
 	    // TRANSLATORS: commandline section header
-	    ScreenWizard(_("Start-Up Settings"), "");
+	    ScreenWizard(_("Start-Up Settings:"), "");
 	    // TRANSLATORS: commandline error message
 	    CommandLine::Error(_("Only one parameter is allowed."));
 	// start at boot
 	} else if (options["atboot"]:nil!=nil) {
 	    ScreenWizard(
 		// TRANSLATORS: commandline section header
-		_("Start-Up Settings"),
+		_("Start-Up Settings:"),
 		// TRANSLATORS: commandline progress information
 		_("Enabling DNS server in the boot process...")
 	    );
@@ -67,7 +67,7 @@
 	} else if (options["manual"]:nil!=nil) {
 	    ScreenWizard(
 		// TRANSLATORS: commandline section header
-		_("Start-Up Settings"),
+		_("Start-Up Settings:"),
 		// TRANSLATORS: commandline progress information
 		_("Removing DNS server from the boot process...")
 	    );
@@ -84,7 +84,7 @@
 		content = _("DNS server needs manual starting");
 	    }
 	    // TRANSLATORS: commandline section header
-	    ScreenWizard(_("Start-Up Settings"), content);
+	    ScreenWizard(_("Start-Up Settings:"), content);
 	    return false;
 	}
 
@@ -101,14 +101,14 @@
 	    });
 	    ScreenWizard(
 		// TRANSLATORS: commandline section header, 
-		_("Forwarding"),
+		_("Forwarding:"),
 		// TRANSLATORS: commandline table header item
 		String::TextTable([_("Forwarder IP")], table_items, $[])
 	    );
 	    return false;
 	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
 	    // TRANSLATORS: commandline error message
-	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    CommandLine::Error(_("Only one action parameter is allowed."));
 	    return false;
 	} else if (options["add"]:nil!=nil) {
 	    string ip = (string) options["ip"]:"";
@@ -174,29 +174,29 @@
 	if (logging_channel["destination"]:"syslog" == "syslog") {
 	    table_items = add (table_items, [
 		// TRANSLATORS: commandline table item
-		_("Logging Destination"),
+		_("Logging destination"),
 		// TRANSLATORS: commandline table item
-		_("System Log")
+		_("System log")
 	    ]);
 	} else if (logging_channel["destination"]:"file" == "file") {
 	    table_items = add (table_items, [
 		// TRANSLATORS: commandline table item
-		_("Logging Destination"),
+		_("Logging destination"),
 		// TRANSLATORS: commandline table item
 		_("File")
 	    ]);
 
 	    table_items = add (table_items, [
 		// TRANSLATORS: commandline table item
-		_("File Name"), logging_channel["filename"]:""
+		_("Filename"), logging_channel["filename"]:""
 	    ]);
 	    table_items = add (table_items, [
 		// TRANSLATORS: commandline table item
-		_("Maximum Size"), logging_channel["size"]:""
+		_("Maximum size"), logging_channel["size"]:""
 	    ]);
 	    table_items = add (table_items, [
 		// TRANSLATORS: commandline table item
-		_("Maximum Versions"), logging_channel["versions"]:""
+		_("Maximum versions"), logging_channel["versions"]:""
 	    ]);
 	}
 
@@ -204,21 +204,21 @@
 	// $[ "queries" : "no", "updates" : "no", "transfers" : "no" ]
 	list <list <string> > tabadds_items = [];
 	tabadds_items = add (tabadds_items, [
-	    // TRANSLATORS: commandline table item
-	    _("Log named Queries"), logadds["queries"]:""
+	    // TRANSLATORS: commandline table item, do not translate named
+	    _("Log named queries"), logadds["queries"]:""
 	]);
 	tabadds_items = add (tabadds_items, [
 	    // TRANSLATORS: commandline table item
-	    _("Log Zone Updates"), logadds["xfer-in"]:""
+	    _("Log zone updates"), logadds["xfer-in"]:""
 	]);
 	tabadds_items = add (tabadds_items, [
 	    // TRANSLATORS: commandline table item
-	    _("Log Zone Transfers"), logadds["xfer-out"]:""
+	    _("Log zone transfers"), logadds["xfer-out"]:""
 	]);
 
 	ScreenWizard(
 	    // TRANSLATORS: commandline section header
-	    _("Logging Settings"),
+	    _("Logging Settings:"),
 	    String::TextTable(
 	        [
 		    // TRANSLATORS: commandline table header item
@@ -308,7 +308,7 @@
 	
 	ScreenWizard(
 	    // TRANSLATORS: commandline section header, 
-	    _("DNS Zones"),
+	    _("DNS Zones:"),
 	    // TRANSLATORS: commandline table header item
 	    String::TextTable([
 		// TRANSLATORS: commandline table header item
@@ -328,7 +328,7 @@
 	if (options["show"]:nil!=nil) {
 	    return DNSHandlerZonesShow();
 	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
-	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    CommandLine::Error(_("Only one action parameter is allowed."));
 	    return false;
 	} else if (options["add"]:nil!=nil) {
 	    return DnsServerAPI::AddZone(
@@ -365,7 +365,7 @@
 	
 	ScreenWizard(
 	    // TRANSLATORS: commandline section header
-	    _("ACLs"),
+	    _("ACLs:"),
 	    // TRANSLATORS: commandline table header item
 	    String::TextTable([
 		// TRANSLATORS: commandline table header item
@@ -403,7 +403,7 @@
 	
 	ScreenWizard(
 	    // TRANSLATORS: commandline section header
-	    _("Zone Transport"),
+	    _("Zone Transport:"),
 	    // TRANSLATORS: commandline table header item
 	    String::TextTable([
 		// TRANSLATORS: commandline table header item
@@ -421,7 +421,7 @@
 	    DNSHandlerTransportShow((string) options["zone"]:nil);
 	    return false;
 	} else if (options["enable"]:nil!=nil && options["disable"]:nil!=nil) {
-	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    CommandLine::Error(_("Only one action parameter is allowed."));
 	    return false;
 	} else if (options["enable"]:nil!=nil) {
 	    return DnsServerAPI::AddZoneTransportACL(
@@ -452,7 +452,7 @@
 	
 	ScreenWizard(
 	    // TRANSLATORS: commandline section header
-	    _("Name Servers"),
+	    _("Name Servers:"),
 	    // TRANSLATORS: commandline table header item
 	    String::TextTable([
 		// TRANSLATORS: commandline table header item
@@ -469,7 +469,7 @@
 	    DNSHandlerNameServersShow((string) options["zone"]:nil);
 	    return false;
 	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
-	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    CommandLine::Error(_("Only one action parameter is allowed."));
 	    return false;
 	} else if (options["add"]:nil!=nil) {
 	    DnsServerAPI::AddZoneNameServer(
@@ -500,7 +500,7 @@
 	
 	ScreenWizard(
 	    // TRANSLATORS: commandline section header
-	    _("Mail Servers"),
+	    _("Mail Servers:"),
 	    // TRANSLATORS: commandline table header item
 	    String::TextTable([
 		// TRANSLATORS: commandline table header item
@@ -519,7 +519,7 @@
 	    DNSHandlerMailServersShow((string) options["zone"]:nil);
 	    return false;
 	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
-	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    CommandLine::Error(_("Only one action parameter is allowed."));
 	    return false;
 	} else if (options["add"]:nil!=nil) {
 	    DnsServerAPI::AddZoneMailServer(
@@ -559,7 +559,7 @@
 
 	ScreenWizard(
 	    // TRANSLATORS: commandline section header
-	    _("Start of Authority (SOA)"),
+	    _("Start of Authority (SOA):"),
 	    // TRANSLATORS: commandline table header item
 	    String::TextTable([
 		// TRANSLATORS: commandline table header item
@@ -606,7 +606,7 @@
 	
 	ScreenWizard(
 	    // TRANSLATORS: commandline section header
-	    _("Mail Servers"),
+	    _("Mail Servers:"),
 	    // TRANSLATORS: commandline table header item
 	    String::TextTable([
 		// TRANSLATORS: commandline table header item
@@ -627,7 +627,7 @@
 	    DNSHandlerResourceRecordsShow((string) options["zone"]:nil, (string) options["type"]:nil);
 	    return false;
 	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
-	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    CommandLine::Error(_("Only one action parameter is allowed."));
 	    return false;
 	} else if (options["add"]:nil!=nil) {
 	    return DnsServerAPI::AddZoneRR(
@@ -661,13 +661,13 @@
 	
 	ScreenWizard(
 	    // TRANSLATORS: commandline section header
-	    _("Host Name Record"),
+	    _("Host Name Record:"),
 	    // TRANSLATORS: commandline table header item
 	    String::TextTable([
 		// TRANSLATORS: commandline table header item
 		_("Zone"),
 		// TRANSLATORS: commandline table header item
-		_("Host Name"),
+		_("Hostname"),
 		// TRANSLATORS: commandline table header item
 		_("IP"),
 	    ], table_items, $[])
@@ -680,7 +680,7 @@
 	    DNSHandlerHostRecordsShow((string) options["zone"]:nil);
 	    return false;
 	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
-	    CommandLine::Error(_("Only one action parameter is allowed"));
+	    CommandLine::Error(_("Only one action parameter is allowed."));
 	    return false;
 	} else if (options["add"]:nil!=nil) {
 	    return DnsServerAPI::AddHost (
@@ -700,7 +700,7 @@
     map cmdline = $[
 	"id" : "dns-server",
 	// TRANSLATORS: commandline general name of the module in help
-	"help" : _("DNS Server Configuration"),
+	"help" : _("DNS server configuration"),
 	"initialize" : DnsServer::Read,
 	"finish" : DnsServer::Write,
 	"actions" : $[
@@ -813,8 +813,8 @@
 	    ],
 	    "host" : $[
 		"handler" : DNSHandlerHostRecords,
-		// TRANSLATORS: commandline short help for command, base cmdline command
-		"help" : _("Handles 'A' and corresponding 'PTR' record at once"),
+		// TRANSLATORS: commandline short help for command, base cmdline command, A is record type
+		"help" : _("Handles A and corresponding PTR record at once"),
 		"example" : [
 		    "host show",
 		    "host show zone=example.org",
@@ -881,7 +881,7 @@
 	    "zonetype" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("Zone type, 'master' or 'slave'"),
+		"help" : _("Zone type, master or slave"),
 	    ],
 	    "masterserver" : $[
 		"type" : "ip4",
@@ -955,13 +955,13 @@
 	    ],
 	    "query" : $[
 		"type" : "string",
-		// TRANSLATORS: commandline short help for command, DNS query is a question for 'value' when we have a /key/ and 'type', ('A' record for 'example.org'? -> 192.0.34.166)
-		"help" : _("DNS query, such as 'example.org' for 'A' record"),
+		// TRANSLATORS: commandline short help for command, DNS query is a question for value when we have a /key/ and type, ('A' record for 'example.org'? -> 192.0.34.166)
+		"help" : _("DNS query, such as example.org for A record"),
 	    ],
 	    "value" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("DNS resource record value, such as '192.0.34.166' for example.org's A record"),
+		"help" : _("DNS resource record value, such as 192.0.34.166 for example.org's A record"),
 	    ],
 	    "hostname" : $[
 		"type" : "string",

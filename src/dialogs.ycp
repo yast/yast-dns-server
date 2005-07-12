@@ -320,7 +320,7 @@ define symbol runZoneTypeSwitch () ``{
     else
     {
 	// message popup
-	Popup::Message (_("YaST2 cannot edit this type of zone."));
+	Popup::Message (_("A zone of this type cannot be edited with this tool."));
 	return `back;
     }
 }

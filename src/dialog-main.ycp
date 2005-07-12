@@ -47,14 +47,14 @@ term ExpertStartUpDialog () {
 	`Top (
 	    `VBox (
 		// Frame label (DNS starting)
-		`Frame ( _("Booting"),
+		`Frame ( _("Start-Up"),
 		    `Left (
 			`RadioButtonGroup( `id ( "dns_server_type" ),
 			    `VBox (
 				// Radiobutton label
-				`Left( `RadioButton( `id (`on), _("O&n -- Start DNS Server Now and when Booting") ) ),
+				`Left( `RadioButton( `id (`on), _("Now and When Booting") ) ),
 				// Radiobutton label
-				`Left( `RadioButton( `id (`off), _("O&ff -- Server Only Starts Manually") ) ),
+				`Left( `RadioButton( `id (`off), _("Only Manually") ) ),
 				`VSpacing ( 1 )
 			    )
 			)
@@ -412,7 +412,7 @@ symbol HandleExpertForwardersPage (string key, map event) {
 	if (contains (forwarders, new_addr))
 	{
 	    // error report
-	    Report::Error (_("Specified forwarder is already present."));
+	    Report::Error (_("The specified forwarder is already present."));
 	    return nil;
 	}
 	forwarders = add (forwarders, new_addr);
@@ -814,8 +814,8 @@ option without any value?
 	    if (! Popup::ContinueCancel(
 		sformat (
 		    // TRANSLATORS: Popup question. Please, do not translate 'yes' and 'no' strings. %1 is a name of the option, %2 is the value of the option.
-		    _("Option '%1' can only have a 'yes' or 'no' value set.
-Really set it to '%2'?
+		    _("Option %1 can only have a yes or no value set.
+Really set it to %2?
 "),
 		    option,
 		    value
@@ -831,8 +831,8 @@ Really set it to '%2'?
 	    if (! Popup::ContinueCancel(
 		sformat (
 		    // TRANSLATORS: Popup question. %1 is a name of the option, %2 is the value of the option.
-		    _("Option '%1' can only be a number.
-Really set it to '%2'?
+		    _("Option %1 can only be a number.
+Really set it to %2?
 "),
 		    option,
 		    value
@@ -846,7 +846,7 @@ Really set it to '%2'?
 	    sformat (
 		// TRANSLATORS: Popup question. %1 is the value of the option.
 		_("Quotes are not used correctly in this option.
-Really set it to '%1'?
+Really set it to %1?
 "),
 		value
 	    )
@@ -858,7 +858,7 @@ Really set it to '%1'?
 	    sformat (
 		// TRANSLATORS: Popup question. %1 is the value of the option.
 		_("Brackets are not used correctly in this option.
-Really set it to '%1'?
+Really set it to %1?
 "),
 		value
 	    )
@@ -906,7 +906,7 @@ symbol HandleExpertBasicOptionsPage (string key, map event) {
 	    if (! Popup::ContinueCancel(
 		sformat(
 		    // Popup question, %1 is the name of the option
-		    _("Option '%1' should be set only once.
+		    _("Option %1 should be set only once.
 Really add another one?
 "),
 		    current_key
@@ -956,9 +956,9 @@ term Expert_Logging_Dialog () {
 				    `RadioButtonGroup( `id ( "log_type" ),
 					`VBox (
 					    // Radiobutton - log type
-					    `Left( `RadioButton( `id ( "log_type_system" ), `opt (`notify), _("&Log to System Log"), true ) ),
+					    `Left( `RadioButton( `id ( "log_type_system" ), `opt (`notify), _("&System Log"), true ) ),
 					    // Radiobutton - log type
-					    `Left( `RadioButton( `id ( "log_type_file" ), `opt (`notify), _("Log to &File") ) )
+					    `Left( `RadioButton( `id ( "log_type_file" ), `opt (`notify), _("&File") ) )
 					)
 				    )
 				),
@@ -994,7 +994,7 @@ term Expert_Logging_Dialog () {
 			`Top (
 			    `VBox (
 				// Checkbox - additional-logging
-				`Left ( `CheckBox ( `id ( "l_named_queries" ),	_("Log Named &Queries") ) ),
+				`Left ( `CheckBox ( `id ( "l_named_queries" ),	_("Log All DNS &Queries") ) ),
 				// Checkbox - additional-logging
 				`Left ( `CheckBox ( `id ( "l_zone_updates" ),	_("Log Zone &Updates") ) ),
 				// Checkbox - additional-logging
@@ -1262,7 +1262,7 @@ boolean ReallyRemoveACL (string acl_name) {
 
     if (size(zones_where_acl_used) > 0) {
 	return Popup::ContinueCancel (sformat(
-	    // A popup question
+	    // A popup question, %1 is number of zones
 	    _("This ACL is used by %1 zones.
 Really remove it?
 "),
@@ -1351,7 +1351,7 @@ symbol HandleExpertAclPage (string key, map event) {
 	    {
 		UI::SetFocus(`id ("new_acl_name") );
 		// An error popup message
-		Popup::Message( _("Specified ACL entry already exists.") );
+		Popup::Message( _("The specified ACL entry already exists.") );
 	    }
 	    else
 	    {
@@ -1512,7 +1512,7 @@ symbol HandleExpertZonesPage (string key, map event) {
 	{
 	    UI::SetFocus ( `id ("new_zone_name") );
 	    // error report
-	    Popup::Error (_("Zone with specified name is already configured."));
+	    Popup::Error (_("A zone with the specified name is already configured."));
 	    return nil;
 	}
 
@@ -1565,14 +1565,14 @@ map<string,map<string,any> > new_widgets = $[
 	"get_service_auto_start" : DnsServer::GetStartService,
 	"set_service_auto_start" : DnsServer::SetStartService,
 	// radio button (starting DNS service - option 1)
-	"start_auto_button" : _("Start DNS Server When &Booting"),
+	"start_auto_button" : _("When &Booting"),
 	// radio button (starting DNS service - option 2)
-	"start_manual_button" : _("Start DNS Server &Manually"),
+	"start_manual_button" : _("&Manually"),
 	"help" : sformat (CWMServiceStart::AutoStartHelpTemplate (),
 	    // part of help text, used to describe radiobuttons (matching starting DNS service but without "&")
-	    _("Start DNS Server when Booting"),
+	    _("When Booting"),
 	    // part of help text, used to describe radiobuttons (matching starting DNS service but without "&")
-	    _("Start DNS Server Manually")
+	    _("Manually")
 	),
     ]),
     "start_stop" : CWMServiceStart::CreateStartStopWidget ($[

@@ -402,7 +402,7 @@ symbol HandleNsListTab (map event) {
 	{
 	    UI::SetFocus (`id ("add_name_server") );
 	    // error message
-	    Popup::Error (_("Specified name server already exists."));
+	    Popup::Error (_("The specified name server already exists."));
 	    return nil;
 	}
 	
@@ -568,7 +568,7 @@ symbol HandleMxListTab (map event) {
 	{
 	    UI::SetFocus ( `id ("add_mail_server") );
 	    // A popup error message
-	    Popup::Error ( _("Specified value is not a valid host name or IP address.") );
+	    Popup::Error ( _("The specified value is not a valid hostname or IP address.") );
 	    return nil;
 	}
 
@@ -592,7 +592,7 @@ symbol HandleMxListTab (map event) {
 	{
 	    UI::SetFocus (`id ("add_name_server") );
 	    // error message
-	    Popup::Error (_("Specified mail server already exists."));
+	    Popup::Error (_("The specified mail server already exists."));
 	    return nil;
 	}
 
@@ -672,7 +672,7 @@ term GetMasterZoneEditorTabSOASettings () {
 			),
 			`HBox ( `opt ( `hstretch ),
 			    // IntField - Setting DNS Expiry - Value
-			    `IntField ( `id ( "zone_settings_expiry_value" ), _("Ex&piry"), 0, 9999999, 0 ),
+			    `IntField ( `id ( "zone_settings_expiry_value" ), _("Ex&piration"), 0, 9999999, 0 ),
 			    // Combobox - Setting DNS Expiry - Unit
 			    `ComboBox ( `id ( "zone_settings_expiry_units" ), _("U&nit"), dns_units )
 			),
@@ -784,7 +784,7 @@ boolean ValidateSoaTab (map event) {
     if (serial == "")
     {
 	UI::SetFocus (`id ("zone_settings_serial"));
-	Popup::Error (_("Serial number of the zone must be specified."));
+	Popup::Error (_("The serial number of the zone must be specified."));
 	return false;
     }
     if (size (serial) > 10)
@@ -792,7 +792,7 @@ boolean ValidateSoaTab (map event) {
 	UI::SetFocus (`id ("zone_settings_serial"));
 	Popup::Error (sformat (
 	    // error report, %1 is an integer
-	    _("Serial number must be at most %1 digits long."), 10));
+	    _("The serial number must be no more than %1 digits long."), 10));
 	return false;
     }
     string refresh_str = sformat ("%1%2",
@@ -832,11 +832,11 @@ term GetMasterZoneEditorTabRecords () {
 	add_records = [ "A", "CNAME", "NS", "MX" ];
     }
     map add_descriptions = $[
-	"A" : _("A -- Domain Name Translation"),
-	"CNAME" : _("CNAME -- Alias for Domain Name"),
-	"NS" : _("NS -- Name Server"),
-	"MX" : _("MX -- Mail Relay"),
-	"PTR" : _("PTR -- Reverse Translation"),
+	"A" : _("A: Domain Name Translation"),
+	"CNAME" : _("CNAME: Alias for Domain Name"),
+	"NS" : _("NS: Name Server"),
+	"MX" : _("MX: Mail Relay"),
+	"PTR" : _("PTR: Reverse Translation"),
     ];
     add_records = maplist (any a, add_records, ``(
 	`item (`id (a), add_descriptions[a]:a)
@@ -1267,7 +1267,7 @@ term GetMasterZoneEditorTab (string tab_id) {
 						// This should never happen, but ...
 						y2error ( "unknown tab_id: %1", tab_id );
 						// When no dialog defined for this tab (software error)
-						return `Label ( _("Software error - Unknown Tab") );
+						return `Label ( _("An internal error has occurred.") );
 }
 
 void InitMasterZoneTab (string dialog) {
@@ -1404,7 +1404,7 @@ symbol runMasterZoneTabDialog () {
 	    `VBox( `opt ( `hvstretch ),
 		`HBox (
 		    // Label - connected with Textentry which shows current edited zone
-		    `HSquash ( `Label ( _("Settings for Zone ") ) ),
+		    `HSquash ( `Label ( _("Settings for Zone") ) ),
 		    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "", zone_name ) ),
 		    `HStretch ()
 		),
@@ -1427,9 +1427,9 @@ symbol runMasterZoneTabDialog () {
 // Menu Item - Zone Editor - Tab
 string qwerty = _("Ad&vanced");
 // error report
-qwerty = _("The input value is invalid.");
+//qwerty = _("The input value is invalid.");
 // error report
-qwerty = _("At least one name server must be defined.");
+//qwerty = _("At least one name server must be defined.");
 
     // FIXME: Only one help is used for all tabs. Maybe would be better to change the help for every single tab.
     Wizard::SetContentsButtons ( caption, contents, HELPS[ help_identificators[current_tab]:"" ]:"",
@@ -1531,7 +1531,7 @@ symbol runSlaveZoneTabDialog () {
     term contents = `VBox (
 	`HBox (
 	    // Label - connected with Textentry which shows current edited zone
-	    `HSquash ( `Label ( _("Settings for Zone ") ) ),
+	    `HSquash ( `Label ( _("Settings for Zone") ) ),
 	    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "", zone_name ) ),
 	    `HStretch ()
 	),
@@ -1611,7 +1611,7 @@ If you continue, the current zone will be removed.")
 	    if (false)
 	    {
 		// TRANSLATORS: A popup error message
-		Report::Error (_("Master DNS server was not defined."));
+		Report::Error (_("No master DNS server defined."));
 		continue;
 	    }
 	    else
@@ -1624,7 +1624,7 @@ If you continue, the current zone will be removed.")
 		{
 		    UI::SetFocus ( `id ("master") );
 		    // A popup error message
-		    Popup::Error ( _("Specified master name server is not a valid IP address.") );
+		    Popup::Error ( _("The specified master name server is not a valid IP address.") );
 		    continue;
 		}
 		break;

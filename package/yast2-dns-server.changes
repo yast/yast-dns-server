@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jul 12 11:49:17 CEST 2005 - locilka@suse.cz
+
+- Changing texts and UI to be YaST Style Guide compatible
+- 2.12.2 
+
+-------------------------------------------------------------------
 Wed Jun 29 11:18:01 CEST 2005 - locilka@suse.cz
 
 - Ehancing POD help for the DnsServerAPI.pm

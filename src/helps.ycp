@@ -24,7 +24,7 @@ global map HELPS = $[
 Please wait...<br></p>") +
 
     /* Read dialog help 2/2 */
-    _("<p><b><big>Aborting Initialization:</big></b><br>
+    _("<p><b><big>Aborting Initialization</big></b><br>
 Safely abort the configuration utility by pressing <b>Abort</b> now.</p>"),
 
     /* Write dialog help 1/2 */
@@ -32,7 +32,7 @@ Safely abort the configuration utility by pressing <b>Abort</b> now.</p>"),
 Please wait...<br></p>") +
 
     /* Write dialog help 2/2 */
-    _("<p><b><big>Aborting Saving:</big></b><br>
+    _("<p><b><big>Aborting Saving</big></b><br>
 Abort the save procedure by pressing <b>Abort</b>.
 An additional dialog informs you whether it is safe to do so.</p>"),
 
@@ -221,7 +221,7 @@ enter its <b>Value</b>, and click <b>Add</b>.</p>
 change the <b>Value</b>, and click <b>Change</b>.</p>
 ") +
 
-    /* Expert Mode Configuration - Basic Options 1/3 */
+    /* Expert Mode Configuration - Basic Options 3/3 */
 _("<p>To remove an option, select it and click <b>Delete</b>.</p>"),
 
     /* Expert Mode Configuration - Logging 1/3 */
@@ -229,37 +229,35 @@ _("<p>To remove an option, select it and click <b>Delete</b>.</p>"),
 Use this dialog to define various options of the DNS server logging.</p>") +
 
     /* Expert Mode Configuration - Logging 2/3 */
-_("<p><b><big>Log Type</big></b><br>
-Select <b>Log to System Log</b> to save DNS server log messages to the system log.
-To save the DNS server log messages to a separate file, select <b>Log to File</b> and set the <b>File Name</b> to which to save the log and 
+_("<p>
+Select <b>Log to System Log</b> to save DNS server log messages to the system log. 
+To save the DNS server log messages to a separate file, select 
+<b>Log to File</b> and set the <b>Filename</b> to which to save the log and 
 the <b>Maximum Size</b> of the log file.
 The DNS server automatically rotates the log files. Use <b>Maximum Versions</b>
-to specify how many files with the log should be saved.</p>
+to specify how many log files should be saved.</p>
 ") +
 
     /* Expert Mode Configuration - Logging 3/3 */
-_("<p><b><big>Additional Logging</big></b><br>
-Set which loggable actions should be logged. Common actions are always logged.<br>
-<b>Log Named Queries</b> logs all queries from clients to the DNS server.<br>
-<b>Log Zone Updates</b> logs when the DNS has been updated.<br>
-<b>Log Zone Transfers</b> logs when zone is completely transferred to secondary
+_("<p>In <b>Additional Logging</b>,
+Set which loggable actions should be logged. Common actions are always logged.
+<b>Log All DNS Queries</b> logs all queries from clients to the DNS server.
+<b>Log Zone Updates</b> logs when DNS has been updated.
+<b>Log Zone Transfers</b> logs when zone is completely transferred to the 
+secondary
 name server.</p>
 "),
 
-    /* Expert Mode Configuration - ACLs 1/3 */
+    /* Expert Mode Configuration - ACLs 1/2 */
 "acls" : _("<p><b><big>ACLs</big></b><br>
 In this dialog, define access control lists to control
 access to zones.</p>
 ") +
 
-    /* Expert Mode Configuration - ACLs 2/3 */
+    /* Expert Mode Configuration - ACLs 2/2 */
 _("<p>To add a new ACL entry, just enter the option's <b>Name</b>
-and <b>Value</b> and click <b>Add</b>.</p>
-") +
-
-    /* Expert Mode Configuration - ACLs 3/3 */
-_("<p>To remove an already set ACL entry, select it
-and click <b>Delete</b>.</p>
+and <b>Value</b> then click <b>Add</b>.  To remove an already set 
+ACL entry, select it and click <b>Delete</b>.</p>
 "),
 
     /* Expert Mode Configuration - Keys 1/3 */
@@ -272,7 +270,7 @@ for the dynamic updates of DNS zones (DDNS).</p>
     /* Expert Mode Configuration - Keys 2/3 */
 _("<p>To add an already created key, set the <b>File Name</b>
 (or use the <b>Browse</b> button to select it) and click <b>Add</b>.<br>
-To generate a new key, enter the <b>File Name</b> and the <b>Key ID</b>
+To generate a new key, enter the <b>Filename</b> and the <b>Key ID</b>
 and click <b>Generate</b>. The new key will be generated and also added.</p>
 ") +
 
@@ -289,8 +287,8 @@ Use this dialog to manage the DNS zones.</p>
 _("<p>To add a new zone, enter its <b>Zone Name</b>, select the <b>Zone Type</b>,
 and click <b>Add</b>.
 To add a new reverse zone, enter a part of reverse IP address followed by
-<i>.in-addr.arpa</i> as its <b>Zone Name</b> (e.g., Zone Name
-<i>0.168.192.in-addr.arpa</i> for network <i>192.168.0.0/24</i>), select
+<tt>.in-addr.arpa</tt> as its <b>Zone Name</b> (for example, zone name
+<tt>0.168.192.in-addr.arpa</tt> for network <tt>192.168.0.0/24</tt>), select
 the <b>Zone Type</b>, and click <b>Add</b>.</p>
 <p>To remove a configured zone, select it and click <b>Delete Zone</b>.
 To edit a zone, select it and click <b>Edit Zone</b>.</p>
@@ -309,32 +307,32 @@ to the zone.</p>
 
 ((ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") ? 
     /* Zone Editor - Help for tab - Basics  2/3 */
-_("<p><big><b>Dynamic DNS</b></big><br>
+_("<p>
 To allow dynamic updates of the zone, set <b>Allow Dynamic Updates</b>
 and select the <b>TSIG Key</b>. At least one TSIG key must be defined
-before allowing the zone to be updated dynamically.</p>
+before the zone can be updated dynamically.</p>
 ")
 :
 "") +
 
     /* Zone Editor - Help for tab - Basics  3/3 */
-_("<p><big><b>Zone Transport</b></big><br>
+_("<p>
 To allow transports of the zone, set <b>Enable Zone Transport</b>
-and select the <b>ACLs</b> that will be checked when a remote host
+and select the <b>ACLs</b> to check when a remote host
 attempts to transfer the zone. At least one ACL must be defined
-before allowing zone transports.</p>"),
+to allow zone transports.</p>"),
 
     /* Zone Editor - Help for tab - Name Servers */
 "zone_editor_nameservers"  : _("<p><b><big>NS Records</big></b><br>
-To add a new name server, enter the name server address and click <b>Add</b>.<br>
+To add a new name server, enter the name server address and click <b>Add</b>.
 To remove one of the listed name servers, select it and click
 <b>Delete</b>.</p>
 "),
 
     /* Zone Editor - Help for tab - Mail Servers */
 "zone_editor_mailservers"  : _("<p><b><big>MX Records</big></b><br>
-To add a new mail server, enter the mail server address and priority
-and click <b>Add</b>.<br>
+To add a new mail server, enter the <b>Address</b> and <b>Priority</b>
+and click <b>Add</b>.
 To remove one of the listed mail servers, select it and click
 <b>Delete</b>.</p>
 "),
@@ -344,7 +342,8 @@ To remove one of the listed mail servers, select it and click
 Set the entries of the SOA record.</p>")
 
     /* Zone Editor - Help for tab - Zone (SOA) 2/7 */
-+ _("<p><b>Serial</b> number is used for determining if the zone has changed on
++ _("<p><b>Serial</b> is the number used for determining if the zone has 
+changed on
 master servers (so slave servers do not always need to synchronize the
 entire zone).</p>")
 
@@ -361,7 +360,7 @@ master name server to slave name servers.</p>")
 the zone from the master server if synchronization fails.</p>")
 
     /* Zone Editor - Help for tab - Zone (SOA) 6/7 */
-+ _("<p><b>Expiry</b> means the period after which the zone expires on slave
++ _("<p><b>Expiration</b> means the period after which the zone expires on slave
 servers and slave servers stop answering replies until it is synchronized.
 </p>")
 
@@ -372,7 +371,7 @@ negative answers (name resolution failed).</p>"),
     /* Zone Editor - Help for tab - Records 1/7  or 1/5 */
 "zone_editor_records"  : _("<p><b><big>Records</big></b><br>
 In this dialog, edit the resource records of the zone. To add new resource
-records, set the <b>Record Key</b>, the <b>Type</b>, and <b>Value</b> and
+records, set the <b>Record Key</b>, <b>Type</b>, and <b>Value</b> then
 click <b>Add</b>.</p>") +
 
     /* Zone Editor - Help for tab - Records 2/7 or 2/5 */
@@ -381,63 +380,63 @@ and click <b>Change</b>. To delete a record, select it and click
 <b>Delete</b>.</p>") +
 
     /* Zone Editor - Help for tab - Records 3/7 or 3/5 */
-_("<p><b><big>Record Settings</big></b><br>
+_("<p>
 Each type of record has its own syntax defined in the RFC.</p>
 "),
 
     /* Zone Editor - Help for tab - Records 4/7 (alt. 1) */
-"zone_editor_records_forward" : _("<p><b>A -- Domain Name Translation</b><br>
-<b>Record Key</b> is a host name without domain or a fully qualified host
-name followed by a dot.
-<b>Value</b> is an IP address.</p>") +
+"zone_editor_records_forward" : _("<p><b>A: Domain Name Translation</b>:
+<b>Record Key</b> is a hostname without domain or a fully qualified 
+hostname followed by a dot.
+ <b>Value</b> is an IP address.</p>") +
 
     /* Zone Editor - Help for tab - Records 5/7 (alt. 1) */
-_("<p><b>CNAME -- Alias for Domain Name</b><br>
-<b>Record Key</b> is a host name relative to the current zone or a fully
-qualified host name followed by a dot.
-<b>Value</b> is a host name relative to the current zone or a fully
-qualified host name followed by a dot. It must be represented by
+_("<p><b>CNAME: Alias for Domain Name</b>:
+<b>Record Key</b> is a hostname relative to the current zone or a fully
+qualified hostname followed by a dot.
+<b>Value</b> is a hostname relative to the current zone or a fully
+qualified hostname followed by a dot. It must be represented by
 an A record.</p>
 ") +
 
     /* Zone Editor - Help for tab - Records 6/7 (alt. 1) */
-_("<p><b>NS -- Name Server</b><br>
+_("<p><b>NS: Name Server</b>:
 <b>Record Key</b> is a zone name relative to the current zone or an absolute
 domain name followed by a dot.
-<b>Value</b> is a host name relative to the current zone or fully qualified
-host name followed by a dot.  It must be represented by an A record.</p>
+<b>Value</b> is a hostname relative to the current zone or fully qualified
+hostname followed by a dot.  It must be represented by an A record.</p>
 ") +
 
     /* Zone Editor - Help for tab - Records 7/7 (alt. 1) */
-_("<p><b>MX -- Mail Relay</b><br>
-<b>Record Key</b> is a host or zone name relative to the current zone
-or an absolute host or zone name followed by a dot.
-<b>Value</b> is a host name relative to the current zone or fully qualified
-host name followed by a dot.  It must be represented by an A record.</p>
+_("<p><b>MX: Mail Relay</b>:
+<b>Record Key</b> is a hostname or zone name relative to the current zone
+or an absolute hostname or zone name followed by a dot.
+<b>Value</b> is a hostname relative to the current zone or fully qualified
+hostname followed by a dot.  It must be represented by an A record.</p>
 "),
 
     /* Zone Editor - Help for tab - Records 4/5 (alt. 2) */
-"zone_editor_records_reverse" : _("<p><b>PTR -- Reverse Translation</b><br>
-<b>Record Key</b> is a full reverse zone name (derived from IP address)
+"zone_editor_records_reverse" : _("<p><b>PTR: Reverse Translation</b>:
+<b>Record Key</b> is a full reverse zone name (derived from the IP address)
 followed by a dot
-(e.g., <i>1.0.168.192.in-addr.arpa.</i> for IP address <i>192.168.0.1</i>)
+(such as <tt>1.0.168.192.in-addr.arpa.</tt> for IP address <tt>192.168.0.1</tt>)
  or a part of reverse zone name relative to the current zone
-(e.g., <i>1</i> for IP address <i>192.168.0.1</i> in zone
-<i>0.168.192.in-addr.arpa.</i>).
-<b>Value</b> is a fully qualified host name followed by a dot.</p>
+(such as <tt>1</tt> for IP address <tt>192.168.0.1</tt> in zone
+<tt>0.168.192.in-addr.arpa.</tt>).
+<b>Value</b> is a fully qualified hostname followed by a dot.</p>
 ") +
 
     /* Zone Editor - Help for tab - Records 5/5 (alt. 2) */
-_("<p><b>NS -- Name Server</b><br>
+    _("<p><b>NS: Name Server</b>:
 <b>Record Key</b> is a zone name relative to the current zone or an absolute
 domain name followed by a dot.
-<b>Value</b> is a host name relative to the current zone or fully qualified
-host name followed by a dot.  It must be represented by an A record.</p>
+<b>Value</b> is a hostname relative to the current zone or fully qualified
+hostname followed by a dot.  It must be represented by an A record.</p>
 "),
 
 // Final step of the installation wizard - 1/5
-"installwizard_step3" : _("<p><b><big>Finish the Configuration</big></b>
-Check the entered settings before finishing the configuration.</p> 
+"installwizard_step3" : _("<p><b><big>Finishing the Configuration</big></b></p>
+<p>Check the entered settings before finishing the configuration.</p> 
 ") +
 
 // Final step of the installation wizard - 2/5
@@ -445,22 +444,22 @@ _("<p>Select <b>Open Port in Firewall</b> to adapt the
 SuSEfirewall2 settings to allow all connections to your DNS server.</p>") +
 
 // Final step of the installation wizard - 3/5
-_("<p><b><big>Booting</big></b><br>
-To start the DNS server every time your computer is booted, set
-<b>On</b>. Otherwise set <b>Off</b>.</p> ") +
+_("<p>
+To start the DNS server every time your computer is booted, set the 
+start-up behavior to <b>On</b>. Otherwise set <b>Off</b>.</p> ") +
 
 ((ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") ? 
     // Final step of the installation wizard - 4/5
-_("<p><b><big>LDAP Support</big></b><br>
+_("<p>
 To store the DNS zones in LDAP instead of native configuration files,
 set <b>LDAP Support Active</b>.</p>")
 :
 "") +
 
     // Final step of the installation wizard - 5/5
-_("<p><b><big>Expert Mode</big></b><br>
+_("<p>
 To enter the expert mode of the DNS server configuration, click
-<b>DNS Server Expert Configuration...</b>.</p>"),
+<b>DNS Server Expert Configuration</b>.</p>"),
 
     // slave zone help text 1/2
 "slave_zone" : _("<p><big><b>Slave DNS Zone</b></big><br>
@@ -470,9 +469,9 @@ Each slave zone must have the master name server defined. Use
     // slave zone help text 2/2
 _("<p><big><b>Zone Transport</b></big><br>
 To allow transports of the zone, set <b>Enable Zone Transport</b>
-and select the <b>ACLs</b> that will be checked when a remote host
+and select the <b>ACLs</b> to check when a remote host
 attempts to transfer the zone. At least one ACL must be defined
-before allowing zone transports.</p>"),
+to allow zone transports.</p>"),
 
 ];
 

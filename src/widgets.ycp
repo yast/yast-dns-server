@@ -1120,7 +1120,7 @@ global define symbol zoneMastersHandle (string key, map event) ``{
 	string new = nil;
 	UI::OpenDialog (`VBox (
 	    // text entry
-	    `TextEntry (`id (`address), _("&Master's Address")),
+	    `TextEntry (`id (`address), _("Address of &Master")),
 	    `HBox (
 		`HStretch (),
 		`PushButton (`id (`ok), Label::OKButton ()),
@@ -1156,7 +1156,7 @@ global define symbol zoneMastersHandle (string key, map event) ``{
     UI::ReplaceWidget (`masters_rp, `SelectionBox (
 	`id (`masters),
 	// selection box
-	_("Master Name servers"),
+	_("Master Name Servers"),
 	current_zone_masters
     ));
     return nil;
@@ -1204,7 +1204,7 @@ define map getZoneMastersWidget () ``{
 	    `ReplacePoint (`id (`masters_rp), `SelectionBox (
 		`id (`masters),
 		// selection box
-		_("Master Name servers"),
+		_("Master Name Servers"),
 		[]
 	    )),
 	    `HBox (
