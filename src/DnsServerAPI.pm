@@ -119,8 +119,8 @@ sub CheckIPv4 {
 
     if (!IP->Check4($ipv4)) {
 	# TRANSLATORS: Popup error message during parameters validation,
-	#   %1 is a string which is needed to be an IPv4
-	Report->Error(sformat(__("'%1' is not a valid IPv4 address."), $ipv4)."\n\n".IP->Valid4());
+	#   %1 is a string that should be IPv4
+	Report->Error(sformat(__("%1 is not a valid IPv4 address."), $ipv4)."\n\n".IP->Valid4());
 	return 0;
     }
     
@@ -144,7 +144,7 @@ sub CheckZone {
     
     # TRANSLATORS: Popup error message, Trying to get information from zone which doesn't exist,
     #   %1 is the zone name
-    Report->Error(sformat(__("DNS zone '%1' does not exist."), $zone));
+    Report->Error(sformat(__("DNS zone %1 does not exist."), $zone));
     return 0;
 }
 
@@ -165,7 +165,7 @@ sub ZoneIsMaster {
     # TRANSLATORS: Popup error message, Trying manage records in zone which is not 'master' type
     #   only 'master' zone records can be managed
     #   %1 is the zone name
-    Report->Error(sformat(__("DNS zone '%1' is not type 'master'."), $zone));
+    Report->Error(sformat(__("DNS zone %1 is not type master."), $zone));
     return 0;
 }
 
@@ -182,7 +182,7 @@ sub CheckZoneType {
     if ($type !~ /^(master|slave)$/) {
 	# TRANSLATORS: Popup error message, Calling function with unsupported DNZ zone type,
 	#   %1 is the zone type
-	Report->Error(sformat(__("Zone type '%1' is not supported."), $type));
+	Report->Error(sformat(__("Zone type %1 is not supported."), $type));
 	return 0;
     }
 
@@ -206,7 +206,7 @@ sub CheckTransportACL {
 
     # TRANSLATORS:  Popup error message, Calling function with unknown ACL,
     #   %1 is the ACL's name
-    Report->Error(sformat(__("An ACL named '%1' does not exist."), $acl));
+    Report->Error(sformat(__("An ACL named %1 does not exist."), $acl));
     return 0;
 }
 
@@ -216,7 +216,7 @@ sub CheckHostname {
 
     if (!$hostname) {
 	# TRANSLATORS:  Popup error message, Calling function with undefined parameter
-	Report->Error(__("The host name must be defined."));
+	Report->Error(__("The hostname must be defined."));
 	return 0;
     }
 
@@ -228,13 +228,13 @@ sub CheckHostname {
 		return 1;
 	    } else {
 		# Popup error message, wrong FQDN format
-		Report->Error(__("The host name must be in the fully qualified domain name format."));
+		Report->Error(__("The hostname must be in the fully qualified domain name format."));
 		return 0;
 	    }
 	# DNS FQDN which doesn't finish with a dot!
 	} else {
 	    # Popup error message, FQDN hostname must finish with a dot
-	    Report->Error(__("The fully qualified host name must end with a dot."));
+	    Report->Error(__("The fully qualified hostname must end with a dot."));
 	    return 0;
 	}
     # Relative name
@@ -244,7 +244,7 @@ sub CheckHostname {
 	} else {
 	    # TRANSLATORS: Popup error message, wrong hostname, allowed syntax is described
 	    #   two lines below using a pre-defined text
-	    Report->Error(__("The host name is in the wrong format.")."\n\n".Hostname->ValidHost());
+	    Report->Error(__("The hostname is invalid.")."\n\n".Hostname->ValidHost());
 	    return 0;
 	}
     }
@@ -283,9 +283,9 @@ sub CheckHostameInZone {
 	if ($hostname !~ /\.$zone\.$/ && $hostname !~ /^$zone\.$/) {
 	    # TRANSLATORS: Popup error message, Wrong hostname which should be part of the zone,
 	    #   %1 is the hostname, %2 is the zone name
-	    Report->Error(sformat(__("Host name '%1' is not part of the zone '%2'.
+	    Report->Error(sformat(__("The hostname %1 is not part of the zone %2.
 
-The host name must be relative to the zone or must end 
+The hostname must be relative to the zone or must end 
 with the zone name followed by a dot, for example,
 'dhcp1' or 'dhcp1.example.org.' for the zone 'dhcp.org'.
 "), $hostname, $zone));
@@ -319,7 +319,7 @@ sub CheckReverseIPv4 {
 
     # TRANSLATORS: Popup error message, Wrong reverse IPv4,
     #   %1 is the reveresed IPv4
-    Report->Error(sformat(__("The reverse IPv4 address '%1' is invalid.
+    Report->Error(sformat(__("The reverse IPv4 address %1 is invalid.
 
 A valid reverse IPv4 consists of four integers in the range 0-255
 separated by a dot then followed by the string '.in-addr.arpa.'.
@@ -341,8 +341,8 @@ sub CheckHostnameRelativity {
     if ($zone =~ /\.in-addr\.arpa$/) {
 	# TRANSLATORS: Popup error message, user can't use hostname %1 because it doesn't make
 	#   sense to e relative to zone %2 (%2 is a reverse zone name like '32.200.192.in-addr.arpa')
-	Report->Error(sformat(__("Relative host name '%1' cannot be used with zone '%2'.
-Use a fully qualified host name finished with a dot instead,
+	Report->Error(sformat(__("The relative hostname %1 cannot be used with zone %2.
+Use a fully qualified hostname finished with a dot instead,
 such as 'host.example.org.'.
 "), $hostname, $zone));
 	return 0;
@@ -516,7 +516,7 @@ sub CheckBINDTimeValue {
 	    # TRANSLATORS: Popup error message, Checking time value for specific SOA section (key),
 	    #   %1 is the section name, %2 is the minimal value, %3 si the maximal value of the section
 	    Report->Error(sformat(__("Invalid SOA record.
-'%1' must be from %2 to %3 seconds.
+%1 must be from %2 to %3 seconds.
 "), $key, 0, 2147483647));
 	    return 0;
 	}
@@ -527,7 +527,7 @@ sub CheckBINDTimeValue {
 	    # TRANSLATORS: Popup error message, Checking time value for specific SOA section (key),
 	    #   %1 is the section name, %2 is the minimal value, %3 si the maximal value of the section
 	    Report->Error(sformat(__("Invalid SOA record.
-'%1' must be from %2 to %3 seconds.
+%1 must be from %2 to %3 seconds.
 "), $key, 0, 10800));
 	    return 0;
 	}	
@@ -556,10 +556,10 @@ sub CheckBINDTimeFormat {
     #   and defined suffies, also only number (as seconds) is allowed, %1 is a section name
     #   like 'ttl' or 'refresh'
     Report->Error(sformat(__("Invalid SOA record.
-'%1' must be a BIND time type.
-A BIND time type consists of numbers and the case insensitive
+%1 must be a BIND time type.
+A BIND time type consists of numbers and the case-insensitive
 suffixes W, D, H, M, and S. Time in seconds is allowed without the suffix.
-Enter values such as 12H15m, 86400 or 1W30M.
+Enter values such as 12H15m, 86400, or 1W30M.
 "), $key));
     return 0;
 }
@@ -587,7 +587,7 @@ sub CheckSOARecord {
 	    # TRANSLATORS: Popup error message, Checking SOA record,
 	    #   %1 is a part of SOA, %2 is typically 0, %3 is some huge number
 	    Report->Error(sformat(__("Invalid SOA record.
-'%1' must be a number from %2 to %3.
+%1 must be a number from %2 to %3.
 "), 'serial', 0, $max_serial));
 	    return 0;
 	}
@@ -952,7 +952,7 @@ sub SetLoggingChannel {
     if ($channel->{'destination'} eq 'file') {
 	if (not defined $channel->{'filename'} || $channel->{'filename'} eq '') {
 	    # TRANSLATORS: Popup error message, parameters validation, 'filename' is needed parameter
-	    Report->Error(__("The file name must be defined when logging to a file."));
+	    Report->Error(__("The filename must be defined when logging to a file."));
 	    return 0;
 	}
 	# checking logfile size
@@ -964,7 +964,7 @@ sub SetLoggingChannel {
 
 It must be set in the format 'number[suffix]'.
 
-Possible suffixes are 'k', 'K', 'm', 'M', 'g', and 'G'.
+Possible suffixes are k, K, m, M, g, and G.
 "));
 	    return 0;
 	}
@@ -1252,8 +1252,8 @@ sub GetZoneMasterServers {
 		# TRANSLATORS: Popup error message, Trying to get 'master server' for zone which is not 'slave' type,
 		#   'master' servers haven't any 'masterservers', they ARE masterservers
 		#   %1 is name of the zone, %2 is type of the zone
-		Report->Error(sformat(__("Only 'slave' zones have a 'master server' defined.
-Zone '%1' is type '%2'.
+		Report->Error(sformat(__("Only slave zones have a master server defined.
+Zone %1 is type %2.
 "), $_->{'zone'}, $_->{'type'}));
 	    }
 	}
@@ -1294,8 +1294,8 @@ sub SetZoneMasterServers {
 	    } else {
 		# TRANSLATORS: Popup error message, Trying to set 'master server' for zone which is not 'slave' type,
 		#   %1 is name of the zone, %2 is type of the zone
-		Report->Error(sformat(__("Only 'slave' zones have a 'master server' defined.
-Zone '%1' is type '%2'.
+		Report->Error(sformat(__("Only slave zones have a master server defined.
+Zone %1 is type %2.
 "), $_->{'zone'}, $_->{'type'}));
 	    }
 	}
@@ -1352,7 +1352,7 @@ sub AddZone {
     foreach my $known_zone (keys %{$zones}) {
 	if ($zone eq $known_zone) {
 	    # TRANSLATORS: Popup error message, Trying to add new zone which already exists
-	    Report->Error(sformat(__("Zone name '%1' already exists."), $zone));
+	    Report->Error(sformat(__("Zone name %1 already exists."), $zone));
 	    return 0;
 	}
     }
@@ -1361,7 +1361,7 @@ sub AddZone {
 
     if ($type eq 'slave' && !$options->{'masterserver'}) {
 	# TRANSLATORS: Popup error message, Adding new 'slave' zone without defined needed option 'masterserver'
-	Report->Error(__("Option 'masterserver' is needed for 'slave' zones."));
+	Report->Error(__("Option masterserver is needed for slave zones."));
 	return 0;
     }
 
@@ -2228,8 +2228,8 @@ sub AddHost {
     if (!$reversezone) {
 	# TRANSLATORS: Popup error message, No reverse zone for %1 record found,
 	#   %2 is the hostname, %1 is the IPv4
-	Report->Error(sformat(__("There is no reverse zone for '%1' administered by your DNS server.
-Host name '%2' cannot be added."), $value, $key));
+	Report->Error(sformat(__("There is no reverse zone for %1 administered by your DNS server.
+Hostname %2 cannot be added."), $value, $key));
 	return 0;
     }
 

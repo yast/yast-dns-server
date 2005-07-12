@@ -387,7 +387,7 @@ sub AdaptFirewall {
     if (! $ret)
     {
         # error report
-        Report->Error (__("Error occurred while setting firewall settings."));
+        Report->Error (__("Error occurred while configuring firewall settings."));
     }
     return $ret;
 }
@@ -1382,8 +1382,8 @@ sub Write {
 	Service->Enable ("named");
 	if ($ret->{'exit'} != 0)
 	{
-	    # Cannot start service 'named', because $error
-	    Report->Error (__("Error occurred while starting service 'named'.\nError: ".$ret->{'stdout'}));
+	    # Cannot start service 'named', because of error that follows Error:.  Do not translate named.
+	    Report->Error (__("Error occurred while starting service named.\nError: ".$ret->{'stdout'}));
 	    $ok = 0;
 	}
     }
@@ -1475,28 +1475,28 @@ sub Summary {
 
     my %zone_types = (
 	# type of zone to be used in summary
-	"master" => __("master"),
+	"master" => __("Master"),
 	# type of zone to be used in summary
-	"slave" => __("slave"),
+	"slave" => __("Slave"),
 	# type of zone to be used in summary
-	"stub" => __("stub"),
+	"stub" => __("Stub"),
 	# type of zone to be used in summary
-	"hint" => __("hint"),
+	"hint" => __("Hint"),
 	# type of zone to be used in summary
-	"forward" => __("forward"),
+	"forward" => __("Forward"),
     );
     my @ret = ();
 
     if ($start_service)
     {
 	# summary string
-	push (@ret, __("The DNS server starts when booting the system."));
+	push (@ret, __("The DNS server starts when booting the system"));
     }
     else
     {
 	push (@ret,
 	    # summary string
-	    __("The DNS server does not start when booting the system."));
+	    __("The DNS server does not start when booting the system"));
     }
 
     my @zones_descr = map {
@@ -1802,7 +1802,7 @@ sub LdapPrepareToWrite {
 	my $result = SCR->Write (".ldap.add", \%ldap_request, \%ldap_object);
 	if (! $result)
 	{
-	    # error report
+	    # error report, %1 is ldap object
 	    Report->Error (sformat (__("Error occurred while creating cn=defaultDNS,%1. Not using LDAP."), $ldap_config_dn));
 	    my $err = SCR->Read (".ldap.error") || {};
 	    my $err_descr = Dumper ($err);
@@ -1828,7 +1828,7 @@ sub LdapPrepareToWrite {
 	    my $result = SCR->Write (".ldap.modify", \%ldap_request, \%ldap_object);
 	    if (! $result)
 	    {
-		# error report
+		# error report, %1 is LDAP record DN
 		Report->Error (sformat (__("Error occurred while updating %1."), $dns_conf_dn));
 		my $err = SCR->Read (".ldap.error") || {};
 		my $err_descr = Dumper ($err);
@@ -1863,7 +1863,7 @@ sub LdapPrepareToWrite {
 	my $result = SCR->Write (".ldap.add", \%ldap_request, \%ldap_object);
 	if (! $result)
 	{
-	    # error report
+	    # error report, %1 is LDAP record DN
 	    Report->Error (sformat (__("Error occurred while creating %1. Not using LDAP."), $zone_base_config_dn));
 	    my $err = SCR->Read (".ldap.error") || {};
 	    my $err_descr = Dumper ($err);
