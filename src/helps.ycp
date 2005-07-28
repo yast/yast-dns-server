@@ -194,8 +194,8 @@ To start or stop the DNS server immediately, use
     /* Expert Mode Configuration - Forwarders 1/3 */
 "forwarders" : _("<p><b><big>Forwarders</big></b><br>
 Forwarders are DNS servers to which your DNS server should send queries
-it cannot answer.</p>
-<p>For a dial-up connection, it can be useful
+it cannot answer.
+For a dial-up connection, it can be useful
 to allow the PPP daemon to update the forwarders after the connection
 is established. For this, select <b>PPP Daemon Sets Forwarders</b>. To update forwarders
 only manually, select <b>Set Forwarders Manually</b>.</p>
@@ -270,8 +270,8 @@ for the dynamic updates of DNS zones (DDNS).</p>
 ") +
 
     /* Expert Mode Configuration - Keys 2/3 */
-_("<p>To add an already created key, set the <b>File Name</b>
-(or use the <b>Browse</b> button to select it) and click <b>Add</b>.<br>
+_("<p>To add an already created key, set the <b>Filename</b>
+(or use the <b>Browse</b> button to select it) and click <b>Add</b>.
 To generate a new key, enter the <b>Filename</b> and the <b>Key ID</b>
 and click <b>Generate</b>. The new key will be generated and also added.</p>
 ") +
