@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Aug 11 13:31:27 CEST 2005 - locilka@suse.cz
+
+- Fixing bug #104072
+  UI layout was broken after the new core layout has been applied
+- 2.12.4
+
+-------------------------------------------------------------------
 Thu Jul 28 13:22:03 CEST 2005 - locilka@suse.cz
 
 - Merged proofread texts

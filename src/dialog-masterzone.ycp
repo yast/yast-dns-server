@@ -116,8 +116,10 @@ term GetMasterZoneEditorTabBasics () {
 	`Left (`CheckBox (`id ("enable_zone_transport"), `opt (`notify),
 	    // check box
 	    _("Enable &Zone Transport"))),
-	// multi selection box
-	`Left (`MultiSelectionBox (`id ("acls_list"), _("ACLs"), acl)),
+	//`Left (
+	    // multi selection box
+	    `VSquash(`MultiSelectionBox (`id ("acls_list"), _("ACLs"), acl)),
+	//),
 	`VStretch ()
     );
     return contents;
@@ -1400,7 +1402,7 @@ symbol runMasterZoneTabDialog () {
 		    ];
 
     term contents =
-	`Top (
+	//`Top (
 	    `VBox( `opt ( `hvstretch ),
 		`HBox (
 		    // Label - connected with Textentry which shows current edited zone
@@ -1422,8 +1424,8 @@ symbol runMasterZoneTabDialog () {
 		DnsFakeTabs::DumbTabs( tab_terms ,
 		    `ReplacePoint( `id( `tabContents ), GetMasterZoneEditorTab ( current_tab ) )
 		))
-	    )
-	);
+	    );
+	//);
 // Menu Item - Zone Editor - Tab
 string qwerty = _("Ad&vanced");
 // error report
