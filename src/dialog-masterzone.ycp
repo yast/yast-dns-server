@@ -1545,7 +1545,7 @@ symbol runSlaveZoneTabDialog () {
 	    // check box
 	    _("Enable &Zone Transport"))),
 	// multi selection box
-	`Left (`MultiSelectionBox (`id ("acls_list"), _("ACLs"), acl)),
+	`VSquash(`MultiSelectionBox (`id ("acls_list"), _("ACLs"), acl)),
 	`VStretch ()
     );
 
