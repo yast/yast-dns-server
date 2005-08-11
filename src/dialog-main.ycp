@@ -1369,7 +1369,6 @@ symbol HandleExpertAclPage (string key, map event) {
  */
 term ExpertZonesDialog () {
     term dialog =
-	`Top (
 	    `VBox (
 		`VSquash (
 		    `Frame ( _("A&dd New Zone "),
@@ -1410,8 +1409,11 @@ term ExpertZonesDialog () {
 		    // Table header - DNS listing zones
 		    `Left ( `Label ( _("Configured DNS Zones") ) ),
 		    `HBox (
+			`VStretch (`opt(`vstretch)),
 			`HWeight ( 9,
-			    `Table ( `id ( "zones_list_table" ), `header (
+			    `Table ( `id ( "zones_list_table" ),
+				`opt(`vstretch),
+				`header (
 				// Table header item - DNS listing zones
 				_("Zone"),
 				// Table header item - DNS listing zones
@@ -1429,8 +1431,8 @@ term ExpertZonesDialog () {
 			)
 		    )
 		)
-	    )
-	);
+	    );
+
     return dialog;
 }
 
