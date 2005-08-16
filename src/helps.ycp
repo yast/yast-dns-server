@@ -242,7 +242,7 @@ to specify how many log files should be saved.</p>
 
     /* Expert Mode Configuration - Logging 3/3 */
 _("<p>In <b>Additional Logging</b>,
-Set which loggable actions should be logged. Common actions are always logged.
+set which loggable actions should be logged. Common actions are always logged.
 <b>Log All DNS Queries</b> logs all queries from clients to the DNS server.
 <b>Log Zone Updates</b> logs when DNS has been updated.
 <b>Log Zone Transfers</b> logs when zone is completely transferred to the 
@@ -273,7 +273,7 @@ for the dynamic updates of DNS zones (DDNS).</p>
 _("<p>To add an already created key, set the <b>Filename</b>
 (or use the <b>Browse</b> button to select it) and click <b>Add</b>.
 To generate a new key, enter the <b>Filename</b> and the <b>Key ID</b>
-and click <b>Generate</b>. The new key will be generated and also added.</p>
+then click <b>Generate</b>. The new key will be generated and also added.</p>
 ") +
 
     /* Expert Mode Configuration - Keys 3/3 */
