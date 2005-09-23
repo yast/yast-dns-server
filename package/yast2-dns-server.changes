@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Sep 23 12:52:11 CEST 2005 - locilka@suse.cz
+
+- Fixed bug #106179
+  Not translated server type in the table of configured zones
+- 2.13.0
+
+-------------------------------------------------------------------
 Tue Aug 16 11:22:43 CEST 2005 - locilka@suse.cz
 
 - Merged proofread texts (2nd round)
