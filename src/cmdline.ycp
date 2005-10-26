@@ -16,7 +16,6 @@
     import "String";
     import "DnsServer";
     import "DnsServerAPI";
-    import "DnsData";
 
     // Wizard Screen function formats and prints unifyied commandline screen
     void ScreenWizard (string header, string content) {
