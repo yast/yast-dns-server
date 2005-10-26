@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Oct 26 14:17:23 CEST 2005 - locilka@suse.cz
+
+- Removing the DnsData unneded import in dns-server client
+- 2.13.1
+
+-------------------------------------------------------------------
 Fri Sep 23 12:52:11 CEST 2005 - locilka@suse.cz
 
 - Fixed bug #106179
