@@ -20,4 +20,5 @@ other2		IN A		1.2.3.7
 other2		IN MX		10 other.domain.cz.
 alias		IN CNAME	dns
 alias2		IN CNAME	other2.domain.cz.
+[liby2] Y2ProgramComponent.cc(result):XXX Sending result: `result (nil)
 [liby2] genericfrontend.cc(main):XXX Finished YaST2 component 'y2base'
