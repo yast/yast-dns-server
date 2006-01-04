@@ -451,8 +451,8 @@ sub TimeToSeconds {
 	    $totaltime += $1;
 	}
     }
-    if ($time =~ s/^\d+$//) {
-	$totaltime += $time;
+    if ($time =~ s/^(\d+)$//) {
+	$totaltime += $1;
     }
     if ($time ne '') {
 	y2error("Wrong time format '".$originaltime."', unable to parse.");
