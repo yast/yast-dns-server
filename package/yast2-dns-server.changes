@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Jan  4 10:35:46 CET 2006 - locilka@suse.cz
+
+- Fixing bug #141211
+  DNS Server truncated the SOA times to 0 when the time was in
+  seconds without any suffix.
+- 2.13.2
+
+-------------------------------------------------------------------
 Wed Oct 26 14:17:23 CEST 2005 - locilka@suse.cz
 
 - Removing the DnsData unneded import in dns-server client
