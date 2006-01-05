@@ -11,7 +11,6 @@
 
     textdomain "dns-server";
 
-    import "Require";
     import "Mode";
     import "Label";
     import "Service";

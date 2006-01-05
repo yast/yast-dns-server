@@ -22,7 +22,6 @@
     import "Popup";
     import "Progress";
     import "Report";
-    import "Require";
     import "Summary";
     import "SuSEFirewall";
 
