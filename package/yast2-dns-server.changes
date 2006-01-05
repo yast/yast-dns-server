@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jan  5 08:18:56 CET 2006 - locilka@suse.cz
+
+- Removed importing module 'Require' which already doesn't exist
+- 2.13.3
+
+-------------------------------------------------------------------
 Wed Jan  4 10:35:46 CET 2006 - locilka@suse.cz
 
 - Fixing bug #141211
