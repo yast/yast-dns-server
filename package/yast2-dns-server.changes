@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Jan  9 17:32:59 CET 2006 - locilka@suse.cz
+
+- Teaching DNS-Server agent to understand multiline entries
+  bug/enhancement #64806
+  Currently supported known sections are (options|view|zone|logging)
+- 2.13.4
+
+-------------------------------------------------------------------
 Thu Jan  5 08:18:56 CET 2006 - locilka@suse.cz
 
 - Removed importing module 'Require' which already doesn't exist
