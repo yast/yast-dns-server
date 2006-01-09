@@ -17,10 +17,15 @@
 `ag_ini(
     `IniAgent( "/etc/named.conf",
 	$[
-	    "options"	: [ "global_values", "repeat_names" ],
+	    // join_multiline for multiline values without newlines
+	    "options"	: [ "global_values", "repeat_names", "join_multiline" ],
 	    "comments"	: [ "^[ \t]*#.*$", "^[ \t]*$" ],
 	    "params"    : [
-		$[ "match" : [ "([^ \t]+)[ \t]([^ \t]+(.*[^ \t]+)+)[ \t]*;$", "%s %s;" ]],
+		$[
+		    "match" : [ "([^ \t]+)[ \t]([^ \t]+(.*[^ \t]+)+)[ \t]*;$", "%s %s;" ],
+		    // This enables multiline parameters
+		    "multiline" : [ "([^ \t]+)[ \t]+([^}]*)", "([^}]*\\}[ \t]*;)[ \t]*" ],
+		],
 		// (...)* made the agent crash when it did not match,
 		// changed it to ((...)*), #39597
 		// Still don't know why this is here at all
@@ -28,7 +33,8 @@
 	    ],
 	    "sections" : [
 		$[
-		    "begin" : [ "[ \t]*([^ \t]+(.*[^ \t]+)*)[ \t]*\\{$", "%s {" ],
+		    // "begin" : [ "[ \t]*([^ \t]+(.*[^ \t]+)*)[ \t]*\\{$", "%s {" ],
+		    "begin" : [ "[ \t]*((options|view|zone|logging)+(.*[^ \t]+)*)[ \t]*\\{$", "%s {" ],
 		    "end"   : [ "^[ \t]*\\}[ \t]*;", "};" ],
 		 ],
 	    ],
