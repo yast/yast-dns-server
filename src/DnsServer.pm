@@ -1274,7 +1274,8 @@ sub Write {
 	return $ok;
     }
 
-    $ok = $self->StopDnsService () && $ok;
+    # Reloading the service at the end
+    # $ok = $self->StopDnsService () && $ok;
 
     Progress->NextStage ();
 
@@ -1351,7 +1352,10 @@ sub Write {
     my $ret = 0;
     if (0 != @zones_update_actions)
     {
-	$ret = SCR->Execute (".target.bash", "/etc/init.d/named restart");
+	# named is running
+	if (Service->Status("named")==0) {
+	    $ret = SCR->Execute (".target.bash", "/etc/init.d/named reload");
+	}
     }
 
     Progress->NextStage ();
@@ -1371,13 +1375,21 @@ sub Write {
 
     Progress->NextStage ();
 
+    # named has to be started
     if ($start_service)
     {
 	my $ret = {};
 	$ret->{'exit'} = 0;
 	if (! $write_only)
 	{
-	    $ret = SCR->Execute (".target.bash_output", "/etc/init.d/named restart");
+	    # named is running
+	    if (Service->Status("named")==0) {
+		y2milestone("Reloading service 'named'");
+		$ret = SCR->Execute (".target.bash_output", "/etc/init.d/named reload");
+	    } else {
+		y2milestone("Restarting service 'named'");
+		$ret = SCR->Execute (".target.bash_output", "/etc/init.d/named restart");
+	    }
 	}
 	Service->Enable ("named");
 	if ($ret->{'exit'} != 0)
@@ -1387,10 +1399,12 @@ sub Write {
 	    $ok = 0;
 	}
     }
+    # named has to be stopped
     else
     {
 	if (! $write_only)
 	{
+	    y2milestone("Stopping service 'named'");
 	    SCR->Execute (".target.bash", "/etc/init.d/named stop");
 	}
 	Service->Disable ("named");
