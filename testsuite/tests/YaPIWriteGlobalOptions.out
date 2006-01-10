@@ -19,7 +19,6 @@ Read	.dns.zone "/var/lib/named/localhost.zone" $["TTL":"1W", "records":[$["key":
 Dir	.dns.named.value."zone \"localhost\" in": ["file", "type"]
 Read	.dns.named.value."zone \"localhost\" in"."file" ["\"localhost.zone\""]
 Read	.dns.named.value."zone \"localhost\" in"."type" ["master"]
-Execute	.target.bash "/etc/init.d/named stop" 0
 Execute	.target.bash_output "stat --format='rights: %a, blocks: %b, size: %s, owner: %u:%g changed: %Z, modifyied: %Y' /etc/named.conf" $["exit":1, "stderr":"", "stdout":""]
 Write	.dns.named.value.acl [] true
 Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
