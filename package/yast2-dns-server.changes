@@ -3,6 +3,7 @@ Tue Jan 10 15:10:09 CET 2006 - locilka@suse.cz
 
 - Fixed SLES Dialogs not to be shrunk
 - Replaced 'rcnamed restart' with 'rcnamed reload' where possible
+- Adjusted testsuites
 - 2.13.5
 
 -------------------------------------------------------------------
