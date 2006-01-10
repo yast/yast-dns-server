@@ -640,7 +640,7 @@ list<string> global_options_number_items = sort([
  */
 term ExpertBasicOptionsDialog () {
     term dialog =
-	`Top (
+	// `Top (
 	    `VBox (
 		`VSquash (
 		    // Frame label for Basic-Options
@@ -686,7 +686,7 @@ term ExpertBasicOptionsDialog () {
 		    `HBox (
 			`HWeight ( 9,
 			    `Table (  `id ( "basic_options_table" ),
-				`opt (`notify, `immediate),
+				`opt (`notify, `immediate, `vstretch),
 				`header (
 					// Table header item - basic-options listing
 					_("Option"),
@@ -704,8 +704,8 @@ term ExpertBasicOptionsDialog () {
 			)
 		    )
 		)
-	    )
-	);
+	    );
+	//);
     return dialog;
 }
 
@@ -1122,7 +1122,7 @@ symbol HandleExpertLoggingPage (string key, map event) {
  */
 term Expert_ACLs_Dialog () {
     term dialog =
-	`Top (
+	//`Top (
 	    `VBox (
 		`VSquash (
 		    // Frame label - adding ACL-optiopn
@@ -1179,8 +1179,8 @@ term Expert_ACLs_Dialog () {
 			)
 		    )
 		)
-	    )
-	);
+	    );
+	//);
     return dialog;
 }
 
@@ -1595,14 +1595,14 @@ map<string,map<string,any> > new_widgets = $[
 	"stop_now_button" : _("S&top DNS Server Now"),
 	"save_now_action" : SaveAndRestart,
 	// push button (DNS service handling)
-	"save_now_button" : _("Save Settings and Restart DNS Server &Now"),
+	"save_now_button" : _("Save Settings and Reload DNS Server &Now"),
 	"help" : sformat (CWMServiceStart::StartStopHelpTemplate (true),
 	    // part of help text, used to describe pusbuttons (matching DNS service handling but without "&")
 	    _("Start DNS Server Now"),
 	    // part of help text, used to describe pusbuttons (matching DNS service handling but without "&")
 	    _("Stop DNS Server Now"),
 	    // part of help text, used to describe pusbuttons (matching DNS service handling but without "&")
-	    _("Save Settings and Restart DNS Server Now")),
+	    _("Save Settings and Reload DNS Server Now")),
     ]),
     "firewall" : CWMFirewallInterfaces::CreateOpenFirewallWidget ($[
 	"services" : [ "dns-server" ],

@@ -20,7 +20,11 @@
      * Restart the DNS daemon
      */
     define void RestartDnsDaemon () ``{
-	Service::RunInitScript("named", "restart");
+	if (Service::Status("named")==0) {
+	    Service::RunInitScript("named", "reload");
+	} else {
+	    Service::RunInitScript("named", "restart");
+	}
     }
 
     /**

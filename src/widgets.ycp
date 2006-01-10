@@ -698,10 +698,10 @@ define symbol advMenubuttonHandle (string id, map event) ``{
 	    "save" : true,
 	    "actions" : [
 		// menubutton entry, try to keep short
-		[ _("Restart DNS Server"),
+		[ _("Reload DNS Server"),
 		    RestartDnsDaemon ],
 		// menubutton entry, try to keep short
-		[ _("Save Settings and Restart DNS Server"),
+		[ _("Save Settings and Reload DNS Server"),
 		    DnsServer::Write ],
 	    ],
 	]);
