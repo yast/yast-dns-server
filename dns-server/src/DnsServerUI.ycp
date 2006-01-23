@@ -1,0 +1,78 @@
+/**
+ * File:	modules/DnsServer.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Data for configuration of dns-server, input and output functions.
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ *
+ * Representation of the configuration of dns-server.
+ * Input and output routines.
+ */
+
+{
+
+    module "DnsServerUI";
+    textdomain "dns-server";
+
+    import "DnsServer";
+    import "DnsTsigKeys";
+    import "DnsZones";
+    import "Mode";
+    import "Popup";
+    import "Progress";
+    import "Report";
+    import "Summary";
+    import "SuSEFirewall";
+
+    import "DnsFakeTabs"; // FIXME remove when possbile
+
+    map<string,any> current_zone = $[];
+    list<map<string,any> > current_section = [];
+    list<string> current_zone_ns = [];
+    list<string> current_zone_mx = [];
+    list<string> current_zone_masters = [];
+    list<map<string,string> > current_zone_upd_ops = [];
+
+    list<map<string,string> > current_tsig_keys = [];
+    list<string> new_tsig_keys = [];
+    list<string> deleted_tsig_keys = [];
+
+    list<string> forwarders = [];
+//    string forward = "";
+
+    list<map<string,any> > options = [];
+    integer current_option_index = 0;
+
+    list<map> zones = [];
+
+    list<string> acl = [];
+
+    list<map<string,any> > logging = [];
+
+    boolean was_editing_zone = false;
+
+    include "dns-server/misc.ycp";
+    include "dns-server/helps.ycp";
+    include "dns-server/options.ycp";
+
+    /**
+      * Map of popups for CWM
+      */
+    global map popups = InitPopups ();
+
+    include "dns-server/widgets.ycp";
+
+    /**
+      * Map of widgets for CWM
+      */
+    global map widgets = InitWidgets ();
+
+    include "dns-server/dialogs.ycp";
+    include "dns-server/dialog-main.ycp";
+    include "dns-server/dialog-masterzone.ycp";
+    include "dns-server/dialog-installwizard.ycp";
+    include "dns-server/wizards.ycp";
+
+/* EOF */
+}

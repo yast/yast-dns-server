@@ -1,0 +1,24 @@
+Dump	=======================
+Execute	.target.bash "/etc/init.d/named status" 0
+Execute	.target.bash "/etc/init.d/named stop" 0
+Execute	.target.bash "/etc/init.d/named restart" 0
+Execute	.target.bash_output "stat --format='rights: %a, blocks: %b, size: %s, owner: %u:%g changed: %Z, modifyied: %Y' /etc/named.conf" $["exit":1, "stderr":"", "stdout":""]
+Read	.sysconfig.named.NAMED_RUN_CHROOTED 0
+Read	.sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY "yes"
+Read	.sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY "yes"
+Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
+Dir	.dns.named.value.options: ["directory", "notify"]
+Read	.dns.named.value.options.directory ["\"/var/lib/named\""]
+Read	.dns.named.value.options.notify ["no"]
+Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
+Read	.dns.named.value.acl []
+Read	.sysconfig.named.NAMED_CONF_INCLUDE_FILES 0
+Read	.dns.named.value."zone \"localhost\" in".type ["master"]
+Read	.dns.named.value."zone \"localhost\" in".file ["\"localhost.zone\""]
+Read	.dns.zone "/var/lib/named/localhost.zone" $["TTL":"1W", "records":[$["key":"", "type":"NS", "value":"@"], $["key":"", "type":"A", "value":"127.0.0.1"], $["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":42, "server":"@", "zone":"@"]]
+Dir	.dns.named.value."zone \"localhost\" in": ["file", "type"]
+Read	.dns.named.value."zone \"localhost\" in"."file" ["\"localhost.zone\""]
+Read	.dns.named.value."zone \"localhost\" in"."type" ["master"]
+Return	true
+Dump	=======================
+Return	$["allowed_interfaces":[], "chroot":"1", "logging":[], "options":[$["key":"directory", "value":"\"/var/lib/named\""], $["key":"notify", "value":"no"], $["key":"forwarders", "value":""]], "start_service":"0", "use_ldap":"0", "zones":[$["file":"localhost.zone", "options":[$["key":"file", "value":"\"localhost.zone\""], $["key":"type", "value":"master"]], "records":[$["key":"localhost.", "type":"NS", "value":"@"], $["key":"localhost.", "type":"A", "value":"127.0.0.1"], $["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":"42", "server":"@", "zone":"@"], "this_zone_had_NS_record_at_start":"1", "ttl":"1W", "type":"master", "zone":"localhost"]]]

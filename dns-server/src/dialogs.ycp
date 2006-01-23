@@ -1,0 +1,336 @@
+/**
+ * File:	include/dns-server/dialogs.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Dialogs definitions
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+    textdomain "dns-server";
+
+    import "DnsServer";
+
+    import "Popup";
+    import "Label";
+    import "CWM";
+    import "Wizard";
+    import "Message";
+    import "SuSEFirewall";
+
+    /**
+      * Ask user if exit without saving
+      * @return boolean true if exit
+      */
+    global define boolean ReallyExit () ``{
+	if (! DnsServer::WasModified ())
+	    return true;
+	// yes-no popup
+	return Popup::YesNo (_("All changes will be lost.
+Really exit?"));
+    }
+
+    /**
+      * If modified, ask for confirmation
+      * @return true if abort is confirmed
+      */
+    global define boolean ReallyAbort () ``{
+	if (! DnsServer::WasModified ())
+	    return true;
+	return Popup::ReallyAbort (true);
+    }
+
+    /**
+      * Ask for confirmation (always)
+      * @return true if abort is confirmed
+      */
+    global define boolean ReallyAbortAlways () ``{
+	return Popup::ReallyAbort (true);
+    }
+
+    /**
+      * Read settings dialog
+      * @return `abort if aborted and `next otherwise
+      */
+    global define symbol ReadDialog() ``{
+	Wizard::RestoreHelp (HELPS["read"]:"");
+	boolean ret = DnsServer::Read();
+	return ret ? `next : `abort;
+    }
+
+    /**
+      * Write settings dialog
+      * @return `abort if aborted and `next otherwise
+      */
+    global define symbol WriteDialog() ``{
+	Wizard::RestoreHelp (HELPS["write"]:"");
+	boolean ret = DnsServer::Write();
+	// yes-no popup
+	if (! ret && Popup::YesNo (_("Saving the configuration failed. Change the settings?")))
+	    return `back;
+	return ret ? `next : `abort;
+    }
+
+/**
+ * Run main dialog
+ * @return symbol for wizard sequencer
+ */
+/** global define symbol runMainDialog () ``{
+    y2milestone ("Running main dialog");
+
+    list<map<string,any> > w = CWM::CreateWidgets (["start", "chroot", "zones", "advanced_mbutton", "log_button"],
+	DnsServerUI::widgets);
+    term contents = `HBox (`HSpacing (1), `VBox (
+	`VSpacing (1),
+	`Left ("start"),
+	`VSpacing (1),
+	`Left ("chroot"),
+	`VSpacing (1),
+	"zones",
+	`VSpacing (1)
+    ), `HSpacing (1));
+
+    // dialog caption
+    string caption = _("DNS Server Configuration");
+
+    string help = CWM::MergeHelps (w);
+    contents = CWM::PrepareDialog (contents, w);
+    Wizard::SetContentsButtons (caption, contents, help,
+	Label::BackButton (), Label::FinishButton ());
+    Wizard::HideBackButton();
+    Wizard::SetAbortButton(`abort, Label::CancelButton() );
+
+    return CWM::Run (w,
+	$[`abort : ReallyExit ]);
+}
+*/
+
+/**
+ * Run global options dialog
+ * @return symbol for wizard sequencer
+ */
+/** define symbol runGlobalOptionsDialog () ``{
+    y2milestone ("Running global options dialog");
+
+    list<string> w = ["global_table"];
+
+    term contents = `HBox (`HSpacing (1), `VBox (
+	`VSpacing (1),
+	"global_table",
+	`VSpacing (1)
+    ), `HSpacing (1));
+
+    // dialog caption
+    string caption = _("Global DNS Server Options");
+
+    return CWM::ShowAndRun (w, DnsServerUI::widgets,
+	contents, caption, Label::BackButton (), Label::OKButton (),
+	$[`abort : ReallyAbortAlways]);
+}
+*/
+
+/**
+ * Run firewall settings dialog
+ * @return symbol for wizard sequencer
+ */
+/** define symbol runFirewallDialog () ``{
+    y2milestone ("Running firewall settings dialog");
+
+    if (! SuSEFirewall::IsStarted())
+    {
+	// message popup
+	Popup::Message (_("Firewall is not configured."));
+	return `back;
+    }
+
+    list<string> w = ["interface_classes", "adapt_firewall"];
+
+    term contents = `HBox (`HStretch (), `VBox (
+	`VStretch (),
+	"interface_classes",
+	`VStretch (),
+	`Left ("adapt_firewall"),
+	`VStretch ()
+    ), `HStretch ());
+
+    // dialog caption
+    string caption = _("Firewall Settings");
+
+    return CWM::ShowAndRun (w, DnsServerUI::widgets,
+	contents, caption, Label::BackButton (), Label::OKButton (),
+	$[`abort : ReallyAbortAlways]);
+}
+*/
+
+/**
+ * Run synaimc DNS settings dialog
+ * @return symbol for wizard sequencer
+ */
+/** define symbol runDDNSDialog () ``{
+    y2milestone ("Running TSIG keys management dialog");
+
+    list<string> w = ["ddns_keys"];
+
+    term contents = `HBox (`HSpacing (2), `VBox (
+	`VSpacing (1),
+	"ddns_keys",
+	`VSpacing (1)
+    ), `HSpacing (2));
+
+    // dialog caption
+    string caption = _("TSIG Key Management");
+
+    return CWM::ShowAndRun (w, DnsServerUI::widgets,
+	contents, caption, Label::BackButton (), Label::OKButton (),
+	$[`abort : ReallyAbortAlways]);
+}
+*/
+
+/**
+ * Run dialog for new zone selection
+ * @return symbol for wizard sequencer
+ */
+/** define symbol runNewZoneDialog () ``{
+    y2milestone ("Running new zone type dialog");
+
+    list<string> w = ["zone_type", "zone_direction"];
+
+    term contents = `HBox (`HStretch (), `VBox (
+	`VStretch (),
+	"zone_type",
+	`VStretch (),
+	"zone_direction",
+	`VStretch ()
+    ), `HStretch ());
+
+    // dialog caption
+    string caption = _("DNS Server Configuration");
+
+    return CWM::ShowAndRun (w, DnsServerUI::widgets,
+	contents, caption, Label::BackButton (), Label::NextButton (),
+	$[`abort : ReallyAbortAlways]);
+}
+*/
+
+/**
+ * Run master zone edit dialog
+ * @return symbol for wizard sequencer
+ */
+/** global define symbol runMasterZoneDialog () ``{
+    y2milestone ("Running master zone editation dialog");
+
+    list<string> w = [ "zone_name", "allow_ddns", "master_table", "soa_button"];
+    term contents = `HBox (`HSpacing (1), `VBox (
+	`VSpacing (1),
+	`HBox (`HSpacing (2), "zone_name", `HSpacing (2)),
+	`VSpacing (1),
+	`HBox (`HSpacing (2), "allow_ddns", `HSpacing (2)),
+	`VSpacing (1),
+	"master_table",
+	`VSpacing (1)
+    ), `HSpacing (1));
+    // dialog caption
+    string caption = _("DNS Master Zone Configuration");
+
+    return CWM::ShowAndRun (w, DnsServerUI::widgets,
+	contents, caption, Label::BackButton (), Label::OKButton (),
+	$[`abort : ReallyAbortAlways]);
+}
+*/
+
+/**
+ * Run SOA record edit dialog
+ * @return symbol for wizard sequencer
+ */
+/** global define symbol runSoaDialog () ``{
+    y2milestone ("Running SOA editation dialog");
+
+    list<string> w = [ "soa" ];
+    term contents = `HBox (`HSpacing (1), `VBox (
+	`VSpacing (1),
+	"soa",
+	`VSpacing (1)
+    ), `HSpacing (1));
+    // dialog caption
+    string caption = _("SOA Record Configuration");
+
+    return CWM::ShowAndRun (w, DnsServerUI::widgets,
+	contents, caption, Label::BackButton (), Label::OKButton (),
+	$[`abort : ReallyAbortAlways]);
+}
+*/
+
+/**
+ * Run slave or stub zone edit dialog
+ * @return symbol for wizard sequencer
+ */
+/** global define symbol runSlaveStubZoneDialog (symbol type) ``{
+    y2milestone ("Running slave/stub zone editation dialog: %1", type);
+
+    list<string> w = [ "zone_name", "zone_masters" ];
+    term contents = `HBox (`HSpacing (1), `VBox (
+	`VSpacing (1),
+	`HBox (`HSpacing (2), "zone_name", `HSpacing (2)),
+	`VSpacing (1),
+	`HBox (`HSpacing (2), "zone_masters", `HSpacing (2)),
+	`VSpacing (1)
+    ), `HSpacing (1));
+    // dialog caption
+    string caption = _("DNS Slave Zone Configuration");
+    if (type == `stub)
+	// dialog caption
+	caption = _("DNS Stub Zone Configuration");
+
+    return CWM::ShowAndRun (w, DnsServerUI::widgets,
+	contents, caption, Label::BackButton (), Label::OKButton (),
+	$[`abort : ReallyAbortAlways]);
+}
+*/
+
+/**
+ * Run slave zone edit dialog
+ * @return symbol for wizard sequencer
+ */
+/** global define symbol runSlaveZoneDialog () ``{
+    return runSlaveStubZoneDialog (`slave);
+}
+*/
+
+/**
+ * Run stub zone edit dialog
+ * @return symbol for wizard sequencer
+ */
+/** global define symbol runStubZoneDialog () ``{
+    return runSlaveStubZoneDialog (`stub);
+}
+*/
+
+define symbol runZoneTypeSwitch () ``{
+    string type = current_zone["type"]:"master";
+    string name = current_zone["zone"]:"unknown";
+    y2milestone ("Editing zone %1, type %2", name, type);
+    if (type == "master")
+	return `master;
+    else if (type == "slave")
+	return `slave;
+    else if (type == "stub")
+	return `stub;
+    else
+    {
+	// message popup
+	Popup::Message (_("A zone of this type cannot be edited with this tool."));
+	return `back;
+    }
+}
+
+/** define symbol runZoneStore () ``{
+    DnsServer::StoreCurrentZone (current_zone);
+    DnsServer::StoreZone ();
+    return `next;
+}
+*/
+
+/* EOF */
+}
