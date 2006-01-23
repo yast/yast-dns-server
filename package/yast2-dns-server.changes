@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Jan 23 17:47:08 CET 2006 - locilka@suse.cz
+
+- Added checking whether the NetworkManager is enabled. In this
+  case user has to confirm continuance.
+- 2.13.6 
+
+-------------------------------------------------------------------
 Tue Jan 10 15:10:09 CET 2006 - locilka@suse.cz
 
 - Fixed SLES Dialogs not to be shrunk

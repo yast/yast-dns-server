@@ -33,6 +33,7 @@ YaST::YCP::Import ("SuSEFirewall");
 YaST::YCP::Import ("Message");
 YaST::YCP::Import ("ProductFeatures");
 YaST::YCP::Import ("CWMTsigKeys");
+YaST::YCP::Import ("Confirm");
 
 use DnsZones;
 use DnsTsigKeys;
@@ -1020,6 +1021,11 @@ sub Read {
     );
 
     Progress->NextStage ();
+
+    # Requires confirmation when NM is used
+    if (! Confirm->NetworkManager()) {
+	return 0;
+    }
 
     # Check packages
     if (! Mode->test () && ! PackageSystem->CheckAndInstallPackagesInteractive (["bind"]))
