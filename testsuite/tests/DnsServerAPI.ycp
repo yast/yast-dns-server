@@ -5,7 +5,7 @@
  * Authors:	Lukas Ocilka <locilka@suse.cz>
  * Copyright:	Copyright 2004, Novell, Inc.  All rights reserved.
  *
- * $Id: YaPIWriteZones.ycp 20574 2004-12-15 14:22:10Z jsrain $
+ * $Id$
  */
 
 {
