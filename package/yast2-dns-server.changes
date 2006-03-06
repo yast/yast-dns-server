@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Mar  6 13:11:47 CET 2006 - locilka@suse.cz
+
+- Adjusting BuildRequires for package
+- 2.13.7
+
+-------------------------------------------------------------------
 Mon Jan 23 17:47:08 CET 2006 - locilka@suse.cz
 
 - Added checking whether the NetworkManager is enabled. In this
