@@ -2,7 +2,7 @@
 
 
 @HEADER@
-BuildRequires:	perl-Digest-SHA1 perl-X500-DN yast2-devel-packages yast2-ldap-client
+BuildRequires:	perl-Digest-SHA1 perl-X500-DN yast2-ldap-client perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-testsuite yast2-perl-bindings
 Requires:	yast2 /usr/bin/host perl-gettext yast2-perl-bindings bind-utils yast2-ldap perl-X500-DN perl-Digest-SHA1 perl-Parse-RecDescent yast2-ldap-client
 
 BuildArchitectures:	noarch
