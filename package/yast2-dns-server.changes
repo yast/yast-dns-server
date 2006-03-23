@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Mar 23 08:59:36 CET 2006 - locilka@suse.cz
+
+- Added checking for root permissions into the module startup
+  process (#158483)
+- 2.13.8
+
+-------------------------------------------------------------------
 Mon Mar  6 13:11:47 CET 2006 - locilka@suse.cz
 
 - Adjusting BuildRequires for package
