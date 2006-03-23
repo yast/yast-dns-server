@@ -1,0 +1,47 @@
+/**
+ * File:	include/dns-server/misc.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Miscelanous functions for configuration of dns-server.
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+    textdomain "dns-server";
+
+    import "Mode";
+    import "Label";
+    import "Service";
+
+
+    /**
+     * Restart the DNS daemon
+     */
+    define void RestartDnsDaemon () ``{
+	if (Service::Status("named")==0) {
+	    Service::RunInitScript("named", "reload");
+	} else {
+	    Service::RunInitScript("named", "restart");
+	}
+    }
+
+    /**
+      * Get zone type from the zone identification
+      * @param zone string zone identification
+      * @return symbol zone type
+      */
+    global define symbol getZoneType (string zone) ``{
+        string relevant_zone_part = "";
+        if (size (zone) > 12
+	    && substring (zone, size (zone) - 12) == "in-addr.arpa")
+	{
+	    return `reverse;
+	}
+	return `normal;
+    }
+
+
+/* EOF */
+}

@@ -1,0 +1,26 @@
+[Desktop Entry]
+Type=Application
+Categories=Qt;X-SuSE-YaST;X-SuSE-YaST-Net_advanced;
+
+X-KDE-ModuleType=Library
+X-KDE-RootOnly=true
+X-KDE-HasReadOnlyMode=true
+X-KDE-Library=yast2
+X-SuSE-YaST-Call=dns-server
+
+X-SuSE-YaST-Group=Net_advanced
+X-SuSE-YaST-Argument=
+X-SuSE-YaST-RootOnly=true
+X-SuSE-YaST-AutoInst=all
+X-SuSE-YaST-AutoInstClonable=true
+X-SuSE-YaST-Geometry=
+X-SuSE-YaST-SortKey=
+X-SuSE-YaST-AutoInstResource=dns-server
+X-SuSE-YaST-AutoInstRequires=lan,ldap,ldap-server,ldap-client
+
+Icon=yast-dns-server
+Exec=/sbin/yast2 dns-server 
+
+Name=DNS Server
+GenericName=Configure a DNS server
+X-KDE-SubstituteUID=true

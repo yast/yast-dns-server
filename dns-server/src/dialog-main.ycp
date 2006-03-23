@@ -1,0 +1,1774 @@
+/**
+ * File:	include/dns-server/dialog-main.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	Main tab-style dialog definitions
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *              Lukas Ocilka <lukas.ocilka@suse.cz>
+ *
+ * $Id$
+ */
+
+{
+
+textdomain "dns-server";
+
+import "DnsServer";
+import "IP";
+import "Hostname";
+import "Popup";
+import "Label";
+import "CWM";
+import "Wizard";
+import "DialogTree";
+import "CWMServiceStart";
+import "Mode";
+import "Report";
+import "ProductFeatures";
+import "CWMFirewallInterfaces";
+import "Message";
+import "DnsRoutines";
+import "CWMTsigKeys";
+import "DnsTsigKeys";
+import "Mode";
+import "Popup";
+import "Hostname";
+import "Confirm";
+import "DnsServerAPI";
+
+/* String defines the initial screen for the expert dialog */
+string initial_screen = "start_up";
+
+/**
+ * Dialog Expert Settings - Start Up
+ * @return term for Get_ExpertDialog()
+ */
+term ExpertStartUpDialog () {
+    term dialog =
+	`Top (
+	    `VBox (
+		// Frame label (DNS starting)
+		`Frame ( _("Start-Up"),
+		    `Left (
+			`RadioButtonGroup( `id ( "dns_server_type" ),
+			    `VBox (
+				// Radiobutton label
+				`Left( `RadioButton( `id (`on), _("Now and When Booting") ) ),
+				// Radiobutton label
+				`Left( `RadioButton( `id (`off), _("Only Manually") ) ),
+				`VSpacing ( 1 )
+			    )
+			)
+		    )
+		),
+	    `VSpacing ( 1 ),
+	    // check box
+	    `Left (`CheckBox (`id ("use_ldap"), `opt (`notify), _("&LDAP Support Active"))),
+	    `VSpacing ( 1 ),
+		// Frame label (stoping starting DNS server)
+		`Frame ( _("Switch On and Off"),
+		    `Left (
+			`HSquash (
+			    `VBox (
+				`HBox (
+				    // Current status
+				    `Label (_("Current Status: ")),
+				    `ReplacePoint (`id ("service_status_rp"),
+					// service status - label
+					`Label (_("DNS server is running"))
+				    ),
+				    `HStretch ()
+				),
+				// Pushbutton for starting the DNS server
+				`PushButton ( `id ( "start_dns_now" ), `opt( `hstretch ), _("&Start DNS Server Now") ),
+				// Pushbutton for stopping the DNS server
+				`PushButton ( `id ( "stop_dns_now" ),  `opt( `hstretch ), _("S&top DNS Server Now") )
+			    )
+			)
+		    )
+		)
+	    )
+	);
+    return dialog;
+}
+
+void UpdateServiceStatusWidget () {
+    if (Mode::config ())
+    {
+	UI::ChangeWidget (`id ("start_dns_now"), `Enabled, false);
+	UI::ChangeWidget (`id ("stop_dns_now"), `Enabled, false);
+	UI::ReplaceWidget (`id ("service_status_rp"), `Label (""));
+    }
+    else
+    {
+	boolean status = DnsServer::GetDnsServiceStatus ();
+	UI::ChangeWidget (`id ("start_dns_now"), `Enabled, ! status);
+	UI::ChangeWidget (`id ("stop_dns_now"), `Enabled, status);
+	UI::ReplaceWidget (`id ("service_status_rp"),
+	    `Label (status
+		// service sttus - label
+		? _("DNS server is running")
+		// service sttus - label
+		: _("DNS server is not running")
+	    )
+	);
+    }
+}
+
+/**
+ * Initialize the tab of the dialog
+ */
+void InitExpertStartUpPage (string key) {
+    boolean auto_start = DnsServer::GetStartService ();
+    UI::ChangeWidget (`id ("dns_server_type"), `CurrentButton, auto_start
+	? `on
+	: `off);
+    boolean use_ldap = DnsServer::GetUseLdap ();
+    UI::ChangeWidget (`id ("use_ldap"), `Value, use_ldap);
+    UpdateServiceStatusWidget ();
+}
+
+/**
+ * Store settings of a tab of a dialog
+ */
+void StoreExpertStartUpPage (string key, map event) {
+    boolean auto_start
+	= UI::QueryWidget (`id ("dns_server_type"), `CurrentButton) == `on;
+    boolean use_ldap = (boolean)UI::QueryWidget (`id ("use_ldap"), `Value);
+    DnsServer::SetStartService (auto_start);
+}
+
+/**
+ * Handle events in a tab of a dialog
+ */
+symbol HandleExpertStartUpPage (string key, map event) {
+    any ret = event["ID"]:nil;
+    if ( ret == "start_dns_now" ) {
+	boolean status = DnsServer::StartDnsService ();
+	if (! status)
+	    // error report
+	    Report::Error (Message::CannotStartService("named"));
+	else
+	{
+	    sleep (500);
+	    UpdateServiceStatusWidget ();
+	}
+    }
+    else if ( ret == "stop_dns_now" ) {
+	boolean status = DnsServer::StopDnsService ();
+	if (! status)
+		// error report
+		Report::Error (Message::CannotStopService("named"));
+	else
+	{
+	    sleep (500);
+	    UpdateServiceStatusWidget ();
+	}
+    }
+    else if (ret == "use_ldap")
+    {
+	// yes-no popup
+/*	if (! Popup::YesNo (*/string popup = _("All your changes will be lost. Settings will
+be reread from new data storage.
+Continue?
+");//))
+//	{
+//	    return nil;
+//	}
+	boolean use_ldap = (boolean)UI::QueryWidget (`id ("use_ldap"), `Value);
+	DnsServer::SetUseLdap (use_ldap);
+	if (! Mode::config ())
+	{
+	    DnsServer::InitYapiConfigOptions ($["use_ldap" : use_ldap]);
+	    DnsServer::LdapInit (true);
+	    DnsServer::CleanYapiConfigOptions ();
+	}
+	use_ldap = DnsServer::GetUseLdap ();
+	UI::ChangeWidget (`id ("use_ldap"), `Value, use_ldap);
+    }
+    return nil;
+}
+/**
+ * Dialog Expert Settings - Forwarders
+ * @return term for Get_ExpertDialog()
+ */
+term ExpertForwardersDialog () {
+    term dialog =
+	`VBox (
+	    // label
+	    `VBox (
+		`RadioButtonGroup( `id ( "who_sets_forwarder" ),
+		    `VBox (
+			// Radiobutton DNS-Forwarders
+			`Left( `RadioButton( `id ( "ppp_forwarder" ), _("&PPP Daemon Sets Forwarders") ) ),
+			// Radiobutton DNS-Forwarders
+			`Left( `RadioButton( `id ( "manually_forwarder" ), _("Set Forwarders &Manually"), true ) )
+		    )
+		)
+	    ),
+	    `VSpacing ( 1 ),
+	    // Frame label for DNS-Forwarders options
+//	    `Frame ( _("Options"),
+//		`Left (
+//		    `VBox (
+//			// Checkbox - DNS-Forwarders options
+//			`Left ( `CheckBox ( `id ( "forward_first" ), `opt (`notify), _("Forward &First") ) ),
+//			// Checkbox - DNS-Forwarders options
+//			`Left ( `CheckBox ( `id ( "forward_only" ),  `opt (`notify), _("Fo&rward Only") ) )
+//		    )
+//		)
+//	    ),
+//	    `VSpacing ( 0.5 ),
+	    `VSquash (
+		`Frame (
+		    // Frame label for DNS-Forwarders adding IP
+		    _("Add IP Address"),
+		    `VBox (
+			`HBox (
+			    `HWeight ( 9,
+				// Textentry for DNS-Forwarders adding IP
+				`TextEntry ( `id ( "forwarders_new_ip_address" ), `opt ( `hstretch ), _("IP A&ddress"), "" )
+			    ),
+			    `HWeight ( 2,
+				`Bottom ( `PushButton ( `id ( "forwarders_add_ip_address" ), `opt ( `hstretch ), Label::AddButton() ) )
+			    )
+			),
+			`VSpacing (0.5)
+		    )
+		)
+	    ),
+	    `VSpacing ( 0.5 ),
+	    `HBox (
+		`HWeight ( 9,
+		  `ReplacePoint (`id ("forwarders_list_rp"),
+		    `SelectionBox ( `id ( "forwarders_list" ), `opt ( `hstretch ),
+			// Selectionbox for listing current DNS-Forwarders
+			_("Forwarder &List"),
+			[ ]
+		    )
+		  )
+		),
+		`HWeight ( 2,
+		    `VBox (
+			`VSquash ( `VSpacing ( 1 ) ),
+			`VSquash ( `PushButton ( `id ( "forwarders_delete_ip_address" ), `opt ( `hstretch ), Label::DeleteButton() ) ),
+			`VStretch ()
+		    )
+		)
+	    )
+	);
+    return dialog;
+}
+
+void RedrawForwardersListWidget () {
+    UI::ReplaceWidget (`id ("forwarders_list_rp"),
+	`SelectionBox ( `id ( "forwarders_list" ), `opt ( `hstretch ),
+	    // Selectionbox for listing current DNS-Forwarders
+	    _("Forwarder &List"),
+	    forwarders));
+//    UI::ChangeWidget (`id ("forward_first"), `Value, forward == "first");
+//    UI::ChangeWidget (`id ("forward_only"), `Value, forward == "only");
+    UI::ChangeWidget (`id ("forwarders_delete_ip_address"),
+	`Enabled, forwarders != []);
+    if (forwarders != [])
+    {
+	UI::ChangeWidget (`id ("forwarders_list"),
+	    `CurrentItem, forwarders[0]:"");
+    }
+}
+
+void ReadForwarders () {
+    list<map<string,any> > options = DnsServer::GetGlobalOptions ();
+    foreach (map<string,any> o, options, {
+	if (o["key"]:"" == "forwarders")
+	{
+	    forwarders = splitstring (o["value"]:"", " ");
+	    forwarders = filter (string f, forwarders, ``(
+		! issubstring (f, "{") && ! issubstring (f, "}") && f != ""
+	    ));
+	    forwarders = maplist (string f, forwarders, {
+		integer i = findfirstof (f, ";");
+		if (i != nil)
+		    f = substring (f, 0, i);
+		return f;
+	    });
+	}
+/*	else if (o["key"]:"" == "forward")
+	{
+	    if (issubstring (o["value"]:"", "first"))
+		forward = "first";
+	    else if (issubstring (o["value"]:"", "only"))
+		forward = "only";
+	    else
+		forward = "";
+	}*/
+
+    });
+}
+
+/**
+ * Setting `ValidChars for the dialog
+ */
+void ValidCharsForwardersPage () {
+    // setting `ValidChars
+    UI::ChangeWidget( `id("forwarders_new_ip_address"), `ValidChars,    IP::ValidChars4);
+}
+
+/**
+ * Initialize the tab of the dialog
+ */
+void InitExpertForwardersPage (string key) {
+    if (DnsServer::GetModifyNamedConfDynamically ())
+    {
+	UI::ChangeWidget (`id ("who_sets_forwarder"), `CurrentButton, "ppp_forwarder");
+    }
+    else
+    {
+	UI::ChangeWidget (`id ("who_sets_forwarder"), `CurrentButton, "manually_forwarder");
+    }
+    ReadForwarders ();
+    RedrawForwardersListWidget ();
+    ValidCharsForwardersPage ();
+}
+
+/**
+ * Store settings of a tab of a dialog
+ */
+void StoreExpertForwardersPage (string key, map event) {
+    if (UI::QueryWidget (`id ("who_sets_forwarder"), `CurrentButton)
+	== "ppp_forwarder")
+    {
+	DnsServer::SetModifyNamedConfDynamically (true);
+	DnsServer::SetModifyResolvConfDynamically (false);
+    }
+    else
+    {
+	DnsServer::SetModifyNamedConfDynamically (false);
+	DnsServer::SetModifyResolvConfDynamically (true);
+    }
+    list<map<string,any> > options = DnsServer::GetGlobalOptions ();
+    options = filter (map<string,any> o, options, {
+	return o["key"]:"" != "forwarders"/* && o["key"]:"" != "forward"*/;
+    });
+    if (forwarders != [])
+    {
+	string forwarders_str = mergestring (forwarders, "; ");
+	forwarders_str = sformat ("{ %1; }", forwarders_str);
+	options = add (options, $[
+	    "key" : "forwarders",
+	    "value" : forwarders_str,
+	]);
+    }
+/*    if (forward != "")
+    {
+	options = add (options, $[
+	    "key" : "forward",
+	    "value" : forward,
+	]);
+    }*/
+
+    DnsServer::SetGlobalOptions (options);
+}
+
+/**
+ * Handle events in a tab of a dialog
+ */
+symbol HandleExpertForwardersPage (string key, map event) {
+    any ret = event["ID"]:nil;
+/*    if (ret == "forward_first")
+    {
+	if ((boolean)UI::QueryWidget (`id ("forward_first"), `Value))
+	{
+	    UI::ChangeWidget (`id ("forward_only"), `Value, false);
+	    forward = "first";
+	}
+	else
+	{
+	    forward = "";
+	}
+	return nil;
+    }
+    else if (ret == "forward_only")
+    {
+	if ((boolean)UI::QueryWidget (`id ("forward_only"), `Value))
+	{
+	    UI::ChangeWidget (`id ("forward_first"), `Value, false);
+	    forward = "only";
+	}
+	else
+	{
+	    forward = "";
+	}
+	return nil;
+    }
+    else */ if (ret == "forwarders_add_ip_address")
+    {
+	string new_addr = (string)
+	    UI::QueryWidget (`id ("forwarders_new_ip_address"), `Value);
+	if (! IP::Check4 (new_addr))
+	{
+	    Report::Error (IP::Valid4 ());
+	    return nil;
+	}
+	if (contains (forwarders, new_addr))
+	{
+	    // error report
+	    Report::Error (_("The specified forwarder is already present."));
+	    return nil;
+	}
+	forwarders = add (forwarders, new_addr);
+    }
+    else if (ret == "forwarders_delete_ip_address")
+    {
+	string old_addr = (string)
+	    UI::QueryWidget (`id ("forwarders_list"), `CurrentItem);
+	y2error ("DA: %1", old_addr);
+	forwarders = filter (string f, forwarders, ``(f != old_addr));
+    }
+
+    RedrawForwardersListWidget ();
+    return nil;
+}
+
+list<string> global_options_add_items = sort([
+        "additional-from-auth",
+        "additional-from-cache",
+        "allow-query",
+        "allow-recursion",
+        "allow-transfer",
+        "also-notify",
+        "auth-nxdomain",
+        "blackhole",
+        "check-names",
+        "cleaning-interval",
+        "coresize",
+        "datasize",
+        "deallocate-on-exit",
+        "dialup",
+        "directory",
+        "dump-file",
+        "fake-iquery",
+        "fetch-glue",
+        "files",
+        "forward",
+        "forwarders",
+        "has-old-clients",
+        "heartbeat-interval",
+        "host-statistics",
+        "host-statistics-max",
+        "hostname",
+        "interface-interval",
+        "lame-ttl",
+        "listen-on",
+        "listen-on-v6",
+        "maintain-ixfr-base",
+        "match-mapped-addresses",
+        "max-cache-size",
+        "max-cache-ttl",
+        "max-ixfr-log-size",
+        "max-ncache-ttl",
+        "max-refresh-time",
+        "max-retry-time",
+        "max-transfer-idle-in",
+        "max-transfer-idle-out",
+        "max-transfer-time-in",
+        "max-transfer-time-out",
+        "memstatistics-file",
+        "min-refresh-time",
+        "min-retry-time",
+        "min-roots",
+        "minimal-responses",
+        "multiple-cnames",
+        "named-xfer",
+        "notify",
+        "pid-file",
+        "port",
+        "preferred-glue",
+        "provide-ixfr",
+        "query-source",
+        "random-device",
+        "recursion",
+        "recursive-clients",
+        "request-ixfr",
+        "rfc2308-type1",
+        "rrset-order",
+        "serial-queries",
+        "serial-query-rate",
+        "sig-validity-interval",
+        "sortlist",
+        "stacksize",
+        "statistics-file",
+        "statistics-interval",
+        "suppress-initial-notify",
+        "tcp-clients",
+        "tkey-dhkey",
+        "tkey-domain",
+        "topology",
+        "transfer-format",
+        "transfer-source",
+        "transfers-in",
+        "transfers-out",
+        "transfers-per-ns",
+        "treat-cr-as-space",
+        "use-id-pool",
+        "use-ixfr",
+        "version",
+        "zone-statistics"
+]);
+
+list<string> global_options_unique_items = sort([
+        "additional-from-auth",
+        "additional-from-cache",
+        "auth-nxdomain",
+        "cleaning-interval",
+        "coresize",
+        "datasize",
+        "deallocate-on-exit",
+        "dialup",
+        "directory",
+        "dump-file",
+        "fake-iquery",
+        "fetch-glue",
+        "files",
+        "forward",
+        "has-old-clients",
+        "heartbeat-interval",
+        "host-statistics",
+        "interface-interval",
+        "lame-ttl",
+        "maintain-ixfr-base",
+        "match-mapped-addresses",
+        "max-cache-size",
+        "max-cache-ttl",
+        "max-ixfr-log-size",
+        "max-ncache-ttl",
+        "max-refresh-time",
+        "max-retry-time",
+        "max-transfer-idle-in",
+        "max-transfer-idle-out",
+        "max-transfer-time-in",
+        "max-transfer-time-out",
+        "memstatistics-file",
+        "min-refresh-time",
+        "min-retry-time",
+        "min-roots",
+        "minimal-responses",
+        "multiple-cnames",
+        "named-xfer",
+        "notify",
+        "pid-file",
+        "port",
+        "provide-ixfr",
+        "random-device",
+        "recursion",
+        "recursive-clients",
+        "request-ixfr",
+        "rfc2308-type1",
+        "serial-queries",
+        "serial-query-rate",
+        "sig-validity-interval",
+        "stacksize",
+        "statistics-file",
+        "statistics-interval",
+        "tcp-clients",
+        "tkey-dhkey",
+        "tkey-domain",
+        "transfer-format",
+        "transfers-in",
+        "transfers-out",
+        "transfers-per-ns",
+        "treat-cr-as-space",
+        "use-id-pool",
+        "use-ixfr",
+        "version",
+        "zone-statistics"
+]);
+
+list<string> global_options_yesno_items = sort([
+	"zone-statistics",
+	"auth-nxdomain",
+	"deallocate-on-exit",
+	"fake-iquery",
+	"fetch-glue",
+	"has-old-clients",
+	"host-statistics",
+	"minimal-responses",
+	"multiple-cnames",
+	"recursion",
+	"rfc2308-type1",
+	"use-id-pool",
+	"maintain-ixfr-base",
+	"use-ixfr",
+	"provide-ixfr",
+	"request-ixfr",
+	"treat-cr-as-space",
+	"additional-from-auth",
+	"additional-from-cache",
+	"match-mapped-addresses"
+]);
+
+list<string> global_options_number_items = sort([
+	"max-transfer-time-in",
+	"max-transfer-time-out",
+	"max-transfer-idle-in",
+	"max-transfer-idle-out",
+	"tcp-clients",
+	"recursive-clients",
+	"serial-query-rate",
+	"serial-queries",
+	"transfers-in",
+	"transfers-out",
+	"transfers-per-ns",
+	"max-ixfr-log-size",
+	"cleaning-interval",
+	"heartbeat-interval",
+	"interface-interval",
+	"statistics-interval",
+	"lame-ttl",
+	"max-ncache-ttl",
+	"max-cache-ttl",
+	"sig-validity-interval",
+	"min-roots",
+	"min-refresh-time",
+	"max-refresh-time",
+	"min-retry-time",
+	"max-retry-time"
+]);
+
+/**
+ * Dialog Expert Settings - Basic Options
+ * @return term for Get_ExpertDialog()
+ */
+term ExpertBasicOptionsDialog () {
+    term dialog =
+	// `Top (
+	    `VBox (
+		`VSquash (
+		    // Frame label for Basic-Options
+		    `Frame ( _("Add or Change Option"),
+		    `VBox (
+		    `HBox (
+			`HWeight ( 9,
+			    `Bottom (
+				`VBox (
+				    `HBox (
+					`HWeight ( 3,
+					    // Combobox for choosing the basic-option
+					    `ComboBox ( `id ( "basic_option_selection" ), `opt(`editable), _("O&ption"),
+						global_options_add_items
+					    )
+					),
+					`HWeight ( 5,
+					    // Textentry for setting the basic-option value
+					    `TextEntry ( `id ( "basic_option_value" ), _("&Value"), "" )
+					)
+				    )
+				)
+			    )
+			),
+			`HWeight ( 2,
+			    `Bottom (
+			    `VBox (
+				`VSquash ( `PushButton ( `id ( "add_basic_option" ), `opt ( `hstretch ), Label::AddButton () ) ),
+				// Pushbutton for changing the basic-option
+				`VSquash ( `PushButton ( `id ( "change_basic_option" ), `opt ( `hstretch ), _("C&hange") ) )
+			    )
+			    )
+			)
+		    ),
+		    `VSpacing (0.5)
+		    )
+		    )
+		),
+		`VSpacing ( 0.5 ),
+		`VBox (
+		    // Table label for basic-options listing
+		    `Left ( `Label ( _("Current Options") ) ),
+		    `HBox (
+			`HWeight ( 9,
+			    `Table (  `id ( "basic_options_table" ),
+				`opt (`notify, `immediate, `vstretch),
+				`header (
+					// Table header item - basic-options listing
+					_("Option"),
+					// Table header item - basic-options listing
+					_("Value")
+				),
+				[]
+			    )
+			),
+			`HWeight ( 2,
+			    `VBox (
+				`VSquash ( `PushButton ( `id ( "delete_basic_option" ), `opt ( `hstretch ), Label::DeleteButton () ) ),
+				`VStretch ()
+			    )
+			)
+		    )
+		)
+	    );
+	//);
+    return dialog;
+}
+
+void ReinitializeOptionAddWidgets () {
+    integer current_opt = (integer)
+	UI::QueryWidget (`id ("basic_options_table"), `CurrentItem);
+    map<string,any> o = options[current_opt]:$[];
+    if (o == $[])
+    {
+	UI::ChangeWidget (`id ("basic_option_value"), `Value, "");
+    }
+    else
+    {
+	UI::ChangeWidget (`id ("basic_option_value"), `Value, o["value"]:"");
+	UI::ChangeWidget (`id ("basic_option_selection"), `Value, o["key"]:"");
+    }
+}
+
+void RedrawOptionsTableWidget () {
+    integer current = (integer)
+	UI::QueryWidget (`id ("basic_options_table"), `CurrentItem);
+    integer index = -1;
+    UI::ChangeWidget (`id ("basic_options_table"), `Items,
+	maplist (map<string,any> o, options, {
+	    index = index + 1;
+	    return `item (`id (index), o["key"]:"", o["value"]:nil);
+	})
+    );
+    if (current != nil && current < size (options))
+    {
+	UI::ChangeWidget (`id ("basic_options_table"), `CurrentItem, current);
+    }
+    UI::ChangeWidget (`id ("delete_basic_option"), `Enabled, size(options) > 0);
+    ReinitializeOptionAddWidgets ();
+}
+
+/**
+ * Initialize the tab of the dialog
+ */
+void InitExpertBasicOptionsPage (string key) {
+    options = DnsServer::GetGlobalOptions ();
+    current_option_index = 0;
+    RedrawOptionsTableWidget ();
+}
+
+/**
+ * Store settings of a tab of a dialog
+ */
+void StoreExpertBasicOptionsPage (string key, map event) {
+    DnsServer::SetGlobalOptions (options);
+}
+
+/**
+ * Return if the option must be unique in configuration or not
+ */
+boolean IsUniqueOption (string option) {
+    // global_options_unique_items is a list of known unique records
+    return contains(global_options_unique_items, option);
+}
+
+/**
+ * Returns if the option was set yet
+ */
+boolean OptionIsSetYet (string option) {
+    if (size(
+	// filters all records whith key = option
+	filter (map<string, any> option_record, options,
+	    ``(option_record["key"]:nil == option)
+	)
+    // options are list, size returns count of records
+    ) >0 ) {
+	return true;
+    }
+    return false;
+}
+
+/**
+ * Returns if the option must be "yes" or "no"
+ */
+boolean OptionsIsYesNoType(string option) {
+    return contains(global_options_yesno_items, option);
+}
+
+/**
+ * Returns if the option must be a number
+ */
+boolean OptionsIsNumberType(string option) {
+    return contains(global_options_number_items, option);
+}
+
+boolean CheckOptionValue (string option, string value) {
+    // any value should be set
+    if (value == nil || value == "") {
+	if (! Popup::YesNo(
+	    // TRANSLATORS: Popup question
+	    _("Really set this
+option without any value?
+")
+	)) {
+	    return false;
+	}
+    // it is a YES or NO type
+    } else if (OptionsIsYesNoType(option)) {
+	// it has not a yes/no value
+	if (! regexpmatch(value,"^ *[yY][eE][sS] *$") && !regexpmatch(value,"^ *[nN][oO] *$")) {
+	    if (! Popup::ContinueCancel(
+		sformat (
+		    // TRANSLATORS: Popup question. Please, do not translate 'yes' and 'no' strings. %1 is a name of the option, %2 is the value of the option.
+		    _("Option %1 can only have a yes or no value set.
+Really set it to %2?
+"),
+		    option,
+		    value
+		)
+	    )) {
+		return false;
+	    }
+	}
+    // it must be a number
+    } else if (OptionsIsNumberType(option)) {
+	// if has not a number value
+	if (! regexpmatch(value,"^ *[0123456789] *$")) {
+	    if (! Popup::ContinueCancel(
+		sformat (
+		    // TRANSLATORS: Popup question. %1 is a name of the option, %2 is the value of the option.
+		    _("Option %1 can only be a number.
+Really set it to %2?
+"),
+		    option,
+		    value
+		)
+	    )) {
+		return false;
+	    }
+	}
+    } else if (! DnsRoutines::CheckQuoting(value)) {
+	if (! Popup::ContinueCancel(
+	    sformat (
+		// TRANSLATORS: Popup question. %1 is the value of the option.
+		_("Quotes are not used correctly in this option.
+Really set it to %1?
+"),
+		value
+	    )
+	)) {
+	    return false;
+	}
+    } else if (! DnsRoutines::CheckBrackets(value)) {
+	if (! Popup::ContinueCancel(
+	    sformat (
+		// TRANSLATORS: Popup question. %1 is the value of the option.
+		_("Brackets are not used correctly in this option.
+Really set it to %1?
+"),
+		value
+	    )
+	)) {
+	    return false;
+	}
+    }
+
+    return true;
+}
+
+/**
+ * Handle events in a tab of a dialog
+ */
+symbol HandleExpertBasicOptionsPage (string key, map event) {
+    any ret = event["ID"]:nil;
+    integer index = (integer)
+	UI::QueryWidget (`id ("basic_options_table"), `CurrentItem);
+    string current_key = (string)
+	UI::QueryWidget (`id ("basic_option_selection"), `Value);
+    string current_value = (string)
+	UI::QueryWidget (`id ("basic_option_value"), `Value);
+    if (ret == "basic_options_table")
+    {
+	ReinitializeOptionAddWidgets ();
+    }
+    else if (ret == "delete_basic_option")
+    {
+	if (! Confirm::DeleteSelected()) {
+	    return nil;
+	}
+
+	options[index] = nil;
+	options = filter (map<string,any> o, options, ``(o != nil));
+	RedrawOptionsTableWidget ();
+	return nil;
+    }
+    else if (ret == "add_basic_option" )
+    {
+	// testing options for right values
+	if (! CheckOptionValue(current_key, current_value)) return nil;
+
+	// option is unique and was set yet
+	if (IsUniqueOption(current_key) && OptionIsSetYet(current_key)) {
+	    if (! Popup::ContinueCancel(
+		sformat(
+		    // Popup question, %1 is the name of the option
+		    _("Option %1 should be set only once.
+Really add another one?
+"),
+		    current_key
+		)
+	    )) {
+		return nil;
+	    }
+	    y2warning("Added unique option '%1' more times", current_key);
+	}
+
+	options = add (options, $[
+	    "key" : current_key,
+	    "value" : current_value,
+	]);
+	RedrawOptionsTableWidget ();
+	return nil;
+    }
+    else if (ret == "change_basic_option")
+    {
+	// testing options for right values
+	if (! CheckOptionValue(current_key, current_value)) return nil;
+
+	options[index, "key"] = current_key;
+	options[index, "value"] = current_value;
+	RedrawOptionsTableWidget ();
+	return nil;
+    }
+
+    return nil;
+}
+
+
+/**
+ * Dialog Expert Settings - Logging
+ * @return term for Get_ExpertDialog()
+ */
+term Expert_Logging_Dialog () {
+    term dialog =
+	`Top (
+	    `HBox (
+		`HWeight ( 5,
+		    // Table header - logging options
+		    `Frame ( _("Log Type"),
+			`Top (
+			    `VBox (
+				`VSquash (
+				    `RadioButtonGroup( `id ( "log_type" ),
+					`VBox (
+					    // Radiobutton - log type
+					    `Left( `RadioButton( `id ( "log_type_system" ), `opt (`notify), _("&System Log"), true ) ),
+					    // Radiobutton - log type
+					    `Left( `RadioButton( `id ( "log_type_file" ), `opt (`notify), _("&File") ) )
+					)
+				    )
+				),
+				`VSpacing ( 0.5 ),
+				`HBox (
+				    `HSpacing ( 3 ),
+				    `VBox (
+					`VWeight ( 25,
+					    `HBox (
+						`TextEntry ( `id ( "logfile_path" ), Label::FileName() ),
+						`VBox (
+						    `VStretch (),
+						    // Pushbutton - browse filesystem for logfile
+						    `PushButton ( `id ( "browse_logfile_path" ), Label::BrowseButton () )
+						)
+					    )
+					),
+					// IntField - max. log size
+					`VWeight ( 25, `IntField  ( `id ( "max_size" ), _("Maximum &Size (MB)"), 0, 4096, 0 ) ),
+					// IntField - max. log age
+					`VWeight ( 25, `IntField  ( `id ( "max_versions" ), _("Maximum &Versions"), 0, 100, 0 ) ),
+					`VStretch ()
+				    )
+				)
+			    )
+			)
+		    )
+		),
+		`HSpacing ( 1 ),
+		`HWeight ( 3,
+		    // Frame label - additional-logging
+		    `Frame ( _("Additional Logging"),
+			`Top (
+			    `VBox (
+				// Checkbox - additional-logging
+				`Left ( `CheckBox ( `id ( "l_named_queries" ),	_("Log All DNS &Queries") ) ),
+				// Checkbox - additional-logging
+				`Left ( `CheckBox ( `id ( "l_zone_updates" ),	_("Log Zone &Updates") ) ),
+				// Checkbox - additional-logging
+				`Left ( `CheckBox ( `id ( "l_zone_transfers" ),	_("Log Zone &Transfers") ) ),
+				`VStretch ()
+			    )
+			)
+		    )
+		)
+	    )
+	);
+    return dialog;
+}
+
+symbol HandleExpertLoggingPage (string key, map event);
+
+/**
+ * Initialize the tab of the dialog
+ */
+void InitExpertLoggingPage (string key) {
+    map <string, string> channel = DnsServerAPI::GetLoggingChannel();
+    if (channel["destination"]:nil=="file") {	
+	UI::ChangeWidget (`id ("log_type"), `CurrentButton, "log_type_file");
+	UI::ChangeWidget (`id ("max_versions"), `Value, tointeger(channel["versions"]:"0"));
+	UI::ChangeWidget (`id ("logfile_path"), `Value, channel["filename"]:"");
+	
+	integer sz = 0;
+	string  su = "";
+	// if size is defined and 
+	if (channel["size"]:nil!=nil && tointeger(channel["size"]:"0")>0) {
+	    sz = tointeger (regexpsub (channel["size"]:"", "([0123456789]+)", "\\1"));
+	    // size is only number, no unit assigned
+	    if (channel["size"]:nil!=tostring(sz)) {
+		su = tolower (regexpsub (channel["size"]:"", "[0123456789]+([kKmMgG])", "\\1"));
+	    }
+	}
+	if (su != nil) {
+	    # no unit = in Bytes
+	    if (su == "")  { sz = tointeger(sz / 1024 / 1024 + 0.5); }
+	    else if (su == "k") { sz = tointeger(sz / 1024 + 0.5); }
+	    # else if (su == "m") {} # M is the default unit
+	    else if (su == "g") { sz = sz * 1024; }
+	}
+	if (sz != nil)
+	    UI::ChangeWidget (`id ("max_size"), `Value, sz);
+
+    } else {
+	UI::ChangeWidget (`id ("log_type"), `CurrentButton, "log_type_system");
+    }
+
+    list <string> categories = DnsServerAPI::GetLoggingCategories();
+    if (contains(categories, "queries")) {
+	UI::ChangeWidget (`id ("l_named_queries"), `Value, true);
+    }
+    if (contains(categories, "xfer-in")) {
+	UI::ChangeWidget (`id ("l_zone_updates"), `Value, true);
+    }
+    if (contains(categories, "xfer-out")) {
+	UI::ChangeWidget (`id ("l_zone_transfers"), `Value, true);
+    }    
+
+    HandleExpertLoggingPage (key, $["ID" : "log_type_system"]);
+}
+
+/**
+ * Store settings of a tab of a dialog
+ */
+void StoreExpertLoggingPage (string key, map event) {
+    list <string> used_categories = [];
+    if ((boolean) UI::QueryWidget (`id ("l_named_queries"), `Value)) {
+	used_categories = add (used_categories, "queries");
+    }
+    if ((boolean) UI::QueryWidget (`id ("l_zone_updates"), `Value)) {
+	used_categories = add (used_categories, "xfer-in");
+    }
+    if ((boolean) UI::QueryWidget (`id ("l_zone_transfers"), `Value)) {
+	used_categories = add (used_categories, "xfer-out");
+    }
+    DnsServerAPI::SetLoggingCategories(used_categories);
+
+    boolean use_file = UI::QueryWidget (`id ("log_type"), `CurrentButton) == "log_type_file";
+    if (use_file) {
+	DnsServerAPI::SetLoggingChannel($[
+	    "destination" : "file",
+	    "filename" : (string) UI::QueryWidget (`id ("logfile_path"), `Value),
+	    "size" :     tostring (UI::QueryWidget (`id ("max_size"), `Value)) + "M",
+	    "versions" : tostring (UI::QueryWidget (`id ("max_versions"), `Value))
+	]);
+    } else {
+	DnsServerAPI::SetLoggingChannel($[ "destination" : "syslog" ]);
+    }
+}
+
+/**
+ * Handle events in a tab of a dialog
+ */
+symbol HandleExpertLoggingPage (string key, map event) {
+    any ret = event["ID"]:nil;
+    if (ret == "log_type_system" || ret == "log_type_file")
+    {
+	boolean en = UI::QueryWidget (`id ("log_type"), `CurrentButton)
+	    == "log_type_file";
+	foreach (string w, [ "logfile_path", "browse_logfile_path",
+	    "max_size", "max_versions"],
+	{
+	    UI::ChangeWidget (`id (w), `Enabled, en);
+	});
+    }
+    else if (ret == "browse_logfile_path")
+    {
+	string fn = (string)UI::QueryWidget (`id ("logfile_path"), `Value);
+	fn = (string)UI::AskForSaveFileName (fn, "",
+	    // popup headline
+	    _("Select File for Log"));
+	if (fn != nil)
+	    UI::ChangeWidget (`id ("logfile_path"), `Value, fn);
+    }
+    return nil;
+}
+
+
+/**
+ * Dialog Expert Settings - ACLs
+ * @return term for Get_ExpertDialog()
+ */
+term Expert_ACLs_Dialog () {
+    term dialog =
+	//`Top (
+	    `VBox (
+		`VSquash (
+		    // Frame label - adding ACL-optiopn
+		    `Frame ( _("Option Setup"),
+		    `VBox (
+		    `HBox (
+			`HWeight ( 9,
+				`VBox (
+				    `HBox (
+					`HWeight ( 3,
+					    // Textentry - adding ACL-optiopn - name
+					    `TextEntry ( `id ( "new_acl_name" ), `opt ( `hstretch ), _("&Name") )
+					),
+					`HWeight ( 5,
+					    // Textentry - adding ACL-optiopn - value
+					    `TextEntry ( `id ( "new_acl_value" ), `opt ( `hstretch ), _("&Value") )
+					)
+				    )
+				)
+			),
+			`HWeight ( 2,
+			    `VBox (
+				`VStretch (),
+				`VSquash ( `PushButton ( `id ( "add_acl" ), `opt ( `hstretch ), Label::AddButton () ) )
+			    )
+			)
+		    ),
+		    `VSpacing (0.5)
+		    )
+		    )
+		),
+		`VSpacing ( 1 ),
+		`VBox (
+		    // Table header - ACL-options listing
+		    `Left ( `Label ( _("Current ACL List") ) ),
+		    `HBox (
+			`HWeight ( 9,
+			    `Table ( `id ( "acl_listing_table" ), `header ( 
+				    // Table header item - ACL-options
+				    _("ACL"),
+				    // Table header item - ACL-options
+				    _("Value")
+				), [
+				// FIXME: real ACL data (list)
+				`item ( `id ( 1 ), "can_acfr", nil ),
+				`item ( `id ( 2 ), "can_query", nil ),
+			    ])
+			),
+			`HWeight ( 2,
+			    `VBox (
+				`VSquash ( `PushButton ( `id ( "delete_acl" ), `opt ( `hstretch ), Label::DeleteButton () ) ),
+				`VStretch ()
+			    )
+			)
+		    )
+		)
+	    );
+	//);
+    return dialog;
+}
+
+void RedrawAclPage () {
+    integer index = -1;
+    list items = maplist (string a, acl, {
+	index = index + 1;
+	while (substring (a, 0, 1) == " " || substring (a, 0, 1) == "\t")
+	    a = substring (a, 1);
+	list<string> s = splitstring (a, " \t");
+	string type = s[0]:"";
+	s[0] = "";
+	a = mergestring (s, " ");
+	while (substring (a, 0, 1) == " " || substring (a, 0, 1) == "\t")
+	    a = substring (a, 1);
+	return `item (`id (index), type, a);
+    });
+    UI::ChangeWidget (`id ("acl_listing_table"), `Items, items);
+}
+
+/**
+ * Initialize the tab of the dialog
+ */
+void InitExpertAclPage (string key) {
+    acl = DnsServer::GetAcl ();
+    UI::ChangeWidget (`id ("new_acl_name"), `ValidChars,
+	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-");
+    RedrawAclPage ();
+}
+
+/**
+ * Store settings of a tab of a dialog
+ */
+void StoreExpertAclPage (string key, map event) {
+   DnsServer::SetAcl (acl);
+}
+
+/**
+ * Testing for acls duplicity
+ * @returns true if the name is duplicate
+ */
+boolean IsAclDefined (string new_name, list<string> acls) {
+    if (foreach (string acl, acls, {
+	list<string> splitted = splitstring (acl, " \t");
+	if (new_name == splitted[0]:"") return true;
+    }) == true) {
+	return true;
+    }
+    return false;
+}
+
+/**
+ * Returns zones where acl is used
+ */
+list<string> GetZonesWithAclUsed (string acl_name) {
+    list<string> zones_touched = [];
+
+    list<map<any,any> > zones = DnsServer::FetchZones ();
+    foreach (map<any,any> zone, zones, {
+	foreach (map<any,any> option, zone["options"]:[], {
+	    if (option["key"]:"" == "allow-transfer") {
+		foreach (string used_acl, splitstring (option["value"]:"", "; {}"), {
+		    if (used_acl == acl_name) {
+			zones_touched = add(zones_touched, zone["zone"]:"");
+		    }
+		});
+	    }
+	});
+    });
+
+    return toset(zones_touched);
+}
+
+/**
+ * Really remove used ACL? (dialog)
+ */
+boolean ReallyRemoveACL (string acl_name) {
+    list<string> zones_where_acl_used = GetZonesWithAclUsed(acl_name);
+
+    if (size(zones_where_acl_used) > 0) {
+	return Popup::ContinueCancel (sformat(
+	    // A popup question, %1 is number of zones
+	    _("This ACL is used by %1 zones.
+Really remove it?
+"),
+	    size(zones_where_acl_used)
+	));
+    } else {
+	return true;
+    }
+}
+
+/**
+ * Handle events in a tab of a dialog
+ */
+symbol HandleExpertAclPage (string key, map event) {
+    any ret = event["ID"]:nil;
+    integer index = (integer)UI::QueryWidget (`id ("acl_listing_table"),
+	`CurrentItem);
+    if (ret == "delete_acl")
+    {
+	string a = acl[index]:"";
+	while (substring (a, 0, 1) == " " || substring (a, 0, 1) == "\t")
+	    a = substring (a, 1);
+	list<string> s = splitstring (a, " \t");
+	a = s[0]:"";
+
+	// Testing if ACL is used
+	if (!ReallyRemoveACL(a)) return nil;
+
+	list<map<any,any> > zones = DnsServer::FetchZones ();
+	zones = maplist (map<any,any> z, zones, {
+	    list<map> options = z["options"]:[];
+	    options = maplist (map o, options, {
+		if (o["key"]:"" == "allow-transfer")
+		{
+		    list<string> keys = splitstring (o["value"]:"", "; {}");
+		    keys = filter (string k, keys, ``(k != ""));
+		    keys = filter (string k, keys, ``(k != a));
+		    o["value"] = sformat ("{ %1; }", mergestring (keys, "; "));
+		}
+		return o;
+	    });
+	    z["options"] = options;
+	    return z;
+	});
+	DnsServer::StoreZones (zones);
+
+	acl[index] = nil;
+	acl = filter (string a, acl, ``(a != nil));
+	RedrawAclPage ();
+    }
+    else if (ret == "add_acl")
+    {
+	string n = (string)UI::QueryWidget (`id ("new_acl_name"), `Value);
+	string v = (string)UI::QueryWidget (`id ("new_acl_value"), `Value);
+	if (n != nil && regexpmatch (n, "^[ \t]*[a-z0-9_-]+[ \t]*$") &&
+	    v != nil && regexpmatch (v, "[^ \t\\{\\};]"))
+	{
+	    // strip leading & trailing spaces
+	    // as well as a trailing ';' char
+	    if (regexpmatch (v, "^[ \t]+.*$"))
+		v = regexpsub (v, "^[ \t]+(.*)$",  "\\1");
+	    if (regexpmatch (v, "^.*[ \t]+$"))
+		v = regexpsub (v, "^(.*)[ \t]+$", "\\1");
+	    if (regexpmatch (v, "^.*[ \t]*;$"))
+		v = regexpsub (v, "^(.*)[ \t]*;$", "\\1");
+
+	    // should be a block begining with a '{'
+	    if (! regexpmatch (v, "^\\{"))
+	    {
+		v = "{ " + v;
+	    }
+
+	    // make sure, there is a block end '}'
+            // note: ';' after '}' is added later
+	    if (! regexpmatch (v, "\\}$"))
+	    {
+		// terminate list with ';' if needed
+		if (! regexpmatch (v, ";$"))
+		{
+		    v = v + ";";
+		}
+		v = v + " }";
+	    }
+	    // testing for ACL duplicity
+	    if (IsAclDefined (n, acl))
+	    {
+		UI::SetFocus(`id ("new_acl_name") );
+		// An error popup message
+		Popup::Message( _("The specified ACL entry already exists.") );
+	    }
+	    else
+	    {
+		acl = add (acl, sformat ("%1 %2", n, v));
+		RedrawAclPage ();
+	    }
+	}
+    }
+    return nil;
+}
+
+/**
+ * Dialog Expert Settings - ZonesZones
+ * @return term for Get_ExpertDialog()
+ */
+term ExpertZonesDialog () {
+    term dialog =
+	    `VBox (
+		`VSquash (
+		    `Frame ( _("A&dd New Zone "),
+		    `HBox (
+			`HWeight ( 9,
+			    // Frame label - DNS adding zone
+			    
+				`VBox (
+				    //`VSpacing ( 0.5 ),
+				    `HBox (
+					// Textentry - DNS adding zone - Name
+					`TextEntry ( `id ( "new_zone_name" ), `opt ( `hstretch ), _("Name"), "example.com" ),
+					// Combobox - DNS adding zone - Type
+					`ComboBox ( `id ( "new_zone_type" ), _("Type") , [
+					    // Combobox - DNS adding zone - Type Master
+					    `item ( `id ( "master" ), _("Master") ),
+					    // Combobox - DNS adding zone - Type Slave
+					    `item ( `id ( "slave" ),  _("Slave") )
+					] )
+				    ),
+				    `VSpacing ( 0.5 )
+				)
+			),
+			`HWeight ( 2,
+			    `VBox (
+				`VSpacing (1),
+				//`VSquash (
+				`PushButton ( `id ( "add_zone" ), `opt ( `hstretch ), Label::AddButton () ),
+				//),
+				`VSpacing ( 0.5 )
+			    )
+			)
+		    )
+		    )
+		),
+		`VSpacing ( 1 ),
+		`VBox (
+		    // Table header - DNS listing zones
+		    `Left ( `Label ( _("Configured DNS Zones") ) ),
+		    `HBox (
+			`VStretch (`opt(`vstretch)),
+			`HWeight ( 9,
+			    `Table ( `id ( "zones_list_table" ),
+				`opt(`vstretch),
+				`header (
+				// Table header item - DNS listing zones
+				_("Zone"),
+				// Table header item - DNS listing zones
+				_("Type")
+			    ),
+			    []
+			    )
+			),
+			`HWeight ( 2,
+			    `VBox (
+				`VSquash ( `PushButton ( `id ( "delete_zone" ), `opt ( `hstretch ), Label::DeleteButton() ) ),
+				`VSquash ( `PushButton ( `id ( "edit_zone" ), `opt ( `hstretch ), Label::EditButton() ) ),
+				`VStretch ()
+			    )
+			)
+		    )
+		)
+	    );
+
+    return dialog;
+}
+
+void RedrawZonesListWidget () {
+    integer index = -1;
+    list items = maplist (map z, zones, ``{
+	index = index + 1;
+	string zone_name = z["zone"]:"";
+	if (zone_name == "." || zone_name == "0.0.127.in-addr.arpa"
+	    || zone_name == "localhost")
+	{
+	    return `item ();
+	}
+	return `item (`id (index), zone_name, (z["type"]:"master" == "master" ?
+	    // TRANSLATORS: Table item - Server type
+	    _("Master")
+	    :
+	    // TRANSLATORS: Table item - Server type
+	    _("Slave")
+	));
+    });
+    items = filter (any i, items, ``(i != `item ()));
+    UI::ChangeWidget (`id ("zones_list_table"), `Items, items);
+    UI::SetFocus (`id ("zones_list_table"));
+    UI::ChangeWidget (`id ("delete_zone"), `Enabled, size (items) > 0);
+    UI::ChangeWidget (`id ("edit_zone"), `Enabled, size (items) > 0);
+}
+
+/**
+ * Setting `ValidChars for the dialog
+ */
+void ValidCharsZonesPage () {
+    // setting `ValidChars
+    UI::ChangeWidget( `id("new_zone_name"),	`ValidChars,	Hostname::ValidCharsDomain);
+}
+
+/**
+ * Initialize the tab of the dialog
+ */
+void InitExpertZonesPage (string key) {
+    zones = DnsServer::FetchZones ();
+    RedrawZonesListWidget ();
+    ValidCharsZonesPage ();
+}
+
+/**
+ * Store settings of a tab of a dialog
+ */
+void StoreExpertZonesPage (string key, map event) {
+    return;
+}
+
+/**
+ * Handle events in a tab of a dialog
+ */
+symbol HandleExpertZonesPage (string key, map event) {
+    any ret = event["ID"]:nil;
+    integer index = (integer)
+	UI::QueryWidget (`id ("zones_list_table"), `CurrentItem);
+    if (ret == "delete_zone")
+    {
+	zones[index] = nil;
+	zones = filter (map z, zones, ``(z != nil));
+	DnsServer::StoreZones (zones);
+	RedrawZonesListWidget ();
+	return nil;
+    }
+    else if (ret == "add_zone")
+    {
+	string zone_name = (string)
+	    UI::QueryWidget (`id ("new_zone_name"), `Value);
+	string zone_type = (string)
+	    UI::QueryWidget (`id ("new_zone_type"), `Value);
+	// zone validation
+	if ( Hostname::CheckDomain (zone_name) != true )
+	{
+	    UI::SetFocus ( `id ("new_zone_name") );
+	    Popup::Error ( Hostname::ValidDomain() );
+	    return nil;
+	}
+	list<map> zones_same = filter (map z, zones, {
+	    return z["zone"]:"" == zone_name;
+	});
+	if (size (zones_same) != 0)
+	{
+	    UI::SetFocus ( `id ("new_zone_name") );
+	    // error report
+	    Popup::Error (_("A zone with the specified name is already configured."));
+	    return nil;
+	}
+
+	DnsServer::StoreZones (zones);
+	DnsServer::SelectZone (-1);
+	map<string,any> z = DnsServer::FetchCurrentZone ();
+	z = (map<string,any>)union (z, $[
+	    "zone" : zone_name,
+	    "type" : zone_type,
+	]);
+
+	y2milestone ("Created zone: %1", z);
+	DnsServer::StoreCurrentZone (z);
+	DnsServer::StoreZone ();
+	zones = DnsServer::FetchZones ();
+	RedrawZonesListWidget ();
+
+	// fixing bug #45950, slave zone _MUST_ have master server
+	if (zone_type == "slave") {
+	    DnsServer::SelectZone (size(zones)-1);
+	    current_zone = DnsServer::FetchCurrentZone ();
+	    return `edit_zone;
+	}
+    }
+    else if (ret == "edit_zone")
+    {
+	// next time, the initial screen will be "zones"
+	initial_screen = "zones";
+	DnsServer::SelectZone (index);
+	current_zone = DnsServer::FetchCurrentZone ();
+	return `edit_zone;
+    }
+
+    return nil;
+}
+
+// Dialog label DNS - expert settings
+string dns_server_label = _("DNS Server");
+
+void SaveAndRestart () {
+    Wizard::CreateDialog ();
+    Wizard::RestoreHelp (HELPS["write"]:"");
+    DnsServer::Write ();
+    sleep(1000);
+    UI::CloseDialog ();
+}
+
+map<string,map<string,any> > new_widgets = $[
+    "auto_start_up" : CWMServiceStart::CreateAutoStartWidget ($[
+	"get_service_auto_start" : DnsServer::GetStartService,
+	"set_service_auto_start" : DnsServer::SetStartService,
+	// radio button (starting DNS service - option 1)
+	"start_auto_button" : _("When &Booting"),
+	// radio button (starting DNS service - option 2)
+	"start_manual_button" : _("&Manually"),
+	"help" : sformat (CWMServiceStart::AutoStartHelpTemplate (),
+	    // part of help text, used to describe radiobuttons (matching starting DNS service but without "&")
+	    _("When Booting"),
+	    // part of help text, used to describe radiobuttons (matching starting DNS service but without "&")
+	    _("Manually")
+	),
+    ]),
+    "start_stop" : CWMServiceStart::CreateStartStopWidget ($[
+	"service_id" : "named",
+	// label - service status, informative text
+	"service_running_label" : _("DNS server is running"),
+	// label - service status, informative text
+	"service_not_running_label" : _("DNS server is not running"),
+	// push button (DNS service handling)
+	"start_now_button" : _("&Start DNS Server Now"),
+	// push button (DNS service handling)
+	"stop_now_button" : _("S&top DNS Server Now"),
+	"save_now_action" : SaveAndRestart,
+	// push button (DNS service handling)
+	"save_now_button" : _("Save Settings and Reload DNS Server &Now"),
+	"help" : sformat (CWMServiceStart::StartStopHelpTemplate (true),
+	    // part of help text, used to describe pusbuttons (matching DNS service handling but without "&")
+	    _("Start DNS Server Now"),
+	    // part of help text, used to describe pusbuttons (matching DNS service handling but without "&")
+	    _("Stop DNS Server Now"),
+	    // part of help text, used to describe pusbuttons (matching DNS service handling but without "&")
+	    _("Save Settings and Reload DNS Server Now")),
+    ]),
+    "firewall" : CWMFirewallInterfaces::CreateOpenFirewallWidget ($[
+	"services" : [ "dns-server" ],
+	"display_details" : true,
+    ]),
+    "use_ldap" : CWMServiceStart::CreateLdapWidget ($[
+	"get_use_ldap" : DnsServer::GetUseLdap,
+	"set_use_ldap" : DnsServer::SetUseLdap,
+	// TRANSLATORS: checkbox label, turning LDAP support on or off
+	"use_ldap_checkbox" : _("&LDAP Support Active"),
+	"help" : CWMServiceStart::EnableLdapHelp(),
+    ]),
+    "forwarders" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `VBox (),
+	"init"		: InitExpertForwardersPage,
+	"handle"	: HandleExpertForwardersPage,
+	"store"		: StoreExpertForwardersPage,
+	"help"		: HELPS["forwarders"]:"",
+    ],
+    "basic_options" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `VBox (),
+	"init"		: InitExpertBasicOptionsPage,
+	"handle"	: HandleExpertBasicOptionsPage,
+	"store"		: StoreExpertBasicOptionsPage,
+	"help"		: HELPS["basic_options"]:"",
+    ],
+    "logging" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `VBox (),
+	"init"		: InitExpertLoggingPage,
+	"handle"	: HandleExpertLoggingPage,
+	"store"		: StoreExpertLoggingPage,
+	"help"		: HELPS["logging"]:"",
+    ],
+    "acls" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `VBox (),
+	"init"		: InitExpertAclPage,
+	"handle"	: HandleExpertAclPage,
+	"store"		: StoreExpertAclPage,
+	"help"		: HELPS["acls"]:"",
+    ],
+    "tsig_keys"		: CWMTsigKeys::CreateWidget ($[
+				    "get_keys_info" : DnsTsigKeys::GetTSIGKeys,
+				    "set_keys_info" : DnsTsigKeys::SetTSIGKeys,
+			  ]),
+    "keys" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `VBox (),
+	"help"		: HELPS["keys"]:"",
+    ],
+    "zones" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `VBox (),
+	"init"		: InitExpertZonesPage,
+	"handle"	: HandleExpertZonesPage,
+	"store"		: StoreExpertZonesPage,
+	"help"		: HELPS["zones"]:"",
+    ],
+];
+
+map<string, map<string, any> > tabs = $[
+    "start_up" : $[
+	// FIXME: new startup
+	"contents"		: `VBox (
+	    "auto_start_up",
+	    `VSpacing(),
+	    "firewall",
+	    "use_ldap",
+	    `VSpacing(),
+	    "start_stop",
+	    `VStretch ()
+	),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + ": " + _("Start-Up"),
+	// Tree Menu Item - DNS - expert settings
+	"tree_item_label"	: _("Start-Up"),
+	// FIXME: new startup
+	"widget_names"		: ((ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") ?
+		// expert mode
+		[ "auto_start_up", "firewall", "use_ldap", "start_stop" ]
+		:
+		// simple mode
+		[ "auto_start_up", "firewall", "start_stop" ]
+	),
+    ],
+    "forwarders" : $[
+	"contents"		: ExpertForwardersDialog(),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + ": " + _("Forwarders"),
+	// Tree Menu Item - DNS - expert settings
+	"tree_item_label"	: _("Forwarders"),
+	"widget_names"		: [ "forwarders" ],
+    ],
+    "basic_options" : $[
+	"contents"		: ExpertBasicOptionsDialog(),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + ": " + _("Basic Options"),
+	// Tree Menu Item - DNS - expert settings
+	"tree_item_label"	: _("Basic Options"),
+	"widget_names"		: [ "basic_options" ],
+    ],
+    "logging" : $[
+	"contents"		: Expert_Logging_Dialog(),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + ": " + _("Logging"),
+	"tree_item_label"	: _("Logging"),
+	// Tree Menu Item - DNS - expert settings
+	"widget_names"		: [ "logging" ],
+    ],
+    "acls" : $[
+	"contents"		: Expert_ACLs_Dialog(),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + ": " + _("ACLs"),
+	// Tree Menu Item - DNS - expert settings
+	"tree_item_label"	: _("ACLs"),
+	"widget_names"		: [ "acls" ],
+    ],
+    "keys" : $[
+	"contents"		: `HBox (`HSpacing (2), `VBox (
+					`VSpacing (1),
+					"tsig_keys",
+					`VSpacing (1)
+				    ), `HSpacing (2)),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + ": " + _("TSIG Keys"),
+	// Tree Menu Item - DNS - expert settings
+	"tree_item_label"	: _("TSIG Keys"),
+	"widget_names"		: ["tsig_keys"],
+	"widget_descr"		: new_widgets
+    ],
+    "zones" : $[
+	"contents"		: ExpertZonesDialog(),
+	// Dialog Label - DNS - expert settings
+	"caption"		: dns_server_label + ": " + _("DNS Zones"),
+	// Tree Menu Item - DNS - expert settings
+	"tree_item_label"	: _("DNS Zones"),
+	"widget_names"		: [ "zones" ],
+    ],
+];
+
+global map<symbol,any> functions = $[
+    `abort : confirmAbort,
+];
+
+/**
+ * Dialog Expert Settings
+ * @return symbol for the wizard sequencer
+ */
+symbol runExpertDialog () {
+    list<string> expert_dialogs = [ "start_up", "forwarders", "basic_options", "logging", "acls", "keys", "zones" ];
+    list<string> normal_dialog  = [ "start_up", "forwarders", "logging", "zones" ];
+
+    return DialogTree::ShowAndRun ($[
+	"ids_order" : ((ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") ? expert_dialogs : normal_dialog),
+	"initial_screen" : initial_screen,
+	"screens" :  tabs,
+	"widget_descr" : new_widgets,
+	"back_button" : "",
+	"abort_button" :  Label::CancelButton (),
+	"next_button" : Label::FinishButton (),
+	"functions" : functions,
+    ]);
+}
+
+/* EOF */
+}

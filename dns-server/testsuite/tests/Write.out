@@ -1,0 +1,35 @@
+Dump	=======================
+Return	true
+Dump	=======================
+Execute	.target.bash_output "stat --format='rights: %a, blocks: %b, size: %s, owner: %u:%g changed: %Z, modifyied: %Y' /etc/named.conf" $["exit":0, "stdout":"20030806"]
+Execute	.target.bash_output "mv --force /etc/named.conf /etc/named.conf.yast2-save" $["exit":0, "stdout":"20030806"]
+Execute	.target.bash "touch /etc/named.conf" 0
+Write	.dns.named.value.acl [] true
+Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
+Dir	.dns.named.value.options: ["directory", "notify", "xxx"]
+Write	.dns.named.value.options."xxx" nil true
+Write	.dns.named.value.options."directory" ["\"/var/lib/named\""] true
+Write	.dns.named.value.options."notify" ["no"] true
+Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
+Write	.dns.named nil true
+Dir	.dns.named.value: ["options", "zone \"localhost\" in"]
+Read	.sysconfig.named.NAMED_CONF_INCLUDE_FILES 0
+Write	.sysconfig.named.NAMED_CONF_INCLUDE_FILES "" true
+Read	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS 0
+Write	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS "createNamedConfInclude" true
+Write	.sysconfig.named nil true
+Write	.dns.named.value."zone \"example.com\" in".type ["master"] true
+Dir	.dns.named.value."zone \"example.com\" in": []
+Execute	.target.bash_output "/bin/hostname --fqdn" $["exit":0, "stdout":"20030806"]
+Write	.dns.zone ["/var/lib/named/example.com", $["TTL":"1W", "records":[$["key":"localhost", "type":"A", "value":"127.0.0.1"], $["key":"localhost", "type":"NS", "value":"127.0.0.1"], $["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":"42", "server":"@", "zone":"@"]]] true
+Write	.dns.named.value."zone \"example.com\" in".file ["\"example.com\""] true
+Write	.dns.named.value."zone \"example.com\" in".type ["master"] true
+Write	.dns.named nil true
+Write	.sysconfig.named.NAMED_RUN_CHROOTED "yes" true
+Write	.sysconfig.named nil true
+Write	.sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY "no" true
+Write	.sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY "no" true
+Write	.sysconfig.network.config nil true
+Execute	.target.bash "/etc/init.d/named stop" 0
+Write	.target.ycp "/var/lib/YaST2/dns_server" $[] true
+Return	true

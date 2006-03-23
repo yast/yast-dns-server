@@ -1,0 +1,89 @@
+#!/usr/bin/perl -w
+
+use ycp;
+use File::Temp;
+
+while ( <STDIN> )
+{
+    my ($command, $path, $argument) = ycp::ParseCommand ($_);
+
+    if ($command eq "Write")
+    {
+	if ($path eq "." && ref ($argument) eq "ARRAY")
+	{
+	    my @a = @{$argument};
+	    my $file = $a[0];
+	    my $forwarders = $a[1];
+
+	    y2milestone ("Writing forwarders to file ".$file);
+	    
+	    open (OUT, ">$file") || do {
+		y2error("Cannot write forwarders into file ".$file.". ".$!);
+		ycp::Return ("false");
+	    };
+
+	    print OUT
+		"# Copyright (c) 2001-2004 SuSE Linux AG, Nuernberg, Germany.\n".
+		"# All rights reserved.\n".
+		"# Forwarders file for PPPD updates (only)\n".
+		"#\n".
+		"# ".$file." \n\n".
+		"forwarders ".$forwarders.";\n";
+
+	    close (OUT) || ycp::Return ("false");
+	    ycp::Return ("true");
+	}
+	else
+	{
+	    y2error ("Wrong arguments");
+	    ycp::Return ("false");
+	}
+
+
+    }
+    elsif ($command eq "Read")
+    {
+	if ($path eq "." && ! ref ($argument))
+	{
+	    my $file = $argument;
+	    my $forwarders = "";
+
+	    y2milestone ("Reading forwarders from file $file");
+
+	    if (! open (IN, "$file"))
+	    {
+		y2error("Cannot open forwarders file ".$file.". ".$!);
+		ycp::Return (undef);
+	    }
+
+	    $forwarders_string = "";
+	    while (my $line = <IN>) {
+		chop $line;
+		$line =~ s/#.*//;
+		$forwarders_string .= $line;
+	    }
+	    if ($forwarders_string =~ /forwarders[ \t]*({[^{}]*})/) {
+		$forwarders = $1;
+	    }
+
+	    close (IN);
+	    ycp::Return ($forwarders);
+	}
+	else
+	{
+	    y2error ("Wrong arguments");
+	    ycp::Return ("false");
+	}
+
+
+    }
+    elsif ($command eq "result")
+    {
+	exit 0;
+    }
+    else
+    {
+        y2error ("Wrong path or arguments");
+        ycp::Return ("false");
+    }
+}
