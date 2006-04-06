@@ -1749,7 +1749,7 @@ sub LdapPrepareToWrite {
 	|| 0 != scalar (@{NetworkDevices->Locate ("IPADDR", $ldap_server)}))
     {
 	y2milestone ("LDAP server is local, checking included schemas");
-	LdapServerAccess->AddLdapSchemas(\("/etc/openldap/schema/dnszone.schema"),1);
+	LdapServerAccess->AddLdapSchemas(["/etc/openldap/schema/dnszone.schema"],1);
     }
     else
     {
