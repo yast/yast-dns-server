@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Apr 10 12:07:25 CEST 2006 - locilka@suse.cz
+
+- Fixing call to LDAPInit()
+- 2.13.9
+
+-------------------------------------------------------------------
 Thu Apr  6 15:16:39 CEST 2006 - locilka@suse.cz
 
 - Fixing variable type sent to the LdapClient (#162871)
