@@ -1757,7 +1757,7 @@ sub LdapPrepareToWrite {
     }
 
     # connect to the LDAP server
-    my $ret = Ldap->LDAPInit (1);
+    my $ret = Ldap->LDAPInit ();
     if ($ret ne "")
     {
 	Ldap->LDAPErrorMessage ("init", $ret);
