@@ -1348,10 +1348,9 @@ sub Write {
 	$modify_resolv_conf_dynamically ? "yes" : "no");
     SCR->Write (".sysconfig.network.config", undef);
 
-    if ($use_ldap) {
-	#set to sysconfig if LDAP is to be used
-	LdapStore ();
-    }
+    # set to sysconfig if LDAP is to be used
+    # set the sysconfig also if LDAP is not to be used (bug #165189)
+    LdapStore ();
 
     Progress->NextStage ();
 
@@ -1482,7 +1481,7 @@ sub Import {
     {
 	# Initialize LDAP if needed
 	$self->InitYapiConfigOptions ({"use_ldap" => $use_ldap});
-	$self->LdapInit (1);
+	$self->LdapInit (0);
 	$self->CleanYapiConfigOptions ();
     }
 
@@ -1549,9 +1548,10 @@ sub Summary {
     return \@ret;
 }
 
-BEGIN { $TYPEINFO{LdapInit} = ["function", "void", "boolean" ]; }
+BEGIN { $TYPEINFO{LdapInit} = ["function", "boolean", "boolean" ]; }
 sub LdapInit {
     my $self = shift;
+    my $ask_user_to_enable_ldap = shift;
     my $report_errors = shift || 0;
 
     $ldap_available = 0;
@@ -1634,14 +1634,21 @@ sub LdapInit {
     else
     {
 	my $reload_script = SCR->Read (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS") || "";
-	if (! $reload_script)
+	if (! $reload_script || $reload_script !~ /.*ldapdump.*/)
 	{
-	    # yes-no popup
-	    $use_ldap = Popup->YesNo (__("Enable LDAP support?"));
-	    y2milestone ("User chose to use LDAP: $use_ldap");
+	    # don't ask user in the read dialog
+	    if ($ask_user_to_enable_ldap) {
+		# yes-no popup
+		$use_ldap = Popup->YesNo (__("Enable LDAP support?"));
+		y2milestone ("User choose to use LDAP: $use_ldap");
+	    # just disable LDAP
+	    } else {
+		$use_ldap = 0;
+	    }
 	}
 	else
 	{
+	    # ldapdump script in /etc/sysconfig/named/NAMED_INITIALIZE_SCRIPTS means use-LDAP
 	    $use_ldap = $reload_script =~ /.*ldapdump.*/;
 	    y2milestone ("Use LDAP according to sysconfig: $use_ldap");
 	}
@@ -1902,6 +1909,7 @@ sub LdapStore {
 
     if ($use_ldap)
     {
+	y2milestone("LdapStore: using ldap");
 	my $already_present = scalar (grep (/ldapdump/, @reload_scripts)) > 0;
 	if (! $already_present)
 	{
@@ -1910,10 +1918,12 @@ sub LdapStore {
     }
     else
     {
+	y2milestone("LdapStore: not using ldap");
 	@reload_scripts = grep (!/ldapdump/, @reload_scripts);
     }
 
     $reload_script = join (" ", @reload_scripts);
+    y2milestone("Writing reload scripts: '".$reload_script."'");
     SCR->Write (".sysconfig.named.NAMED_INITIALIZE_SCRIPTS", $reload_script);
     SCR->Write (".sysconfig.named", undef);
 }

@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Apr 11 14:21:48 CEST 2006 - locilka@suse.cz
+
+- After the LDAP storage was fixed and we could enable is, it was
+  impossible to disable it (#165189).
+- 2.13.10
+
+-------------------------------------------------------------------
 Mon Apr 10 12:07:25 CEST 2006 - locilka@suse.cz
 
 - Fixing call to LDAPInit()
