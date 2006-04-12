@@ -1,0 +1,62 @@
+#!/usr/bin/perl -w
+
+use ycp;
+use File::Temp;
+
+while ( <STDIN> ) {
+    my ($command, $path, $argument) = ycp::ParseCommand ($_);
+
+    if ($command eq "Execute") {
+	if ($path eq "." && ! ref ($argument)) {
+	    y2milestone($argument);
+	    my $file = $argument;
+
+	    y2milestone ("Reading file '$file'");
+
+	    if (! open (FILE, "$file")) {
+		y2error("Cannot open configuration file. ".$file." -> ".$!);
+		ycp::Return (undef);
+	    }
+
+	    my $file_content = join('', <FILE>);
+	    my $file_content_backup = $file_content;
+	    close (FILE);
+	    
+	    # convert the file content to the IniAgent-understandable format
+	    $file_content =~ s/(options|view|logging)[ \t\n]*\{/$1 {/g;
+	    $file_content =~ s/(zone)[ \t\n]*([^ \t\n]+)[ \t\n]*([^ \t\n]+)[ \t\n]*\{/$1 $2 $3 {/g;
+	    
+	    if ($file_content ne $file_content_backup) {
+		my $backup_file = $file.'.YaST-backup';
+		y2milestone("File structure (".$file.") has been changed, saving backup into ".$backup_file."...");
+		
+		if (open(FILE, ">$backup_file")) {
+		    print FILE $file_content_backup;
+		    close(FILE);
+		    
+		    y2milestone("Backup file saved, converting '".$file."'...");
+		    if (open(FILE, ">$file")) {
+			print FILE $file_content;
+			close(FILE);
+		    } else {
+			y2error("Cannot write converted file '".$file."': ".$!);
+		    }
+		} else {
+		    y2error("Cannot write backup file '".$backup_file."': ".$!);
+		}
+	    }
+
+	    ycp::Return ("true");
+	} else {
+	    y2error ("Wrong arguments");
+	    ycp::Return ("false");
+	}
+
+
+    } elsif ($command eq "result") {
+	exit 0;
+    } else {
+        y2error ("Wrong path or arguments");
+        ycp::Return ("false");
+    }
+}
