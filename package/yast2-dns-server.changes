@@ -5,6 +5,7 @@ Wed Apr 12 11:04:46 CEST 2006 - locilka@suse.cz
   IniAgent used for reading and writing configuration. Current
   configuration is backed up as 'named.conf.YaST-backup' file.
 - Handling comments in zone file better (both #165133).
+- Fixed testsuites for added calls.
 - 2.13.11
 
 -------------------------------------------------------------------
