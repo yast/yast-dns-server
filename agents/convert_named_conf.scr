@@ -1,0 +1,13 @@
+/**
+ * File:        convert_named_conf.scr
+ * Summary:     Agent for converting named.conf into the readable format
+ * Author:      Lukas Ocilka <locilka@suse.cz>
+ * Access:      execute
+ *
+ * $Id: named_forwarders.scr 18759 2004-08-23 13:22:52Z locilka $
+ *
+ */
+.dns.named_conf_convert
+
+`ag_convert_named_conf ()
+
