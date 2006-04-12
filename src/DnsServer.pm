@@ -77,6 +77,8 @@ my $ldap_config_dn = "";
 
 my $configuration_timestamp = "";
 
+my $configfile = '/etc/named.conf';
+
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
 
@@ -975,7 +977,6 @@ BEGIN { $TYPEINFO{GetConfigurationStat} = ["function", "string"]; }
 sub GetConfigurationStat {
     my $class = shift;
 
-    my $configfile = "/etc/named.conf";
     my $ret = SCR->Execute (".target.bash_output",
 	"stat --format='rights: %a, blocks: %b, size: %s, owner: %u:%g changed: %Z, modifyied: %Y' ".$configfile
     );
@@ -1053,6 +1054,8 @@ sub Read {
     Progress->set($current_progress);
 
     Progress->NextStage ();
+
+    y2milestone("Converting configfile: ", SCR->Execute (".dns.named_conf_convert", $configfile));
 
     $configuration_timestamp = $self->GetConfigurationStat();
 
@@ -1294,7 +1297,6 @@ sub Write {
     
     ### Bugzilla #46121, Configuration file changed by hand, INI-Agent would break
     my $new_configuration_timestamp = $self->GetConfigurationStat();
-    my $configfile = "/etc/named.conf";
     my $yast2_suffix = ".yast2-save";
     # timestamp differs from the Read()
     if ($new_configuration_timestamp ne $configuration_timestamp) {

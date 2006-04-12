@@ -60,7 +60,7 @@ while ( <STDIN> )
 	    my @a = @{$argument};
 	    my $file = $a[0];
 	    my %data = %{$a[1]};
-
+	    
 	    y2milestone ("Writing zone file $file");
 
 	    open (OUT, ">$file");
@@ -119,25 +119,29 @@ while ( <STDIN> )
 	    {
 		@records = @{$data{"records"}};
 	    }
-	    my $current_origin = ((exists $data{"ORIGIN"}) ? $data{"ORIGIN"}:$domain_name);
+	    my $current_origin = ((defined $data{"ORIGIN"}) ? $data{"ORIGIN"}:$domain_name);
 	    if ($current_origin eq ".") { $current_origin = $domain_name; }
 	    foreach $ref (@records) {
 		%record = %{$ref};
-		if ((exists ($record{"comment"})) && ($record{"comment"} ne ""))
+		if ((defined ($record{"comment"})) && ($record{"comment"} ne ""))
 		{
-		    print OUT "$record{\"comment\"}";
+		    print OUT $record{"comment"};
 		}
 		my $type  = $record{"type"} || '';
 		my $value = $record{"value"} || '';
 		my $key   = $record{"key"} || '';
-		if ($record{"type"} eq "TTL")
+		if ($type eq "TTL")
 		{
 		    print OUT "\$TTL $value\n";
 		}
-		elsif ($record{"type"} eq "ORIGIN")
+		elsif ($type eq "ORIGIN")
 		{
 		    $current_origin = $value;
 		    print OUT "\$ORIGIN $value\n";
+		}
+		elsif ($type eq "comment")
+		{
+		    next;
 		}
 		else
 		{
@@ -262,7 +266,12 @@ while ( <STDIN> )
 			$rec{"key"} = $previous_key;
 		    } else {
 		    # defined key sets the "previous_key" for the next line
-			$previous_key = $rec{"key"};
+			if ($rec{"key"} !~ /^;/) {
+			    $previous_key = $rec{"key"};
+			}
+		    }
+		    if ($previous_key eq "" && $zone ne "\@") {
+			$previous_key = $zone;
 		    }
 		    
 		    # creating absolute names from name and origin
