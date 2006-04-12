@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Apr 12 11:04:46 CEST 2006 - locilka@suse.cz
+
+- Convert the named.conf file to the format understandable for
+  IniAgent used for reading and writing configuration. Current
+  configuration is backed up as 'named.conf.YaST-backup' file.
+- Handling comments in zone file better (both #165133).
+- 2.13.11
+
+-------------------------------------------------------------------
 Tue Apr 11 14:21:48 CEST 2006 - locilka@suse.cz
 
 - After the LDAP storage was fixed and we could enable is, it was

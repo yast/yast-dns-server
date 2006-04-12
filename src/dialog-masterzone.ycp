@@ -917,6 +917,10 @@ void RedrawZonesTable () {
 	{
 	    return -1;
         }
+	if (m["type"]:"" == "comment")
+	{
+	    return -1;
+	}
         return index;
     });
     ret = filter (integer r, ret, ``(r != nil && r != -1));
