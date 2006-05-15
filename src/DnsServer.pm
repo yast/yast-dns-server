@@ -507,8 +507,11 @@ sub SaveGlobals {
 	! $self->contains (\@current_options, $_);
     } @old_options;
 
-    # if any forwarders are defined
-    if (scalar (grep { $_->{"key"} eq "forwarders"} @options ) != 0) {
+#    # if any forwarders are defined
+#    if (scalar (grep { $_->{"key"} eq "forwarders"} @options ) != 0) {
+#    bug 134692, allways write the forwarders file because of the feature
+#    "modify forwarders by ppp"
+
 	# remove them from options because they will be written into single file
 	push @del_options, "forwarders";
 	# if forwarders are not included
@@ -518,7 +521,7 @@ sub SaveGlobals {
 	    y2milestone("Moving forwarders into single file ".$forwarders_include);
 	    push @options, { "key" => "include", "value" => $forwarders_include_record };
 	}
-    }
+#    }
 
     foreach my $o (@del_options)
     {
@@ -549,8 +552,8 @@ sub SaveGlobals {
 	    SCR->Write (".dns.named-forwarders", [$forwarders_include, @{$opt_map{$key}}[0]]);
 	}
     }
-    # forwarders were but now are't in configuration, replace them
-    if ($include_defined_in_conf && !$forwarders_found) {
+    # forwarders not defined, but they must be at least empty
+    if (!$forwarders_found) {
 	SCR->Write (".dns.named-forwarders", [$forwarders_include, "{}"]);
     }
 
