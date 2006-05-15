@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Mon May 15 09:47:02 CEST 2006 - locilka@suse.cz
+
+- Special file /etc/named.d/forwarders.conf is allways written and
+  included in the configuration of /etc/named.conf because of the
+  feature 'PPP daemon sets forwarders'. The file is allways written
+  even the list of forwarders is empty (#134692).
+- 2.13.12 
+
+-------------------------------------------------------------------
 Wed Apr 12 11:04:46 CEST 2006 - locilka@suse.cz
 
 - Convert the named.conf file to the format understandable for
