@@ -972,7 +972,7 @@ sub AutoPackages {
 
     return {
 	"install" => ["bind"],
-	"remote" => [],
+	"remove" => [],
     }
 }
 
