@@ -475,6 +475,9 @@ and select the <b>ACLs</b> to check when a remote host
 attempts to transfer the zone. At least one ACL must be defined
 to allow zone transports.</p>"),
 
+// forward zone help text
+"forward_zone" : _("FIXME: !!!!!!!!!!!")
+
 ];
 
 /* EOF */

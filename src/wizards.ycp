@@ -25,6 +25,8 @@
 	    "master_zone_tab"	: ``(runMasterZoneTabDialog ()),
 	    "slave_zone_tab"	: ``(runSlaveZoneTabDialog ()),
 	    "stub_zone_tab"	: ``(runStubZoneTabDialog ()),
+	    // FIXME: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	    "forward_zone_tab"	: ``(runForwardZoneTabDialog ()),
 	];
 
 	map sequence = $[
@@ -39,6 +41,7 @@
 		`master : "master_zone_tab",
 		`slave : "slave_zone_tab",
 		`stub : "stub_zone_tab",
+		`forward : "forward_zone_tab",
 	    ],
 	    "master_zone_tab" : $[
 		`abort : `abort,
@@ -49,6 +52,10 @@
 		`next : "main",
 	    ],
 	    "stub_zone_tab" : $[
+		`abort : `abort,
+		`next : "main",
+	    ],
+	    "forward_zone_tab" : $[
 		`abort : `abort,
 		`next : "main",
 	    ],
@@ -70,6 +77,7 @@
 	    "master_zone_tab"	: ``(runMasterZoneTabDialog ()),
 	    "slave_zone_tab"	: ``(runSlaveZoneTabDialog ()),
 	    "stub_zone_tab"	: ``(runStubZoneTabDialog ()),
+	    // FIXME: .........
 	];
 
 	map sequence = $[
@@ -119,97 +127,6 @@
     }
 
     /**
-      * Main workflow of the dns-server configuration
-      * @return sequence result
-      */
-/**    global define symbol MainSequence() ``{
-
-	map aliases = $[
-	    "main"		: ``(runMainDialog ()),
-	    "global_options"	: ``(runGlobalOptionsDialog ()),
-	    "new_zone"		: ``(runNewZoneDialog ()),
-	    "zone_type_switch"	:[``(runZoneTypeSwitch ()), true],
-	    "master_zone"	: ``(runMasterZoneDialog ()),
-	    "soa"		: ``(runSoaDialog ()),
-	    "slave_zone"	: ``(runSlaveZoneDialog ()),
-	    "stub_zone"		: ``(runStubZoneDialog ()),
-	    "store_zone"	:[``(runZoneStore ()), true],
-	    "firewall_settings" : ``(runFirewallDialog ()),
-	    "ddns_settings"	: ``(runDDNSDialog ()),
-	    "ddns_settings_2"	: ``(runDDNSDialog ()),
-	];
-
-	map sequence = $[
-	    "ws_start" : "main",
-	    "main" : $[
-		`abort : `abort,
-		`next : `next,
-		`add : "new_zone",
-		`edit : "zone_type_switch",
-		`global_options : "global_options",
-		`firewall : "firewall_settings",
-		`ddns : "ddns_settings",
-	    ],
-	    "global_options" : $[
-		`abort : `abort,
-		`next : "main",
-	    ],
-	    "firewall_settings" : $[
-		`abort : `abort,
-		`next : "main",
-	    ],
-	    "ddns_settings" : $[
-		`abort : `abort,
-		`next : "main",
-	    ],
-	    "new_zone" : $[
-		`abort : `abort,
-		`next : "zone_type_switch",
-	    ],
-	    "zone_type_switch" : $[
-		`abort : `abort,
-		`master : "master_zone",
-		`slave : "slave_zone",
-		`stub : "stub_zone",
-	    ],
-	    "master_zone" : $[
-		`abort : `abort,
-		`next : "store_zone",
-		`soa : "soa",
-		`again : "master_zone",
-		`ddns : "ddns_settings_2",
-	    ],
-	    "ddns_settings_2" : $[
-		`abort : `abort,
-		`next : "master_zone",
-	    ],
-	    "soa" : $[
-		`abort : `abort,
-		`next : "master_zone",
-	    ],
-	    "slave_zone" : $[
-		`abort : `abort,
-		`next : "store_zone",
-		`again : "slave_zone",
-	    ],
-	    "stub_zone" : $[
-		`abort : `abort,
-		`next : "store_zone",
-		`again : "stub_zone",
-	    ],
-	    "store_zone" : $[
-		`abort : `abort,
-		`next : "main",
-	    ],
-	];
-
-	symbol ret = Sequencer::Run(aliases, sequence);
-
-	return ret;
-    }
-*/
-
-    /**
       * Whole configuration of dns-server
       * @return sequence result
       */
@@ -217,7 +134,6 @@
 
 	map aliases = $[
 	    "read"	: [ ``( ReadDialog() ), true ],
-//	    "main"	:   ``( MainSequence() ),
 	    "main"	:   ``( TabSequence() ),
 	    "wizard"	:   ``( InstallWizardSequence() ),
 	    "write"	: [ ``( WriteDialog() ), true ]
@@ -265,7 +181,6 @@
 
 	map aliases = $[
 	    "main"	:   ``( TabSequence() ),
-//	    "main"	:   ``( MainSequence() ),
 	];
 
 	map sequence = $[

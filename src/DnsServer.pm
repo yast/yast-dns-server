@@ -129,6 +129,8 @@ sub ZoneWrite {
     # creating temporary zone file if zone is slave
     if ($zone_file eq "" && defined $zone_map{"type"} && $zone_map{"type"} eq "slave") {
 	$zone_file = "slave/$zone_name";
+    } elsif ($zone_file eq "" && defined $zone_map{"type"} && $zone_map{"type"} eq "forward") {
+	$zone_file = "";
     # otherwise it is master
     } elsif ($zone_file eq "") {
 	$zone_file = "master/$zone_name";
@@ -263,6 +265,10 @@ sub ZoneWrite {
 	    # named should create the temporary file by itself
 	    SCR->Write ("$base_path.file", ["\"$zone_file\""]);
 	}
+    }
+    elsif ($zone_type eq "forward")
+    {
+	SCR->Write ("$base_path.forwarders", [$zone_map{"forwarders"} || "{}"]);
     }
     elsif ($zone_type eq "hint")
     {
@@ -1179,6 +1185,7 @@ sub Read {
 	my %zd = (
 	    "type" => $zonetype
 	);
+	# ZONE TYPE 'master'
 	if ($zonetype eq "master")
 	{
 	    if ($use_ldap)
@@ -1190,6 +1197,7 @@ sub Read {
 		%zd = %{DnsZones->ZoneRead ($zonename, $filename)};
 	    }
 	}
+	# ZONE TYPE 'slave' or 'stub'
 	elsif ($zonetype eq "slave" || $zonetype eq "stub")
 	{
 	    @tmp = @{SCR->Read (".dns.named.value.$path_el.masters") || []};
@@ -1199,9 +1207,18 @@ sub Read {
 		$zd{"masters"} =~ s/\{(.*);\}/$1/
 	    }
 	}
+	# ZONE TYPE 'forward'
+	elsif ($zonetype eq "forward") {
+	    @tmp = @{SCR->Read (".dns.named.value.$path_el.forwarders") || []};
+	    $zd{"forwarders"} = $tmp[0] || "";
+ 	    if ($zd{"forwarders"} =~ /\{.*;\}/)
+	    {
+		$zd{"forwarders"} =~ s/\{(.*);\}/$1/
+	    }
+	}
 	else
 	{
-# TODO hint, forward, .... not supported at the moment
+# TODO hint, .... not supported at the moment
 	}
 	
 	my @zone_options_names = @{SCR->Dir (".dns.named.value.$path_el")|| []};
@@ -1218,9 +1235,9 @@ sub Read {
 
 	if (scalar (keys (%zd)) > 0)
 	{	
-	    $zd{"file"} = $filename;
-	    $zd{"type"} = $zonetype;
-	    $zd{"zone"} = $zonename;
+	    $zd{"file"} = $filename || "";
+	    $zd{"type"} = $zonetype || "";
+	    $zd{"zone"} = $zonename || "";
 	    $zd{"options"} = \@zone_options;
 	}
 	\%zd;

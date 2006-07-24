@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Jul 24 15:02:56 CEST 2006 - locilka@suse.cz
+
+- Added support for forward zones (FaTE #120041). The only option
+  thats is possible to set is a 'forwarders' option.
+- 2.13.13
+
+-------------------------------------------------------------------
 Mon May 15 09:47:02 CEST 2006 - locilka@suse.cz
 
 - Special file /etc/named.d/forwarders.conf is allways written and

@@ -1285,18 +1285,19 @@ sub SetZoneMasterServers {
 
     my $zones = DnsServer->FetchZones();
     my $zone_counter = 0;
-    foreach (@{$zones}) {
-	if ($zone eq $_->{'zone'}) {
-	    if ($_->{'type'} eq 'slave') {
-		$_->{'masters'} = GetRecordFromList(@{$masters});
-		@{$zones}[$zone_counter] = $_;
+    foreach my $one_zone (@{$zones}) {
+	if ($zone eq $one_zone->{'zone'}) {
+	    if ($one_zone->{'type'} eq 'slave') {
+		$one_zone->{'masters'} = GetRecordFromList(@{$masters});
+		$one_zone->{'modified'} = 1;
+		@{$zones}[$zone_counter] = $one_zone;
 		last;
 	    } else {
 		# TRANSLATORS: Popup error message, Trying to set 'master server' for zone which is not 'slave' type,
 		#   %1 is name of the zone, %2 is type of the zone
 		Report->Error(sformat(__("Only slave zones have a master server defined.
 Zone %1 is type %2.
-"), $_->{'zone'}, $_->{'type'}));
+"), $one_zone->{'zone'}, $one_zone->{'type'}));
 	    }
 	}
 	++$zone_counter;
@@ -1458,21 +1459,22 @@ sub SetZoneTransportACLs {
 
     my $zones = DnsServer->FetchZones();
     my $zone_counter = 0;
-    foreach (@{$zones}) {
-	if ($_->{'zone'} eq $zone) {
+    foreach my $one_zone (@{$zones}) {
+	if ($one_zone->{'zone'} eq $zone) {
 	    my @new_options;
-	    foreach (@{$_->{'options'}}) {
+	    foreach (@{$one_zone->{'options'}}) {
 		# removing all allow-transfer from options, getting allow-transfer
-		if ($_->{'key'} eq 'allow-transfer') {
+		if ($one_zone->{'key'} eq 'allow-transfer') {
 		    next;
 		} else {
 		# adding all non-allow-transfer from options
-		    push @new_options, $_;
+		    push @new_options, $one_zone;
 		}
 	    }
 	    push @new_options, { 'key' => 'allow-transfer', 'value' => GetRecordFromList(@{$acls}) };
-	    $_->{'options'} = \@new_options;
-	    @{$zones}[$zone_counter] = $_;
+	    $one_zone->{'options'} = \@new_options;
+	    $one_zone->{'modified'} = 1;
+	    @{$zones}[$zone_counter] = $one_zone;
 	    last;
 	}
 	++$zone_counter;
@@ -2350,6 +2352,73 @@ sub GetZoneHosts {
     }
 
     return \@hosts;
+}
+
+=item *
+C<$array = GetZoneForwarders($string);>
+
+Function returns list of zone forwarders.
+
+EXAMPLE:
+
+    $list_of_forwarders = GetZoneForwarders('example.org');
+
+=cut
+
+BEGIN{$TYPEINFO{GetZoneForwarders} = ["function", ["list", "string"], "string"]};
+sub GetZoneForwarders {
+    my $class = shift;
+    my $zone  = shift || '';
+
+    return 0 if (!$class->CheckZone($zone));
+
+    my @forwarders;
+    my $zones = DnsServer->FetchZones();
+    foreach my $one_zone (@$zones) {
+	if ($zone eq $one_zone->{'zone'}) {
+	    @forwarders = GetListFromRecord($one_zone->{'forwarders'});
+	    last;
+	}
+    }
+
+    return \@forwarders;
+}
+
+=item *
+C<$boolean = SetZoneForwarders($string, $array);>
+
+Function sets forwarders for the zone.
+
+EXAMPLE:
+
+  my @forwarders = ('192.168.32.1','192.168.32.2');
+  my $zone = 'example.org';
+  my $success = SetZoneForwarders($zone, \@masterservers);
+
+=cut
+
+BEGIN{$TYPEINFO{SetZoneForwarders} = ["function", "boolean", "string", ["list", "string"]]};
+sub SetZoneForwarders {
+    my $class      = shift;
+    my $zone       = shift || '';
+    my $forwarders = shift;
+
+    return 0 if (!$class->CheckZone($zone));
+
+    my $zones = DnsServer->FetchZones();
+    my $zone_counter = 0;
+    foreach my $one_zone (@{$zones}) {
+	if ($zone eq $one_zone->{'zone'}) {
+	    $one_zone->{'masters'} = GetRecordFromList(@{$forwarders});
+	    $one_zone->{'modified'} = 1;
+	    @{$zones}[$zone_counter] = $one_zone;
+	    DnsServer->StoreZones($zones);
+	    last;
+	}
+	++$zone_counter;
+    }
+
+    return 1;
 }
 
 1;
