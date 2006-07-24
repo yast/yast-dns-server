@@ -322,6 +322,8 @@ define symbol runZoneTypeSwitch () ``{
 	return `slave;
     else if (type == "stub")
 	return `stub;
+    else if (type == "forward")
+	return `forward;
     else
     {
 	// message popup

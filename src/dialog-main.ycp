@@ -1386,7 +1386,9 @@ term ExpertZonesDialog () {
 					    // Combobox - DNS adding zone - Type Master
 					    `item ( `id ( "master" ), _("Master") ),
 					    // Combobox - DNS adding zone - Type Slave
-					    `item ( `id ( "slave" ),  _("Slave") )
+					    `item ( `id ( "slave" ),  _("Slave") ),
+					    // Combobox - DNS adding zone - Type Slave
+					    `item ( `id ( "forward" ),  _("Forward") ),
 					] )
 				    ),
 				    `VSpacing ( 0.5 )
@@ -1441,19 +1443,37 @@ void RedrawZonesListWidget () {
     list items = maplist (map z, zones, ``{
 	index = index + 1;
 	string zone_name = z["zone"]:"";
+
+	// filtering out default zones
 	if (zone_name == "." || zone_name == "0.0.127.in-addr.arpa"
-	    || zone_name == "localhost")
-	{
-	    return `item ();
+	    || zone_name == "localhost") {
+		return `item ();
 	}
-	return `item (`id (index), zone_name, (z["type"]:"master" == "master" ?
-	    // TRANSLATORS: Table item - Server type
-	    _("Master")
-	    :
-	    // TRANSLATORS: Table item - Server type
-	    _("Slave")
-	));
+
+	string type_trans = "";
+	switch (z["type"]:"master") {
+	    case "master" :
+		// TRANSLATORS: Table item - Server type
+		type_trans = _("Master");
+		break;
+	    case "slave" :
+		// TRANSLATORS: Table item - Server type
+		type_trans = _("Slave");
+		break;
+	    case "stub" :
+		// TRANSLATORS: Table item - Server type
+		type_trans = _("Slave");
+		break;
+	    case "forward" :
+		// TRANSLATORS: Table item - Server type
+		type_trans = _("Forward");
+		break;
+	    y2warning("Unknown zone type %1", type_trans);
+	}
+
+	return `item (`id (index), zone_name, type_trans);
     });
+
     items = filter (any i, items, ``(i != `item ()));
     UI::ChangeWidget (`id ("zones_list_table"), `Items, items);
     UI::SetFocus (`id ("zones_list_table"));
