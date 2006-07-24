@@ -3,6 +3,7 @@ Mon Jul 24 15:02:56 CEST 2006 - locilka@suse.cz
 
 - Added support for forward zones (FaTE #120041). The only option
   thats is possible to set is a 'forwarders' option.
+- Added CommandLine support for forward zone.
 - 2.13.13
 
 -------------------------------------------------------------------

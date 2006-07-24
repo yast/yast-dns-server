@@ -295,13 +295,21 @@
 
     boolean DNSHandlerZonesShow () {
 	list <list <string> > table_items = [];
+
 	foreach (string zone_name, map <string, string> zone, DnsServerAPI::GetZones(), {
 	    list <string> masterservers = [];
+	    list <string> forwarders = [];
+
 	    if (zone["type"]:nil=="slave") {
 		masterservers = DnsServerAPI::GetZoneMasterServers(zone_name);
+	    } else if (zone["type"]:nil=="forward") {
+		forwarders = DnsServerAPI::GetZoneForwarders(zone_name);
 	    }
+
 	    table_items = add (table_items, [
-		zone_name, zone["type"]:nil, mergestring(masterservers, ", ")
+	        zone_name, zone["type"]:nil,
+		    mergestring(masterservers, ", "),
+		    mergestring(forwarders, ", ")
 	    ]);
 	});
 	
@@ -315,7 +323,9 @@
 		// TRANSLATORS: commandline table header item
 		_("Type"),
 		// TRANSLATORS: commandline table header item
-		_("Master Server")
+		_("Master Server"),
+		// TRANSLATORS: commandline table header item
+		_("Forwarders")
 	    ], table_items, $[])
 	);
 
@@ -324,24 +334,53 @@
 
     // Function for handling DNS zones in general
     boolean DNSHandlerZones (map options) {
+	y2milestone("Options: %1", options);
+    
+	// Show current settings
 	if (options["show"]:nil!=nil) {
 	    return DNSHandlerZonesShow();
+
+	// Both Add and Remove defined => Error!
 	} else if (options["add"]:nil!=nil && options["remove"]:nil!=nil) {
 	    CommandLine::Error(_("Only one action parameter is allowed."));
 	    return false;
+
+	// Adding zone
 	} else if (options["add"]:nil!=nil) {
-	    return DnsServerAPI::AddZone(
+	    if (DnsServerAPI::AddZone(
 		(string) options["name"]:nil,
 		(string) options["zonetype"]:nil,
-		$["masterserver":(string) options["masterserver"]:nil]
-	    );
+		$["masterserver" : (string) options["masterserver"]:nil ]
+	    )) {
+		if ((string) options["zonetype"]:nil == "forward") {
+		    return DnsServerAPI::SetZoneForwarders(
+			(string) options["name"]:nil,
+			splitstring((string) options["forwarders"]:"", ",")
+		    );
+		}
+	    } else {
+		return false;
+	    }
+
+	// Removing zone
 	} else if (options["remove"]:nil!=nil) {
 	    return DnsServerAPI::RemoveZone((string) options["name"]:nil);
+
+	// Chenging settings
 	} else if (options["set"]:nil!=nil) {
-	    return DnsServerAPI::SetZoneMasterServers(
-		(string) options["name"]:nil,
-		[(string) options["masterserver"]:nil]
-	    );
+	    // Zone MasterServers
+	    if (options["masterserver"]:nil != nil) {
+		return DnsServerAPI::SetZoneMasterServers(
+		    (string) options["name"]:nil,
+		    [(string) options["masterserver"]:nil]
+		);
+	    // Zone Forwarders
+	    } else if (options["forwarders"]:nil != nil) {
+		return DnsServerAPI::SetZoneForwarders(
+		    (string) options["name"]:nil,
+		    splitstring((string) options["forwarders"]:"", ",")
+		);
+	    }
 	}
 	return false;
     }
@@ -741,8 +780,10 @@
 		    "zones show",
 		    "zones add name=example.org zonetype=master",
 		    "zones add name=example.com zonetype=slave masterserver=192.168.0.1",
+		    "zones add name=example.com zonetype=forward forwarders=192.168.0.1,192.168.0.2",
 		    "zones remove name=example.org",
 		    "zones set name=example.com masterserver=192.168.10.1",
+		    "zones set name=example.com forwarders=192.168.0.3",
 		],
 	    ],
 	    "acls" : $[
@@ -982,6 +1023,11 @@
 		// TRANSLATORS: commandline short help for command, %1 are possible untranlatable parameters "(yes|no)"
 		"help" : sformat(_("Log zone transfers %1"), "(yes|no)"),
 	    ],
+	    "forwarders" : $[
+		"type" : "string",
+		// TRANSLATORS: commandline short help for command
+		"help" : _("Comma-separated list of zone forwarders"),
+	    ],
 	],
 	"mappings" : $[
 	    "startup" : [
@@ -999,6 +1045,7 @@
 	    "zones" : [
 		"show", "add", "remove", "set",
 		"name", "masterserver", "zonetype",
+		"forwarders",
 	    ],
 	    "acls" : [
 		"show"

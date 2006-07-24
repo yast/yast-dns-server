@@ -179,7 +179,7 @@ sub CheckZoneType {
 	return 0;
     }
 
-    if ($type !~ /^(master|slave)$/) {
+    if ($type !~ /^(master|slave|forward)$/) {
 	# TRANSLATORS: Popup error message, Calling function with unsupported DNZ zone type,
 	#   %1 is the zone type
 	Report->Error(sformat(__("Zone type %1 is not supported."), $type));
@@ -1291,6 +1291,7 @@ sub SetZoneMasterServers {
 		$one_zone->{'masters'} = GetRecordFromList(@{$masters});
 		$one_zone->{'modified'} = 1;
 		@{$zones}[$zone_counter] = $one_zone;
+		DnsServer->StoreZones($zones);
 		last;
 	    } else {
 		# TRANSLATORS: Popup error message, Trying to set 'master server' for zone which is not 'slave' type,
@@ -1375,7 +1376,18 @@ sub AddZone {
 
     if ($type eq 'slave') {
 	my @masters = $options->{'masterserver'};
-	$class->SetZoneMasterServers($zone,\@masters);
+	$class->SetZoneMasterServers($zone, \@masters);
+    } elsif ($type eq 'forward') {
+	# forwarders are optional for 'forward' zone
+	if (defined $options->{'forwarders'}) {
+	    $options->{'forwarders'} =~ s/,/ /g;
+	    $options->{'forwarders'} =~ s/;/ /g;
+	    $options->{'forwarders'} =~ s/ +/ /g;
+	    $options->{'forwarders'} =~ s/(^ *| *$)//g;
+	    
+	    my @forwarders = split(/ /, $options->{'forwarders'});
+	    $class->SetZoneForwarders($zone, \@forwarders);
+	}
     }
 
     return 1;
@@ -2409,7 +2421,7 @@ sub SetZoneForwarders {
     my $zone_counter = 0;
     foreach my $one_zone (@{$zones}) {
 	if ($zone eq $one_zone->{'zone'}) {
-	    $one_zone->{'masters'} = GetRecordFromList(@{$forwarders});
+	    $one_zone->{'forwarders'} = GetRecordFromList(@{$forwarders});
 	    $one_zone->{'modified'} = 1;
 	    @{$zones}[$zone_counter] = $one_zone;
 	    DnsServer->StoreZones($zones);
