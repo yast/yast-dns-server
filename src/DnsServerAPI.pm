@@ -25,9 +25,13 @@ This package is the public functional YaST2 API to configure the Bind version 9
 
 =head1 SYNOPSIS
 
-use DnsServerAPI;
+in Perl
+    use DnsServerAPI;
+    my $categories = DnsServerAPI->GetLoggingCategories();
 
-$categories = DnsServerAPI::GetLoggingCategories();
+in YCP
+    imoprt "DnsServerAPI";
+    list <string> categories = DnsServerAPI::GetLoggingCategories();
 
 Note: All arrays or hashes returned or accepted by this module are references
 to them. However it is impossible to change the data through the references,
@@ -146,6 +150,19 @@ sub CheckZone {
     #   %1 is the zone name
     Report->Error(sformat(__("DNS zone %1 does not exist."), $zone));
     return 0;
+}
+
+sub CheckIPv4s {
+    my $class = shift;
+    my $ips   = shift || [];
+
+    foreach my $ip (@{$ips}) {
+	if (!$class->CheckIPv4($ip)) {
+	    return 0;
+	}
+    }
+    
+    return 1;
 }
 
 sub ZoneIsMaster {
@@ -1282,6 +1299,7 @@ sub SetZoneMasterServers {
     my $masters = shift;
 
     return 0 if (!$class->CheckZone($zone));
+    return 0 if (!$class->CheckIPv4s($masters));
 
     my $zones = DnsServer->FetchZones();
     my $zone_counter = 0;
@@ -2118,9 +2136,9 @@ sub SetZoneSOA {
     my $zones = DnsServer->FetchZones();
     my $zone_index = 0;
     my $new_zone = {};
-    foreach (@{$zones}) {
-	if ($_->{'zone'} eq $zone) {
-	    my $new_SOA = $_->{'soa'};
+    foreach my $one_zone (@{$zones}) {
+	if ($one_zone->{'zone'} eq $zone) {
+	    my $new_SOA = $one_zone->{'soa'};
 	    foreach my $key ('minimum', 'expiry', 'serial', 'retry', 'refresh', 'mail', 'server') {
 		# changing current SOA with new values
 		if (defined $SOA->{$key}) {
@@ -2128,7 +2146,7 @@ sub SetZoneSOA {
 		    $new_SOA->{$key} = $SOA->{$key};
 		}
 	    }
-	    $new_zone = $_;
+	    $new_zone = $one_zone;
 	    # ttl is defined in another place
 	    if (defined $SOA->{'ttl'}) {
 		$new_zone->{'ttl'} = $SOA->{'ttl'};
@@ -2161,6 +2179,8 @@ BEGIN{$TYPEINFO{GetReverseZoneNameForIP} = ["function","string","string"]};
 sub GetReverseZoneNameForIP {
     my $class = shift;
     my $ip    = shift || '';
+    
+    return undef if (!$class->CheckIPv4($ip));
 
     my $zones = $class->GetZones();
     my @reversezones = ();
@@ -2202,6 +2222,8 @@ BEGIN{$TYPEINFO{GetReverseIPforIPv4} = ["function","string","string"]};
 sub GetReverseIPforIPv4 {
     my $class = shift;
     my $ipv4  = shift || '';
+    
+    return undef if (!$class->CheckIPv4($ipv4));
 
     my $reverseip = 'in-addr.arpa.';
     foreach my $part (split(/\./, $ipv4)) {
@@ -2382,7 +2404,7 @@ sub GetZoneForwarders {
     my $class = shift;
     my $zone  = shift || '';
 
-    return 0 if (!$class->CheckZone($zone));
+    return undef if (!$class->CheckZone($zone));
 
     my @forwarders;
     my $zones = DnsServer->FetchZones();
@@ -2416,6 +2438,7 @@ sub SetZoneForwarders {
     my $forwarders = shift;
 
     return 0 if (!$class->CheckZone($zone));
+    return 0 if (!$class->CheckIPv4s($forwarders));
 
     my $zones = DnsServer->FetchZones();
     my $zone_counter = 0;
