@@ -1411,7 +1411,9 @@ symbol runMasterZoneTabDialog () {
 		`HBox (
 		    // Label - connected with Textentry which shows current edited zone
 		    `HSquash ( `Label ( _("Settings for Zone") ) ),
-		    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "", zone_name ) ),
+		    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "",
+			DnsServerPunycode::DecodeDomainName(zone_name)
+		    ) ),
 		    `HStretch ()
 		),
 		`VSpacing ( 1 ),
@@ -1538,7 +1540,9 @@ symbol runSlaveZoneTabDialog () {
 	`HBox (
 	    // Label - connected with Textentry which shows current edited zone
 	    `HSquash ( `Label ( _("Settings for Zone") ) ),
-	    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "", zone_name ) ),
+	    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "",
+		DnsServerPunycode::DecodeDomainName(zone_name)
+	    ) ),
 	    `HStretch ()
 	),
 	`VSpacing ( 1 ),
@@ -1705,6 +1709,15 @@ symbol runForwardZoneTabDialog () {
 
     term contents =
 	`VBox (
+	`HBox (
+	    // Label - connected with Textentry which shows current edited zone
+	    `HSquash ( `Label ( _("Settings for Zone") ) ),
+	    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "",
+		DnsServerPunycode::DecodeDomainName(zone_name)
+	    ) ),
+	    `HStretch ()
+	),
+	`VSpacing ( 1 ),
 	    `VSquash (
 		`HBox (
 		    `HWeight (7,
@@ -1772,7 +1785,11 @@ Are you sure you want to deny these queries?"))) {
 		}
 	    }
 	
-	    y2milestone("Zone %1, Forwarders %2", current_zone["zone"]:"", current_zone_forwarders);
+	    y2milestone("Zone %1 (%2), Forwarders: %3",
+		current_zone["zone"]:"",
+		DnsServerPunycode::DecodeDomainName(current_zone["zone"]:""),
+		current_zone_forwarders
+	    );
 	    current_zone["modified"] = true;
 	    if (size(current_zone_forwarders) > 0) {
 		current_zone["forwarders"] = sformat("{ %1; }", mergestring(current_zone_forwarders, "; "));
