@@ -4,6 +4,7 @@ Wed Jul 26 16:27:03 CEST 2006 - locilka@suse.cz
 - Created new YCP module DnsServerPunycode that transforms strings
   (relative zone names, or FQDNs) into the Punycode encoding
   described in RFC 3492 (FaTE #300589, Bugzilla #162217).
+- DnsServerPunycode used for adding and editing DNS zones.
 
 -------------------------------------------------------------------
 Mon Jul 24 15:02:56 CEST 2006 - locilka@suse.cz
