@@ -1,0 +1,115 @@
+/**
+ * File:	modules/DnsServerPunycode.ycp
+ * Package:	Configuration of dns-server
+ * Summary:	DNS Punycode Handling
+ * Authors:	Lukas Ocilka <lukas.ocilka@suse.cz>
+ * Tags:	Unstable
+ *
+ * $Id:$
+ *
+ * Representation of the configuration of dns-server.
+ * Input and output routines.
+ */
+
+{
+
+    module "DnsServerPunycode";
+    textdomain "dns-server";
+
+    string tmp_dir = nil;
+
+    /**
+     * Returns the current temporary directory.
+     * Lazy loading for the initialization is used.
+     */
+    define string GetTmpDirectory () {
+	if (tmp_dir == nil) {
+	    tmp_dir = (string) SCR::Read(.target.tmpdir);
+	}
+
+	return tmp_dir;
+    }
+
+    define list <string> ConvertBackAndForth (list <string> strings_in, boolean to_punycode) {
+	string tmp_in  = GetTmpDirectory() + "/tmp-idnconv-in.ycp";
+	string tmp_out = GetTmpDirectory() + "/tmp-idnconv-out.ycp";
+
+	list <string> strings_out = [];
+	SCR::Write(.target.ycp, tmp_in, strings_in);
+	string convert_command = sformat("/usr/bin/idnconv %1 %2 > %3",
+	    (to_punycode ? "":"-reverse"), tmp_in, tmp_out
+	);
+
+	if ((integer) SCR::Execute(.target.bash, convert_command) != 0) {
+	    y2error("Conversion failed!");
+	} else {
+	    strings_out = (list <string>) SCR::Read(.target.ycp, tmp_out);
+	    // Parsing the YCP file failed
+	    if (strings_out == nil) {
+		y2error("Erroneous YCP file: %1", SCR::Read(.target.string, tmp_out));
+	    }
+	}
+    
+	return strings_out;
+    }
+
+    /**
+     * Converts list of UTF-8 strings into their Punycode
+     * ASCII repserentation.
+     *
+     * @param list <string> punycode_strings
+     * @return list <string> encoded_strings
+     */
+    global define list <string> EncodePunycodes (list <string> punycode_strings) {
+	return ConvertBackAndForth(punycode_strings, true);
+    }
+
+    /**
+     * Converts list of Punycode strings into their UTF-8
+     * representation.
+     *
+     * @param list <string> punycode_strings
+     * @return list <string> decoded_strings
+     */
+    global define list <string> DecodePunycodes (list <string> punycode_strings) {
+	return ConvertBackAndForth(punycode_strings, false);
+    }
+
+    /**
+     * Encodes the domain name (relative or FQDN) to the Punycode.
+     *
+     * @param string decoded domain_name
+     * @return string encoded domain_name
+     *
+     * @example
+     *	EncodeDomainName("žížala.jůlinka.go.home")
+     *		-> "xn--ala-qma83eb.xn--jlinka-3mb.go.home"
+     */
+    global define string EncodeDomainName (string decoded_domain_name) {
+	return mergestring(
+	    EncodePunycodes(
+		splitstring(decoded_domain_name, ".")
+	    ),
+	    "."
+	);
+    }
+
+    /**
+     * Decodes the domain name (relative or FQDN) from the Punycode.
+     *
+     * @param string encoded_domain_name
+     * @return string decoded domain_name
+     *
+     * @example
+     *	DecodeDomainName("xn--ala-qma83eb.xn--jlinka-3mb.go.home")
+     *		-> "žížala.jůlinka.go.home"
+     */
+    global define string DecodeDomainName (string encoded_domain_name) {
+	return mergestring(
+	    DecodePunycodes(
+		splitstring(encoded_domain_name, ".")
+	    ),
+	    "."
+	);
+    }
+}
