@@ -10,7 +10,7 @@
 
 {
     include "testsuite.ycp";
-    //testedfiles: DnsServerAPI
+    // testedfiles: DnsServerAPI
 
     map READ = $[
 	"passwd" : $[ "passwd" : $[ "pluslines" : [] ] ],
@@ -56,11 +56,6 @@
                     ],
                 ],
             ],
-
-	"target" : $[
-	    "stat" : $[],
-	    "ycp" : $[],
-	],
 	"dns" : $[
 	    "named" : $[
 		"section" : $[
@@ -119,11 +114,19 @@
 	    ],
 	],
 	"target" : $[
+	    "stat" : $[],
+	    "lstat" : $[],
+	    "ycp" : nil,
 	    "yast2" : $[ "lang2iso.ycp" : $[] ],
 	    "size" : 1,
+	    "string" : "some text",
 	],
     ];
-    map WRITE = $[];
+    map WRITE = $[
+	"target" : $[
+	    "ycp" : true,
+	],
+    ];
     map EXEC = $[
 	"target" : $[
 	    "bash_output" : $["exit" : 1, "stdout" : "", "stderr" : ""],
@@ -133,46 +136,7 @@
 
 
 
-    list<map<string,any> > zones = [
-	$[
-	    "options" : [
-		$[
-		    "value" : "master",
-		    "key" : "type",
-		],
-		$[
-		    "value" : "\"example.com.zone\"",
-		    "key" : "file",
-		]
-	    ],
-	    "zone" : "example.com",
-	    "ttl" : "1W",
-	    "records" : [
-		$[
-		    "value" : "127.0.0.1",
-		    "type" : "A",
-		    "key" : "host",
-		],
-		$[
-		    "value" : "@",
-		    "type" : "NS",
-		    "key" : "example.com."
-		],
-	    ],
-	    "file" : "example.com",
-	    "type" : "master",
-	    "soa" : $[
-		"minimum" : "1W",
-		"expiry" : "6W",
-		"serial" : 2004012701,
-		"zone" : "@",
-		"retry" : "4H",
-		"refresh" : "2D",
-		"mail" : "root",
-		"server" : "@"
-	    ]
-	]
-    ];
+
 
     TESTSUITE_INIT ([READ, WRITE, EXEC], nil);
 
