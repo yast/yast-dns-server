@@ -987,20 +987,20 @@ void RedrawZonesTable () {
     }
 }
 
-/**
- * Setting ValidChars for dialog
- */
-void ValidCharsZoneRecordsTab () {
-    //UI::ChangeWidget( `id ("add_record_name"),	`ValidChars,	Hostname::ValidCharsFQ);
-    //UI::ChangeWidget( `id ("add_record_val"),	`ValidChars,	Hostname::ValidCharsFQ + " ");
-}
+///**
+// * Setting ValidChars for dialog
+// */
+// void ValidCharsZoneRecordsTab () {
+//    UI::ChangeWidget( `id ("add_record_name"),	`ValidChars,	Hostname::ValidCharsFQ);
+//    UI::ChangeWidget( `id ("add_record_val"),	`ValidChars,	Hostname::ValidCharsFQ + " ");
+//}
 
 /**
  * Initialize the tab of the dialog
  */
 void InitZoneRecordsTab () {
     RedrawZonesTable ();
-    ValidCharsZoneRecordsTab ();
+    // ValidCharsZoneRecordsTab ();
 }
 
 /**
