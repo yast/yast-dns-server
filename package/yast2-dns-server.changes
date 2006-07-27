@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Jul 27 09:14:08 CEST 2006 - locilka@suse.cz
+
+- Fixed testsuites because of changes in yast2-pam.
+- Adjusted master-zone dialog to show Punycode records in their
+  decoded form.
+- 2.13.14
+
+-------------------------------------------------------------------
 Wed Jul 26 16:27:03 CEST 2006 - locilka@suse.cz
 
 - Created new YCP module DnsServerPunycode that transforms strings

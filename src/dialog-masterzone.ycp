@@ -342,6 +342,7 @@ void InitNsListTab () {
     ));
     current_zone_ns = maplist (map r, records, ``(r["value"]:""));
     current_zone_ns = filter (string z, current_zone_ns, ``(z != ""));
+    current_zone_ns = DnsServerPunycode::DecodePunycodes(current_zone_ns);
     RedrawNsListWidget ();
     ValidCharsNsListWidget ();
 }
@@ -486,15 +487,22 @@ term GetMasterZoneEditorTabMailServers () {
 }
 
 void RedrawMxListWidget () {
-    integer index = -1;
-    list items = maplist (string mx, current_zone_mx, {
-	index = index + 1;
-	list<string> split = splitstring (mx, " \t");
-	split = filter (string s, split, ``(s != ""));
-	string prio = split[0]:"";
-	string address = split[1]:"";
-	return `item (`id (index), address, prio);
+    // get the map of zone mail servers
+    list <map <string, string> > zone_mx_servers = DnsServerAPI::GetZoneMailServers(current_zone["zone"]:"");
+    // create a list of mail servers to be used by Punycode and convert them
+    list <string> mx_addresses = maplist(map <string, string> one_address, zone_mx_servers, {
+	return one_address["name"]:"";
     });
+    mx_addresses = DnsServerPunycode::DecodePunycodes(mx_addresses);
+    
+    integer index = -1;
+    // create term items using already translated strings
+    list <term> items = maplist (map <string, string> one_address, zone_mx_servers, {
+	index = index + 1;
+	return `item (`id (index), mx_addresses[index]:one_address["name"]:"", one_address["priority"]:"");
+    });
+
+    // initialize the widget content
     UI::ChangeWidget (`id ("mail_server_list"), `Items, items);
 }
 
@@ -907,6 +915,8 @@ term GetMasterZoneEditorTabRecords () {
 void RedrawZonesTable () {
     integer index = -1;
     string zone_name = current_zone["zone"]:"";
+    string decoded_zone_name = DnsServerPunycode::DecodeDomainName(zone_name);
+
     list<integer> ret = maplist (map m, current_zone["records"]:[], {
 	index = index + 1;
 	if (m["type"]:"" == "TTL" || m["type"]:"" == "ORIGIN")
@@ -924,14 +934,34 @@ void RedrawZonesTable () {
         return index;
     });
     ret = filter (integer r, ret, ``(r != nil && r != -1));
+
+    // keys
+    list <string> decoded_names = maplist (integer r, ret, {
+	return current_zone["records", r, "key"]:"";
+    });
+
+    integer const_plus = size(decoded_names);
+
+    // values
+    foreach (string record, maplist (integer r, ret, {
+	    return current_zone["records", r, "value"]:"";
+    }), {
+	decoded_names = add (decoded_names, record);
+    });
+    decoded_names = DnsServerPunycode::DecodePunycodes(decoded_names);
+
+    integer counter = -1;
     list items = maplist (integer r, ret, {
+	counter = counter + 1;
+
 	return `item (
 	    `id (r),
-	    ToRelativeName(current_zone["records", r, "key"]:"", zone_name),
+	    ToRelativeName(decoded_names[counter]:current_zone["records", r, "key"]:"", decoded_zone_name),
 	    current_zone["records", r, "type"]:"",
-	    ToRelativeName(current_zone["records", r, "value"]:"", zone_name)
+	    ToRelativeName(decoded_names[counter+const_plus]:current_zone["records", r, "value"]:"", decoded_zone_name)
 	);
     });
+
     integer r = (integer)
 	UI::QueryWidget (`id ("records_list"), `CurrentItem );
     UI::ChangeWidget (`id ("records_list"), `Items, items);
@@ -943,11 +973,17 @@ void RedrawZonesTable () {
 	r = (integer)
 	    UI::QueryWidget (`id ("records_list"), `CurrentItem );
 	UI::ChangeWidget (`id ("add_record_name"), `Value,
-	    ToRelativeName(current_zone["records", r, "key"]:"", zone_name));
+	    ToRelativeName(
+		DnsServerPunycode::DecodeDomainName(current_zone["records", r, "key"]:""), decoded_zone_name
+	    )
+	);
 	UI::ChangeWidget (`id ("add_record_type"), `Value,
 	    current_zone["records", r, "type"]:"");
 	UI::ChangeWidget (`id ("add_record_val"), `Value,
-	    ToRelativeName(current_zone["records", r, "value"]:"", zone_name));
+	    ToRelativeName(
+		DnsServerPunycode::DecodeDomainName(current_zone["records", r, "value"]:""), decoded_zone_name
+	    )
+	);
     }
 }
 
@@ -955,8 +991,8 @@ void RedrawZonesTable () {
  * Setting ValidChars for dialog
  */
 void ValidCharsZoneRecordsTab () {
-    UI::ChangeWidget( `id ("add_record_name"),	`ValidChars,	Hostname::ValidCharsFQ);
-    UI::ChangeWidget( `id ("add_record_val"),	`ValidChars,	Hostname::ValidCharsFQ + " ");
+    //UI::ChangeWidget( `id ("add_record_name"),	`ValidChars,	Hostname::ValidCharsFQ);
+    //UI::ChangeWidget( `id ("add_record_val"),	`ValidChars,	Hostname::ValidCharsFQ + " ");
 }
 
 /**
@@ -1114,6 +1150,7 @@ boolean CheckNewZoneRecordLogic (map <string, string> record) {
  */
 symbol HandleZoneRecordsTab (map event) {
     any ret = event["ID"]:nil;
+
     integer r = (integer)
 	UI::QueryWidget (`id ("records_list"), `CurrentItem );
     string key = (string)
@@ -1122,14 +1159,24 @@ symbol HandleZoneRecordsTab (map event) {
 	UI::QueryWidget (`id ("add_record_type"), `Value);
     string val = (string)
 	UI::QueryWidget (`id ("add_record_val"), `Value);
+
+    string zone = current_zone["zone"]:"";
+    string decoded_zone = DnsServerPunycode::DecodeDomainName(zone);
+
     if (ret == "records_list")
     {
 	UI::ChangeWidget (`id ("add_record_name"), `Value,
-	    ToRelativeName(current_zone["records", r, "key"]:"", current_zone["zone"]:""));
+	    ToRelativeName(
+		DnsServerPunycode::DecodeDomainName(current_zone["records", r, "key"]:""), decoded_zone
+	    )
+	);
 	UI::ChangeWidget (`id ("add_record_type"), `Value,
 	    current_zone["records", r, "type"]:"");
 	UI::ChangeWidget (`id ("add_record_val"), `Value,
-	    ToRelativeName(current_zone["records", r, "value"]:"", current_zone["zone"]:""));
+	    ToRelativeName(
+		DnsServerPunycode::DecodeDomainName(current_zone["records", r, "value"]:""), decoded_zone
+	    )
+	);
     }
     else if (ret == "change_record")
     {
