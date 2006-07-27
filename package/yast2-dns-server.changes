@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jul 27 15:15:34 CEST 2006 - locilka@suse.cz
+
+- Added cache of already converted strings unicode->punycode,
+  punycode->unicode. Cache size is limited.
+
+-------------------------------------------------------------------
 Thu Jul 27 09:14:08 CEST 2006 - locilka@suse.cz
 
 - Fixed testsuites because of changes in yast2-pam.
