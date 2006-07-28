@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 Fri Jul 28 08:47:05 CEST 2006 - locilka@suse.cz
 
-- Optimized PunycodeToUnicide translations using DocodeDomainNames
+- Optimized PunycodeToUnicode translations using DocodeDomainNames
   function from DnsServerPunycode module (speeding up).
 - Added forward zone handling into the Install-Wizard Sequence.
 - Added help for forward zone.
