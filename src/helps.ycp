@@ -475,8 +475,15 @@ and select the <b>ACLs</b> to check when a remote host
 attempts to transfer the zone. At least one ACL must be defined
 to allow zone transports.</p>"),
 
-// forward zone help text
-"forward_zone" : _("FIXME: !!!!!!!!!!!")
+    // forward zone help text 1/2
+"forward_zone" : _("<p><big><b>Forward DNS Zone</b></big><br>
+This type of DNS zone only forwards DNS queries to forwarders
+defined in it.</p>") +
+
+    // forward zone help text 2/2
+_("<p>If there are no forwarders defined, all DNS queries
+for the respective zone are denied, because there is no DNS
+server to which should be that query forwarded.</p>"),
 
 ];
 

@@ -1469,6 +1469,9 @@ symbol HandleExpertZonesPage (string key, map event) {
 
     if (ret == "delete_zone")
     {
+	// Confirm deleting zone
+	if (!Confirm::DeleteSelected()) return nil;
+
 	zones[index] = nil;
 	zones = filter (map z, zones, ``(z != nil));
 	DnsServer::StoreZones (zones);
