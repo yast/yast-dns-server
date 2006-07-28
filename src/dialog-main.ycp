@@ -1385,9 +1385,20 @@ term ExpertZonesDialog () {
 }
 
 void RedrawZonesListWidget () {
+    // Translating of all zone names at once
+    list <string> encoded_zone_names = maplist (map z, zones, {
+	return z["zone"]:"";
+    });
+    list <string> decoded_zone_names = DnsServerPunycode::DocodeDomainNames(encoded_zone_names);
     integer index = -1;
+    // Creating map $[encoded:decoded]
+    map <string, string> enc_to_dec = listmap (string enc_zone, encoded_zone_names, {
+	index = index + 1;
+	return $[enc_zone : decoded_zone_names[index]:""];
+    });
 
-    list items = maplist (map z, zones, ``{
+    index = -1;
+    list <term> items = maplist (map z, zones, ``{
 	index = index + 1;
 	string zone_name = z["zone"]:"";
 
@@ -1418,10 +1429,15 @@ void RedrawZonesListWidget () {
 	    y2warning("Unknown zone type %1", type_trans);
 	}
 
-	return `item (`id (index), DnsServerPunycode::DecodeDomainName(zone_name), type_trans);
+	return `item (`id (index), enc_to_dec[zone_name]:zone_name, type_trans);
     });
 
-    items = filter (any i, items, ``(i != `item ()));
+    // Filtering out empty items
+    items = filter (term i, items,  { return i != `item(); });
+
+    // Sorting by the zone name (might have different sorting than UI)
+    items = sort (term x, term y, items, ``(x[1]:"" < y[1]:""));
+
     UI::ChangeWidget (`id ("zones_list_table"), `Items, items);
     UI::SetFocus (`id ("zones_list_table"));
     UI::ChangeWidget (`id ("delete_zone"), `Enabled, size (items) > 0);

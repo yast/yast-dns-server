@@ -304,4 +304,73 @@
 	    "."
 	);
     }
+
+    /**
+     * Decodes the list of domain names to their Unicode representation.
+     * This function is similar to DecodePunycodes but it works with every
+     * string as a domain name (that means every domain name is parsed
+     * by dots and separately evaluated).
+     *
+     * @param list <string> encoded_domain_names
+     * @return list <string> decoded_domain_names
+     *
+     * @example
+     * 	DocodeDomainNames(["mx1.example.org", "xp3.example.org.", "xn--ala-qma83eb.org.example."])
+     *		-> ["mx1.example.org", "xp3.example.org.", "žížala.org.example."]
+     */
+    global define list <string> DocodeDomainNames (list <string> encoded_domain_names) {
+	list <string> decoded_domain_names = [];
+	list <string> strings_to_decode = [];
+
+	// $[0 : [0, 2], 1 : [3, 5]]
+	map <integer, list <integer> > backward_map_of_conversion = $[];
+
+	integer current_domain_index = -1;
+	integer current_domain_item  =  0;
+
+	// parsing all domain names one by one
+	foreach (string one_domain_name, encoded_domain_names, {
+	    current_domain_index = current_domain_index + 1;
+	    integer start = current_domain_item;
+
+	    // parsing the domain name by dots
+	    foreach (string domain_item, splitstring(one_domain_name, "."), {
+		strings_to_decode[current_domain_item] = domain_item;
+		current_domain_item = current_domain_item + 1;
+	    });
+	    // creating backward index
+	    backward_map_of_conversion[current_domain_index] = [start, (current_domain_item-1)];
+	});
+	
+	// Transformating strings to the decoded format
+	strings_to_decode = DnsServerPunycode::DecodePunycodes(strings_to_decode);
+	
+	current_domain_index = -1;
+	foreach (string one_encoded, encoded_domain_names, {
+	    current_domain_index = current_domain_index + 1;
+
+	    // Where the current string starts and ends
+	    integer current = backward_map_of_conversion[current_domain_index, 0]:nil;
+	    integer end     = backward_map_of_conversion[current_domain_index, 1]:nil;
+	    
+	    // error?
+	    if (current == nil || end == nil) {
+		y2error("Cannot find start/end for %1 in %2",
+		    one_encoded, backward_map_of_conversion[current_domain_index]:nil
+		); 
+		decoded_domain_names[current_domain_index] = one_encoded;
+	    } else {
+		// create a list of items of the current domain (translated)
+		list <string> decoded_domain = [];
+		while (current <= end) {
+		    decoded_domain = add(decoded_domain, strings_to_decode[current]:"");
+		    current = current + 1;
+		}
+		// create a domain name from these strings
+		decoded_domain_names[current_domain_index] = mergestring(decoded_domain, ".");
+	    }
+	});
+
+	return decoded_domain_names;
+    }
 }

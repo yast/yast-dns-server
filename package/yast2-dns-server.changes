@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Jul 28 08:47:05 CEST 2006 - locilka@suse.cz
+
+- Optimized PunycodeToUnicide translations using DocodeDomainNames
+  function from DnsServerPunycode module (speeding up).
+
+-------------------------------------------------------------------
 Thu Jul 27 15:15:34 CEST 2006 - locilka@suse.cz
 
 - Added cache of already converted strings unicode->punycode,
