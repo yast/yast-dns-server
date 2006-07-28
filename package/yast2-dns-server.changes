@@ -3,6 +3,12 @@ Fri Jul 28 08:47:05 CEST 2006 - locilka@suse.cz
 
 - Optimized PunycodeToUnicide translations using DocodeDomainNames
   function from DnsServerPunycode module (speeding up).
+- Added forward zone handling into the Install-Wizard Sequence.
+- Added help for forward zone.
+- Adjusted full support for viewing, adding, removing and changing
+  all DNS records (NSs, MXs, other Records) in Master Zone dialogs.
+- Deleting the zone must be confirmed.
+- 2.13.15
 
 -------------------------------------------------------------------
 Thu Jul 27 15:15:34 CEST 2006 - locilka@suse.cz
