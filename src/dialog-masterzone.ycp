@@ -342,7 +342,7 @@ void InitNsListTab () {
     ));
     current_zone_ns = maplist (map r, records, ``(r["value"]:""));
     current_zone_ns = filter (string z, current_zone_ns, ``(z != ""));
-    current_zone_ns = DnsServerPunycode::DecodePunycodes(current_zone_ns);
+    current_zone_ns = DnsServerPunycode::DocodeDomainNames(current_zone_ns);
     RedrawNsListWidget ();
     ValidCharsNsListWidget ();
 }
@@ -493,7 +493,7 @@ void RedrawMxListWidget () {
     list <string> mx_addresses = maplist(map <string, string> one_address, zone_mx_servers, {
 	return one_address["name"]:"";
     });
-    mx_addresses = DnsServerPunycode::DecodePunycodes(mx_addresses);
+    mx_addresses = DnsServerPunycode::DocodeDomainNames(mx_addresses);
     
     integer index = -1;
     // create term items using already translated strings
