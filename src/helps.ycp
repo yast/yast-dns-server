@@ -292,8 +292,9 @@ To add a new reverse zone, enter a part of reverse IP address followed by
 <tt>.in-addr.arpa</tt> as its <b>Zone Name</b> (for example, zone name
 <tt>0.168.192.in-addr.arpa</tt> for network <tt>192.168.0.0/24</tt>), select
 the <b>Zone Type</b>, and click <b>Add</b>.</p>
-<p>To remove a configured zone, select it and click <b>Delete Zone</b>.
-To edit a zone, select it and click <b>Edit Zone</b>.</p>
+<p>To modify settings for a zone, such as zone transport and name and
+mail servers, select it then click <b>Edit Zone</b>.
+To remove a configured zone, select it and click <b>Delete Zone</b>.</p>
 "),
 
 "zone_editor_basics"	:
@@ -377,7 +378,7 @@ records, set the <b>Record Key</b>, <b>Type</b>, and <b>Value</b> then
 click <b>Add</b>.</p>") +
 
     /* Zone Editor - Help for tab - Records 2/7 or 2/5 */
-_("<p>To change an existing record, select it, modify requested entries,
+_("<p>To change an existing record, select it, modify the desired entries,
 and click <b>Change</b>. To delete a record, select it and click
 <b>Delete</b>.</p>") +
 
@@ -483,7 +484,7 @@ defined in it.</p>") +
     // forward zone help text 2/2
 _("<p>If there are no forwarders defined, all DNS queries
 for the respective zone are denied, because there is no DNS
-server to which should be that query forwarded.</p>"),
+server to which that query should be forwarded.</p>"),
 
 ];
 
