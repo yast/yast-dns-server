@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Fri Aug  4 16:11:37 CEST 2006 - locilka@suse.cz
+
+- Added new function IsServiceConfigurableExternally() to the
+  DnsServerAPI module to be used from external modules like
+  DHCP or HTTP Servers.
+- 2.13.16
+
+-------------------------------------------------------------------
 Fri Aug  4 12:39:47 CEST 2006 - mvidner@suse.cz
 
 - Removed a Perl search path that is added elsewhere already
