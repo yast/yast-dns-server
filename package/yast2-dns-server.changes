@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Aug  4 12:39:47 CEST 2006 - mvidner@suse.cz
+
+- Removed a Perl search path that is added elsewhere already
+  and here just breaks compilation in some cases (#197099).
+
+-------------------------------------------------------------------
 Thu Aug  3 10:57:42 CEST 2006 - locilka@suse.cz
 
 - New help texts (#195873).
