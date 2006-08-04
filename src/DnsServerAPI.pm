@@ -52,6 +52,7 @@ textdomain("dns-server");
 
 use YaST::YCP qw( sformat y2milestone y2error y2warning );
 YaST::YCP::Import ("DnsServer");
+YaST::YCP::Import ("PackageSystem");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("Progress");
 # for reporting errors
@@ -2425,7 +2426,7 @@ Function sets forwarders for the zone.
 
 EXAMPLE:
 
-  my @forwarders = ('192.168.32.1','192.168.32.2');
+  my @forwarders = SetZoneForwarders('192.168.32.1','192.168.32.2');
   my $zone = 'example.org';
   my $success = SetZoneForwarders($zone, \@masterservers);
 
@@ -2452,6 +2453,38 @@ sub SetZoneForwarders {
 	}
 	++$zone_counter;
     }
+
+    return 1;
+}
+
+=item *
+C<$boolean = ServiceIsConfigurableExternally();>
+
+Checks whether the needed DNS Server package is installed
+and whether the server is enabled, or at least, running.
+
+EXAMPLE:
+
+  my $configurable = IsServiceConfigurableExternally()
+
+=cut
+
+BEGIN{$TYPEINFO{IsServiceConfigurableExternally} = ["function", "boolean"]};
+sub IsServiceConfigurableExternally {
+    my $class = shift;
+
+    my $service_enabled   = Service->Enabled         ("named");
+    my $service_status    = Service->Status          ("named");
+    my $service_installed = PackageSystem->Installed ("bind");
+
+    y2milestone (
+	"Enabled: ".$service_enabled.", ".
+	"Status: ".$service_status.", ".
+	"Installed: ".$service_installed
+    );
+    
+    return 0 if ($service_installed != 1);
+    return 0 if ($service_enabled != 1 && $service_status != 0);
 
     return 1;
 }
