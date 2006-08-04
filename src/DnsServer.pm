@@ -38,7 +38,6 @@ YaST::YCP::Import ("NetworkService");
 use DnsZones;
 use DnsTsigKeys;
 
-use lib "/usr/share/YaST2/modules/";
 use LdapServerAccess;
 
 use DnsData qw(@tsig_keys $start_service $chroot @allowed_interfaces
