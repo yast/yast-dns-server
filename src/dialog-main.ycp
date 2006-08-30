@@ -34,7 +34,7 @@ import "Popup";
 import "Hostname";
 import "Confirm";
 import "DnsServerAPI";
-import "DnsServerPunycode";
+import "Punycode";
 
 /* String defines the initial screen for the expert dialog */
 string initial_screen = "start_up";
@@ -1389,7 +1389,7 @@ void RedrawZonesListWidget () {
     list <string> encoded_zone_names = maplist (map z, zones, {
 	return z["zone"]:"";
     });
-    list <string> decoded_zone_names = DnsServerPunycode::DocodeDomainNames(encoded_zone_names);
+    list <string> decoded_zone_names = Punycode::DocodeDomainNames(encoded_zone_names);
     integer index = -1;
     // Creating map $[encoded:decoded]
     map <string, string> enc_to_dec = listmap (string enc_zone, encoded_zone_names, {
@@ -1485,7 +1485,7 @@ symbol HandleExpertZonesPage (string key, map event) {
 	string zone_type = (string)
 	    UI::QueryWidget (`id ("new_zone_type"), `Value);
 
-	string encoded_zone_name = DnsServerPunycode::EncodeDomainName(zone_name);
+	string encoded_zone_name = Punycode::EncodeDomainName(zone_name);
 	
 	// zone validation
 	if ( Hostname::CheckDomain (encoded_zone_name) != true )
