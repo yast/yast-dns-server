@@ -333,7 +333,7 @@ void RedrawNsListWidget () {
 		`id ("name_server_list"),
     		// selection box label
 		_("Na&me Server List"),
-    		DnsServerPunycode::DocodeDomainNames(current_zone_ns)
+    		Punycode::DocodeDomainNames(current_zone_ns)
 	    )
 	);
 }
@@ -396,7 +396,7 @@ symbol HandleNsListTab (map event) {
 	// NS is converted to the Punycode first
 	string new_ns_entered = (string)
 	    UI::QueryWidget (`id ("add_name_server"), `Value);
-	string new_ns = DnsServerPunycode::EncodeDomainName(new_ns_entered);
+	string new_ns = Punycode::EncodeDomainName(new_ns_entered);
 	y2milestone("New NS: %1", new_ns);
 
 	string check_ns = new_ns;
@@ -510,7 +510,7 @@ term GetMasterZoneEditorTabMailServers () {
 }
 
 void RedrawMxListWidget () {
-    list <string> zone_mx_decoded = DnsServerPunycode::DocodeDomainNames(current_zone_mx);
+    list <string> zone_mx_decoded = Punycode::DocodeDomainNames(current_zone_mx);
 
     integer index = -1;
     // create term items using already translated strings
@@ -585,7 +585,7 @@ symbol HandleMxListTab (map event) {
     {
 	string new_mx_decoded = (string)
 	    UI::QueryWidget (`id ("add_mail_server"), `Value);
-	string new_mx = DnsServerPunycode::EncodeDomainName(new_mx_decoded);
+	string new_mx = Punycode::EncodeDomainName(new_mx_decoded);
 
 	integer prio = (integer)UI::QueryWidget (`id ("add_priority"), `Value);
 	// maximal priority is 65535
@@ -950,7 +950,7 @@ term GetMasterZoneEditorTabRecords () {
 void RedrawZonesTable () {
     integer index = -1;
     string zone_name = current_zone["zone"]:"";
-    string decoded_zone_name = DnsServerPunycode::DecodeDomainName(zone_name);
+    string decoded_zone_name = Punycode::DecodeDomainName(zone_name);
 
     list<integer> ret = maplist (map m, current_zone["records"]:[], {
 	index = index + 1;
@@ -983,7 +983,7 @@ void RedrawZonesTable () {
     }), {
 	decoded_names = add (decoded_names, record);
     });
-    decoded_names = DnsServerPunycode::DecodePunycodes(decoded_names);
+    decoded_names = Punycode::DecodePunycodes(decoded_names);
 
     integer counter = -1;
     list items = maplist (integer r, ret, {
@@ -1009,14 +1009,14 @@ void RedrawZonesTable () {
 	    UI::QueryWidget (`id ("records_list"), `CurrentItem );
 	UI::ChangeWidget (`id ("add_record_name"), `Value,
 	    ToRelativeName(
-		DnsServerPunycode::DecodeDomainName(current_zone["records", r, "key"]:""), decoded_zone_name
+		Punycode::DecodeDomainName(current_zone["records", r, "key"]:""), decoded_zone_name
 	    )
 	);
 	UI::ChangeWidget (`id ("add_record_type"), `Value,
 	    current_zone["records", r, "type"]:"");
 	UI::ChangeWidget (`id ("add_record_val"), `Value,
 	    ToRelativeName(
-		DnsServerPunycode::DecodeDomainName(current_zone["records", r, "value"]:""), decoded_zone_name
+		Punycode::DecodeDomainName(current_zone["records", r, "value"]:""), decoded_zone_name
 	    )
 	);
     }
@@ -1192,28 +1192,28 @@ symbol HandleZoneRecordsTab (map event) {
 	UI::QueryWidget (`id ("add_record_type"), `Value);
 
     // translating new record key and val
-    string key = DnsServerPunycode::EncodeDomainName(
+    string key = Punycode::EncodeDomainName(
 	(string) UI::QueryWidget (`id ("add_record_name"), `Value)
     );
-    string val = DnsServerPunycode::EncodeDomainName(
+    string val = Punycode::EncodeDomainName(
 	(string) UI::QueryWidget (`id ("add_record_val"), `Value)
     );
 
     string zone = current_zone["zone"]:"";
-    string decoded_zone = DnsServerPunycode::DecodeDomainName(zone);
+    string decoded_zone = Punycode::DecodeDomainName(zone);
 
     if (ret == "records_list")
     {
 	UI::ChangeWidget (`id ("add_record_name"), `Value,
 	    ToRelativeName(
-		DnsServerPunycode::DecodeDomainName(current_zone["records", r, "key"]:""), decoded_zone
+		Punycode::DecodeDomainName(current_zone["records", r, "key"]:""), decoded_zone
 	    )
 	);
 	UI::ChangeWidget (`id ("add_record_type"), `Value,
 	    current_zone["records", r, "type"]:"");
 	UI::ChangeWidget (`id ("add_record_val"), `Value,
 	    ToRelativeName(
-		DnsServerPunycode::DecodeDomainName(current_zone["records", r, "value"]:""), decoded_zone
+		Punycode::DecodeDomainName(current_zone["records", r, "value"]:""), decoded_zone
 	    )
 	);
     }
@@ -1498,7 +1498,7 @@ symbol runMasterZoneTabDialog () {
 		    // Label - connected with Textentry which shows current edited zone
 		    `HSquash ( `Label ( _("Settings for Zone") ) ),
 		    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "",
-			DnsServerPunycode::DecodeDomainName(zone_name)
+			Punycode::DecodeDomainName(zone_name)
 		    ) ),
 		    `HStretch ()
 		),
@@ -1627,7 +1627,7 @@ symbol runSlaveZoneTabDialog () {
 	    // Label - connected with Textentry which shows current edited zone
 	    `HSquash ( `Label ( _("Settings for Zone") ) ),
 	    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "",
-		DnsServerPunycode::DecodeDomainName(zone_name)
+		Punycode::DecodeDomainName(zone_name)
 	    ) ),
 	    `HStretch ()
 	),
@@ -1799,7 +1799,7 @@ symbol runForwardZoneTabDialog () {
 	    // Label - connected with Textentry which shows current edited zone
 	    `HSquash ( `Label ( _("Settings for Zone") ) ),
 	    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "",
-		DnsServerPunycode::DecodeDomainName(zone_name)
+		Punycode::DecodeDomainName(zone_name)
 	    ) ),
 	    `HStretch ()
 	),
@@ -1873,7 +1873,7 @@ Are you sure you want to deny these queries?"))) {
 	
 	    y2milestone("Zone %1 (%2), Forwarders: %3",
 		current_zone["zone"]:"",
-		DnsServerPunycode::DecodeDomainName(current_zone["zone"]:""),
+		Punycode::DecodeDomainName(current_zone["zone"]:""),
 		current_zone_forwarders
 	    );
 	    current_zone["modified"] = true;

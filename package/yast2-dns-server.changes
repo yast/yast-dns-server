@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Aug 30 15:32:35 CEST 2006 - locilka@suse.cz
+
+- DnsServerPunycode renamed to Punycode and moved to yast2-2.13.78.
+- 2.13.17
+
+-------------------------------------------------------------------
 Fri Aug  4 16:11:37 CEST 2006 - locilka@suse.cz
 
 - Added new function IsServiceConfigurableExternally() to the
