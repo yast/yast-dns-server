@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Thu Sep  7 10:53:09 CEST 2006 - locilka@suse.cz
+
+- Fixed "Enable Zone Transfer" behavior. Transfers are enabled for
+  anybody by default if the allow-transfer options is not mentioned
+  at all. This led to a buggy behavior when YaST presented it as
+  disabled. By now, selecting the "Enable Transfer" check-box-only
+  explicitely writes allow-transfer for "all", disabling the
+  check-box writes allow-transfer for "none", using other ACLs is
+  not changed (#203910).
+- 2.13.18
+
+-------------------------------------------------------------------
 Wed Aug 30 15:32:35 CEST 2006 - locilka@suse.cz
 
 - DnsServerPunycode renamed to Punycode and moved to yast2-2.13.78.

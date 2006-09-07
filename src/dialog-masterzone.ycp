@@ -113,6 +113,13 @@ term GetMasterZoneEditorTabBasics () {
 	);
     }
 
+    // bug #203910
+    // hide "none" from listed ACLs
+    // "none" means, not allowed and thus multiselectbox of ACLs is disabled
+    acl = filter (string one_acl, acl, {
+	return one_acl != "none";
+    });
+
     term contents = `VBox (
 	expert_settings,
 	`Left (`CheckBox (`id ("enable_zone_transport"), `opt (`notify),
@@ -145,6 +152,20 @@ void ZoneAclInit () {
             }
         }
     });
+
+    // bug #203910
+    // no keys in allow-transfer means that transfer is allowed for all
+    // explicitly say that
+    if (size (keys) == 0) {
+	allowed = true;
+	keys = ["any"];
+    // the only way how to disable the transfer is to set "allow-transfer { none; };"
+    // "none" must be alone, remove it from the list, it is not present in the multi-sel box
+    } else if (size (keys) == 1 && keys == ["none"]) {
+	allowed = false;
+	keys = [];
+    }
+
     UI::ChangeWidget (`id ("enable_zone_transport"), `Value, allowed);
     UI::ChangeWidget (`id ("acls_list"), `Enabled, allowed);
     if (allowed)
@@ -170,14 +191,31 @@ void ZoneAclStore () {
 	UI::QueryWidget (`id ("acls_list"), `SelectedItems);
     boolean allowed = (boolean)
 	UI::QueryWidget (`id ("enable_zone_transport"), `Value);
-    if (allowed && size (keys) > 0)
-    {
-        current_zone["options"] = add (current_zone["options"]:[], $[
-            "key" : "allow-transfer",
-            "value" : sformat ("{ %1; }", mergestring (keys, "; ")),
-        ]);
+
+
+    // bug #203910
+    // always store the allow-transfer option explicitly
+    // if zone transfer is not allowed, set allow-transfer to { none; };
+    if (! allowed) {
+	keys = ["none"];
+	y2milestone("ZoneTransfer not allowed, keys: %1", keys);
+    // otherwise set selected keys
+    } else {
+	y2milestone("Zone transfer is allowed, keys: %1", keys);
+	// no ACL selected means "any" is selected by default
+    	if (size (keys) == 0) {
+	    keys = ["any"];
+	}
     }
 
+    // store either "none" (transfer disabled) or "all" (transfer enabled)
+    // or selected ACLs (transfer enabled for selected ACLs)
+    current_zone["options"] = add (
+	current_zone["options"]:[], $[
+    	    "key" : "allow-transfer",
+    	    "value" : sformat ("{ %1; }", mergestring (keys, "; ")),
+	]
+    );
 }
 
 void ZoneAclHandle (map event) {
@@ -1620,6 +1658,13 @@ symbol runSlaveZoneTabDialog () {
     });
     acl = (list<string>)
 	sort (merge (acl, ["any", "none", "localhost", "localnets"]));
+
+    // bug #203910
+    // hide "none" from listed ACLs
+    // "none" means, not allowed and thus multiselectbox of ACLs is disabled
+    acl = filter (string one_acl, acl, {
+	return one_acl != "none";
+    });
 
     string zone_name = current_zone["zone"]:"";
     term contents = `VBox (
