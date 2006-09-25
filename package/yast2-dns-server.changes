@@ -1,4 +1,20 @@
 -------------------------------------------------------------------
+Mon Sep 25 09:11:17 CEST 2006 - locilka@suse.cz
+
+- Fixed "Enable Zone Transfer" behavior. Transfers are enabled for
+  anybody by default if the allow-transfer options is not mentioned
+  at all. This led to a buggy behavior when YaST presented it as
+  disabled. By now, selecting the "Enable Transfer" check-box-only
+  explicitely writes allow-transfer for "all", disabling the
+  check-box writes allow-transfer for "none", using other ACLs is
+  not changed (#203910).
+- Special file /etc/named.d/forwarders.conf is allways written and
+  included in the configuration of /etc/named.conf because of the
+  feature 'PPP daemon sets forwarders'. The file is allways written
+  even the list of forwarders is empty (#134692, #205965).
+- 2.13.11.1
+
+-------------------------------------------------------------------
 Wed Apr 12 11:04:46 CEST 2006 - locilka@suse.cz
 
 - Convert the named.conf file to the format understandable for
