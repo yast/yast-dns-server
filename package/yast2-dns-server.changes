@@ -1,4 +1,17 @@
 -------------------------------------------------------------------
+Mon Sep 25 09:11:17 CEST 2006 - locilka@suse.cz
+
+- Fixed "Enable Zone Transfer" behavior. Transfers are enabled for
+  anybody by default if the allow-transfer options is not mentioned
+  at all. This led to a buggy behavior when YaST presented it as
+  disabled. By now, selecting the "Enable Transfer" check-box-only
+  explicitely writes allow-transfer for "all", disabling the
+  check-box writes allow-transfer for "none", using other ACLs is
+  not changed (#203910).
+- Adjusted testsuites.
+- 2.13.12.1
+
+-------------------------------------------------------------------
 Mon May 15 09:47:02 CEST 2006 - locilka@suse.cz
 
 - Special file /etc/named.d/forwarders.conf is allways written and
