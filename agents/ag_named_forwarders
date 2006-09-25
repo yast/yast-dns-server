@@ -15,7 +15,7 @@ while ( <STDIN> )
 	    my $file = $a[0];
 	    my $forwarders = $a[1];
 
-	    y2milestone ("Writing forwarders to file ".$file);
+	    y2milestone ("Writing forwarders ".$forwarders." to file ".$file);
 	    
 	    open (OUT, ">$file") || do {
 		y2error("Cannot write forwarders into file ".$file.". ".$!);
