@@ -38,7 +38,6 @@ YaST::YCP::Import ("NetworkService");
 use DnsZones;
 use DnsTsigKeys;
 
-use lib "/usr/share/YaST2/modules/";
 use LdapServerAccess;
 
 use DnsData qw(@tsig_keys $start_service $chroot @allowed_interfaces
@@ -547,9 +546,11 @@ sub SaveGlobals {
 	    my @values = @{$opt_map{$key} || []};
 	    SCR->Write (".dns.named.value.options.\"\Q$key\E\"", \@values);
 	} else {
-	    $forwarders_found = 1;
-	    # writing forwarders into single file
-	    SCR->Write (".dns.named-forwarders", [$forwarders_include, @{$opt_map{$key}}[0]]);
+	    if (defined @{$opt_map{$key}}[0] && @{$opt_map{$key}}[0] != "") {
+		$forwarders_found = 1;
+		# writing forwarders into single file
+		SCR->Write (".dns.named-forwarders", [$forwarders_include, @{$opt_map{$key}}[0]]);
+	    }
 	}
     }
     # forwarders not defined, but they must be at least empty
