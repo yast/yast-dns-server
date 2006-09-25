@@ -12,6 +12,7 @@ Mon Sep 25 09:11:17 CEST 2006 - locilka@suse.cz
   included in the configuration of /etc/named.conf because of the
   feature 'PPP daemon sets forwarders'. The file is allways written
   even the list of forwarders is empty (#134692, #205965).
+- Adjusted testsuites.
 - 2.13.11.1
 
 -------------------------------------------------------------------
