@@ -280,19 +280,22 @@ then click <b>Generate</b>. The new key will be generated and also added.</p>
 _("<p>To remove an existing key, select it and
 click <b>Delete</b>.</p>"),
 
-    /* Expert Mode Configuration - Zones 1/2 */
+    /* Expert Mode Configuration - Zones 1/3 */
 "zones" : _("<p><b><big>DNS Zones</big></b><br>
 Use this dialog to manage the DNS zones.</p>
 ") +
 
-    /* Expert Mode Configuration - Zones 2/2 */
+    /* Expert Mode Configuration - Zones 2/3 */
 _("<p>To add a new zone, enter its <b>Zone Name</b>, select the <b>Zone Type</b>,
 and click <b>Add</b>.
-To add a new reverse zone, enter a part of reverse IP address followed by
+To add a new reverse zone, enter a part of the reverse IP address followed by
 <tt>.in-addr.arpa</tt> as its <b>Zone Name</b> (for example, zone name
 <tt>0.168.192.in-addr.arpa</tt> for network <tt>192.168.0.0/24</tt>), select
 the <b>Zone Type</b>, and click <b>Add</b>.</p>
-<p>To modify settings for a zone, such as zone transport and name and
+") +
+
+    /* Expert Mode Configuration - Zones 3/3 */
+_("<p>To modify settings for a zone, such as zone transport and name and
 mail servers, select it then click <b>Edit Zone</b>.
 To remove a configured zone, select it and click <b>Delete Zone</b>.</p>
 "),

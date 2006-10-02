@@ -1908,10 +1908,9 @@ symbol runForwardZoneTabDialog () {
 	} else if (ret == `next) {
 	    if (size(current_zone_forwarders) == 0) {
 		// TRANSLATORS: popup question
-		if (! Popup::YesNo(_("This forward zone has no forwarders defined which means
-that all DNS queries for this zone will be denied.
-
-Are you sure you want to deny these queries?"))) {
+		if (! Popup::YesNo(_("This forward zone has no forwarders defined, which means
+that all DNS queries for this zone are denied.
+Really deny these queries?"))) {
 		    continue;
 		}
 	    }
