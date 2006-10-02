@@ -232,6 +232,8 @@ void ZoneAclHandle (map event) {
  * Initialize the tab of the dialog
  */
 void InitZoneBasicsTab () {
+    Wizard::SetDesktopIcon("dns-server");
+
     boolean allowed = false;
     string key = nil;
     foreach (map m, current_zone["options"]:[], ``{
