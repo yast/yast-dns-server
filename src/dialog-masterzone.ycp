@@ -15,7 +15,6 @@ textdomain "dns-server";
 import "Label";
 import "Wizard";
 import "DnsServer";
-// FIXME - DnsFakeTabs will be replaced by real Tabs
 import "DnsFakeTabs";
 import "DnsRoutines";
 import "DnsServerAPI";
@@ -27,6 +26,7 @@ import "Popup";
 import "DnsTsigKeys";
 import "Mode";
 import "Report";
+import "DnsServerAPI";
 
 string ToRelativeName (string absolute_name, string zone_name) {
     if (absolute_name == nil || zone_name == nil) {
@@ -74,6 +74,8 @@ boolean HandleNsupdate (map update_record, string operation) {
     return true;
 }
 
+// zone ACL -->
+
 /**
  * Dialog Tab - Zone Editor - Basics
  * @return term for Get_ZoneEditorTab()
@@ -111,6 +113,13 @@ term GetMasterZoneEditorTabBasics () {
 	);
     }
 
+    // bug #203910
+    // hide "none" from listed ACLs
+    // "none" means, not allowed and thus multiselectbox of ACLs is disabled
+    acl = filter (string one_acl, acl, {
+	return one_acl != "none";
+    });
+
     term contents = `VBox (
 	expert_settings,
 	`Left (`CheckBox (`id ("enable_zone_transport"), `opt (`notify),
@@ -143,6 +152,20 @@ void ZoneAclInit () {
             }
         }
     });
+
+    // bug #203910
+    // no keys in allow-transfer means that transfer is allowed for all
+    // explicitly say that
+    if (size (keys) == 0) {
+	allowed = true;
+	keys = ["any"];
+    // the only way how to disable the transfer is to set "allow-transfer { none; };"
+    // "none" must be alone, remove it from the list, it is not present in the multi-sel box
+    } else if (size (keys) == 1 && keys == ["none"]) {
+	allowed = false;
+	keys = [];
+    }
+
     UI::ChangeWidget (`id ("enable_zone_transport"), `Value, allowed);
     UI::ChangeWidget (`id ("acls_list"), `Enabled, allowed);
     if (allowed)
@@ -168,14 +191,31 @@ void ZoneAclStore () {
 	UI::QueryWidget (`id ("acls_list"), `SelectedItems);
     boolean allowed = (boolean)
 	UI::QueryWidget (`id ("enable_zone_transport"), `Value);
-    if (allowed && size (keys) > 0)
-    {
-        current_zone["options"] = add (current_zone["options"]:[], $[
-            "key" : "allow-transfer",
-            "value" : sformat ("{ %1; }", mergestring (keys, "; ")),
-        ]);
+
+
+    // bug #203910
+    // always store the allow-transfer option explicitly
+    // if zone transfer is not allowed, set allow-transfer to { none; };
+    if (! allowed) {
+	keys = ["none"];
+	y2milestone("ZoneTransfer not allowed, keys: %1", keys);
+    // otherwise set selected keys
+    } else {
+	y2milestone("Zone transfer is allowed, keys: %1", keys);
+	// no ACL selected means "any" is selected by default
+    	if (size (keys) == 0) {
+	    keys = ["any"];
+	}
     }
 
+    // store either "none" (transfer disabled) or "all" (transfer enabled)
+    // or selected ACLs (transfer enabled for selected ACLs)
+    current_zone["options"] = add (
+	current_zone["options"]:[], $[
+    	    "key" : "allow-transfer",
+    	    "value" : sformat ("{ %1; }", mergestring (keys, "; ")),
+	]
+    );
 }
 
 void ZoneAclHandle (map event) {
@@ -184,10 +224,16 @@ void ZoneAclHandle (map event) {
 	(boolean)UI::QueryWidget (`id ("enable_zone_transport"), `Value));
 }
 
+// <-- zone ACL
+
+// --> zone Basic
+
 /**
  * Initialize the tab of the dialog
  */
 void InitZoneBasicsTab () {
+    Wizard::SetDesktopIcon("dns-server");
+
     boolean allowed = false;
     string key = nil;
     foreach (map m, current_zone["options"]:[], ``{
@@ -274,6 +320,11 @@ preparation for autoinstallation.
     ZoneAclHandle (event);
     return nil;
 }
+
+// <-- zone Basic
+
+// --> zone NS
+
 /**
  * Dialog Tab - Zone Editor - Name Servers
  * @return term for Get_ZoneEditorTab()
@@ -316,19 +367,23 @@ term GetMasterZoneEditorTabNameServers () {
 }
 
 void RedrawNsListWidget () {
-    UI::ReplaceWidget (`id ("name_server_list_rp"), `SelectionBox (
-	`id ("name_server_list"),
-        // selection box label
-	_("Na&me Server List"),
-        current_zone_ns));
+    UI::ReplaceWidget (
+	`id ("name_server_list_rp"),
+	    `SelectionBox (
+		`id ("name_server_list"),
+    		// selection box label
+		_("Na&me Server List"),
+    		Punycode::DocodeDomainNames(current_zone_ns)
+	    )
+	);
 }
 
-/**
- * Setting ValidChars for dialog
- */
-void ValidCharsNsListWidget () {
-    UI::ChangeWidget( `id ("add_name_server"), `ValidChars, Hostname::ValidCharsFQ);
-}
+///**
+// * Setting ValidChars for dialog
+// */
+//void ValidCharsNsListWidget () {
+//    UI::ChangeWidget( `id ("add_name_server"), `ValidChars, Hostname::ValidCharsFQ);
+//}
 
 /**
  * Initialize the tab of the dialog
@@ -342,8 +397,9 @@ void InitNsListTab () {
     ));
     current_zone_ns = maplist (map r, records, ``(r["value"]:""));
     current_zone_ns = filter (string z, current_zone_ns, ``(z != ""));
+
     RedrawNsListWidget ();
-    ValidCharsNsListWidget ();
+    //ValidCharsNsListWidget ();
 }
 
 /**
@@ -377,8 +433,12 @@ symbol HandleNsListTab (map event) {
     {
 	string zn = current_zone["zone"]:"" + ".";
 
-	string new_ns = (string)
+	// NS is converted to the Punycode first
+	string new_ns_entered = (string)
 	    UI::QueryWidget (`id ("add_name_server"), `Value);
+	string new_ns = Punycode::EncodeDomainName(new_ns_entered);
+	y2milestone("New NS: %1", new_ns);
+
 	string check_ns = new_ns;
 	if (regexpmatch (check_ns, "^.*\\.$"))
 	    check_ns = regexpsub (check_ns, "^(.*)\\.$", "\\1");
@@ -426,6 +486,10 @@ symbol HandleNsListTab (map event) {
     }
     return nil;
 }
+
+// <-- zone NS
+
+// --> zone MX
 
 /**
  * Dialog Tab - Zone Editor - Mail Servers
@@ -486,24 +550,33 @@ term GetMasterZoneEditorTabMailServers () {
 }
 
 void RedrawMxListWidget () {
+    list <string> zone_mx_decoded = Punycode::DocodeDomainNames(current_zone_mx);
+
     integer index = -1;
-    list items = maplist (string mx, current_zone_mx, {
+    // create term items using already translated strings
+    list <term> items = maplist (string one_mx, zone_mx_decoded, {
+	string one_address_name = one_mx;
+	one_address_name = regexpsub(one_address_name, "^[0123456789]+[ \t]+(.*)$", "\\1");
+	
+	string one_priority = one_mx;
+	one_priority = regexpsub(one_priority, "^([0123456789]+)[ \t]+.*$", "\\1");
+	
 	index = index + 1;
-	list<string> split = splitstring (mx, " \t");
-	split = filter (string s, split, ``(s != ""));
-	string prio = split[0]:"";
-	string address = split[1]:"";
-	return `item (`id (index), address, prio);
+	return `item (`id (index), one_address_name, one_priority);
     });
+    
+    items = sort (term x, term y, items, ``(x[1]:"" < y[2]:""));
+
+    // initialize the widget content
     UI::ChangeWidget (`id ("mail_server_list"), `Items, items);
 }
 
-/**
- * Setting ValidChars for dialog
- */
-void ValidCharsMxListTab () {
-    UI::ChangeWidget( `id ("add_mail_server"), `ValidChars, Hostname::ValidCharsFQ);
-}
+///**
+// * Setting ValidChars for dialog
+// */
+//void ValidCharsMxListTab () {
+//    UI::ChangeWidget( `id ("add_mail_server"), `ValidChars, Hostname::ValidCharsFQ);
+//}
 
 /**
  * Initialize the tab of the dialog
@@ -517,8 +590,8 @@ void InitMxListTab () {
     ));
     current_zone_mx = maplist (map r, records, ``(r["value"]:""));
     current_zone_mx = filter (string z, current_zone_mx, ``(z != ""));
+
     RedrawMxListWidget ();
-    ValidCharsMxListTab ();
 }
 
 /**
@@ -550,8 +623,10 @@ symbol HandleMxListTab (map event) {
 
     if (ret == "add_mx")
     {
-	string new_mx = (string)
+	string new_mx_decoded = (string)
 	    UI::QueryWidget (`id ("add_mail_server"), `Value);
+	string new_mx = Punycode::EncodeDomainName(new_mx_decoded);
+
 	integer prio = (integer)UI::QueryWidget (`id ("add_priority"), `Value);
 	// maximal priority is 65535
 	if (prio > 65535) {
@@ -599,11 +674,11 @@ symbol HandleMxListTab (map event) {
 	}
 
 	new_mx = sformat ("%1 %2", prio, new_mx);
+	y2milestone("New MX: %1", new_mx);
 	
 	HandleNsupdate($["type":"MX", "key":zn, "value":new_mx],"add");
 
-	current_zone_mx
-	    = add (current_zone_mx, new_mx);
+	current_zone_mx = add (current_zone_mx, new_mx);
 	RedrawMxListWidget ();
     }
     else if (ret == "delete_mx")
@@ -621,6 +696,10 @@ symbol HandleMxListTab (map event) {
     }
     return nil;
 }
+
+// <-- zone MX
+
+// --> zone SOA
 
 /**
  * Dialog Tab - Zone Editor - Zone Settings
@@ -819,6 +898,10 @@ Continue?")))
     return true;
 }
 
+// <-- zone SOA
+
+// --> zone RECORDS
+
 /**
  * Dialog Tab - Zone Editor - Records
  * @return term for Get_ZoneEditorTab()
@@ -907,6 +990,8 @@ term GetMasterZoneEditorTabRecords () {
 void RedrawZonesTable () {
     integer index = -1;
     string zone_name = current_zone["zone"]:"";
+    string decoded_zone_name = Punycode::DecodeDomainName(zone_name);
+
     list<integer> ret = maplist (map m, current_zone["records"]:[], {
 	index = index + 1;
 	if (m["type"]:"" == "TTL" || m["type"]:"" == "ORIGIN")
@@ -924,14 +1009,34 @@ void RedrawZonesTable () {
         return index;
     });
     ret = filter (integer r, ret, ``(r != nil && r != -1));
+
+    // keys
+    list <string> decoded_names = maplist (integer r, ret, {
+	return current_zone["records", r, "key"]:"";
+    });
+
+    integer const_plus = size(decoded_names);
+
+    // values
+    foreach (string record, maplist (integer r, ret, {
+	    return current_zone["records", r, "value"]:"";
+    }), {
+	decoded_names = add (decoded_names, record);
+    });
+    decoded_names = Punycode::DecodePunycodes(decoded_names);
+
+    integer counter = -1;
     list items = maplist (integer r, ret, {
+	counter = counter + 1;
+
 	return `item (
 	    `id (r),
-	    ToRelativeName(current_zone["records", r, "key"]:"", zone_name),
+	    ToRelativeName(decoded_names[counter]:current_zone["records", r, "key"]:"", decoded_zone_name),
 	    current_zone["records", r, "type"]:"",
-	    ToRelativeName(current_zone["records", r, "value"]:"", zone_name)
+	    ToRelativeName(decoded_names[counter+const_plus]:current_zone["records", r, "value"]:"", decoded_zone_name)
 	);
     });
+
     integer r = (integer)
 	UI::QueryWidget (`id ("records_list"), `CurrentItem );
     UI::ChangeWidget (`id ("records_list"), `Items, items);
@@ -943,28 +1048,33 @@ void RedrawZonesTable () {
 	r = (integer)
 	    UI::QueryWidget (`id ("records_list"), `CurrentItem );
 	UI::ChangeWidget (`id ("add_record_name"), `Value,
-	    ToRelativeName(current_zone["records", r, "key"]:"", zone_name));
+	    ToRelativeName(
+		Punycode::DecodeDomainName(current_zone["records", r, "key"]:""), decoded_zone_name
+	    )
+	);
 	UI::ChangeWidget (`id ("add_record_type"), `Value,
 	    current_zone["records", r, "type"]:"");
 	UI::ChangeWidget (`id ("add_record_val"), `Value,
-	    ToRelativeName(current_zone["records", r, "value"]:"", zone_name));
+	    ToRelativeName(
+		Punycode::DecodeDomainName(current_zone["records", r, "value"]:""), decoded_zone_name
+	    )
+	);
     }
 }
 
-/**
- * Setting ValidChars for dialog
- */
-void ValidCharsZoneRecordsTab () {
-    UI::ChangeWidget( `id ("add_record_name"),	`ValidChars,	Hostname::ValidCharsFQ);
-    UI::ChangeWidget( `id ("add_record_val"),	`ValidChars,	Hostname::ValidCharsFQ + " ");
-}
+///**
+// * Setting ValidChars for dialog
+// */
+// void ValidCharsZoneRecordsTab () {
+//    UI::ChangeWidget( `id ("add_record_name"),	`ValidChars,	Hostname::ValidCharsFQ);
+//    UI::ChangeWidget( `id ("add_record_val"),	`ValidChars,	Hostname::ValidCharsFQ + " ");
+//}
 
 /**
  * Initialize the tab of the dialog
  */
 void InitZoneRecordsTab () {
     RedrawZonesTable ();
-    ValidCharsZoneRecordsTab ();
 }
 
 /**
@@ -983,6 +1093,7 @@ boolean CheckNewZoneRecordSyntax (map <string, string> record) {
     string type	= (string) record["type"]:"";
     string key	= (string) record["key"]:"";
     string val	= (string) record["val"]:"";
+    
     if (regexpmatch (key, "^.*\\.$"))
 	key = regexpsub (key, "^(.*)\\.$", "\\1");
     if (regexpmatch (val, "^.*\\.$"))
@@ -1114,22 +1225,37 @@ boolean CheckNewZoneRecordLogic (map <string, string> record) {
  */
 symbol HandleZoneRecordsTab (map event) {
     any ret = event["ID"]:nil;
+
     integer r = (integer)
 	UI::QueryWidget (`id ("records_list"), `CurrentItem );
-    string key = (string)
-	UI::QueryWidget (`id ("add_record_name"), `Value);
     string type = (string)
 	UI::QueryWidget (`id ("add_record_type"), `Value);
-    string val = (string)
-	UI::QueryWidget (`id ("add_record_val"), `Value);
+
+    // translating new record key and val
+    string key = Punycode::EncodeDomainName(
+	(string) UI::QueryWidget (`id ("add_record_name"), `Value)
+    );
+    string val = Punycode::EncodeDomainName(
+	(string) UI::QueryWidget (`id ("add_record_val"), `Value)
+    );
+
+    string zone = current_zone["zone"]:"";
+    string decoded_zone = Punycode::DecodeDomainName(zone);
+
     if (ret == "records_list")
     {
 	UI::ChangeWidget (`id ("add_record_name"), `Value,
-	    ToRelativeName(current_zone["records", r, "key"]:"", current_zone["zone"]:""));
+	    ToRelativeName(
+		Punycode::DecodeDomainName(current_zone["records", r, "key"]:""), decoded_zone
+	    )
+	);
 	UI::ChangeWidget (`id ("add_record_type"), `Value,
 	    current_zone["records", r, "type"]:"");
 	UI::ChangeWidget (`id ("add_record_val"), `Value,
-	    ToRelativeName(current_zone["records", r, "value"]:"", current_zone["zone"]:""));
+	    ToRelativeName(
+		Punycode::DecodeDomainName(current_zone["records", r, "value"]:""), decoded_zone
+	    )
+	);
     }
     else if (ret == "change_record")
     {
@@ -1411,7 +1537,9 @@ symbol runMasterZoneTabDialog () {
 		`HBox (
 		    // Label - connected with Textentry which shows current edited zone
 		    `HSquash ( `Label ( _("Settings for Zone") ) ),
-		    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "", zone_name ) ),
+		    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "",
+			Punycode::DecodeDomainName(zone_name)
+		    ) ),
 		    `HStretch ()
 		),
 		`VSpacing ( 1 ),
@@ -1533,12 +1661,21 @@ symbol runSlaveZoneTabDialog () {
     acl = (list<string>)
 	sort (merge (acl, ["any", "none", "localhost", "localnets"]));
 
+    // bug #203910
+    // hide "none" from listed ACLs
+    // "none" means, not allowed and thus multiselectbox of ACLs is disabled
+    acl = filter (string one_acl, acl, {
+	return one_acl != "none";
+    });
+
     string zone_name = current_zone["zone"]:"";
     term contents = `VBox (
 	`HBox (
 	    // Label - connected with Textentry which shows current edited zone
 	    `HSquash ( `Label ( _("Settings for Zone") ) ),
-	    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "", zone_name ) ),
+	    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "",
+		Punycode::DecodeDomainName(zone_name)
+	    ) ),
 	    `HStretch ()
 	),
 	`VSpacing ( 1 ),
@@ -1660,7 +1797,156 @@ symbol runStubZoneTabDialog () {
     return runSlaveZoneTabDialog ();
 }
 
+/* All current forwarders are stored here */
+list <string> current_zone_forwarders = [];
 
+void InitTableOfZOneForwarders () {
+    if (current_zone_forwarders != nil && current_zone_forwarders != []) {
+	list <term> forwarders_items = [];
+	foreach (string one_forwarder, current_zone_forwarders, {
+	    forwarders_items = add(forwarders_items, `item(`id(one_forwarder), one_forwarder));
+	});
+	UI::ChangeWidget (`id("zone_forwarders_list"), `Items, forwarders_items);
+    }
+}
+
+void ForwardZone_AddZoneForwarder () {
+    string new_forwarder = (string) UI::QueryWidget(`id("new_forwarder"), `Value);
+    if (!IP::Check4(new_forwarder)) {
+	UI::SetFocus(`id("new_forwarder"));
+	Report::Error(IP::Valid4());
+    } else {
+	current_zone_forwarders = toset(add(current_zone_forwarders, new_forwarder));
+	InitTableOfZOneForwarders();
+    }
+}
+
+void ForwardZone_DeleteZoneForwarder () {
+    string delete_forwarder = (string) UI::QueryWidget(`id("zone_forwarders_list"), `CurrentItem);
+    if (delete_forwarder != nil && delete_forwarder != "") {
+	current_zone_forwarders = filter (string one_forwarder, current_zone_forwarders, {
+	    return one_forwarder != delete_forwarder;
+	});
+	InitTableOfZOneForwarders();
+    }
+}
+
+/**
+ * Dialog Zone Editor - Forward
+ * @return any dialog result for wizard
+ */
+symbol runForwardZoneTabDialog () {
+
+    string zone_name = current_zone["zone"]:"";
+    current_zone_forwarders = DnsServerAPI::GetZoneForwarders(current_zone["zone"]:"");
+
+    term contents =
+	`VBox (
+	`HBox (
+	    // Label - connected with Textentry which shows current edited zone
+	    `HSquash ( `Label ( _("Settings for Zone") ) ),
+	    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "",
+		Punycode::DecodeDomainName(zone_name)
+	    ) ),
+	    `HStretch ()
+	),
+	`VSpacing ( 1 ),
+	    `VSquash (
+		`HBox (
+		    `HWeight (7,
+			// Textentry - adding forwarder
+			`TextEntry ( `id("new_forwarder"), _("New &Forwarder IP Address"))
+		    ),
+		    `HWeight (2,
+			`VBox (
+			    `VStretch (),
+			    `VSquash (`PushButton (`id("add_forwarder"), `opt(`hstretch), Label::AddButton()))
+			)
+		    )
+		)
+	    ),
+	    `HBox (
+		`HWeight (7,
+		    // Selectionbox - listing current forwarders
+		    `SelectionBox (`id("zone_forwarders_list"), `opt(`hstretch), _("Current &Zone Forwarders"), [])
+		),
+		`HWeight (2,
+		    `VBox (
+			`VSquash (`VSpacing (1) ),
+			`VSquash (`PushButton (`id("delete_forwarder"), `opt(`hstretch), Label::DeleteButton())),
+			`VStretch ()
+		    )
+		)
+	    )
+	);
+
+    // dialog caption
+    string caption = _("Forward Zone Editor");
+
+    Wizard::SetContentsButtons (caption, contents, HELPS["forward_zone"]:"",
+        Label::CancelButton(), Label::OKButton());
+    UI::ChangeWidget (`id ("new_forwarder"), `ValidChars, IP::ValidChars4);
+
+    InitTableOfZOneForwarders();
+    
+    any ret = nil;
+
+    while (true) {
+	ret = UI::UserInput();
+
+	if (ret == `abort || ret == `cancel) {
+	    if (ReallyAbort())
+		return `abort;
+	    else
+		continue;
+	} else if (ret == `back) {
+	    break;
+	} else if (ret == "add_forwarder") {
+	    ForwardZone_AddZoneForwarder();
+	    continue;
+	} else if (ret == "delete_forwarder") {
+	    ForwardZone_DeleteZoneForwarder();
+	    continue;
+	} else if (ret == `next) {
+	    if (size(current_zone_forwarders) == 0) {
+		// TRANSLATORS: popup question
+		if (! Popup::YesNo(_("This forward zone has no forwarders defined, which means
+that all DNS queries for this zone are denied.
+Really deny these queries?"))) {
+		    continue;
+		}
+	    }
+	
+	    y2milestone("Zone %1 (%2), Forwarders: %3",
+		current_zone["zone"]:"",
+		Punycode::DecodeDomainName(current_zone["zone"]:""),
+		current_zone_forwarders
+	    );
+	    current_zone["modified"] = true;
+	    if (size(current_zone_forwarders) > 0) {
+		current_zone["forwarders"] = sformat("{ %1; }", mergestring(current_zone_forwarders, "; "));
+	    } else {
+		current_zone["forwarders"] = "{}";
+	    }
+	    DnsServer::StoreCurrentZone (current_zone);
+	    DnsServer::StoreZone ();
+	    DnsServer::SetModified ();
+	    break;
+	} else {
+	    y2error("Unexpected return %1", ret);
+	}
+    }
+
+    if (ret == `next)
+    {
+	current_zone["modified"] = true;
+    }
+    // empty the list
+    current_zone_forwarders = [];
+    was_editing_zone = true;
+
+    return (symbol) ret;
+}
 
 /* EOF */
 }

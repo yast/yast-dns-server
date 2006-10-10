@@ -55,6 +55,10 @@
 	    "personal-firewall" : $["REJECT_ALL_INCOMING_CONNECTIONS":""],
 	    "displaymanager" : $["DISPLAYMANAGER":""],
 	],
+	"target" : $[
+	    "stat" : $[],
+	    "lstat" : $[],
+	],
     ];
     map I_WRITE = $[];
     map I_EXEC = $[];
@@ -197,6 +201,8 @@
 	"target" : $[
 	    "yast2" : $[ "lang2iso.ycp" : $[] ],
 	    "size" : 1,
+	    "stat" : $[],
+	    "lstat" : $[],
 	],
     ];
     map WRITE = $[];

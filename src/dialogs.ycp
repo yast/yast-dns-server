@@ -19,6 +19,7 @@
     import "Wizard";
     import "Message";
     import "SuSEFirewall";
+    import "Punycode";
 
     /**
       * Ask user if exit without saving
@@ -315,13 +316,15 @@ Really exit?"));
 define symbol runZoneTypeSwitch () ``{
     string type = current_zone["type"]:"master";
     string name = current_zone["zone"]:"unknown";
-    y2milestone ("Editing zone %1, type %2", name, type);
+    y2milestone ("Editing zone %1 (%2), type %3", name, Punycode::DecodeDomainName(name), type);
     if (type == "master")
 	return `master;
     else if (type == "slave")
 	return `slave;
     else if (type == "stub")
 	return `stub;
+    else if (type == "forward")
+	return `forward;
     else
     {
 	// message popup
