@@ -25,9 +25,13 @@ This package is the public functional YaST2 API to configure the Bind version 9
 
 =head1 SYNOPSIS
 
-use DnsServerAPI;
+in Perl
+    use DnsServerAPI;
+    my $categories = DnsServerAPI->GetLoggingCategories();
 
-$categories = DnsServerAPI::GetLoggingCategories();
+in YCP
+    imoprt "DnsServerAPI";
+    list <string> categories = DnsServerAPI::GetLoggingCategories();
 
 Note: All arrays or hashes returned or accepted by this module are references
 to them. However it is impossible to change the data through the references,
@@ -48,6 +52,7 @@ textdomain("dns-server");
 
 use YaST::YCP qw( sformat y2milestone y2error y2warning );
 YaST::YCP::Import ("DnsServer");
+YaST::YCP::Import ("PackageSystem");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("Progress");
 # for reporting errors
@@ -148,6 +153,19 @@ sub CheckZone {
     return 0;
 }
 
+sub CheckIPv4s {
+    my $class = shift;
+    my $ips   = shift || [];
+
+    foreach my $ip (@{$ips}) {
+	if (!$class->CheckIPv4($ip)) {
+	    return 0;
+	}
+    }
+    
+    return 1;
+}
+
 sub ZoneIsMaster {
     my $class = shift;
     my $zone  = shift || '';
@@ -179,7 +197,7 @@ sub CheckZoneType {
 	return 0;
     }
 
-    if ($type !~ /^(master|slave)$/) {
+    if ($type !~ /^(master|slave|forward)$/) {
 	# TRANSLATORS: Popup error message, Calling function with unsupported DNZ zone type,
 	#   %1 is the zone type
 	Report->Error(sformat(__("Zone type %1 is not supported."), $type));
@@ -1282,21 +1300,24 @@ sub SetZoneMasterServers {
     my $masters = shift;
 
     return 0 if (!$class->CheckZone($zone));
+    return 0 if (!$class->CheckIPv4s($masters));
 
     my $zones = DnsServer->FetchZones();
     my $zone_counter = 0;
-    foreach (@{$zones}) {
-	if ($zone eq $_->{'zone'}) {
-	    if ($_->{'type'} eq 'slave') {
-		$_->{'masters'} = GetRecordFromList(@{$masters});
-		@{$zones}[$zone_counter] = $_;
+    foreach my $one_zone (@{$zones}) {
+	if ($zone eq $one_zone->{'zone'}) {
+	    if ($one_zone->{'type'} eq 'slave') {
+		$one_zone->{'masters'} = GetRecordFromList(@{$masters});
+		$one_zone->{'modified'} = 1;
+		@{$zones}[$zone_counter] = $one_zone;
+		DnsServer->StoreZones($zones);
 		last;
 	    } else {
 		# TRANSLATORS: Popup error message, Trying to set 'master server' for zone which is not 'slave' type,
 		#   %1 is name of the zone, %2 is type of the zone
 		Report->Error(sformat(__("Only slave zones have a master server defined.
 Zone %1 is type %2.
-"), $_->{'zone'}, $_->{'type'}));
+"), $one_zone->{'zone'}, $one_zone->{'type'}));
 	    }
 	}
 	++$zone_counter;
@@ -1374,7 +1395,18 @@ sub AddZone {
 
     if ($type eq 'slave') {
 	my @masters = $options->{'masterserver'};
-	$class->SetZoneMasterServers($zone,\@masters);
+	$class->SetZoneMasterServers($zone, \@masters);
+    } elsif ($type eq 'forward') {
+	# forwarders are optional for 'forward' zone
+	if (defined $options->{'forwarders'}) {
+	    $options->{'forwarders'} =~ s/,/ /g;
+	    $options->{'forwarders'} =~ s/;/ /g;
+	    $options->{'forwarders'} =~ s/ +/ /g;
+	    $options->{'forwarders'} =~ s/(^ *| *$)//g;
+	    
+	    my @forwarders = split(/ /, $options->{'forwarders'});
+	    $class->SetZoneForwarders($zone, \@forwarders);
+	}
     }
 
     return 1;
@@ -1458,21 +1490,22 @@ sub SetZoneTransportACLs {
 
     my $zones = DnsServer->FetchZones();
     my $zone_counter = 0;
-    foreach (@{$zones}) {
-	if ($_->{'zone'} eq $zone) {
+    foreach my $one_zone (@{$zones}) {
+	if ($one_zone->{'zone'} eq $zone) {
 	    my @new_options;
-	    foreach (@{$_->{'options'}}) {
+	    foreach (@{$one_zone->{'options'}}) {
 		# removing all allow-transfer from options, getting allow-transfer
-		if ($_->{'key'} eq 'allow-transfer') {
+		if ($one_zone->{'key'} eq 'allow-transfer') {
 		    next;
 		} else {
 		# adding all non-allow-transfer from options
-		    push @new_options, $_;
+		    push @new_options, $one_zone;
 		}
 	    }
 	    push @new_options, { 'key' => 'allow-transfer', 'value' => GetRecordFromList(@{$acls}) };
-	    $_->{'options'} = \@new_options;
-	    @{$zones}[$zone_counter] = $_;
+	    $one_zone->{'options'} = \@new_options;
+	    $one_zone->{'modified'} = 1;
+	    @{$zones}[$zone_counter] = $one_zone;
 	    last;
 	}
 	++$zone_counter;
@@ -2104,9 +2137,9 @@ sub SetZoneSOA {
     my $zones = DnsServer->FetchZones();
     my $zone_index = 0;
     my $new_zone = {};
-    foreach (@{$zones}) {
-	if ($_->{'zone'} eq $zone) {
-	    my $new_SOA = $_->{'soa'};
+    foreach my $one_zone (@{$zones}) {
+	if ($one_zone->{'zone'} eq $zone) {
+	    my $new_SOA = $one_zone->{'soa'};
 	    foreach my $key ('minimum', 'expiry', 'serial', 'retry', 'refresh', 'mail', 'server') {
 		# changing current SOA with new values
 		if (defined $SOA->{$key}) {
@@ -2114,7 +2147,7 @@ sub SetZoneSOA {
 		    $new_SOA->{$key} = $SOA->{$key};
 		}
 	    }
-	    $new_zone = $_;
+	    $new_zone = $one_zone;
 	    # ttl is defined in another place
 	    if (defined $SOA->{'ttl'}) {
 		$new_zone->{'ttl'} = $SOA->{'ttl'};
@@ -2147,6 +2180,8 @@ BEGIN{$TYPEINFO{GetReverseZoneNameForIP} = ["function","string","string"]};
 sub GetReverseZoneNameForIP {
     my $class = shift;
     my $ip    = shift || '';
+    
+    return undef if (!$class->CheckIPv4($ip));
 
     my $zones = $class->GetZones();
     my @reversezones = ();
@@ -2188,6 +2223,8 @@ BEGIN{$TYPEINFO{GetReverseIPforIPv4} = ["function","string","string"]};
 sub GetReverseIPforIPv4 {
     my $class = shift;
     my $ipv4  = shift || '';
+    
+    return undef if (!$class->CheckIPv4($ipv4));
 
     my $reverseip = 'in-addr.arpa.';
     foreach my $part (split(/\./, $ipv4)) {
@@ -2350,6 +2387,106 @@ sub GetZoneHosts {
     }
 
     return \@hosts;
+}
+
+=item *
+C<$array = GetZoneForwarders($string);>
+
+Function returns list of zone forwarders.
+
+EXAMPLE:
+
+    $list_of_forwarders = GetZoneForwarders('example.org');
+
+=cut
+
+BEGIN{$TYPEINFO{GetZoneForwarders} = ["function", ["list", "string"], "string"]};
+sub GetZoneForwarders {
+    my $class = shift;
+    my $zone  = shift || '';
+
+    return undef if (!$class->CheckZone($zone));
+
+    my @forwarders;
+    my $zones = DnsServer->FetchZones();
+    foreach my $one_zone (@$zones) {
+	if ($zone eq $one_zone->{'zone'}) {
+	    @forwarders = GetListFromRecord($one_zone->{'forwarders'});
+	    last;
+	}
+    }
+
+    return \@forwarders;
+}
+
+=item *
+C<$boolean = SetZoneForwarders($string, $array);>
+
+Function sets forwarders for the zone.
+
+EXAMPLE:
+
+  my @forwarders = SetZoneForwarders('192.168.32.1','192.168.32.2');
+  my $zone = 'example.org';
+  my $success = SetZoneForwarders($zone, \@masterservers);
+
+=cut
+
+BEGIN{$TYPEINFO{SetZoneForwarders} = ["function", "boolean", "string", ["list", "string"]]};
+sub SetZoneForwarders {
+    my $class      = shift;
+    my $zone       = shift || '';
+    my $forwarders = shift;
+
+    return 0 if (!$class->CheckZone($zone));
+    return 0 if (!$class->CheckIPv4s($forwarders));
+
+    my $zones = DnsServer->FetchZones();
+    my $zone_counter = 0;
+    foreach my $one_zone (@{$zones}) {
+	if ($zone eq $one_zone->{'zone'}) {
+	    $one_zone->{'forwarders'} = GetRecordFromList(@{$forwarders});
+	    $one_zone->{'modified'} = 1;
+	    @{$zones}[$zone_counter] = $one_zone;
+	    DnsServer->StoreZones($zones);
+	    last;
+	}
+	++$zone_counter;
+    }
+
+    return 1;
+}
+
+=item *
+C<$boolean = ServiceIsConfigurableExternally();>
+
+Checks whether the needed DNS Server package is installed
+and whether the server is enabled, or at least, running.
+
+EXAMPLE:
+
+  my $configurable = IsServiceConfigurableExternally()
+
+=cut
+
+BEGIN{$TYPEINFO{IsServiceConfigurableExternally} = ["function", "boolean"]};
+sub IsServiceConfigurableExternally {
+    my $class = shift;
+
+    my $service_enabled   = Service->Enabled         ("named");
+    my $service_status    = Service->Status          ("named");
+    my $service_installed = PackageSystem->Installed ("bind");
+
+    y2milestone (
+	"Enabled: ".$service_enabled.", ".
+	"Status: ".$service_status.", ".
+	"Installed: ".$service_installed
+    );
+    
+    return 0 if ($service_installed != 1);
+    return 0 if ($service_enabled != 1 && $service_status != 0);
+
+    return 1;
 }
 
 1;

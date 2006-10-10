@@ -48,7 +48,11 @@
 		"ROOT_USES_LANG" : "ctype",
 	    ],
 	],
-	"target" : $[ "yast2" : $[ "lang2iso.ycp" : $[] ] ],
+	"target" : $[
+	    "stat" : $[],
+	    "lstat" : $[],
+	    "yast2" : $[ "lang2iso.ycp" : $[] ]
+	],
     ];
     map I_WRITE = $[];
     map I_EXEC = $[];
@@ -110,6 +114,7 @@
 
 	"target" : $[
 	    "stat" : $[],
+	    "lstat" : $[],
 	    "ycp" : $[],
 	],
 	"dns" : $[
@@ -170,6 +175,8 @@
 	    ],
 	],
 	"target" : $[
+	    "stat" : $[],
+	    "lstat" : $[],
 	    "yast2" : $[ "lang2iso.ycp" : $[] ],
 	    "size" : 1,
 	],

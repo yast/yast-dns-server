@@ -1,4 +1,105 @@
 -------------------------------------------------------------------
+Tue Oct 10 15:16:47 CEST 2006 - locilka@suse.cz
+
+- Merged SLES10 SP1 branch to openSUSE 10.2.
+- 2.14.0
+
+-------------------------------------------------------------------
+Mon Oct  2 16:56:41 CEST 2006 - locilka@suse.cz
+
+- Merged proofread texts
+- 2.13.20
+
+-------------------------------------------------------------------
+Mon Sep 25 09:55:46 CEST 2006 - locilka@suse.cz
+
+- Handling possible exception of hand-edited configuration of
+  forwarders (Enhancement related to bug #134692).
+- Adjusted testsuites.
+- 2.13.19
+
+-------------------------------------------------------------------
+Thu Sep  7 10:53:09 CEST 2006 - locilka@suse.cz
+
+- Fixed "Enable Zone Transfer" behavior. Transfers are enabled for
+  anybody by default if the allow-transfer options is not mentioned
+  at all. This led to a buggy behavior when YaST presented it as
+  disabled. By now, selecting the "Enable Transfer" check-box-only
+  explicitely writes allow-transfer for "all", disabling the
+  check-box writes allow-transfer for "none", using other ACLs is
+  not changed (#203910).
+- 2.13.18
+
+-------------------------------------------------------------------
+Wed Aug 30 15:32:35 CEST 2006 - locilka@suse.cz
+
+- DnsServerPunycode renamed to Punycode and moved to yast2-2.13.78.
+- 2.13.17
+
+-------------------------------------------------------------------
+Fri Aug  4 16:11:37 CEST 2006 - locilka@suse.cz
+
+- Added new function IsServiceConfigurableExternally() to the
+  DnsServerAPI module to be used from external modules like
+  DHCP or HTTP Servers.
+- 2.13.16
+
+-------------------------------------------------------------------
+Fri Aug  4 12:39:47 CEST 2006 - mvidner@suse.cz
+
+- Removed a Perl search path that is added elsewhere already
+  and here just breaks compilation in some cases (#197099).
+
+-------------------------------------------------------------------
+Thu Aug  3 10:57:42 CEST 2006 - locilka@suse.cz
+
+- New help texts (#195873).
+
+-------------------------------------------------------------------
+Fri Jul 28 08:47:05 CEST 2006 - locilka@suse.cz
+
+- Optimized PunycodeToUnicode translations using DocodeDomainNames
+  function from DnsServerPunycode module (speeding up).
+- Added forward zone handling into the Install-Wizard Sequence.
+- Added help for forward zone.
+- Adjusted full support for viewing, adding, removing and changing
+  all DNS records (NSs, MXs, other Records) in Master Zone dialogs.
+- Deleting the zone must be confirmed.
+- 2.13.15
+
+-------------------------------------------------------------------
+Thu Jul 27 15:15:34 CEST 2006 - locilka@suse.cz
+
+- Added cache of already converted strings unicode->punycode,
+  punycode->unicode. Cache size is limited.
+
+-------------------------------------------------------------------
+Thu Jul 27 09:14:08 CEST 2006 - locilka@suse.cz
+
+- Fixed testsuites because of changes in yast2-pam.
+- Adjusted master-zone dialog to show Punycode records in their
+  decoded form.
+- 2.13.14
+
+-------------------------------------------------------------------
+Wed Jul 26 16:27:03 CEST 2006 - locilka@suse.cz
+
+- Created new YCP module DnsServerPunycode that transforms strings
+  (relative zone names, or FQDNs) into the Punycode encoding
+  described in RFC 3492 (FaTE #300589, Bugzilla #162217).
+- DnsServerPunycode used for adding and editing DNS zones.
+
+-------------------------------------------------------------------
+Mon Jul 24 15:02:56 CEST 2006 - locilka@suse.cz
+
+- Added support for forward zones (FaTE #120041). The only option
+  thats is possible to set is a 'forwarders' option.
+- Added CommandLine support for forward zone.
+- Added more checking proceduures into the DnsServerAPI module.
+- Enhanced testsuited for DnsServerAPI module.
+- 2.13.13
+
+-------------------------------------------------------------------
 Mon May 15 09:47:02 CEST 2006 - locilka@suse.cz
 
 - Special file /etc/named.d/forwarders.conf is allways written and

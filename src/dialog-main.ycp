@@ -34,6 +34,7 @@ import "Popup";
 import "Hostname";
 import "Confirm";
 import "DnsServerAPI";
+import "Punycode";
 
 /* String defines the initial screen for the expert dialog */
 string initial_screen = "start_up";
@@ -207,17 +208,6 @@ term ExpertForwardersDialog () {
 	    ),
 	    `VSpacing ( 1 ),
 	    // Frame label for DNS-Forwarders options
-//	    `Frame ( _("Options"),
-//		`Left (
-//		    `VBox (
-//			// Checkbox - DNS-Forwarders options
-//			`Left ( `CheckBox ( `id ( "forward_first" ), `opt (`notify), _("Forward &First") ) ),
-//			// Checkbox - DNS-Forwarders options
-//			`Left ( `CheckBox ( `id ( "forward_only" ),  `opt (`notify), _("Fo&rward Only") ) )
-//		    )
-//		)
-//	    ),
-//	    `VSpacing ( 0.5 ),
 	    `VSquash (
 		`Frame (
 		    // Frame label for DNS-Forwarders adding IP
@@ -265,8 +255,6 @@ void RedrawForwardersListWidget () {
 	    // Selectionbox for listing current DNS-Forwarders
 	    _("Forwarder &List"),
 	    forwarders));
-//    UI::ChangeWidget (`id ("forward_first"), `Value, forward == "first");
-//    UI::ChangeWidget (`id ("forward_only"), `Value, forward == "only");
     UI::ChangeWidget (`id ("forwarders_delete_ip_address"),
 	`Enabled, forwarders != []);
     if (forwarders != [])
@@ -292,16 +280,6 @@ void ReadForwarders () {
 		return f;
 	    });
 	}
-/*	else if (o["key"]:"" == "forward")
-	{
-	    if (issubstring (o["value"]:"", "first"))
-		forward = "first";
-	    else if (issubstring (o["value"]:"", "only"))
-		forward = "only";
-	    else
-		forward = "";
-	}*/
-
     });
 }
 
@@ -358,13 +336,6 @@ void StoreExpertForwardersPage (string key, map event) {
 	    "value" : forwarders_str,
 	]);
     }
-/*    if (forward != "")
-    {
-	options = add (options, $[
-	    "key" : "forward",
-	    "value" : forward,
-	]);
-    }*/
 
     DnsServer::SetGlobalOptions (options);
 }
@@ -374,33 +345,8 @@ void StoreExpertForwardersPage (string key, map event) {
  */
 symbol HandleExpertForwardersPage (string key, map event) {
     any ret = event["ID"]:nil;
-/*    if (ret == "forward_first")
-    {
-	if ((boolean)UI::QueryWidget (`id ("forward_first"), `Value))
-	{
-	    UI::ChangeWidget (`id ("forward_only"), `Value, false);
-	    forward = "first";
-	}
-	else
-	{
-	    forward = "";
-	}
-	return nil;
-    }
-    else if (ret == "forward_only")
-    {
-	if ((boolean)UI::QueryWidget (`id ("forward_only"), `Value))
-	{
-	    UI::ChangeWidget (`id ("forward_first"), `Value, false);
-	    forward = "only";
-	}
-	else
-	{
-	    forward = "";
-	}
-	return nil;
-    }
-    else */ if (ret == "forwarders_add_ip_address")
+
+    if (ret == "forwarders_add_ip_address")
     {
 	string new_addr = (string)
 	    UI::QueryWidget (`id ("forwarders_new_ip_address"), `Value);
@@ -1386,7 +1332,9 @@ term ExpertZonesDialog () {
 					    // Combobox - DNS adding zone - Type Master
 					    `item ( `id ( "master" ), _("Master") ),
 					    // Combobox - DNS adding zone - Type Slave
-					    `item ( `id ( "slave" ),  _("Slave") )
+					    `item ( `id ( "slave" ),  _("Slave") ),
+					    // Combobox - DNS adding zone - Type Slave
+					    `item ( `id ( "forward" ),  _("Forward") ),
 					] )
 				    ),
 				    `VSpacing ( 0.5 )
@@ -1437,36 +1385,63 @@ term ExpertZonesDialog () {
 }
 
 void RedrawZonesListWidget () {
+    // Translating of all zone names at once
+    list <string> encoded_zone_names = maplist (map z, zones, {
+	return z["zone"]:"";
+    });
+    list <string> decoded_zone_names = Punycode::DocodeDomainNames(encoded_zone_names);
     integer index = -1;
-    list items = maplist (map z, zones, ``{
+    // Creating map $[encoded:decoded]
+    map <string, string> enc_to_dec = listmap (string enc_zone, encoded_zone_names, {
+	index = index + 1;
+	return $[enc_zone : decoded_zone_names[index]:""];
+    });
+
+    index = -1;
+    list <term> items = maplist (map z, zones, ``{
 	index = index + 1;
 	string zone_name = z["zone"]:"";
+
+	// filtering out default zones
 	if (zone_name == "." || zone_name == "0.0.127.in-addr.arpa"
-	    || zone_name == "localhost")
-	{
-	    return `item ();
+	    || zone_name == "localhost") {
+		return `item ();
 	}
-	return `item (`id (index), zone_name, (z["type"]:"master" == "master" ?
-	    // TRANSLATORS: Table item - Server type
-	    _("Master")
-	    :
-	    // TRANSLATORS: Table item - Server type
-	    _("Slave")
-	));
+
+	string type_trans = "";
+	switch (z["type"]:"master") {
+	    case "master" :
+		// TRANSLATORS: Table item - Server type
+		type_trans = _("Master");
+		break;
+	    case "slave" :
+		// TRANSLATORS: Table item - Server type
+		type_trans = _("Slave");
+		break;
+	    case "stub" :
+		// TRANSLATORS: Table item - Server type
+		type_trans = _("Slave");
+		break;
+	    case "forward" :
+		// TRANSLATORS: Table item - Server type
+		type_trans = _("Forward");
+		break;
+	    y2warning("Unknown zone type %1", type_trans);
+	}
+
+	return `item (`id (index), enc_to_dec[zone_name]:zone_name, type_trans);
     });
-    items = filter (any i, items, ``(i != `item ()));
+
+    // Filtering out empty items
+    items = filter (term i, items,  { return i != `item(); });
+
+    // Sorting by the zone name (might have different sorting than UI)
+    items = sort (term x, term y, items, ``(x[1]:"" < y[1]:""));
+
     UI::ChangeWidget (`id ("zones_list_table"), `Items, items);
     UI::SetFocus (`id ("zones_list_table"));
     UI::ChangeWidget (`id ("delete_zone"), `Enabled, size (items) > 0);
     UI::ChangeWidget (`id ("edit_zone"), `Enabled, size (items) > 0);
-}
-
-/**
- * Setting `ValidChars for the dialog
- */
-void ValidCharsZonesPage () {
-    // setting `ValidChars
-    UI::ChangeWidget( `id("new_zone_name"),	`ValidChars,	Hostname::ValidCharsDomain);
 }
 
 /**
@@ -1475,7 +1450,6 @@ void ValidCharsZonesPage () {
 void InitExpertZonesPage (string key) {
     zones = DnsServer::FetchZones ();
     RedrawZonesListWidget ();
-    ValidCharsZonesPage ();
 }
 
 /**
@@ -1492,8 +1466,12 @@ symbol HandleExpertZonesPage (string key, map event) {
     any ret = event["ID"]:nil;
     integer index = (integer)
 	UI::QueryWidget (`id ("zones_list_table"), `CurrentItem);
+
     if (ret == "delete_zone")
     {
+	// Confirm deleting zone
+	if (!Confirm::DeleteSelected()) return nil;
+
 	zones[index] = nil;
 	zones = filter (map z, zones, ``(z != nil));
 	DnsServer::StoreZones (zones);
@@ -1506,15 +1484,20 @@ symbol HandleExpertZonesPage (string key, map event) {
 	    UI::QueryWidget (`id ("new_zone_name"), `Value);
 	string zone_type = (string)
 	    UI::QueryWidget (`id ("new_zone_type"), `Value);
+
+	string encoded_zone_name = Punycode::EncodeDomainName(zone_name);
+	
 	// zone validation
-	if ( Hostname::CheckDomain (zone_name) != true )
+	if ( Hostname::CheckDomain (encoded_zone_name) != true )
 	{
 	    UI::SetFocus ( `id ("new_zone_name") );
+	    // FIXME: another message!
 	    Popup::Error ( Hostname::ValidDomain() );
 	    return nil;
 	}
+
 	list<map> zones_same = filter (map z, zones, {
-	    return z["zone"]:"" == zone_name;
+	    return z["zone"]:"" == encoded_zone_name;
 	});
 	if (size (zones_same) != 0)
 	{
@@ -1528,11 +1511,11 @@ symbol HandleExpertZonesPage (string key, map event) {
 	DnsServer::SelectZone (-1);
 	map<string,any> z = DnsServer::FetchCurrentZone ();
 	z = (map<string,any>)union (z, $[
-	    "zone" : zone_name,
+	    "zone" : encoded_zone_name,
 	    "type" : zone_type,
 	]);
 
-	y2milestone ("Created zone: %1", z);
+	y2milestone ("Created zone: %1 (%2)", z, zone_name);
 	DnsServer::StoreCurrentZone (z);
 	DnsServer::StoreZone ();
 	zones = DnsServer::FetchZones ();
