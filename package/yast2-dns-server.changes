@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Oct 31 11:30:02 CET 2006 - locilka@suse.cz
+
+- Replaced '!=' with 'ne' for textual comparsion (#216531).
+- 2.14.1
+
+-------------------------------------------------------------------
 Tue Oct 10 15:16:47 CEST 2006 - locilka@suse.cz
 
 - Merged SLES10 SP1 branch to openSUSE 10.2.
