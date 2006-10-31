@@ -553,7 +553,7 @@ sub SaveGlobals {
 	    SCR->Write (".dns.named.value.options.\"\Q$key\E\"", \@values);
 	} else {
 	    # handling an exception
-	    if (defined @{$opt_map{$key}}[0] && @{$opt_map{$key}}[0] != "") {
+	    if (defined @{$opt_map{$key}}[0] && @{$opt_map{$key}}[0] ne "") {
 		$forwarders_found = 1;
 		# writing forwarders into single file
 		SCR->Write (".dns.named-forwarders", [$forwarders_include, @{$opt_map{$key}}[0]]);
