@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Oct 31 11:28:23 CET 2006 - locilka@suse.cz
+
+- Replaced '!=' with 'ne' for textual comparsion (#216531).
+- 2.13.21
+
+-------------------------------------------------------------------
 Mon Oct  2 16:56:41 CEST 2006 - locilka@suse.cz
 
 - Merged proofread texts
