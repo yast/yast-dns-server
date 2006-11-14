@@ -1,0 +1,98 @@
+default namespace = "http://www.suse.com/1.0/yast2ns"
+namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
+namespace config = "http://www.suse.com/1.0/configns"
+
+
+dns-server = element dns-server {
+    element chroot             { "1" | "0" }? &
+    element start_service      { "1" | "0" }? &
+    element use_ldap           { "1" | "0" }? &
+
+    dns-server_logging? &
+    dns-server_options? &
+    dns-server_zones?
+}
+
+dns-server_logging = element logging {
+    LIST,
+    dns-server_logging_entry*
+}
+
+dns-server_logging_entry = element listentry {
+    element key   { text }? &
+    element value { text }?
+}
+
+dns-server_options = element options {
+    LIST,
+    dns-server_option_entry*
+}
+
+dns-server_option_entry = element option {
+    element key   { text }? &
+    element value { text }?
+}
+
+dns-server_zones = element zones {
+    LIST,
+    dns-server_zones_entry*
+}
+
+dns-server_zones_entry = element listentry {
+    element is_new       { "1" | "0" }? &
+    element modified     { "1" | "0" }? &
+    element soa_modified { "1" | "0" }? &
+    element ttl          { text }? &
+    element type         { text }? &
+    element zone         { text }? &
+
+    zone_options? &
+    zone_records? &
+    zone_soa? &
+    zone_update_actions?
+}
+
+zone_options = element options {
+    LIST,
+    zone_option_entry*
+}
+
+zone_option_entry = element option {
+    element key   { text }? &
+    element value { text }?
+}
+
+zone_records = element records {
+    LIST,
+    zone_records_entry*
+}
+
+zone_records_entry = element listentry {
+    element key   { text }? &
+    element value { text }? &
+    element type  { text }?
+}
+
+zone_soa = element soa {
+    element expiry  { text }? &
+    element mail    { text }? &
+    element minimum { text }? &
+    element refresh { text }? &
+    element retry   { text }? &
+    element serial  { text }? &
+    element server  { text }? &
+    element zone    { text }?
+}
+
+zone_update_actions = element update_actions {
+    LIST,
+    update_actions_entry*
+}
+
+update_actions_entry = element listentry {
+    element key       { text }? &
+    element value     { text }? &
+    element type      { text }? &
+    element operation { text }?
+
+}
