@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Nov 14 13:44:55 CET 2006 - locilka@suse.cz
+
+- Added/Moved .rnc file from AutoYaST (#220747).
+- 2.14.2
+
+-------------------------------------------------------------------
 Tue Oct 31 11:30:02 CET 2006 - locilka@suse.cz
 
 - Replaced '!=' with 'ne' for textual comparsion (#216531).
