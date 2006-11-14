@@ -40,7 +40,10 @@ YaPI_perldir = @moduledir@/YaPI
 YaPI_perl_DATA = \
 	DNSD.pm
 
-EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA) $(YaPI_perl_DATA)
+rncdir= $(schemadir)/autoyast/rnc/
+rnc_DATA = dns-server.rnc
+
+EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA) $(YaPI_perl_DATA) $(rnc_DATA)
 
 dns-server:
 	test -l dns-server || ln -s . dns-server
