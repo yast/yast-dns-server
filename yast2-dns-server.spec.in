@@ -40,4 +40,5 @@ Summary:	Configuration of dns-server
 @agentdir@/ag_dns_zone
 @agentdir@/ag_named_forwarders
 @agentdir@/ag_convert_named_conf
+@schemadir@/autoyast/rnc/dns-server.rnc
 %doc @docdir@
