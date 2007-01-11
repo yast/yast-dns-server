@@ -215,6 +215,10 @@ sub ZoneRead {
 	}
 	else
 	{
+	    # bugzilla #189310, "@" is equal to zone name
+	    if ($key eq "\@") {
+		$key = $zone . ($zone =~ /\.$/ ? "":".");
+	    }
 	    $previous_key = $key;
 	}
 	push @records, {

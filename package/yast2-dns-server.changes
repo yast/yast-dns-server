@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Thu Jan 11 15:14:43 CET 2007 - locilka@suse.cz
+
+- New possibility to add @ as a DNS record key that actually means
+  $zone_name. "@" is immediately transformed to the $zone_name.
+  Also reading the current zone files supports that transformation
+  (#189310).
+- 2.15.0 
+
+-------------------------------------------------------------------
 Tue Nov 14 13:44:55 CET 2006 - locilka@suse.cz
 
 - Added/Moved .rnc file from AutoYaST (#220747).
