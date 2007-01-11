@@ -1232,9 +1232,13 @@ symbol HandleZoneRecordsTab (map event) {
 	UI::QueryWidget (`id ("add_record_type"), `Value);
 
     // translating new record key and val
-    string key = Punycode::EncodeDomainName(
-	(string) UI::QueryWidget (`id ("add_record_name"), `Value)
-    );
+    string key = (string) UI::QueryWidget (`id ("add_record_name"), `Value);
+    if (key == "@") {
+	key = current_zone["zone"]:"" + ".";
+	y2warning ("Transforming key @ into %1", key);
+    }
+    key = Punycode::EncodeDomainName (key);
+
     string val = Punycode::EncodeDomainName(
 	(string) UI::QueryWidget (`id ("add_record_val"), `Value)
     );

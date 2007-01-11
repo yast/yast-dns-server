@@ -265,8 +265,9 @@ while ( <STDIN> )
 		    if (!$rec{"key"}) {
 			$rec{"key"} = $previous_key;
 		    } else {
-		    # defined key sets the "previous_key" for the next line
-			if ($rec{"key"} !~ /^;/) {
+			# defined key sets the "previous_key" for the next line
+			# mustn't be a comment (;)
+			if ($rec{"key"} !~ /^[ \t]*;/) {
 			    $previous_key = $rec{"key"};
 			}
 		    }
@@ -285,7 +286,7 @@ while ( <STDIN> )
 		    if (($rec{"key"} !~ /\.$/) && ($rec{"type"} =~ /^(ns|mx)$/i)) {
 			if ($current_origin ne ".") {
 			    $rec{"key"} = $rec{"key"}.".".$current_origin;
-			} elsif ($rec{"key"} eq $zone) {
+			} elsif ($rec{"key"} eq $zone && $zone ne "\@") {
 			    $rec{"key"} .= ".";
 			}
 		    }
