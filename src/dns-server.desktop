@@ -17,6 +17,7 @@ X-SuSE-YaST-Geometry=
 X-SuSE-YaST-SortKey=
 X-SuSE-YaST-AutoInstResource=dns-server
 X-SuSE-YaST-AutoInstRequires=lan,ldap,ldap-server,ldap-client
+X-SuSE-YaST-AutoInstSchema=dns-server.rnc
 
 Icon=yast-dns-server
 Exec=/sbin/yast2 dns-server 
