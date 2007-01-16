@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jan 16 13:05:02 CET 2007 - locilka@suse.cz
+
+- Adding X-SuSE-YaST-AutoInstSchema entry into the application
+  desktop file (#235339).
+
+-------------------------------------------------------------------
 Thu Jan 11 15:14:43 CET 2007 - locilka@suse.cz
 
 - New possibility to add @ as a DNS record key that actually means
