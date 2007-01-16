@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Jan 16 13:05:47 CET 2007 - locilka@suse.cz
+
+- Adding X-SuSE-YaST-AutoInstSchema entry into the application
+  desktop file (#235339).
+- 2.13.23
+
+-------------------------------------------------------------------
 Tue Nov 14 13:46:11 CET 2006 - locilka@suse.cz
 
 - Added/Moved .rnc file from AutoYaST (#220747).
