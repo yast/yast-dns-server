@@ -78,6 +78,8 @@ my $configuration_timestamp = "";
 
 my $configfile = '/etc/named.conf';
 
+my %zonename_to_filename = ();
+
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
 
@@ -170,9 +172,15 @@ sub ZoneWrite {
     }
     elsif ($zone_map{"is_new"})
     {
-	while (SCR->Read (".target.size", "/var/lib/named/$zone_file") > 0)
-	{
-	    $zone_file = "$zone_file" . "X";
+	# deleted and created again, bugzilla #199926
+	if (defined $zonename_to_filename{$zone_name} && $zonename_to_filename{$zone_name} ne "") {
+	    $zone_file = $zonename_to_filename{$zone_name};
+	    y2milestone ("Reusing zone file $zone_file");
+	} else {
+	    while (SCR->Read (".target.size", "/var/lib/named/$zone_file") > 0)
+	    {
+		$zone_file = "$zone_file" . "X";
+	    }
 	}
 	y2milestone ("Zone $zone_name is new, zone file set to $zone_file");
     }
@@ -1190,6 +1198,9 @@ sub Read {
 	# ZONE TYPE 'master'
 	if ($zonetype eq "master")
 	{
+	    # bugzilla #199926
+	    $zonename_to_filename{$zonename} = $filename;
+
 	    if ($use_ldap)
 	    {
 		%zd = %{DnsZones->ZoneReadLdap ($zonename, $filename)};
