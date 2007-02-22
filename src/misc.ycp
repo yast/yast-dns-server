@@ -17,7 +17,6 @@
     import "Wizard";
 
     global define void SetDNSSErverIcon () {
-	y2milestone ("Icon!");
         Wizard::SetTitleIcon("yast-dns-server");
     }
 
