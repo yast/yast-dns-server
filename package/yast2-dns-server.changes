@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Feb 22 16:29:39 CET 2007 - locilka@suse.cz
+
+- Fixed and unified icons-handling.
+- 2.15.2
+
+-------------------------------------------------------------------
 Mon Feb  5 16:42:37 CET 2007 - locilka@suse.cz
 
 - Reusing zone file when zone is removed and created again in one

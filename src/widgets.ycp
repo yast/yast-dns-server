@@ -24,7 +24,6 @@ global define symbol chrootHandle (string id, map event);
 global define symbol zonesHandle (string key, map event);
 define symbol advMenubuttonHandle (string id, map event);
 
-
 // start service widget
 
 /**

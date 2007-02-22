@@ -164,7 +164,7 @@
 	];
 
 	Wizard::CreateDialog();
-	Wizard::SetDesktopIcon("dns-server");
+	SetDNSSErverIcon();
 
 	if ($[] == SCR::Read (.target.stat, Directory::vardir + "/dns_server"))
 	{
@@ -196,7 +196,7 @@
 	];
 
 	Wizard::CreateDialog();
-	Wizard::SetDesktopIcon("dns-server");
+	SetDNSSErverIcon();
 
 	symbol ret = Sequencer::Run(aliases, sequence);
 

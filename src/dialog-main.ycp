@@ -116,9 +116,17 @@ void UpdateServiceStatusWidget () {
 }
 
 /**
+ * Sets the dialog icon
+ */
+void InitDNSSErverIcon (string key) {
+    SetDNSSErverIcon();
+}
+
+/**
  * Initialize the tab of the dialog
  */
 void InitExpertStartUpPage (string key) {
+    SetDNSSErverIcon();
     boolean auto_start = DnsServer::GetStartService ();
     UI::ChangeWidget (`id ("dns_server_type"), `CurrentButton, auto_start
 	? `on
@@ -295,6 +303,7 @@ void ValidCharsForwardersPage () {
  * Initialize the tab of the dialog
  */
 void InitExpertForwardersPage (string key) {
+    SetDNSSErverIcon();
     if (DnsServer::GetModifyNamedConfDynamically ())
     {
 	UI::ChangeWidget (`id ("who_sets_forwarder"), `CurrentButton, "ppp_forwarder");
@@ -692,6 +701,7 @@ void RedrawOptionsTableWidget () {
  * Initialize the tab of the dialog
  */
 void InitExpertBasicOptionsPage (string key) {
+    SetDNSSErverIcon();
     options = DnsServer::GetGlobalOptions ();
     current_option_index = 0;
     RedrawOptionsTableWidget ();
@@ -961,6 +971,7 @@ symbol HandleExpertLoggingPage (string key, map event);
  * Initialize the tab of the dialog
  */
 void InitExpertLoggingPage (string key) {
+    SetDNSSErverIcon();
     map <string, string> channel = DnsServerAPI::GetLoggingChannel();
     if (channel["destination"]:nil=="file") {	
 	UI::ChangeWidget (`id ("log_type"), `CurrentButton, "log_type_file");
@@ -1151,6 +1162,7 @@ void RedrawAclPage () {
  * Initialize the tab of the dialog
  */
 void InitExpertAclPage (string key) {
+    SetDNSSErverIcon();
     acl = DnsServer::GetAcl ();
     UI::ChangeWidget (`id ("new_acl_name"), `ValidChars,
 	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-");
@@ -1448,6 +1460,7 @@ void RedrawZonesListWidget () {
  * Initialize the tab of the dialog
  */
 void InitExpertZonesPage (string key) {
+    SetDNSSErverIcon();
     zones = DnsServer::FetchZones ();
     RedrawZonesListWidget ();
 }
@@ -1647,6 +1660,12 @@ map<string,map<string,any> > new_widgets = $[
 	"store"		: StoreExpertZonesPage,
 	"help"		: HELPS["zones"]:"",
     ],
+    "set_icon" : $[
+	"widget"	: `custom,
+	"custom_widget"	: `Empty(),
+	"init"		: InitDNSSErverIcon,
+	"help"		: " ",
+    ],
 ];
 
 map<string, map<string, any> > tabs = $[
@@ -1671,7 +1690,7 @@ map<string, map<string, any> > tabs = $[
 		[ "auto_start_up", "firewall", "use_ldap", "start_stop" ]
 		:
 		// simple mode
-		[ "auto_start_up", "firewall", "start_stop" ]
+		[ "auto_start_up", "firewall", "start_stop", "set_icon" ]
 	),
     ],
     "forwarders" : $[

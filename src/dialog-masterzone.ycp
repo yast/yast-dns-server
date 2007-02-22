@@ -27,6 +27,7 @@ import "DnsTsigKeys";
 import "Mode";
 import "Report";
 import "DnsServerAPI";
+import "Punycode";
 
 string ToRelativeName (string absolute_name, string zone_name) {
     if (absolute_name == nil || zone_name == nil) {
@@ -232,7 +233,7 @@ void ZoneAclHandle (map event) {
  * Initialize the tab of the dialog
  */
 void InitZoneBasicsTab () {
-    Wizard::SetDesktopIcon("dns-server");
+    SetDNSSErverIcon();
 
     boolean allowed = false;
     string key = nil;
