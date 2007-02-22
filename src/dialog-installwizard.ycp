@@ -34,7 +34,7 @@ symbol runInstallWizardForwardersDialog () {
     Wizard::SetContentsButtons ( caption, contents, HELPS["forwarders"]:"",
 	Label::BackButton (), Label::NextButton ()
     );
-    Wizard::SetDesktopIcon("dns-server");
+    SetDNSSErverIcon();
     Wizard::SetAbortButton ( `abort, Label::CancelButton() );
     Wizard::HideBackButton ();
     InitExpertForwardersPage ("forwarders");
@@ -83,7 +83,7 @@ symbol runInstallWizardZonesDialog () {
 	caption, ExpertZonesDialog (), HELPS["zones"]:"",
 	Label::BackButton (), Label::NextButton ()
     );
-    Wizard::SetDesktopIcon("dns-server");
+    SetDNSSErverIcon();
     Wizard::RestoreAbortButton ();
     Wizard::RestoreBackButton ();
     Wizard::RestoreNextButton ();
@@ -214,7 +214,7 @@ symbol runInstallWizardFinishDialog () {
 	HELPS["installwizard_step3"]:"" + firewall_help,
 	Label::BackButton (), Label::NextButton ()
     );
-    Wizard::SetDesktopIcon("dns-server");
+    SetDNSSErverIcon();
     Wizard::SetNextButton ( `next, Label::FinishButton() );
 
     boolean auto_start = DnsServer::GetStartService ();
