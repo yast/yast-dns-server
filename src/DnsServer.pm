@@ -34,6 +34,7 @@ YaST::YCP::Import ("Message");
 YaST::YCP::Import ("ProductFeatures");
 YaST::YCP::Import ("CWMTsigKeys");
 YaST::YCP::Import ("NetworkService");
+YaST::YCP::Import ("ProductFeatures");
 
 use DnsZones;
 use DnsTsigKeys;
@@ -2004,6 +2005,23 @@ sub CleanYapiConfigOptions {
     my $self = shift;
 
     %yapi_conf = ();
+}
+
+# -1 == not defined
+#  1 == yes
+#  0 == no
+my $expert_ui = -1;
+
+BEGIN { $TYPEINFO{ExpertUI} = ["function", "boolean"]; };
+sub ExpertUI () {
+    if ($expert_ui != -1) {
+	return $expert_ui;
+    }
+
+    # simple == 0
+    # expert (or default) == 1
+    $expert_ui = (ProductFeatures->GetFeature ("globals", "ui_mode") eq "simple" ? 0 : 1);
+    return $expert_ui;
 }
 
 1;

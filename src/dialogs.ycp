@@ -20,6 +20,7 @@
     import "Message";
     import "SuSEFirewall";
     import "Punycode";
+    import "DnsServer";
 
     /**
       * Ask user if exit without saving

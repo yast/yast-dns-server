@@ -18,7 +18,6 @@ import "DnsServer";
 import "DnsFakeTabs";
 import "DnsRoutines";
 import "DnsServerAPI";
-import "ProductFeatures";
 import "Confirm";
 import "Hostname";
 import "IP";
@@ -28,6 +27,7 @@ import "Mode";
 import "Report";
 import "DnsServerAPI";
 import "Punycode";
+import "DnsServer";
 
 string ToRelativeName (string absolute_name, string zone_name) {
     if (absolute_name == nil || zone_name == nil) {
@@ -99,7 +99,7 @@ term GetMasterZoneEditorTabBasics () {
 	sort (merge (acl, ["any", "none", "localhost", "localnets"]));
 
     term expert_settings = `Empty();
-    if (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") {
+    if (DnsServer::ExpertUI()) {
 	expert_settings = `VBox (
 	    `Left (`CheckBox (`id ("allow_ddns"), `opt (`notify),
 		// check box
@@ -250,7 +250,7 @@ void InitZoneBasicsTab () {
             }
         }
     });
-    if (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") {
+    if (DnsServer::ExpertUI()) {
 	UI::ChangeWidget (`id ("allow_ddns"), `Value, allowed);
 	UI::ChangeWidget (`id ("ddns_key"), `Enabled, allowed);
 
@@ -278,7 +278,7 @@ void StoreZoneBasicsTab () {
         m != $[]
     ));
 
-    if (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") {
+    if (DnsServer::ExpertUI()) {
 	string key = (string)UI::QueryWidget (`id ("ddns_key"), `Value);
 	boolean allowed = (boolean)UI::QueryWidget (`id ("allow_ddns"), `Value);
 	if (allowed) {
@@ -297,7 +297,7 @@ void StoreZoneBasicsTab () {
 symbol HandleZoneBasicsTab (map event) {
     any ret = event["ID"]:nil;
 
-    if (ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") {
+    if (DnsServer::ExpertUI()) {
 	if (ret == "allow_ddns" && Mode::config ()) {
 	    // popup message
 	    Popup::Message (_("This function is not available during
