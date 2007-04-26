@@ -23,7 +23,6 @@ import "DialogTree";
 import "CWMServiceStart";
 import "Mode";
 import "Report";
-import "ProductFeatures";
 import "CWMFirewallInterfaces";
 import "Message";
 import "DnsRoutines";
@@ -35,6 +34,7 @@ import "Hostname";
 import "Confirm";
 import "DnsServerAPI";
 import "Punycode";
+import "DnsServer";
 
 /* String defines the initial screen for the expert dialog */
 string initial_screen = "start_up";
@@ -1685,7 +1685,7 @@ map<string, map<string, any> > tabs = $[
 	// Tree Menu Item - DNS - expert settings
 	"tree_item_label"	: _("Start-Up"),
 	// FIXME: new startup
-	"widget_names"		: ((ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") ?
+	"widget_names"		: ((DnsServer::ExpertUI()) ?
 		// expert mode
 		[ "auto_start_up", "firewall", "use_ldap", "start_stop" ]
 		:
@@ -1761,7 +1761,7 @@ symbol runExpertDialog () {
     list<string> normal_dialog  = [ "start_up", "forwarders", "logging", "zones" ];
 
     return DialogTree::ShowAndRun ($[
-	"ids_order" : ((ProductFeatures::GetFeature ("globals", "ui_mode") == "expert") ? expert_dialogs : normal_dialog),
+	"ids_order" : ((DnsServer::ExpertUI()) ? expert_dialogs : normal_dialog),
 	"initial_screen" : initial_screen,
 	"screens" :  tabs,
 	"widget_descr" : new_widgets,

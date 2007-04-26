@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Thu Apr 26 15:06:03 CEST 2007 - locilka@suse.cz
+
+- Enhanced agent for transforming user-defined named.conf to
+  understand zone definition without 'in' (#266717).
+- Enabled expert UI by default.
+- 2.15.3
+
+-------------------------------------------------------------------
 Thu Feb 22 16:29:39 CET 2007 - locilka@suse.cz
 
 - Fixed and unified icons-handling.
