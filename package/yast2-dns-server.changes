@@ -1,4 +1,14 @@
 -------------------------------------------------------------------
+Wed Nov 14 14:04:36 CET 2007 - locilka@suse.cz
+
+- Fixed recognizing TSIG-keys definition in named.conf. Currently
+  they are ignored (not supported) instead of being broken when
+  rewriting the configuration (#339036).
+- Removed obsolete firewall-related functions.
+- Disabled expert/simple differentiation (all is expert).
+- 2.16.0
+
+-------------------------------------------------------------------
 Thu Apr 26 15:06:03 CEST 2007 - locilka@suse.cz
 
 - Enhanced agent for transforming user-defined named.conf to

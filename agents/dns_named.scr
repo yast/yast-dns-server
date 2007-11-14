@@ -34,7 +34,7 @@
 	    "sections" : [
 		$[
 		    // "begin" : [ "[ \t]*([^ \t]+(.*[^ \t]+)*)[ \t]*\\{$", "%s {" ],
-		    "begin" : [ "[ \t]*((options|view|zone|logging)+(.*[^ \t]+)*)[ \t]*\\{$", "%s {" ],
+		    "begin" : [ "[ \t]*((options|view|zone|logging|key)+(.*[^ \t]+)*)[ \t]*\\{$", "%s {" ],
 		    "end"   : [ "^[ \t]*\\}[ \t]*;", "};" ],
 		 ],
 	    ],

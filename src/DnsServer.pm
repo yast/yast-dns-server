@@ -7,16 +7,15 @@ package DnsServer;
 
 use strict;
 
-use ycp;
-use YaST::YCP qw(Boolean sformat);
+use YaST::YCP qw(Boolean sformat :LOGGING);
+use YaPI;
+
 use Data::Dumper;
 use Time::localtime;
 
-use YaPI;
 textdomain("dns-server");
 
 our %TYPEINFO;
-
 
 YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("Directory");
@@ -31,10 +30,8 @@ YaST::YCP::Import ("Report");
 YaST::YCP::Import ("Service");
 YaST::YCP::Import ("SuSEFirewall");
 YaST::YCP::Import ("Message");
-YaST::YCP::Import ("ProductFeatures");
 YaST::YCP::Import ("CWMTsigKeys");
 YaST::YCP::Import ("NetworkService");
-YaST::YCP::Import ("ProductFeatures");
 
 use DnsZones;
 use DnsTsigKeys;
@@ -44,7 +41,7 @@ use LdapServerAccess;
 use DnsData qw(@tsig_keys $start_service $chroot @allowed_interfaces
 @zones @options @logging $ddns_file_name
 $modified $save_all @files_to_delete %current_zone $current_zone_index
-$adapt_firewall %firewall_settings $write_only @new_includes @deleted_includes
+$write_only @new_includes @deleted_includes
 @zones_update_actions $firewall_support @new_includes_tsig @deleted_includes_tsig);
 use DnsRoutines;
 
@@ -288,127 +285,6 @@ sub ZoneWrite {
     return 1;
 }
 
-BEGIN { $TYPEINFO{ReadFirewallSupport} = ["function", "boolean"]; };
-sub ReadFirewallSupport {
-    my $self = shift;
-
-    $firewall_support = 1;
-
-    @allowed_interfaces = ();
-    my $at_least_one_allowed = 0;
-    foreach my $protocol ("UDP", "TCP") {
-	foreach my $interface ("INT", "EXT", "DMZ") {
-	    if (SuSEFirewall->HaveService ("53",$protocol,$interface)) {
-		++$at_least_one_allowed;
-		push @allowed_interfaces, $interface;
-	    }
-	    if (SuSEFirewall->HaveService ("domain",$protocol,$interface)) {
-		++$at_least_one_allowed;
-		push @allowed_interfaces, $interface;
-	    }
-	}
-    }
-    if (!$at_least_one_allowed) {
-	$firewall_support = 0;
-    }
-}
-
-BEGIN { $TYPEINFO{AdaptFirewall} = ["function", "boolean"]; }
-sub AdaptFirewall {
-    my $self = shift;
-
-    if (! $adapt_firewall)
-    {
-	return 1;
-    }
-
-    my $ret = 1;
-
-    my $HIGHPORTS_UDP = SCR->Read (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_UDP");
-    my $HIGHPORTS_TCP = SCR->Read (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_TCP");
-
-    foreach my $i ("INT", "EXT", "DMZ") {
-        y2milestone ("Removing dns iface $i");
-        SuSEFirewall->RemoveService ("53",	"UDP", $i);
-	SuSEFirewall->RemoveService ("domain",	"UDP", $i);
-        SuSEFirewall->RemoveService ("53",	"TCP", $i);
-	SuSEFirewall->RemoveService ("domain",	"TCP", $i);
-    }
-    if ($start_service)
-    {
-	# FIXME: interfaces to allow are not set !!!
-        foreach my $i (@allowed_interfaces) {
-            y2milestone ("Adding dns iface %1", $i);
-            SuSEFirewall->AddService ("domain", "UDP", $i);
-            SuSEFirewall->AddService ("domain", "TCP", $i);
-        }
-    }
-    if (! Mode->test ())
-    {
-        my $progress_orig = Progress->set (0);
-        $ret = SuSEFirewall->Write () && $ret;
-        Progress->set ($progress_orig);
-    }
-    if ($start_service)
-    {
-        $ret = SCR->Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DNS", "yes")
-	    && $ret;
-
-	# Allowing access to high udp ports
-	if ($HIGHPORTS_UDP =~ /^(no|domain|DNS|53)$/) {
-	    # Not used yet or used by BIND, setting to BIND only
-	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_UDP", "domain");
-	} else {
-	    # Also another service is enabled, setting to "yes"
-	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_UDP", "yes");
-	}
-
-	# Allowing acces to high tcp ports
-	if ($HIGHPORTS_TCP =~ /^(no|domain|DNS|53)$/) {
-	    # Not used yet or used by BIND, setting to BIND only
-	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_TCP", "domain");
-	} else {
-	    # Also another service is enabled, setting to "yes"
-	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_TCP", "yes");
-	}
-    }
-    else
-    {
-        $ret = SCR->Write (".sysconfig.SuSEfirewall2.FW_SERVICE_DNS", "no")
-            && $ret;
-
-	# Disallowing access to high udp ports
-	if ($HIGHPORTS_UDP =~ /^(no|domain|DNS|53)$/) {
-	    # Only bind used it, disabling
-	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_UDP", "no");
-	} else {
-	    # Also another service is enabled, setting to "yes"
-	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_UDP", "yes");
-	}
-
-	# Disallowing acces to high tcp ports
-	if ($HIGHPORTS_TCP =~ /^(no|domain|DNS|53)$/) {
-	    # Only bind used it, disabling
-	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_TCP", "no");
-	} else {
-	    # Also another service is enabled, setting to "yes"
-	    SCR->Write (".sysconfig.SuSEfirewall2.FW_ALLOW_INCOMING_HIGHPORTS_TCP", "yes");
-	}
-    }
-
-    $ret = SCR->Write (".sysconfig.SuSEfirewall2", undef) && $ret;
-    if (! $write_only)
-    {
-        $ret = SCR->Execute (".target.bash", "test -x /sbin/rcSuSEfirewall2 && /sbin/rcSuSEfirewall2 status && /sbin/rcSuSEfirewall2 restart") && $ret;
-    }
-    if (! $ret)
-    {
-        # error report
-        Report->Error (__("Error occurred while configuring firewall settings."));
-    }
-    return $ret;
-}
-
 sub ReadDDNSKeys {
     my $self = shift;
 
@@ -420,7 +296,7 @@ sub ReadDDNSKeys {
 	    y2milestone ("Reading include file $filename");
 	    $filename = $self->NormalizeFilename ($filename);
 	    my @tsig_keys = @{CWMTsigKeys->AnalyzeTSIGKeyFile ($filename) ||[]};
-	    #my @tsig_keys = @{DnsTsigKeys->AnalyzeTSIGKeyFile ($filename) ||[]};
+
 	    foreach my $tsig_key (@tsig_keys) {
 		y2milestone ("Having key $tsig_key, file $filename");
 		DnsTsigKeys->PushTSIGKey ({
@@ -472,6 +348,9 @@ sub AdaptDDNS {
     }
     @includes = sort (keys (%includes));
     $includes = join (" ", @includes);
+
+    y2milestone ("INCLUDES: ".$includes);
+
     SCR->Write (".sysconfig.named.NAMED_CONF_INCLUDE_FILES", $includes);
 
     return 1;
@@ -815,19 +694,6 @@ sub SetWriteOnly {
     $write_only = shift;
 }
 
-BEGIN { $TYPEINFO{SetAdaptFirewall} = ["function", "void", "boolean" ]; }
-sub SetAdaptFirewall {
-    my $self = shift;
-    $adapt_firewall = shift;
-}
-
-BEGIN { $TYPEINFO{GetAdaptFirewall} = [ "function", "boolean" ];}
-sub GetAdaptFirewall {
-    my $self = shift;
-
-    return $adapt_firewall;
-}
-
 BEGIN{$TYPEINFO{SetAllowedInterfaces} = ["function","void",["list","string"]];}
 sub SetAllowedInterfaces {
     my $self = shift;
@@ -1054,9 +920,9 @@ sub Read {
 	return 0;
     }
 
-    if (ProductFeatures->GetFeature ("globals", "ui_mode") eq "expert") {
+#    if (ProductFeatures->GetFeature ("globals", "ui_mode") eq "expert") {
 	$self->LdapInit (0);
-    }
+#    }
  
     Progress->NextStage ();
 
@@ -1510,7 +1376,6 @@ sub Import {
     @files_to_delete = ();
     %current_zone = ();
     $current_zone_index = -1;
-    $adapt_firewall = 0;
     $write_only = 0;
 
     if (Mode->autoinst() && $use_ldap)
@@ -2020,7 +1885,8 @@ sub ExpertUI () {
 
     # simple == 0
     # expert (or default) == 1
-    $expert_ui = (ProductFeatures->GetFeature ("globals", "ui_mode") eq "simple" ? 0 : 1);
+    # $expert_ui = (ProductFeatures->GetFeature ("globals", "ui_mode") eq "simple" ? 0 : 1);
+    $expert_ui = 1;
     return $expert_ui;
 }
 
