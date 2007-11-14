@@ -1275,44 +1275,6 @@ define map getIfaceClassesWidget () ``{
     ];
 }
 
-// adapt firewall widget
-
-/**
- * Initialize the widget
- * @param id any widget id
- */
-global define void FirewallInit (string id) ``{
-    boolean adapt = DnsServer::GetAdaptFirewall ();
-    UI::ChangeWidget (`id (id), `Value, adapt);
-}
-
-/**
- * Store settings of the widget
- * @param id string widget id
- * @param event map event that caused storing process
- */
-global define void FirewallStore (string id, map event) ``{
-    boolean adapt = (boolean)UI::QueryWidget (`id (id), `Value);
-    DnsServer::SetAdaptFirewall (adapt);
-    DnsServer::SetModified ();
-}
-
-
-/**
- * Get the widget description map
- * @return map widget description map
- */
-define map getAdaptFirewallWidget () ``{
-    return $[
-	"widget" : `checkbox,
-	// check box
-	"label" : _("Adapt &Firewall Settings"),
-	"init" : FirewallInit,
-	"store" : FirewallStore,
-	"help" : HELPS["adapt_firewall"]:"",
-    ];
-}
-
 // DDNS allowing widget
 
 /**
@@ -1429,7 +1391,6 @@ global define void AllowDdnsStore (string id, map event) ``{
 //	    "ns_mx_button" : getNsMxButton (),
 	    "zone_masters" : getZoneMastersWidget (),
 	    "interface_classes" : getIfaceClassesWidget (),
-	    "adapt_firewall" : getAdaptFirewallWidget (),
 //	    "allow_ddns" : getAllowDdnsWidget (),
 //	    "ddns_keys" : getDdnsKeysWidget (),
 	];
