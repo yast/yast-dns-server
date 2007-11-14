@@ -6,6 +6,7 @@ Wed Nov 14 14:04:36 CET 2007 - locilka@suse.cz
   rewriting the configuration (#339036).
 - Removed obsolete firewall-related functions.
 - Disabled expert/simple differentiation (all is expert).
+- Adapted testsuite (removed calling those obsolete functions).
 - 2.16.0
 
 -------------------------------------------------------------------
