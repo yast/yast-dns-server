@@ -63,8 +63,6 @@
 
     boolean progress_orig = Progress::set (false);
 
-    DnsServer::SetAdaptFirewall (true);
-
     map READ = $[
 	"probe" : $[
 	    "architecture" : "i386",
