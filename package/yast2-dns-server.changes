@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Tue Dec  4 15:20:21 CET 2007 - locilka@suse.cz
+
+- Merged texts back from proofreading.
+
+-------------------------------------------------------------------
 Wed Nov 14 14:04:36 CET 2007 - locilka@suse.cz
 
 - Fixed recognizing TSIG-keys definition in named.conf. Currently

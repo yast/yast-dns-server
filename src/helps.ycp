@@ -296,7 +296,7 @@ the <b>Zone Type</b>, and click <b>Add</b>.</p>
 
     /* Expert Mode Configuration - Zones 3/3 */
 _("<p>To modify settings for a zone, such as zone transport and name and
-mail servers, select it then click <b>Edit Zone</b>.
+mail servers, select it, and click <b>Edit Zone</b>.
 To remove a configured zone, select it and click <b>Delete Zone</b>.</p>
 "),
 
