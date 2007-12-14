@@ -2,15 +2,17 @@
 
 
 @HEADER@
-BuildRequires:	perl-Digest-SHA1 perl-X500-DN yast2-ldap-client perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-testsuite yast2-perl-bindings
+BuildRequires:	yast2-ldap-client perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-testsuite yast2-perl-bindings
+
 Requires:	/usr/bin/host
 Requires:	perl-gettext
+# Exporter Data::Dumper
+Requires:	perl-base
+# Time
+Requires:	perl
 Requires:	yast2-perl-bindings
 Requires:	bind-utils
 Requires:	yast2-ldap
-Requires:	perl-X500-DN
-Requires:	perl-Digest-SHA1
-Requires:	perl-Parse-RecDescent
 Requires:	yast2-ldap-client
 
 # DnsServerPunycode renamed to Punycode and moved to yast2.rpm
