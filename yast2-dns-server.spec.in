@@ -15,8 +15,8 @@ Requires:	bind-utils
 Requires:	yast2-ldap
 Requires:	yast2-ldap-client
 
-# DnsServerPunycode renamed to Punycode and moved to yast2.rpm
-Requires:	yast2 >= 2.13.78
+# yast2/NeworkDevices -> yast2/NetworkInterfaces
+Requires:	yast2 >= 2.16.23
 
 BuildArchitectures:	noarch
 
