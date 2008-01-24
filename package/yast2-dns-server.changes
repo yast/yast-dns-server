@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Jan 24 14:12:54 CET 2008 - mzugec@suse.cz
+
+- replace deprecated NetworkDevices by NetworkInterfaces (from yast2)
+- 2.16.2
+
+-------------------------------------------------------------------
 Fri Dec 14 18:12:54 CET 2007 - locilka@suse.cz
 
 - Fixed Perl-dependencies.

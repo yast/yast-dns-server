@@ -22,7 +22,7 @@ YaST::YCP::Import ("Directory");
 YaST::YCP::Import ("DNS");
 YaST::YCP::Import ("Ldap");
 YaST::YCP::Import ("Mode");
-YaST::YCP::Import ("NetworkDevices");
+YaST::YCP::Import ("NetworkInterfaces");
 YaST::YCP::Import ("PackageSystem");
 YaST::YCP::Import ("Popup");
 YaST::YCP::Import ("Progress");
@@ -1650,11 +1650,11 @@ sub LdapPrepareToWrite {
     my $zone_base_config_dn = DnsZones->GetZoneBaseConfigDn ();
 
     # check if the schema is properly included
-    NetworkDevices->Read ();
+    NetworkInterfaces->Read ();
     DNS->Read ();
     if ($ldap_server eq "127.0.0.1" || $ldap_server eq "localhost"
 	|| -1 != index (lc ($ldap_server), lc (DNS->hostname ()))
-	|| 0 != scalar (@{NetworkDevices->Locate ("IPADDR", $ldap_server)}))
+	|| 0 != scalar (@{NetworkInterfaces->Locate ("IPADDR", $ldap_server)}))
     {
 	y2milestone ("LDAP server is local, checking included schemas");
 	LdapServerAccess->AddLdapSchemas(["/etc/openldap/schema/dnszone.schema"],1);
