@@ -1039,11 +1039,14 @@ void RedrawZonesTable () {
     });
 
     integer r = (integer)
-	UI::QueryWidget (`id ("records_list"), `CurrentItem );
+	UI::QueryWidget (`id ("records_list"), `CurrentItem);
+    if (r == nil) r = items [0, 0, 0]:0;
+
     UI::ChangeWidget (`id ("records_list"), `Items, items);
     UI::ChangeWidget (`id ("records_list"), `CurrentItem, r);
     UI::ChangeWidget (`id ("delete_record"), `Enabled, size (items) > 0);
     UI::ChangeWidget (`id ("change_record"), `Enabled, size (items) > 0);
+
     if (size (items) > 0)
     {
 	r = (integer)
