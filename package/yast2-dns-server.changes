@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri May 16 16:40:22 CEST 2008 - jsrain@suse.cz
+
+- added categories Settings and System into desktop file
+  (bnc #382778)
+
+-------------------------------------------------------------------
 Fri May  9 10:50:13 CEST 2008 - locilka@suse.cz
 
 - Fixed "Records" handling (bnc #377029).
