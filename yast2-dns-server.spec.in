@@ -15,8 +15,8 @@ Requires:	bind-utils
 Requires:	yast2-ldap
 Requires:	yast2-ldap-client
 
-# yast2/NeworkDevices -> yast2/NetworkInterfaces
-Requires:	yast2 >= 2.16.23
+# DnsServerApi moved to yast2.rpm (bnc#392606)
+Requires:	yast2 >= 2.16.73
 
 BuildArchitectures:	noarch
 

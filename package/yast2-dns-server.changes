@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Mon Jun  9 17:03:19 CEST 2008 - mzugec@suse.cz
+
+- DnsServerApi.pm moved to yast2 (bnc#392606)
+- 2.16.5 
+
+-------------------------------------------------------------------
 Fri May 16 16:40:22 CEST 2008 - jsrain@suse.cz
 
 - added categories Settings and System into desktop file
