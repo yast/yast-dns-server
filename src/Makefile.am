@@ -32,8 +32,7 @@ module_DATA =			\
 	DnsZones.pm		\
 	DnsTsigKeys.pm		\
 	DnsServerUI.ycp		\
-	DnsFakeTabs.ycp		\
-	DnsServerAPI.pm
+	DnsFakeTabs.ycp		
 
 YaPI_perldir = @moduledir@/YaPI
 
