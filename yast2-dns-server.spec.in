@@ -16,7 +16,7 @@ Requires:	yast2-ldap
 Requires:	yast2-ldap-client
 
 # DnsServerApi moved to yast2.rpm (bnc#392606)
-Requires:	yast2 >= 2.16.73
+Requires:	yast2 >= 2.17.0
 
 BuildArchitectures:	noarch
 
