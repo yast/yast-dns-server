@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Fri Jun 13 15:25:04 CEST 2008 - locilka@suse.cz
+
+- DnsServerAPI testsuite moved to yast2 RPM.
+
+-------------------------------------------------------------------
 Mon Jun  9 17:03:19 CEST 2008 - mzugec@suse.cz
 
 - DnsServerApi.pm moved to yast2 (bnc#392606)
