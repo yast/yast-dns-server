@@ -19,7 +19,6 @@ our %TYPEINFO;
 
 YaST::YCP::Import ("SCR");
 YaST::YCP::Import ("Directory");
-YaST::YCP::Import ("DNS");
 YaST::YCP::Import ("Ldap");
 YaST::YCP::Import ("Mode");
 YaST::YCP::Import ("NetworkInterfaces");
@@ -1641,6 +1640,18 @@ LDAP support will not be active."));
     return;
 }
 
+sub GetHostname () {
+    my $ret = SCR->Execute (".target.bash_output", "/bin/hostname");
+    chop ($ret->{'stdout'});
+    if ($ret->{'exit'} != 0) {
+	y2warning("Error: ".$ret->{'exit'}.", Cannot read hostname: ".$ret->{'stderr'});
+	return "";
+    }
+
+    y2milestone ("Hostname is: '".$ret->{'stdout'}."'");
+    return $ret->{'stdout'};
+}
+
 BEGIN { $TYPEINFO{LdapPrepareToWrite} = ["function", "boolean"];}
 sub LdapPrepareToWrite {
     my $self = shift;
@@ -1651,9 +1662,8 @@ sub LdapPrepareToWrite {
 
     # check if the schema is properly included
     NetworkInterfaces->Read ();
-    DNS->Read ();
     if ($ldap_server eq "127.0.0.1" || $ldap_server eq "localhost"
-	|| -1 != index (lc ($ldap_server), lc (DNS->hostname ()))
+	|| -1 != index (lc ($ldap_server), lc (GetHostname()))
 	|| 0 != scalar (@{NetworkInterfaces->Locate ("IPADDR", $ldap_server)}))
     {
 	y2milestone ("LDAP server is local, checking included schemas");
