@@ -105,7 +105,7 @@ Really exit?"));
     string help = CWM::MergeHelps (w);
     contents = CWM::PrepareDialog (contents, w);
     Wizard::SetContentsButtons (caption, contents, help,
-	Label::BackButton (), Label::FinishButton ());
+	Label::BackButton (), Label::OKButton ());
     Wizard::HideBackButton();
     Wizard::SetAbortButton(`abort, Label::CancelButton() );
 

@@ -1767,7 +1767,7 @@ symbol runExpertDialog () {
 	"widget_descr" : new_widgets,
 	"back_button" : "",
 	"abort_button" :  Label::CancelButton (),
-	"next_button" : Label::FinishButton (),
+	"next_button" : Label::OKButton (),
 	"functions" : functions,
     ]);
 }
