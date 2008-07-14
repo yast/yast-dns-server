@@ -224,7 +224,7 @@ term ExpertForwardersDialog () {
 			`HBox (
 			    `HWeight ( 9,
 				// Textentry for DNS-Forwarders adding IP
-				`TextEntry ( `id ( "forwarders_new_ip_address" ), `opt ( `hstretch ), _("IP A&ddress"), "" )
+				`InputField ( `id ( "forwarders_new_ip_address" ), `opt ( `hstretch ), _("IP A&ddress"), "" )
 			    ),
 			    `HWeight ( 2,
 				`Bottom ( `PushButton ( `id ( "forwarders_add_ip_address" ), `opt ( `hstretch ), Label::AddButton() ) )
@@ -614,7 +614,7 @@ term ExpertBasicOptionsDialog () {
 					),
 					`HWeight ( 5,
 					    // Textentry for setting the basic-option value
-					    `TextEntry ( `id ( "basic_option_value" ), _("&Value"), "" )
+					    `InputField ( `id ( "basic_option_value" ), `opt (`hstretch), _("&Value"), "" )
 					)
 				    )
 				)
@@ -924,7 +924,7 @@ term Expert_Logging_Dialog () {
 				    `VBox (
 					`VWeight ( 25,
 					    `HBox (
-						`TextEntry ( `id ( "logfile_path" ), Label::FileName() ),
+						`InputField ( `id ( "logfile_path" ), `opt (`hstretch), Label::FileName() ),
 						`VBox (
 						    `VStretch (),
 						    // Pushbutton - browse filesystem for logfile
@@ -1091,11 +1091,11 @@ term Expert_ACLs_Dialog () {
 				    `HBox (
 					`HWeight ( 3,
 					    // Textentry - adding ACL-optiopn - name
-					    `TextEntry ( `id ( "new_acl_name" ), `opt ( `hstretch ), _("&Name") )
+					    `InputField ( `id ( "new_acl_name" ), `opt ( `hstretch ), _("&Name") )
 					),
 					`HWeight ( 5,
 					    // Textentry - adding ACL-optiopn - value
-					    `TextEntry ( `id ( "new_acl_value" ), `opt ( `hstretch ), _("&Value") )
+					    `InputField ( `id ( "new_acl_value" ), `opt ( `hstretch ), _("&Value") )
 					)
 				    )
 				)
@@ -1338,7 +1338,7 @@ term ExpertZonesDialog () {
 				    //`VSpacing ( 0.5 ),
 				    `HBox (
 					// Textentry - DNS adding zone - Name
-					`TextEntry ( `id ( "new_zone_name" ), `opt ( `hstretch ), _("Name"), "example.com" ),
+					`InputField ( `id ( "new_zone_name" ), `opt ( `hstretch ), _("Name"), "example.com" ),
 					// Combobox - DNS adding zone - Type
 					`ComboBox ( `id ( "new_zone_type" ), _("Type") , [
 					    // Combobox - DNS adding zone - Type Master

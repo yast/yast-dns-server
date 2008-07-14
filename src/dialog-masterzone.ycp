@@ -337,7 +337,7 @@ term GetMasterZoneEditorTabNameServers () {
 		`HBox (
 		    `HWeight ( 7,
 			// Textentry - adding nameserver
-			`TextEntry ( `id ( "add_name_server" ), _("&Name Server to Add") )
+			`InputField ( `id ( "add_name_server" ), `opt (`hstretch), _("&Name Server to Add") )
 		    ),
 		    `HWeight ( 2,
 			`VBox (
@@ -508,7 +508,7 @@ term GetMasterZoneEditorTabMailServers () {
 			    `HWeight ( 7,
 				`HBox (
 				    // Textentry - addind mail server - Name
-				    `TextEntry ( `id ( "add_mail_server" ), _("&Address") ),
+				    `InputField ( `id ( "add_mail_server" ), `opt (`hstretch), _("&Address") ),
 				    // IntField - adding mail server - Priority
 				    `IntField ( `id ( "add_priority" ), _("&Priority"), 0, 65535, 0 )
 				)
@@ -727,7 +727,7 @@ term GetMasterZoneEditorTabSOASettings () {
 		`HWeight ( 50,
 		    `VBox (
 			// Textentry - setting Serial for zone
-			`TextEntry ( `id ( "zone_settings_serial" ), `opt ( `hstretch ), _("Seri&al"), "" ),
+			`InputField ( `id ( "zone_settings_serial" ), `opt ( `hstretch ), _("Seri&al"), "" ),
 			`VSpacing ( 1 ),
 			`HBox (
 			    // Textentry - setting TTL for zone
@@ -938,11 +938,11 @@ term GetMasterZoneEditorTabRecords () {
 			    `HWeight ( 9,
 				`HBox (
 				    // Textentry - zone settings - Record Name
-				    `TextEntry ( `id ( "add_record_name" ), _("&Record Key") ),
+				    `InputField ( `id ( "add_record_name" ), `opt (`hstretch), _("&Record Key") ),
 				    // Combobox - zone settings - Record Type
 				    `ComboBox ( `id ( "add_record_type" ), _("T&ype"), add_records ),
 				    // Textentry - zone settings - Record Value
-				    `TextEntry ( `id ( "add_record_val" ), _("Val&ue") )
+				    `InputField ( `id ( "add_record_val" ), `opt (`hstretch), _("Val&ue") )
 				)
 			    ),
 			    `HWeight ( 2,
@@ -1545,7 +1545,7 @@ symbol runMasterZoneTabDialog () {
 		`HBox (
 		    // Label - connected with Textentry which shows current edited zone
 		    `HSquash ( `Label ( _("Settings for Zone") ) ),
-		    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "",
+		    `HSquash ( `InputField ( `id ( "current_zone" ), `opt ( `disabled, `hstretch ), "",
 			Punycode::DecodeDomainName(zone_name)
 		    ) ),
 		    `HStretch ()
@@ -1575,7 +1575,9 @@ string qwerty = _("Ad&vanced");
 
     // FIXME: Only one help is used for all tabs. Maybe would be better to change the help for every single tab.
     Wizard::SetContentsButtons ( caption, contents, HELPS[ help_identificators[current_tab]:"" ]:"",
-	Label::CancelButton (), Label::OKButton () );
+	Label::BackButton (), Label::OKButton () );
+    Wizard::DisableBackButton();
+    Wizard::SetAbortButton (`go_back, Label::CancelButton());
     InitMasterZoneTab ( current_tab );
 
     map event = nil;
@@ -1591,11 +1593,13 @@ string qwerty = _("Ad&vanced");
 	    else
 		continue;
 	}
-	if (ret == `back)
+	if (ret == `go_back)
 	{
+	    ret = `back;
 	    break;
 	}
-	else if ( ret == `cancel || ret == `abort) {
+	// close the whole dialog
+	else if ( ret == `cancel) {
 	    if ( ReallyAbort() )
 		return `abort;
 	    else
@@ -1681,14 +1685,14 @@ symbol runSlaveZoneTabDialog () {
 	`HBox (
 	    // Label - connected with Textentry which shows current edited zone
 	    `HSquash ( `Label ( _("Settings for Zone") ) ),
-	    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "",
+	    `HSquash ( `InputField ( `id ( "current_zone" ), `opt ( `disabled, `hstretch ), "",
 		Punycode::DecodeDomainName(zone_name)
 	    ) ),
 	    `HStretch ()
 	),
 	`VSpacing ( 1 ),
 	// TRANSLATORS: Text entry
-	`Left (`TextEntry (`id ("master"), _("&Master DNS Server IP"))),
+	`Left (`InputField (`id ("master"), `opt (`hstretch), _("&Master DNS Server IP"))),
 	`VSpacing (2),
 	`Left (`CheckBox (`id ("enable_zone_transport"), `opt (`notify),
 	    // check box
@@ -1853,7 +1857,7 @@ symbol runForwardZoneTabDialog () {
 	`HBox (
 	    // Label - connected with Textentry which shows current edited zone
 	    `HSquash ( `Label ( _("Settings for Zone") ) ),
-	    `HSquash ( `TextEntry ( `id ( "current_zone" ), `opt ( `disabled ), "",
+	    `HSquash ( `InputField ( `id ( "current_zone" ), `opt ( `disabled, `hstretch ), "",
 		Punycode::DecodeDomainName(zone_name)
 	    ) ),
 	    `HStretch ()
@@ -1863,7 +1867,7 @@ symbol runForwardZoneTabDialog () {
 		`HBox (
 		    `HWeight (7,
 			// Textentry - adding forwarder
-			`TextEntry ( `id("new_forwarder"), _("New &Forwarder IP Address"))
+			`InputField ( `id("new_forwarder"), `opt (`hstretch), _("New &Forwarder IP Address"))
 		    ),
 		    `HWeight (2,
 			`VBox (
