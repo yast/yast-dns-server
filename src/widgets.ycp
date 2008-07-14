@@ -329,32 +329,32 @@ define map getSoaWidget () ``{
 		`VBox (
 		    `VWeight (1,
 			// text entry
-			`TextEntry (`id ("ttl"), _("$TT&L"))),
+			`InputField (`id ("ttl"), `opt (`hstretch), _("$TT&L"))),
 		    `VWeight (2, `VStretch ()),
 		    `VWeight (1,
 			// text entry
-			`TextEntry (`id ("server"), _("Primary &Source"))),
+			`InputField (`id ("server"), `opt (`hstretch), _("Primary &Source"))),
 		    `VWeight (1,
 			// text entry
-			`TextEntry (`id ("mail"), _("&Administrator's Mail")))
+			`InputField (`id ("mail"), `opt (`hstretch), _("&Administrator's Mail")))
 		),
 		`HSpacing (1),
 		`VBox (
 		    `VWeight (1,
 			// text entry
-			`TextEntry (`id ("serial"), _("Serial"))),
+			`InputField (`id ("serial"), `opt (`hstretch), _("Serial"))),
 		    `VWeight (1,
 			// text entry
-			`TextEntry (`id ("refresh"), _("Re&fresh"))),
+			`InputField (`id ("refresh"), `opt (`hstretch), _("Re&fresh"))),
 		    `VWeight (1,
 			// text entry
-			`TextEntry (`id ("retry"), _("Re&try"))),
+			`InputField (`id ("retry"), `opt (`hstretch), _("Re&try"))),
 		    `VWeight (1,
 			// text entry
-			`TextEntry (`id ("expiry"), _("E&xpiration"))),
+			`InputField (`id ("expiry"), `opt (`hstretch), _("E&xpiration"))),
 		    `VWeight (1,
 			// text entry
-			`TextEntry (`id ("minimum"), _("Mi&nimum")))
+			`InputField (`id ("minimum"), `opt (`hstretch), _("Mi&nimum")))
 		)
 	    )
 	),
@@ -738,7 +738,7 @@ global define symbol nsHandle (string id, map event) ``{
     {
 	string new = nil;
 	UI::OpenDialog (`VBox (
-	    `TextEntry (`id (`address), _("&Name Server")),
+	    `InputField (`id (`address), `opt (`hstretch), _("&Name Server")),
 	    `HBox (
 		`HStretch (),
 		`PushButton (`id (`ok), Label::OKButton ()),
@@ -859,7 +859,7 @@ global define symbol mxHandle (string id, map event) ``{
 	string new = nil;
 	UI::OpenDialog (`VBox (
 	    // text entry
-	    `TextEntry (`id (`address), _("&Mail Relay")),
+	    `InputField (`id (`address), `opt (`hstretch), _("&Mail Relay")),
 	    // int field
 	    `IntField (`id (`priority), _("&Priority"), 0, 100, 10),
 	    `HBox (
@@ -1119,7 +1119,7 @@ global define symbol zoneMastersHandle (string key, map event) ``{
 	string new = nil;
 	UI::OpenDialog (`VBox (
 	    // text entry
-	    `TextEntry (`id (`address), _("Address of &Master")),
+	    `InputField (`id (`address), `opt (`hstretch), _("Address of &Master")),
 	    `HBox (
 		`HStretch (),
 		`PushButton (`id (`ok), Label::OKButton ()),

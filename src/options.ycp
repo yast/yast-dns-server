@@ -169,10 +169,10 @@ define map getAPopup () ``{
 	    "widget" : `custom,
 	    "custom_widget" :`HBox (`HSpacing (1), `VBox (
 		`HSpacing (50),
-		`TextEntry (`id (`key), Label::HostName()),
+		`InputField (`id (`key), `opt (`hstretch), Label::HostName()),
 		`VSpacing (2),
 		// text entry
-		`TextEntry (`id (`value), _("&IP Addresses")),
+		`InputField (`id (`value), `opt (`hstretch), _("&IP Addresses")),
 		`VSpacing (1)
 	    ), `HSpacing (1)),
 	],
@@ -201,10 +201,10 @@ define map getCNAMEPopup () {
 	    "custom_widget" : `HBox (`HSpacing (1), `VBox (
 		`HSpacing (30),
 		// text entry
-		`TextEntry (`id (`key), _("&Alias")),
+		`InputField (`id (`key), `opt (`hstretch), _("&Alias")),
 		`VSpacing (1),
 		// text entry
-		`TextEntry (`id (`value), _("&Base Host Name")),
+		`InputField (`id (`value), `opt (`hstretch), _("&Base Host Name")),
 		`VSpacing (1)
 	    ), `HSpacing (1)),
 	],
@@ -233,10 +233,10 @@ define map getPTRPopup () ``{
 	    "custom_widget" : `HBox (`HSpacing (1), `VBox (
 		`HSpacing (30),
 		// text entry
-		`TextEntry (`id (`key), _("&IP Address")),
+		`InputField (`id (`key), `opt (`hstretch), _("&IP Address")),
 		`VSpacing (1),
 		// text entry
-		`TextEntry (`id (`value), Label::HostName()),
+		`InputField (`id (`value), `opt (`hstretch), Label::HostName()),
 		`VSpacing (1)
 	    ), `HSpacing (1)),
 	],
@@ -264,10 +264,10 @@ define map getNSPopup () ``{
 	    "custom_widget" : `HBox (`HSpacing (1), `VBox (
 		`HSpacing (30),
 		// text entry
-		`TextEntry (`id (`key), _("&Domain")),
+		`InputField (`id (`key), `opt (`hstretch), _("&Domain")),
 		`VSpacing (1),
 		// text entry
-		`TextEntry (`id (`value), _("&Name Server")),
+		`InputField (`id (`value), `opt (`hstretch), _("&Name Server")),
 		`VSpacing (1)
 	    ), `HSpacing (1)),
 	],
@@ -356,10 +356,10 @@ define map getMXPopup () ``{
 	    "custom_widget" : `HBox (`HSpacing (1), `VBox (
 		`HSpacing (30),
 		// text entry
-		`TextEntry (`id (`key), _("&Domain Name")),
+		`InputField (`id (`key), `opt (`hstretch), _("&Domain Name")),
 		`VSpacing (1),
 		// text entry
-		`TextEntry (`id (`value), _("&Mail Relay")),
+		`InputField (`id (`value), `opt (`hstretch), _("&Mail Relay")),
 		`VSpacing (1),
 		// int field
 		`IntField (`id (`prio), _("&Priority"), 0, 100, 0),
