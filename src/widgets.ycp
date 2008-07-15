@@ -254,7 +254,7 @@ global define void zoneNameStore (string id, map event) ``{
  */
 global define map getZoneNameWidget () ``{
     return $[
-	"widget" : `textentry,
+	"widget" : `inputfield,
 	// text entry
 	"label" : _("Zone"),
 	"init" : zoneNameInit,

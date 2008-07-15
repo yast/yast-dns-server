@@ -5,6 +5,7 @@ Mon Jul 14 13:42:44 CEST 2008 - locilka@suse.cz
 - InputFields instead of TextEntries.
 - [OK] instead of [Finish] in Single Step Dialogs.
 - [Cancel] instead of [Abort].
+- 2.17.1
 
 -------------------------------------------------------------------
 Mon Jun  9 17:03:19 CEST 2008 - mzugec@suse.cz
