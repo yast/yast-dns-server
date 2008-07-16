@@ -1601,7 +1601,7 @@ map<string,map<string,any> > new_widgets = $[
 	    _("Save Settings and Reload DNS Server Now")),
     ]),
     "firewall" : CWMFirewallInterfaces::CreateOpenFirewallWidget ($[
-	"services" : [ "dns-server" ],
+	"services" : [ "service:bind" ],
 	"display_details" : true,
     ]),
     "use_ldap" : CWMServiceStart::CreateLdapWidget ($[

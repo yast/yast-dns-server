@@ -158,7 +158,7 @@ symbol runInstallWizardFinishDialog () {
 	"</ul>";
 
     map<string,any> firewall_settings = $[
-	"services" : [ "dns-server" ],
+	"services" : [ "service:bind" ],
 	"display_details" : true,
     ];
     map<string,any> firewall_widget =

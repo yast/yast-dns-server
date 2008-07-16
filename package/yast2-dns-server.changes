@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Jul 16 15:17:50 CEST 2008 - locilka@suse.cz
+
+- Firewall service 'dns-server' replaced with 'service:bind'.
+
+-------------------------------------------------------------------
 Mon Jul 14 13:42:44 CEST 2008 - locilka@suse.cz
 
 - Removed unneeded dependency on DNS module (yast2-network).
