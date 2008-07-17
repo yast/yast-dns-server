@@ -1,0 +1,27 @@
+RRs
+---
+http://www.zytrax.com/books/dns/ch8/
+
+TXT RR
+------
+http://www.zytrax.com/books/dns/ch8/txt.html
+
+name  ttl  class   rr     text
+joe        IN      TXT    "Located in a black hole"
+
+^{1}                      ^{2}
+
+{1} similar to hostname
+{2} SCR agent has to be modified (?) to accept quotes
+
+SRV RR
+------
+http://www.zytrax.com/books/dns/ch8/srv.html
+
+srvce.prot.name ttl  class   rr  pri  weight port target
+_http._tcp.example.com. IN      SRV 0    5      80   www.example.com.
+_http._tcp              IN      SRV 1    5      80   www2.example.com.
+^{1}                                ^{2} ^{3}   ^{4} ^{5}
+
+{1} _service._protocol
+{2,3,4} similar to MX record, yet another special entry...
