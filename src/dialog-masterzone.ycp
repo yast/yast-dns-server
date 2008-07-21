@@ -915,6 +915,8 @@ Continue?")))
 
 list supported_records = [];
 
+string last_add_record_type = nil;
+
 term GetEditationWidgets (string rec_type) {
     term ret = nil;
 
@@ -925,7 +927,7 @@ term GetEditationWidgets (string rec_type) {
 		// Textentry - zone settings - Record Name
 		`Top (`InputField (`id ("add_record_name"), `opt (`hstretch), _("&Record Key"))),
 		// Combobox - zone settings - Record Type
-		`Top (`ComboBox (`id ("add_record_type"), _("T&ype"), supported_records)),
+		`Top (`ComboBox (`id ("add_record_type"), `opt (`notify), _("T&ype"), supported_records)),
 		// IntField - zone settings - Record Value
 		`Top (`HSquash (`IntField (`id ("add_record_prio"), `opt (`hstretch), _("&Priority"), 0, 65535, 0))),
 		// Textentry - zone settings - Record Value
@@ -960,7 +962,7 @@ term GetEditationWidgets (string rec_type) {
 		),
 		`Top (
 		    // Combobox - zone settings - Record Type
-		    `ComboBox (`id ("add_record_type"), _("T&ype"), supported_records)
+		    `ComboBox (`id ("add_record_type"), `opt (`notify), _("T&ype"), supported_records)
 		),
 		`VBox (
 		    // IntField - zone settings - Record Value
@@ -984,7 +986,7 @@ term GetEditationWidgets (string rec_type) {
 		// Textentry - zone settings - Record Name
 		`Top (`InputField (`id ("add_record_name"), `opt (`hstretch), _("&Record Key"))),
 		// Combobox - zone settings - Record Type
-		`Top (`ComboBox (`id ("add_record_type"), _("T&ype"), supported_records)),
+		`Top (`ComboBox (`id ("add_record_type"), `opt (`notify), _("T&ype"), supported_records)),
 		// Textentry - zone settings - Record Value
 		`Top (`InputField (`id ("add_record_val"), `opt (`hstretch), _("Val&ue")))
 	    );
@@ -1106,7 +1108,7 @@ void AdjustEditationWidgets (map current_record, string & decoded_zone_name, str
 
 		    // not to show an empty string
 		    if (current_key == "") current_key = zone_name + ".";
-		} else {
+		} else if (current_key != "" && regexpmatch (current_key, "[ \\t]")) {
 		    y2error ("Invalid record key: %1", current_key);
 		}
 
@@ -1118,7 +1120,7 @@ void AdjustEditationWidgets (map current_record, string & decoded_zone_name, str
 		    current_weight	= tointeger (regexpsub (current_val, "^[0-9]+[ \\t]+([0-9]+)[ \\t]+[0-9]+.*$", "\\1"));
 		    current_port	= tointeger (regexpsub (current_val, "^[0-9]+[ \\t]+[0-9]+[ \\t]+([0-9]+).*$", "\\1"));
 		    current_val		= regexpsub (current_val, "^[0-9]+[ \\t]+[0-9]+[ \\t]+[0-9]+[ \\t]+(.*)$", "\\1");
-		} else {
+		} else if (current_val != "" && regexpmatch (current_val, "[ \\t]")) {
 		    y2error ("Invalid record val: %1", current_val);
 		}
 
@@ -1133,7 +1135,7 @@ void AdjustEditationWidgets (map current_record, string & decoded_zone_name, str
 		if (regexpmatch (current_val, "[0-9]+[ \\t]+.*")) {
 		    current_prio	= tointeger (regexpsub (current_val, "([0-9]+)[ \\t]+.*", "\\1"));
 		    current_val		= regexpsub (current_val, "[0-9]+[ \\t]+(.*)", "\\1");
-		} else {
+		} else if (current_val != "" && regexpmatch (current_val, "[ \\t]")) {
 		    y2error ("Invalid record val: %1", current_val);
 		}
 
@@ -1232,7 +1234,6 @@ void RedrawZonesTable () {
 	    UI::QueryWidget (`id ("records_list"), `CurrentItem);
 
 	AdjustEditationWidgets (current_zone["records", r]:$[], decoded_zone_name, zone_name);
-
     }
 }
 
@@ -1514,6 +1515,27 @@ boolean CheckAndModifyRecord (string & type, string & key, string & val) {
     return true;
 }
 
+void SwitchAndAdjustEditationWidgets (string & type, map current_record, string & decoded_zone, string & zone) {
+    term new_rr_rp = GetEditationWidgets (type);
+
+    string key = (string) UI::QueryWidget (`id ("add_record_name"), `Value);
+    string val = (string) UI::QueryWidget (`id ("add_record_val"), `Value);
+
+    if (! haskey (current_record, "key")) current_record["key"] = key;
+    if (! haskey (current_record, "value")) current_record["value"] = val;
+
+    // Replacing the editation widgets
+    if (new_rr_rp != current_rr_rp) {
+	current_rr_rp = new_rr_rp;
+	UI::ReplaceWidget (`id ("rr_rp"), current_rr_rp);
+	last_add_record_type = type;
+	UI::ChangeWidget (`id ("add_record_type"), `Value, type);
+	UI::SetFocus (`id ("add_record_type"));
+    }
+
+    AdjustEditationWidgets (current_record, decoded_zone, zone);
+}
+
 /**
  * Handle events in a tab of a dialog
  */
@@ -1522,6 +1544,7 @@ symbol HandleZoneRecordsTab (map event) {
     string zone_fqdn = current_zone["zone"]:"" + ".";
 
     integer r = (integer)  UI::QueryWidget (`id ("records_list"), `CurrentItem);
+    // Currently selected type
     string type = (string) UI::QueryWidget (`id ("add_record_type"), `Value);
 
     // translating new record key
@@ -1543,6 +1566,16 @@ symbol HandleZoneRecordsTab (map event) {
     integer record_prio = 0;
     integer record_weigh = 0;
     integer record_port = 0;
+
+    string zone = current_zone["zone"]:"";
+    string decoded_zone = Punycode::DecodeDomainName(zone);
+
+    // Switch to new type of Editation dialog
+    if (ret == "add_record_type") {
+	if (type != last_add_record_type)
+	    SwitchAndAdjustEditationWidgets (type, $["type":type], decoded_zone, zone);
+	return nil;
+    }
 
     switch (type) {
 	// "SRV"
@@ -1579,24 +1612,12 @@ symbol HandleZoneRecordsTab (map event) {
 	    break;
     };
 
-    string zone = current_zone["zone"]:"";
-    string decoded_zone = Punycode::DecodeDomainName(zone);
-
     // Switching selected record
     if (ret == "records_list")
     {
 	// type might have changed
 	type = current_zone["records", r, "type"]:"";
-	term new_rr_rp = GetEditationWidgets (type);
-
-	// Replacing the editation widgets
-	if (new_rr_rp != current_rr_rp) {
-	    current_rr_rp = new_rr_rp;
-	    UI::ReplaceWidget (`id ("rr_rp"), current_rr_rp);
-	    UI::ChangeWidget (`id ("add_record_type"), `Value, type);
-	}
-
-	AdjustEditationWidgets (current_zone["records", r]:$[], decoded_zone, zone);
+	SwitchAndAdjustEditationWidgets (type, current_zone["records", r]:$[], decoded_zone, zone);
     }
 
     // Changing selected record
