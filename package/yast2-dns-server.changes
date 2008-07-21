@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Jul 21 14:21:00 CEST 2008 - locilka@suse.cz
+
+- Added support for SRV and TXT RRs (FATE #206, #120040).
+- Added support for AAAA IPv6 RR (FATE #304401).
+- Added support for IPv6 reverse zones (WIP).
+- 2.17.2
+
+-------------------------------------------------------------------
 Wed Jul 16 15:17:50 CEST 2008 - locilka@suse.cz
 
 - Firewall service 'dns-server' replaced with 'service:bind'.

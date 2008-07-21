@@ -22,6 +22,8 @@ use DnsRoutines;
 use YaPI;
 textdomain("dns-server");
 
+YaST::YCP::Import ("Hostname");
+
 #use io_routines;
 #use check_routines;
 
@@ -42,7 +44,7 @@ use Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw($zone_base_config_dn);
 
-my @all_rec_types = ("mx", "ns", "a", "md", "cname", "ptr", "hinfo",
+my @all_rec_types = ("mx", "ns", "a", "aaaa", "md", "cname", "ptr", "hinfo",
     "minfo", "txt", "sig", "key", "aaa", "loc", "nxtr", "srv",
     "naptr", "kx", "cert", "a6", "dname");
 
@@ -203,8 +205,8 @@ sub ZoneRead {
     my $zone_has_ns_record = 0;
     my $search_for_record_key = $zone.".";
 
-    foreach my $r (@original_records) {
-	my %r = %{$r};
+    foreach my $record (@original_records) {
+	my %r = %{$record};
 	my $key = $r{"key"} || "";
 	my $type = $r{"type"} || "";
 	my $value = $r{"value"} || "";
@@ -221,6 +223,13 @@ sub ZoneRead {
 	    }
 	    $previous_key = $key;
 	}
+
+	# Handle special cases
+	if ($type =~ /^txt$/i) {
+	    $value =~ s/(^\"|\"$)//g;
+	    $value =~ s/\\\"/\"/g;
+	}
+
 	push @records, {
 	    "key" => $key,
 	    "type" => $type,
@@ -257,7 +266,42 @@ sub ZoneFileWrite {
 	$soa{$key} = $value;
     }
 
-    my @records = @{$zone_map{"records"} || []};
+    my @records = ();
+
+    my $NS_records = 0;
+
+    # Handle special cases
+    foreach my $r (@{$zone_map{"records"}}) {
+	my $key = $r->{"key"} || "";
+	my $type = $r->{"type"} || "";
+	my $value = $r->{"value"} || "";
+
+	if ($type =~ /^txt$/i && $value !~ /^\"/ && $value !~ /\"$/) {
+	    $value =~ s/\"/\\\"/g;
+	    $value = '"'.$value.'"';
+	}
+
+	if ($type =~ /^NS/i) {
+	    ++$NS_records;
+	}
+
+	push @records, {
+	    "key" => $key,
+	    "type" => $type,
+	    "value" => $value,
+	};
+    }
+
+    # At least one NS record must be set
+    if ($NS_records == 0) {
+	my $hostname = Hostname->CurrentFQ();
+	y2warning ("No NS record set, adding the current hostname: '".$hostname."'");
+	push @records, {
+	    "key" => $zone_name.'.',
+	    "type" => 'NS',
+	    "value" => $hostname.'.',
+	};
+    }
 
     my %save = (
 	"TTL" => $ttl,
@@ -317,6 +361,15 @@ sub GetSortedUpdateCommands {
     return \@actions;
 }
 
+# To prevent from showing the key
+sub RemoveKeyLine ($) {
+    my $command = shift;
+
+    $command =~ s/key[ \t]+([^ \t]+)[ \t]+.*/key $1 __secret_key_has_been_hidden_for_security_reasons__/;
+
+    return $command;
+}
+
 BEGIN{$TYPEINFO{UpdateZones}=["function",["list",["map","any","any"]]];}
 sub UpdateZones {
     my $self = shift;
@@ -371,7 +424,7 @@ sub UpdateZones {
 	push @commands, "";
 	push @commands, "";
 	my $command = join ("\n", @commands);
-	y2milestone ("Running command $command");
+	y2milestone ("Running command:\n".RemoveKeyLine($command));
 	my $xx = SCR->Execute (".target.bash_output",
 	    "echo '$command' | /usr/bin/nsupdate");
     }

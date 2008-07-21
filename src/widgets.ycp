@@ -1068,10 +1068,10 @@ define symbol MasterTableStore (string key, map event) ``{
  */
 global define symbol MasterTableHandle (string key, map event) ``{
     map<string, any> widget = CWM::GetProcessedWidget ();
-    if (regexpmatch (current_zone["zone"]:"", "in-addr\\.arpa\\.?$"))
+    if (regexpmatch (current_zone["zone"]:"", "in-addr\\.arpa\\.?$") || regexpmatch (current_zone["zone"]:"", "\\.ip6\\.arpa\\.?$"))
 	widget["add_items"] = [ "PTR", "NS" ];
     else
-	widget["add_items"] = [ "A", "CNAME", "NS", "MX" ];
+	widget["add_items"] = [ "A", "AAAA", "CNAME", "NS", "MX" ];
     return TablePopup::TableHandle(widget, key, event);
 }
 
@@ -1097,7 +1097,7 @@ global define map getMasterTableWidget () ``{
 	    "label_func" : masterTableLabelFunc,
 	],
 	"option_delete" : masterTableEntryDelete,
-	"add_items" : [ "A", "CNAME", "PTR", "NS", "MX" ],
+	"add_items" : [ "AAAA", "A", "CNAME", "PTR", "NS", "MX" ],
 	"add_items_keep_order" : true,
 	"add_unlisted" : false,
 	"help" : HELPS["master_zone"]:"",

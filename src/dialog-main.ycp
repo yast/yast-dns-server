@@ -1498,6 +1498,11 @@ symbol HandleExpertZonesPage (string key, map event) {
 	string zone_type = (string)
 	    UI::QueryWidget (`id ("new_zone_type"), `Value);
 
+	// Do not add the final dot to the zone name
+	if (regexpmatch (zone_name, "\\.+$")) {
+	    zone_name = regexpsub (zone_name, "(.*)\\.+$", "\\1");
+	}
+
 	string encoded_zone_name = Punycode::EncodeDomainName(zone_name);
 	
 	// zone validation

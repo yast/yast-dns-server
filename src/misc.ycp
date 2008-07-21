@@ -46,6 +46,28 @@
 	return `normal;
     }
 
+    /**
+     * Returns whether zone is a reverse-zone type
+     *
+     * @param string zone
+     * @return boolean if zone is reverse type
+     */
+    global define boolean IsReverseZone (string zone) {
+	if (zone == nil || zone == "") {
+	    y2error ("Wrong zone name: '%1'", zone);
+	    return nil;
+	}
+
+	if (
+	    regexpmatch (current_zone["zone"]:"", ".*\\.in-addr\\.arpa\\.?$")
+	    ||
+	    regexpmatch (current_zone["zone"]:"", ".*\\.ip6\\.arpa\\.?$")
+	) {
+	    return true;
+	} else {
+	    return false;
+	}
+    }
 
 /* EOF */
 }
