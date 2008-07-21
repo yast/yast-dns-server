@@ -119,8 +119,10 @@ while ( <STDIN> )
 	    {
 		@records = @{$data{"records"}};
 	    }
+
 	    my $current_origin = ((defined $data{"ORIGIN"}) ? $data{"ORIGIN"}:$domain_name);
 	    if ($current_origin eq ".") { $current_origin = $domain_name; }
+
 	    foreach $ref (@records) {
 		%record = %{$ref};
 		if ((defined ($record{"comment"})) && ($record{"comment"} ne ""))

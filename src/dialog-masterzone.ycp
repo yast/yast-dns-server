@@ -29,6 +29,8 @@ import "DnsServerAPI";
 import "Punycode";
 import "DnsServer";
 
+include "dns-server/misc.ycp";
+
 string ToRelativeName (string absolute_name, string zone_name) {
     if (absolute_name == nil || zone_name == nil) {
 	return nil;
@@ -63,6 +65,10 @@ boolean HandleNsupdate (map update_record, string operation) {
     if (regexpmatch(tolower(update_record["type"]:""),"^\(ns\|mx\|cname\)$")) {
 	if (regexpmatch (update_record["value"]:"", ".*[^.]$"))
 	    update_record["value"] = update_record["value"]:"" + _current_zone_;
+    }
+
+    if (tolower (update_record["type"]:"") == "txt") {
+	update_record["value"] = "\"" + mergestring (splitstring (update_record["value"]:"", "\""), "\\\"") + "\"";
     }
 
     current_zone["update_actions"] = add (current_zone["update_actions"]:[], $[
@@ -386,10 +392,7 @@ void RedrawNsListWidget () {
 //    UI::ChangeWidget( `id ("add_name_server"), `ValidChars, Hostname::ValidCharsFQ);
 //}
 
-/**
- * Initialize the tab of the dialog
- */
-void InitNsListTab () {
+void RegenerateCurrentZoneNS () {
     string zone_name = current_zone["zone"]:"";
     list<map> records = filter (map r, (list<map>)(current_zone["records"]:[]), ``(
         r["type"]:"" == "NS"
@@ -398,7 +401,14 @@ void InitNsListTab () {
     ));
     current_zone_ns = maplist (map r, records, ``(r["value"]:""));
     current_zone_ns = filter (string z, current_zone_ns, ``(z != ""));
+    y2milestone ("NSs: %1", current_zone_ns);
+}
 
+/**
+ * Initialize the tab of the dialog
+ */
+void InitNsListTab () {
+    RegenerateCurrentZoneNS();
     RedrawNsListWidget ();
     //ValidCharsNsListWidget ();
 }
@@ -903,58 +913,142 @@ Continue?")))
 
 // --> zone RECORDS
 
+list supported_records = [];
+
+term GetEditationWidgets (string rec_type) {
+    term ret = nil;
+
+    switch (rec_type) {
+	// "MX"
+	case "MX":
+	    ret = `HBox (
+		// Textentry - zone settings - Record Name
+		`Top (`InputField (`id ("add_record_name"), `opt (`hstretch), _("&Record Key"))),
+		// Combobox - zone settings - Record Type
+		`Top (`ComboBox (`id ("add_record_type"), _("T&ype"), supported_records)),
+		// IntField - zone settings - Record Value
+		`Top (`HSquash (`IntField (`id ("add_record_prio"), `opt (`hstretch), _("&Priority"), 0, 65535, 0))),
+		// Textentry - zone settings - Record Value
+		`Top (`InputField (`id ("add_record_val"), `opt (`hstretch), _("Val&ue")))
+	    );
+
+	    break;
+
+	// "SRV"
+	case "SRV":
+	    ret = `HBox (
+		`VBox (
+		    // Textentry - zone settings - Record Name
+		    `InputField (`id ("add_record_name"), `opt (`hstretch), _("&Record Key")),
+		    `HBox (
+			// Textentry - zone settings - Record Name
+			`ComboBox (`id ("add_record_service"), `opt (`editable, `hstretch), _("&Service"), [
+			    `item ("_http"),
+			    `item ("_ftp"),
+			    `item ("_imap"),
+			    `item ("_ldap"),
+			    `item ("_PK"),
+			    `item ("_XREP"),
+			]),
+			// Textentry - zone settings - Record Name
+			`ComboBox (`id ("add_record_protocol"), `opt (`editable, `hstretch), _("&Protocol"), [
+			    `item ("_tcp"),
+			    `item ("_udp"),
+			]),
+			`HStretch()
+		    )
+		),
+		`Top (
+		    // Combobox - zone settings - Record Type
+		    `ComboBox (`id ("add_record_type"), _("T&ype"), supported_records)
+		),
+		`VBox (
+		    // IntField - zone settings - Record Value
+		    `InputField (`id ("add_record_val"), `opt (`hstretch), _("Val&ue")),
+		    `HBox (
+			// IntField - zone settings - Record Value
+			`IntField (`id ("add_record_prio"), _("&Priority"), 0, 65535, 0),
+			// IntField - zone settings - Record Value
+			`IntField (`id ("add_record_weight"), _("&Weight"), 0, 65535, 0),
+			// IntField - zone settings - Record Value
+			`IntField (`id ("add_record_port"), _("&Port"), 0, 65535, 0)
+		    )
+		)
+	    );
+
+	    break;
+
+	// "A", "AAAA", "CNAME", "NS", "PTR", "TXT"
+	default:
+	    ret = `HBox (
+		// Textentry - zone settings - Record Name
+		`Top (`InputField (`id ("add_record_name"), `opt (`hstretch), _("&Record Key"))),
+		// Combobox - zone settings - Record Type
+		`Top (`ComboBox (`id ("add_record_type"), _("T&ype"), supported_records)),
+		// Textentry - zone settings - Record Value
+		`Top (`InputField (`id ("add_record_val"), `opt (`hstretch), _("Val&ue")))
+	    );
+
+	    break;
+    };
+
+    return ret;
+}
+
+// current RR type used in `ReplacePoint (`id ("rr_rp"))
+term current_rr_rp = nil;
+
 /**
  * Dialog Tab - Zone Editor - Records
  * @return term for Get_ZoneEditorTab()
  */
 term GetMasterZoneEditorTabRecords () {
-    list add_records = [];
-    if (regexpmatch (current_zone["zone"]:"", "in-addr\\.arpa\\.?$"))
-    {
-	add_records = [ "PTR", "NS" ];
+    // reverse zone
+    if (IsReverseZone (current_zone["zone"]:"")) {
+	supported_records = [ "PTR", "NS" ];
+    } else {
+	supported_records = [ "A", "AAAA", "CNAME", "NS", "MX", "SRV", "TXT" ];
     }
-    else
-    {
-	add_records = [ "A", "CNAME", "NS", "MX" ];
-    }
-    map add_descriptions = $[
-	"A" : _("A: Domain Name Translation"),
-	"CNAME" : _("CNAME: Alias for Domain Name"),
-	"NS" : _("NS: Name Server"),
-	"MX" : _("MX: Mail Relay"),
-	"PTR" : _("PTR: Reverse Translation"),
+
+    map record_type_descriptions = $[
+	"A"	: _("A: IPv4 Domain Name Translation"),
+	"AAAA"	: _("AAAA: IPv6 Domain Name Translation"),
+	"CNAME"	: _("CNAME: Alias for Domain Name"),
+	"NS"	: _("NS: Name Server"),
+	"MX"	: _("MX: Mail Relay"),
+	"PTR"	: _("PTR: Reverse Translation"),
+	"SRV"	: _("SRV: Services Record"),
+	"TXT"	: _("TXT: Text Record"),
     ];
-    add_records = maplist (any a, add_records, ``(
-	`item (`id (a), add_descriptions[a]:a)
+
+    supported_records = maplist (any one_rec_type, supported_records, ``(
+	`item (`id (one_rec_type), record_type_descriptions[one_rec_type]:one_rec_type)
     ));
+
+    current_rr_rp = GetEditationWidgets (nil);
 
     term contents =
 	`VBox (
+	    `HStretch(),
 	    `VSquash (
 		// Frame label - Adding/Changing IP/CNAME/Type... zone settings
 		`Frame ( _("Record Settings"),
 		    `VBox (
 			`HBox (
-			    `HWeight ( 9,
-				`HBox (
-				    // Textentry - zone settings - Record Name
-				    `InputField ( `id ( "add_record_name" ), `opt (`hstretch), _("&Record Key") ),
-				    // Combobox - zone settings - Record Type
-				    `ComboBox ( `id ( "add_record_type" ), _("T&ype"), add_records ),
-				    // Textentry - zone settings - Record Value
-				    `InputField ( `id ( "add_record_val" ), `opt (`hstretch), _("Val&ue") )
-				)
+			    `HWeight (11,
+				// Will be replaced with another box of widgets
+				// after selecting another RR type
+				`ReplacePoint (`id ("rr_rp"), current_rr_rp)
 			    ),
 			    `HWeight ( 2,
 				`VBox (
-				    `VStretch (),
+				    `VSpacing (2),
 				    // Pushbutton - Change Record
 				    `VSquash ( `PushButton ( `id ( "change_record" ), `opt ( `hstretch ), _("C&hange") ) ),
 				    `VSquash ( `PushButton ( `id ( "add_record" ), `opt ( `hstretch ), Label::AddButton () ) )
 				)
 			    )
-			),
-			`VSpacing (0.5)
+			)
 		    )
 		)
 	    ),
@@ -962,7 +1056,7 @@ term GetMasterZoneEditorTabRecords () {
 	    // Table label - Records listing
 	    `Left ( `Label (_("Configured Resource Records") ) ),
 	    `HBox (
-		`HWeight ( 9,
+		`HWeight ( 11,
 		    `VBox (
 			`Table ( `id ( "records_list" ),
 			    `opt (`notify, `immediate),
@@ -973,7 +1067,7 @@ term GetMasterZoneEditorTabRecords () {
 			    _("Type"),
 			    // Table menu item - Records listing
 			    _("Value")
-			), [
+			    ), [
 			])
 		    )
 		),
@@ -986,6 +1080,84 @@ term GetMasterZoneEditorTabRecords () {
 	    )
 	);
     return contents;
+}
+
+void AdjustEditationWidgets (map current_record, string & decoded_zone_name, string & zone_name) {
+	string current_type = current_record["type"]:"A";
+
+	string current_key = current_record["key"]:"";
+	string current_val = current_record["value"]:"";
+
+	string current_service	= "";
+	string current_protocol	= "";
+
+	integer current_prio	= 0;
+	integer current_weight	= 0;
+	integer current_port	= 0;
+
+	switch (current_type) {
+	    // "SRV"
+	    case "SRV":
+
+		if (regexpmatch (current_key, "^_[^_]+\\._[^_]+\\.?")) {
+		    current_service	= regexpsub (current_key, "^(_[^_]+)\\._[^_]+\\.?.*", "\\1");
+		    current_protocol	= regexpsub (current_key, "^_[^_]+\\.(_[^\\.]+)\\.?.*", "\\1");
+		    current_key		= regexpsub (current_key, "^_[^_]+\\._[^\\.]+\\.?(.*)$", "\\1");
+
+		    // not to show an empty string
+		    if (current_key == "") current_key = zone_name + ".";
+		} else {
+		    y2error ("Invalid record key: %1", current_key);
+		}
+
+		UI::ChangeWidget (`id ("add_record_service"), `Value, current_service);
+		UI::ChangeWidget (`id ("add_record_protocol"), `Value, current_protocol);
+
+		if (regexpmatch (current_val, "^[0-9]+[ \\t]+[0-9]+[ \\t]+[0-9]+.*")) {
+		    current_prio	= tointeger (regexpsub (current_val, "^([0-9]+)[ \\t]+[0-9]+[ \\t]+[0-9]+.*$", "\\1"));
+		    current_weight	= tointeger (regexpsub (current_val, "^[0-9]+[ \\t]+([0-9]+)[ \\t]+[0-9]+.*$", "\\1"));
+		    current_port	= tointeger (regexpsub (current_val, "^[0-9]+[ \\t]+[0-9]+[ \\t]+([0-9]+).*$", "\\1"));
+		    current_val		= regexpsub (current_val, "^[0-9]+[ \\t]+[0-9]+[ \\t]+[0-9]+[ \\t]+(.*)$", "\\1");
+		} else {
+		    y2error ("Invalid record val: %1", current_val);
+		}
+
+		UI::ChangeWidget (`id ("add_record_prio"), `Value, current_prio);
+		UI::ChangeWidget (`id ("add_record_weight"), `Value, current_weight);
+		UI::ChangeWidget (`id ("add_record_port"), `Value, current_port);
+
+		break;
+
+	    // "MX"
+	    case "MX":
+		if (regexpmatch (current_val, "[0-9]+[ \\t]+.*")) {
+		    current_prio	= tointeger (regexpsub (current_val, "([0-9]+)[ \\t]+.*", "\\1"));
+		    current_val		= regexpsub (current_val, "[0-9]+[ \\t]+(.*)", "\\1");
+		} else {
+		    y2error ("Invalid record val: %1", current_val);
+		}
+
+		UI::ChangeWidget (`id ("add_record_prio"), `Value, current_prio);
+
+		break;
+
+	    // "A", "AAAA", "CNAME", "NS", "PTR", "TXT"
+	    default:
+		break;
+	};
+
+	// Applies to all
+	UI::ChangeWidget (`id ("add_record_name"), `Value,
+	    ToRelativeName(
+		Punycode::DecodeDomainName (current_key), decoded_zone_name
+	    )
+	);
+	UI::ChangeWidget (`id ("add_record_type"), `Value, current_type);
+	UI::ChangeWidget (`id ("add_record_val"), `Value,
+	    ToRelativeName(
+		Punycode::DecodeDomainName (current_val), decoded_zone_name
+	    )
+	);
 }
 
 void RedrawZonesTable () {
@@ -1032,37 +1204,35 @@ void RedrawZonesTable () {
 
 	return `item (
 	    `id (r),
-	    ToRelativeName(decoded_names[counter]:current_zone["records", r, "key"]:"", decoded_zone_name),
+	    ToRelativeName (decoded_names[counter]:current_zone["records", r, "key"]:"", decoded_zone_name),
 	    current_zone["records", r, "type"]:"",
-	    ToRelativeName(decoded_names[counter+const_plus]:current_zone["records", r, "value"]:"", decoded_zone_name)
+	    ToRelativeName (decoded_names[counter+const_plus]:current_zone["records", r, "value"]:"", decoded_zone_name)
 	);
     });
 
+    // remember the last selected item
     integer r = (integer)
 	UI::QueryWidget (`id ("records_list"), `CurrentItem);
     if (r == nil) r = items [0, 0, 0]:0;
 
+    // Redraw
     UI::ChangeWidget (`id ("records_list"), `Items, items);
-    UI::ChangeWidget (`id ("records_list"), `CurrentItem, r);
+
+    // Set CurrentItem again
+    if (size (items) > 0) {
+	UI::ChangeWidget (`id ("records_list"), `CurrentItem, r);
+    }
+
     UI::ChangeWidget (`id ("delete_record"), `Enabled, size (items) > 0);
     UI::ChangeWidget (`id ("change_record"), `Enabled, size (items) > 0);
 
     if (size (items) > 0)
     {
 	r = (integer)
-	    UI::QueryWidget (`id ("records_list"), `CurrentItem );
-	UI::ChangeWidget (`id ("add_record_name"), `Value,
-	    ToRelativeName(
-		Punycode::DecodeDomainName(current_zone["records", r, "key"]:""), decoded_zone_name
-	    )
-	);
-	UI::ChangeWidget (`id ("add_record_type"), `Value,
-	    current_zone["records", r, "type"]:"");
-	UI::ChangeWidget (`id ("add_record_val"), `Value,
-	    ToRelativeName(
-		Punycode::DecodeDomainName(current_zone["records", r, "value"]:""), decoded_zone_name
-	    )
-	);
+	    UI::QueryWidget (`id ("records_list"), `CurrentItem);
+
+	AdjustEditationWidgets (current_zone["records", r]:$[], decoded_zone_name, zone_name);
+
     }
 }
 
@@ -1103,6 +1273,7 @@ boolean CheckNewZoneRecordSyntax (map <string, string> record) {
     if (regexpmatch (val, "^.*\\.$"))
 	val = regexpsub (val, "^(.*)\\.$", "\\1");
 
+    // -- A -- \\
     if (type == "A") {
 	// (hostname or FQ -> IPv4)
 	if (Hostname::Check(key) != true && Hostname::CheckFQ(key) != true) {
@@ -1116,6 +1287,8 @@ boolean CheckNewZoneRecordSyntax (map <string, string> record) {
 	    return false;
 	}
 	return true;
+
+    // -- CNAME -- \\
     } else if (type == "CNAME") {
 	// (hostname or FQ -> hostname or FQ)
 	if (Hostname::Check(key) != true && Hostname::CheckFQ(key) != true) {
@@ -1129,6 +1302,8 @@ boolean CheckNewZoneRecordSyntax (map <string, string> record) {
 	    return false;
 	}
 	return true;
+
+    // -- NS -- \\
     } else if (type == "NS") {
 	// (hostname or domain or FQ -> hostname or FQ)
 	if (Hostname::Check(key) != true &&
@@ -1145,9 +1320,13 @@ boolean CheckNewZoneRecordSyntax (map <string, string> record) {
 	    return false;
 	}
 	return true;
+
+    // -- MX -- \\
     } else if (type == "MX") {
-	if (regexpmatch (val, "^[ \t]*[0-9]+[ \t]+[^ \t].*$"))
+	if (regexpmatch (val, "^[ \t]*[0-9]+[ \t]+[^ \t].*$")) {
 	    val = regexpsub (val, "^[ \t]*[0-9]+[ \t]+([^ \t].*)$", "\\1");
+	    // FIXME: check also priority
+	}
 	// (hostname or domain or FQ -> hostname or FQ)
 	if (Hostname::Check(key) != true &&
 	    Hostname::CheckDomain(key) != true &&
@@ -1163,6 +1342,8 @@ boolean CheckNewZoneRecordSyntax (map <string, string> record) {
 	    return false;
 	}
 	return true;
+
+    // -- PTR -- \\
     } else if (type == "PTR") {
 	// (hostname or domain or FQ -> FQ)
 	if (Hostname::CheckFQ(val) != true
@@ -1173,6 +1354,7 @@ boolean CheckNewZoneRecordSyntax (map <string, string> record) {
 	    return false;
 	}
 	string num = "(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])";
+	// FIXME: can produce errors for IPv6!
 	string ipv4_incompl = "^" + num + "(\\." + num + "){0,3}"
 	    + "(\\.in-addr\\.arpa)*\\.*$";
 	if (! regexpmatch (key, ipv4_incompl))
@@ -1181,6 +1363,55 @@ boolean CheckNewZoneRecordSyntax (map <string, string> record) {
 	    Popup::Error ( Hostname::ValidFQ() );
 	    return false;
 	}
+	// FIXME: check also IPv6 PTR record
+	return true;
+
+    // -- AAAA -- \\
+    } else if (type == "AAAA") {
+	// (hostname or FQ)
+	if (Hostname::Check(key) != true && Hostname::CheckFQ(key) != true) {
+	    UI::SetFocus ( `id ("add_record_name") );
+	    Popup::Error ( Hostname::ValidFQ() );
+	    return false;
+	}
+	if (IP::Check6(val) != true) {
+	    UI::SetFocus ( `id ("add_record_val") );
+	    Popup::Error (_("Invalid IPv6 address."));
+	    return false;
+	}
+	return true;
+
+    // -- SRV -- \\
+    } else if (type == "SRV") {
+	// int int int hostname
+	if (regexpmatch (val, "^[ \t]*[0-9]+[ \t]+[0-9]+[ \t]+[0-9]+[ \t]+[^ \t].*$")) {
+	    val = regexpsub (val, "^[ \t]*[0-9]+[ \t]+[0-9]+[ \t]+[0-9]+[ \t]+([^ \t].*)$", "\\1");
+	    // FIXME: check also other values (ints)
+	}
+	if (Hostname::Check(val) != true && Hostname::CheckFQ(val) != true) {
+	    UI::SetFocus ( `id ("add_record_val") );
+	    Popup::Error ( Hostname::ValidFQ() );
+	    return false;
+	}
+	return true;
+
+    // -- TXT -- \\
+    } else if (type == "TXT") {
+	// (hostname or FQ)
+	if (Hostname::Check(key) != true && Hostname::CheckFQ(key) != true) {
+	    UI::SetFocus ( `id ("add_record_name") );
+	    Popup::Error (_("Invalid TXT record key. It should be similar to a hostname.") + "\n\n" + Hostname::ValidFQ() );
+	    return false;
+	}
+	if (size (val) > 255) {
+	    UI::SetFocus (`id ("add_record_val"));
+	    // TRANSLATORS: Error message, %1 is replaced with the maximal length
+	    // %2 with the current length of a new TXT record.
+	    Popup::Error (sformat(_("Maximal length of a TXT record is %1 characters.
+This message is %2 characters long."), 255, size (val)));
+	    return false;
+	}
+	// FIXME: handle quotes
 	return true;
     }
 
@@ -1199,7 +1430,10 @@ boolean CheckNewZoneRecordLogic (map <string, string> record) {
     string val	= (string) record["val"]:"";
 
     if (type == "A") {
-	// A record should point to IPv4
+	// A record should point to IPv4 address
+	return true;
+    } else if (type == "AAAA") {
+	// AAAA record should point to IPv6 address
 	return true;
     } else if (type == "CNAME") {
 	// (hostname or FQ -> hostname or FQ)
@@ -1211,12 +1445,17 @@ boolean CheckNewZoneRecordLogic (map <string, string> record) {
 	}
 	return true;
     } else if (type == "NS") {
-	// NS should point to an A record
+	// FIXME: NS should point to an A or AAAA record (if it is in the same domain)
 	return true;
     } else if (type == "MX") {
-	// MX should point to an A record
+	// FIXME: MX should point to an A or AAAA record (if it is in the same domain)
 	return true;
     } else if (type == "PTR") {
+	return true;
+    } else if (type == "SRV") {
+	// FIXME: SRV should point to an A or AAAA record (if it is in the same domain)
+	return true;
+    } else if (type == "TXT") {
 	return true;
     }
 
@@ -1224,146 +1463,164 @@ boolean CheckNewZoneRecordLogic (map <string, string> record) {
     return false;
 }
 
+boolean CheckAndModifyRecord (string & type, string & key, string & val) {
+	// (SYNTAX) Checking the record by record-type (true or false)
+	if (CheckNewZoneRecordSyntax ($[ "key" : key, "type" : type, "val" : val ]) != true) {
+	    return false;
+	}
+	// (LOGIC) Checking the record by record-type (true or false)
+	if (CheckNewZoneRecordLogic ($[ "key" : key, "type" : type, "val" : val ]) != true) {
+	    return false;
+	}
+
+	string tolower_type = tolower (type);
+
+	if (tolower_type == nil || tolower_type == "") {
+	    y2error ("tolover(%1) -> %2", type, tolower_type);
+	    return false;
+	}
+
+	if (tolower_type == "ptr")
+	{
+	    // no dot at the end
+	    if (! regexpmatch (val, "^.*\\.$"))
+		// add dot
+		val = val + ".";
+
+	    if (regexpmatch (key, "in-addr\\.arpa$") || regexpmatch (key, "ip6\\.arpa$"))
+		key = key + ".";
+	}
+
+	else if (contains (["a", "cname", "ns", "mx"], tolower_type))
+	{
+	    if (tolower_type == "mx") {
+		if (! regexpmatch (val, "^[ \t]*[0-9]+[ \t]+[^ \t].*$")) {
+		    val = "0 " + val;
+		} else {
+		    integer prio = tointeger( regexpsub (val, "^[ \t]*([0-9]+)[ \t]+[^ \t].*$", "\\1") );
+		    if (prio > 65535) {
+			val = "65535 " + regexpsub (val, "^[ \t]*[0-9]+[ \t]+([^ \t].*)$", "\\1");
+			y2milestone("MX Priority decrased to maximal 65535 from %1", prio);
+		    }
+		}
+	    } else if (contains (["ns", "mx", "cname"], tolower_type)) {
+		if (regexpmatch (val, "\\..*[^.]$"))
+		    val = val + ".";
+	    } else if (regexpmatch (key, "\\..*[^.]$")) {
+		key = key + ".";
+	    }
+	}
+
+    return true;
+}
+
 /**
  * Handle events in a tab of a dialog
  */
 symbol HandleZoneRecordsTab (map event) {
     any ret = event["ID"]:nil;
+    string zone_fqdn = current_zone["zone"]:"" + ".";
 
-    integer r = (integer)
-	UI::QueryWidget (`id ("records_list"), `CurrentItem );
-    string type = (string)
-	UI::QueryWidget (`id ("add_record_type"), `Value);
+    integer r = (integer)  UI::QueryWidget (`id ("records_list"), `CurrentItem);
+    string type = (string) UI::QueryWidget (`id ("add_record_type"), `Value);
 
-    // translating new record key and val
+    // translating new record key
     string key = (string) UI::QueryWidget (`id ("add_record_name"), `Value);
     if (key == "@") {
-	key = current_zone["zone"]:"" + ".";
+	key = zone_fqdn;
 	y2warning ("Transforming key @ into %1", key);
     }
     key = Punycode::EncodeDomainName (key);
 
+    // translating new record val
     string val = Punycode::EncodeDomainName(
 	(string) UI::QueryWidget (`id ("add_record_val"), `Value)
     );
 
+    string record_service = "";
+    string record_protocol = "";
+
+    integer record_prio = 0;
+    integer record_weigh = 0;
+    integer record_port = 0;
+
+    switch (type) {
+	// "SRV"
+	case "SRV":
+	    record_service	= (string) UI::QueryWidget (`id ("add_record_service"), `Value);
+	    record_protocol	= (string) UI::QueryWidget (`id ("add_record_protocol"), `Value);
+
+	    // empty key or FQDN
+	    if (key == "" || key == zone_fqdn) {
+		key = sformat ("%1.%2", record_service, record_protocol);
+	    // non empty key & not matching zone FQDN
+	    } else {
+		key = sformat ("%1.%2.%3", record_service, record_protocol, key);
+	    }
+
+	    record_prio		= (integer) UI::QueryWidget (`id ("add_record_prio"), `Value);
+	    record_weigh	= (integer) UI::QueryWidget (`id ("add_record_weight"), `Value);
+	    record_port		= (integer) UI::QueryWidget (`id ("add_record_port"), `Value);
+
+	    val = sformat ("%1 %2 %3 %4", record_prio, record_weigh, record_port, val);
+
+	    break;
+
+	// "MX"
+	case "MX":
+	    record_prio	= (integer) UI::QueryWidget (`id ("add_record_prio"), `Value);
+
+	    val = sformat ("%1 %2", record_prio, val);
+
+	    break;
+
+	// "A", "AAAA", "CNAME", "NS", "PTR", "TXT"
+	default:
+	    break;
+    };
+
     string zone = current_zone["zone"]:"";
     string decoded_zone = Punycode::DecodeDomainName(zone);
 
+    // Switching selected record
     if (ret == "records_list")
     {
-	UI::ChangeWidget (`id ("add_record_name"), `Value,
-	    ToRelativeName(
-		Punycode::DecodeDomainName(current_zone["records", r, "key"]:""), decoded_zone
-	    )
-	);
-	UI::ChangeWidget (`id ("add_record_type"), `Value,
-	    current_zone["records", r, "type"]:"");
-	UI::ChangeWidget (`id ("add_record_val"), `Value,
-	    ToRelativeName(
-		Punycode::DecodeDomainName(current_zone["records", r, "value"]:""), decoded_zone
-	    )
-	);
-    }
-    else if (ret == "change_record")
-    {
-	// (SYNTAX) Checking the record by record-type (true or false)
-	if (CheckNewZoneRecordSyntax ($[ "key" : key, "type" : type, "val" : val ]) != true) {
-	    return nil;
-	}
-	// (LOGIC) Checking the record by record-type (true or false)
-	if (CheckNewZoneRecordLogic ($[ "key" : key, "type" : type, "val" : val ]) != true) {
-	    return nil;
+	// type might have changed
+	type = current_zone["records", r, "type"]:"";
+	term new_rr_rp = GetEditationWidgets (type);
+
+	// Replacing the editation widgets
+	if (new_rr_rp != current_rr_rp) {
+	    current_rr_rp = new_rr_rp;
+	    UI::ReplaceWidget (`id ("rr_rp"), current_rr_rp);
+	    UI::ChangeWidget (`id ("add_record_type"), `Value, type);
 	}
 
-	if (tolower (type) == "ptr")
-	{
-	    if (! regexpmatch (val, "^.*\\.$"))
-		val = val + ".";
-	    if (regexpmatch (key, "in-addr\\.arpa$"))
-		key = key + ".";
-	}
-	else if (tolower (type) == "a" || tolower (type) == "cname"
-	    || tolower (type) == "ns" || tolower (type) == "mx")
-	{
-	    if (tolower (type) == "mx")
-	    {
-		if (! regexpmatch (val, "^[ \t]*[0-9]+[ \t]+[^ \t].*$"))
-		{
-		    val = "0 " + val;
-		}
-		else
-		{
-		    integer prio = tointeger( regexpsub (val, "^[ \t]*([0-9]+)[ \t]+[^ \t].*$", "\\1") );
-		    if (prio > 65535) {
-			val = "65535 " + regexpsub (val, "^[ \t]*[0-9]+[ \t]+([^ \t].*)$", "\\1");
-			y2milestone("MX Priority decrased to maximal 65535 from %1", prio);
-		    }
-		}
-	    }
-	    if (tolower (type) == "ns" || tolower (type) == "mx"
-		|| tolower (type) == "cname")
-	    {
-		if (regexpmatch (val, "\\..*[^.]$"))
-		    val = val + ".";
-	    }
-	    if (regexpmatch (key, "\\..*[^.]$"))
-		key = key + ".";
+	AdjustEditationWidgets (current_zone["records", r]:$[], decoded_zone, zone);
+    }
+
+    // Changing selected record
+    else if (ret == "change_record")
+    {
+	if (CheckAndModifyRecord (type, key, val) != true) {
+	    return nil;
 	}
 
 	HandleNsupdate(current_zone["records", r]:$[],"delete");
 
-	current_zone["records", r, "key"] = key;
-	current_zone["records", r, "type"] = type;
-	current_zone["records", r, "value"] = val;
+	current_zone["records", r, "key"]	= key;
+	current_zone["records", r, "type"]	= type;
+	current_zone["records", r, "value"]	= val;
 	RedrawZonesTable ();
 
-	HandleNsupdate(current_zone["records", r]:$[],"add");
+	HandleNsupdate (current_zone["records", r]:$[],"add");
     }
+
+    // Adding new record
     else if (ret == "add_record")
     {
-	// (SYNTAX) Checking the record by record-type (true or false)
-	if (CheckNewZoneRecordSyntax ($[ "key" : key, "type" : type, "val" : val ]) != true) {
+	if (CheckAndModifyRecord (type, key, val) != true) {
 	    return nil;
-	}
-	// (LOGIC) Checking the record by record-type (true or false)
-	if (CheckNewZoneRecordLogic ($[ "key" : key, "type" : type, "val" : val ]) != true) {
-	    return nil;
-	}
-
-	if (tolower (type) == "ptr")
-	{
-	    if (! regexpmatch (val, "^.*\\.$"))
-		val = val + ".";
-	    if (regexpmatch (key, "in-addr\\.arpa$"))
-		key = key + ".";
-	}
-	else if (tolower (type) == "a" || tolower (type) == "cname"
-	    || tolower (type) == "ns" || tolower (type) == "mx")
-	{
-	    if (tolower (type) == "mx")
-	    {
-		if (! regexpmatch (val, "^[ \t]*[0-9]+[ \t]+[^ \t].*$"))
-		{
-		    val = "0 " + val;
-		}
-		else
-		{
-		    integer prio = tointeger( regexpsub (val, "^[ \t]*([0-9]+)[ \t]+[^ \t].*$", "\\1") );
-		    if (prio > 65535) {
-			val = "65535 " + regexpsub (val, "^[ \t]*[0-9]+[ \t]+([^ \t].*)$", "\\1");
-			y2milestone("MX Priority decrased to maximal 65535 from %1", prio);
-		    }
-		}
-	    }
-	    if (tolower (type) == "ns" || tolower (type) == "mx"
-		|| tolower (type) == "cname")
-	    {
-		if (regexpmatch (val, "\\..*[^.]$"))
-		    val = val + ".";
-	    }
-	    if (regexpmatch (key, "\\..*[^.]$"))
-		key = key + ".";
 	}
 
 	map rec = $[
@@ -1374,8 +1631,10 @@ symbol HandleZoneRecordsTab (map event) {
 	current_zone["records"] = add (current_zone["records"]:[], rec);
 	RedrawZonesTable ();
 
-	HandleNsupdate(rec,"add");
+	HandleNsupdate (rec,"add");
     }
+
+    // Removing selected record
     else if (ret == "delete_record")
     {
 	if (! Confirm::DeleteSelected()) {
@@ -1389,7 +1648,12 @@ symbol HandleZoneRecordsTab (map event) {
 	    r != nil
 	));
 	RedrawZonesTable ();
+
+    // And the rest...
+    } else {
+	y2error ("Uknown ret: %1", ret);
     }
+
     return nil;
 }
 /**
@@ -1524,9 +1788,26 @@ symbol runMasterZoneTabDialog () {
     ];
 
     string zone_name = current_zone["zone"]:"";
+    string zone_name_dec = Punycode::DecodeDomainName (zone_name);
     string current_tab = "basics";
 
-    list<term> tab_terms = [
+    list <term> tab_terms = [];
+
+    // Different list of tabs for reverse zone
+    if (IsReverseZone (zone_name)) {
+	tab_terms = [
+								// Menu Item - Zone Editor - Tab
+			`item ( `id( "basics" ),		_("&Basics") ),
+								// Menu Item - Zone Editor - Tab
+			`item ( `id( "name_servers" ),		_("NS Recor&ds") ),
+								// Menu Item - Zone Editor - Tab
+			`item ( `id( "soa_settings" ),		_("&SOA") ),
+								// Menu Item - Zone Editor - Tab
+			`item ( `id( "records" ),		_("R&ecords") ),
+		    ];
+    // Not a reverse zone
+    } else {
+	tab_terms = [
 								// Menu Item - Zone Editor - Tab
 			`item ( `id( "basics" ),		_("&Basics") ),
 								// Menu Item - Zone Editor - Tab
@@ -1538,17 +1819,20 @@ symbol runMasterZoneTabDialog () {
 								// Menu Item - Zone Editor - Tab
 			`item ( `id( "records" ),		_("R&ecords") ),
 		    ];
+    }
+
+
 
     term contents =
 	//`Top (
 	    `VBox( `opt ( `hvstretch ),
 		`HBox (
 		    // Label - connected with Textentry which shows current edited zone
-		    `HSquash ( `Label ( _("Settings for Zone") ) ),
-		    `HSquash ( `InputField ( `id ( "current_zone" ), `opt ( `disabled, `hstretch ), "",
-			Punycode::DecodeDomainName(zone_name)
-		    ) ),
-		    `HStretch ()
+		    `HSquash (`Label ( _("Settings for Zone"))),
+		    `HSquash (`MinWidth (size (zone_name_dec) + 3,
+			`InputField (`id ("current_zone"), `opt (`disabled, `hstretch), "", zone_name_dec)
+		    )),
+		    `HStretch()
 		),
 		`VSpacing ( 1 ),
 		// Here start Tabs
@@ -1588,6 +1872,21 @@ string qwerty = _("Ad&vanced");
 	ret = event["ID"]:nil;
 
         if (ret == `next ) {
+	    // The new ones are alerady stored there
+	    if (current_tab != "name_servers")
+		RegenerateCurrentZoneNS();
+
+	    // at least one NS server must be set
+	    if (size (current_zone_ns) == 0) {
+		y2warning ("At least one NS server must be set");
+		current_tab = "name_servers";
+		UI::ReplaceWidget (`tabContents, GetMasterZoneEditorTab ("name_servers"));
+		if (UI::HasSpecialWidget (`DumbTab))
+		    UI::ChangeWidget (`id (`dumbtab), `CurrentItem, current_tab);
+		Report::Error (_("At least one NS server must be set."));
+		continue;
+	    }
+
 	    if (ValidateMasterZoneTab (current_tab, event))
 		break;
 	    else
@@ -1616,8 +1915,9 @@ string qwerty = _("Ad&vanced");
 	    if (current_tab == "records")
 	    {
 		string help_part2 = "zone_editor_records_forward";
-		if (regexpmatch(current_zone["zone"]:"", "in-addr\\.arpa\\.?$"))
+		if (IsReverseZone (current_zone["zone"]:""))
 		    help_part2 = "zone_editor_records_reverse";
+
 		Wizard::RestoreHelp (
 		    HELPS[help_identificators[current_tab]:""]:""
 		    + HELPS[help_part2]:""
