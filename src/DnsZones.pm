@@ -23,6 +23,7 @@ use YaPI;
 textdomain("dns-server");
 
 YaST::YCP::Import ("Hostname");
+YaST::YCP::Import ("String");
 
 #use io_routines;
 #use check_routines;
@@ -424,9 +425,12 @@ sub UpdateZones {
 	push @commands, "";
 	push @commands, "";
 	my $command = join ("\n", @commands);
+
 	y2milestone ("Running command:\n".RemoveKeyLine($command));
+	my $tmpfile = Directory->tmpdir().'/nsupdate_commands';
+	SCR->Write ('.target.string', $tmpfile, $command);
 	my $xx = SCR->Execute (".target.bash_output",
-	    "echo '$command' | /usr/bin/nsupdate");
+	    "cat '".String->Quote ($tmpfile)."' | /usr/bin/nsupdate");
     }
     return $ok;
 }

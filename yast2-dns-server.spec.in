@@ -4,8 +4,8 @@
 @HEADER@
 BuildRequires:	yast2-ldap-client perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-testsuite yast2-perl-bindings
 
-# requires DnsServerAPI
-BuildRequires: yast2 >= 2.17.0
+# requires DnsServerAPI::GetReverseIPforIPv6
+BuildRequires: yast2 >= 2.17.8
 Requires:	/usr/bin/host
 Requires:	perl-gettext
 # Exporter Data::Dumper
@@ -18,7 +18,8 @@ Requires:	yast2-ldap
 Requires:	yast2-ldap-client
 
 # DnsServerApi moved to yast2.rpm (bnc#392606)
-Requires:	yast2 >= 2.17.0
+# DnsServerAPI::GetReverseIPforIPv6
+Requires:	yast2 >= 2.17.8
 
 BuildArchitectures:	noarch
 

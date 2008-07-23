@@ -280,21 +280,33 @@ then click <b>Generate</b>. The new key will be generated and also added.</p>
 _("<p>To remove an existing key, select it and
 click <b>Delete</b>.</p>"),
 
-    /* Expert Mode Configuration - Zones 1/3 */
+/* Expert Mode Configuration - Zones #1 */
 "zones" : _("<p><b><big>DNS Zones</big></b><br>
 Use this dialog to manage the DNS zones.</p>
 ") +
 
-    /* Expert Mode Configuration - Zones 2/3 */
+/* Expert Mode Configuration - Zones #2 */
 _("<p>To add a new zone, enter its <b>Zone Name</b>, select the <b>Zone Type</b>,
-and click <b>Add</b>.
-To add a new reverse zone, enter a part of the reverse IP address followed by
+and click <b>Add</b>.</p>
+") +
+
+/* Expert Mode Configuration - Zones #3 */
+_("<p>To add a new IPv4 reverse zone, enter a part of the reverse IPv4 address followed by
 <tt>.in-addr.arpa</tt> as its <b>Zone Name</b> (for example, zone name
 <tt>0.168.192.in-addr.arpa</tt> for network <tt>192.168.0.0/24</tt>), select
 the <b>Zone Type</b>, and click <b>Add</b>.</p>
 ") +
 
-    /* Expert Mode Configuration - Zones 3/3 */
+/* Expert Mode Configuration - Zones #4 */
+_("<p>To add a new IPv6 reverse zone, enter a part of the reverse IPv6 address followed by
+<tt>.ip6.arpa</tt> as its <b>Zone Name</b>. Several formats for entering the zone name are
+supported: Standard form: <tt>4.5.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.</tt>;
+Forward form: <tt>2001:db8:0:54::/64</tt>;
+Forward form without netmask bits: <tt>2001:db8:0:54::</tt>
+(default <tt>64</tt> netmask bits are used).</p>
+") +
+
+/* Expert Mode Configuration - Zones #5 */
 _("<p>To modify settings for a zone, such as zone transport and name and
 mail servers, select it, and click <b>Edit Zone</b>.
 To remove a configured zone, select it and click <b>Delete Zone</b>.</p>
