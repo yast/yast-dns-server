@@ -45,6 +45,7 @@ dns-server_zones_entry = element listentry {
     element ttl          { text }? &
     element type         { text }? &
     element zone         { text }? &
+    element connected_with { text }? &
 
     zone_options? &
     zone_records? &

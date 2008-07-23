@@ -32,6 +32,8 @@ YaST::YCP::Import ("Message");
 YaST::YCP::Import ("CWMTsigKeys");
 YaST::YCP::Import ("NetworkService");
 YaST::YCP::Import ("Hostname");
+YaST::YCP::Import ("FileUtils");
+YaST::YCP::Import ("DnsServerHelperFunctions");
 
 use DnsZones;
 use DnsTsigKeys;
@@ -44,6 +46,10 @@ $modified $save_all @files_to_delete %current_zone $current_zone_index
 $write_only @new_includes @deleted_includes
 @zones_update_actions $firewall_support @new_includes_tsig @deleted_includes_tsig);
 use DnsRoutines;
+
+my $reverse_zones_connections = 'yast2-dns-server_reverse-zones';
+
+my %reverse_zones_connections_data = ();
 
 my $forwarders_include = '/etc/named.d/forwarders.conf';
 
@@ -1041,6 +1047,14 @@ sub Read {
 
     $self->ReadDDNSKeys ();
 
+    # FATE #304401: IPv6 support in DNS server configuration
+    # Automatically created reverse zones from forward ones
+    my $read_from = Directory->vardir()."/".$reverse_zones_connections;
+    if (FileUtils->Exists ($read_from)) {
+	y2milestone ("Reading: ".$read_from);
+	%reverse_zones_connections_data = %{SCR->Read (".target.ycp", $read_from)};
+    }
+
     @zones = map {
 	my $zonename = $_;
 	$zonename =~ s/.*\"(.*)\".*/$1/;
@@ -1075,6 +1089,11 @@ sub Read {
 	    else
 	    {
 		%zd = %{DnsZones->ZoneRead ($zonename, $filename)};
+	    }
+
+	    if ($reverse_zones_connections_data{$zonename}) {
+		$zd{"connected_with"} = $reverse_zones_connections_data{$zonename};
+		y2milestone ("Zone '".$zonename."' is connected with '".$zd{"connected_with"}."'");
 	    }
 	}
 	# ZONE TYPE 'slave' or 'stub'
@@ -1132,6 +1151,27 @@ sub Read {
     return 1;
 }
 
+BEGIN { $TYPEINFO{GetWhichZonesAreConnectedWith} = ["function", ["list", "string"], "string"]; }
+sub GetWhichZonesAreConnectedWith {
+    my $class = shift;
+    my $zone = shift || '';
+
+    if ($zone eq '') {
+	y2error ("Undefined zone");
+	return undef;
+    }
+
+    my @ret;
+
+    foreach my $z (@zones) {
+	if (defined $z->{"connected_with"} && $z->{"connected_with"} eq $zone) {
+	    push @ret, $z->{"zone"};
+	}
+    }
+
+    return \@ret;
+}
+
 BEGIN { $TYPEINFO{Write} = ["function", "boolean"]; }
 sub Write {
     my $self = shift;
@@ -1172,7 +1212,7 @@ sub Write {
     ""
     );
 
-    my $sl = 2;
+    my $sl = 0;
 
     Progress->NextStage ();
 
@@ -1194,7 +1234,19 @@ sub Write {
 	LdapPrepareToWrite ();
     }
 
-    
+    foreach my $z (@zones) {
+
+	if (defined $z->{"connected_with"} && $z->{"connected_with"} ne "") {
+	    $reverse_zones_connections_data{$z->{"zone"}} = $z->{"connected_with"};
+	    # info: zone records might get rewritten
+	    DnsServerHelperFunctions->RegenerateReverseZoneFrom ($z->{"zone"}, $z->{"connected_with"});
+	} else {
+	    delete $reverse_zones_connections_data{$z->{"zone"}};
+	}
+    }
+    my $write_to = Directory->vardir()."/".$reverse_zones_connections;
+    SCR->Write (".target.ycp", $write_to, \%reverse_zones_connections_data);
+
     ### Bugzilla #46121, Configuration file changed by hand, INI-Agent would break
     my $new_configuration_timestamp = $self->GetConfigurationStat();
     my $yast2_suffix = ".yast2-save";
@@ -1231,12 +1283,6 @@ sub Write {
     #ensure that if there is an include file, named.conf.include gets recreated
     $ok = $self->EnsureNamedConfIncludeIsRecreated () && $ok;
 
-    #save all zones
-    @zones_update_actions = ();
-    foreach my $z (@zones) {
-	$ok = $self->ZoneWrite ($z) && $ok;
-    }
-
     #be sure the named.conf file is saved
     SCR->Write (".dns.named", undef);
     
@@ -1256,8 +1302,15 @@ sub Write {
 
     Progress->NextStage ();
 
+    #save all zones
+    @zones_update_actions = ();
+
+    foreach my $z (@zones) {
+	$ok = $self->ZoneWrite ($z) && $ok;
+    }
+
     my $ret = 0;
-    if (0 != @zones_update_actions)
+    if (scalar (@zones_update_actions) > 0)
     {
 	# named is running
 	if (Service->Status("named")==0) {
@@ -1267,7 +1320,7 @@ sub Write {
 
     Progress->NextStage ();
 
-    if (0 != @zones_update_actions)
+    if (scalar (@zones_update_actions) > 0)
     {
 	if ($ret != 0)
 	{
@@ -1275,7 +1328,6 @@ sub Write {
 	}
 	else
 	{
-	    sleep (0.1);
 	    DnsZones->UpdateZones (\@zones_update_actions);
 	}
     }
@@ -1324,7 +1376,7 @@ sub Write {
     }
 
     Progress->NextStage ();
-    
+
     # Firewall has it's own Progress
     my $progress_orig = Progress->set (0);
     SuSEFirewall::Write();

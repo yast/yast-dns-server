@@ -35,6 +35,7 @@ import "Confirm";
 import "DnsServerAPI";
 import "Punycode";
 import "DnsServer";
+import "DnsServerHelperFunctions";
 
 /* String defines the initial screen for the expert dialog */
 string initial_screen = "start_up";
@@ -1329,7 +1330,8 @@ term ExpertZonesDialog () {
     term dialog =
 	    `VBox (
 		`VSquash (
-		    `Frame ( _("A&dd New Zone "),
+		    // frame label
+		    `Frame ( _("Add New Zone "),
 		    `HBox (
 			`HWeight ( 9,
 			    // Frame label - DNS adding zone
@@ -1415,8 +1417,7 @@ void RedrawZonesListWidget () {
 	string zone_name = z["zone"]:"";
 
 	// filtering out default zones
-	if (zone_name == "." || zone_name == "0.0.127.in-addr.arpa"
-	    || zone_name == "localhost") {
+	if (DnsServerHelperFunctions::IsInternalZone (zone_name)) {
 		return `item ();
 	}
 
@@ -1472,6 +1473,26 @@ void StoreExpertZonesPage (string key, map event) {
     return;
 }
 
+string TransformToReverseIPv6ZoneName (string zone_name) {
+    if (! regexpmatch (zone_name, "^[:0-9A-Fa-f]+/[0-9]+$")) {
+	y2error ("No a required format: %1", zone_name);
+	return zone_name;
+    }
+
+    string zone_translated = regexpsub (zone_name,  "^([:0-9A-Fa-f]+)/[0-9]+$", "\\1");
+    integer zone_bits = tointeger (regexpsub (zone_name,  "^[:0-9A-Fa-f]+/([0-9]+)$", "\\1"));
+
+    zone_translated = DnsServerAPI::GetReverseIPforIPv6 (zone_translated);
+    if (zone_bits > 128) zone_bits = 128;
+    zone_bits = zone_bits / 4;
+
+    zone_translated = substring (zone_translated, 2 * zone_bits);
+
+    y2milestone ("Guessing zone: '%1' from '%2'", zone_translated, zone_name);
+
+    return zone_translated;
+}
+
 /**
  * Handle events in a tab of a dialog
  */
@@ -1501,6 +1522,15 @@ symbol HandleExpertZonesPage (string key, map event) {
 	// Do not add the final dot to the zone name
 	if (regexpmatch (zone_name, "\\.+$")) {
 	    zone_name = regexpsub (zone_name, "(.*)\\.+$", "\\1");
+	}
+
+	// IPv6 zone name in forward format
+	// e.g., "3ffe:ffff::210:a4ff:fe01:1/48"
+	if (regexpmatch (zone_name, "^[:0-9A-Fa-f]+/[0-9]+$")) {
+	    zone_name = TransformToReverseIPv6ZoneName (zone_name);
+	// e.g., "3ffe:ffff::210:a4ff:fe01:1" without bits
+	} else if (IP::Check6 (zone_name)) {
+	    zone_name = TransformToReverseIPv6ZoneName (zone_name + "/64");
 	}
 
 	string encoded_zone_name = Punycode::EncodeDomainName(zone_name);
