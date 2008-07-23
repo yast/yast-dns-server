@@ -1519,10 +1519,7 @@ symbol HandleExpertZonesPage (string key, map event) {
 	string zone_type = (string)
 	    UI::QueryWidget (`id ("new_zone_type"), `Value);
 
-	// Do not add the final dot to the zone name
-	if (regexpmatch (zone_name, "\\.+$")) {
-	    zone_name = regexpsub (zone_name, "(.*)\\.+$", "\\1");
-	}
+
 
 	// IPv6 zone name in forward format
 	// e.g., "3ffe:ffff::210:a4ff:fe01:1/48"
@@ -1531,6 +1528,11 @@ symbol HandleExpertZonesPage (string key, map event) {
 	// e.g., "3ffe:ffff::210:a4ff:fe01:1" without bits
 	} else if (IP::Check6 (zone_name)) {
 	    zone_name = TransformToReverseIPv6ZoneName (zone_name + "/64");
+	}
+
+	// Do not add the final dot to the zone name
+	if (regexpmatch (zone_name, "\\.+$")) {
+	    zone_name = regexpsub (zone_name, "(.*)\\.+$", "\\1");
 	}
 
 	string encoded_zone_name = Punycode::EncodeDomainName(zone_name);
