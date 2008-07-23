@@ -8,6 +8,7 @@ Wed Jul 23 12:33:54 CEST 2008 - locilka@suse.cz
 - Added support for IPv6 reverse zones (FATE #304401).
 - Added support for automatic generation of connected reverse zones
   (FATE #304401).
+- Adapted testsuites.
 - 2.17.3
 
 -------------------------------------------------------------------
