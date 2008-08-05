@@ -1651,7 +1651,7 @@ sub LdapInit {
 	%found = (
 	    'objectclass' => [ 'top', 'suseDnsConfiguration' ],
 	    'cn' => [ 'defaultDNS' ],
-	    'susedefaultbase' => [ 'ou=DNS,'.$ldap_domain ],
+	    'suseDefaultBase' => [ 'ou=DNS,'.$ldap_domain ],
 	);
     }
     else
@@ -1662,7 +1662,7 @@ sub LdapInit {
     }
 
     # check if base DN for zones is defined
-    my @bases = @{ $found{"susedefaultbase"} || [] };
+    my @bases = @{ $found{"suseDefaultBase"} || [] };
     if (@bases == 0)
     {
 	@bases = ("ou=DNS,$ldap_domain");
@@ -1773,7 +1773,7 @@ sub LdapPrepareToWrite {
 	my %ldap_object = (
 	    'objectclass' => [ 'top', 'suseDnsConfiguration' ],
 	    'cn' => [ 'defaultDNS' ],
-	    'susedefaultbase' => [ 'ou=DNS,'.$ldap_domain ],
+	    'suseDefaultBase' => [ 'ou=DNS,'.$ldap_domain ],
 	);
 	my %ldap_request = (
 	    "dn" => "cn=defaultDNS,$ldap_config_dn",
@@ -1796,11 +1796,11 @@ sub LdapPrepareToWrite {
 	my $dns_conf_dn = $keys[0];
 	%found = %{$found{$dns_conf_dn}};
 	# check if base DN for zones is defined
-	my @bases = @{ $found{"susedefaultbase"} || [] };
+	my @bases = @{ $found{"suseDefaultBase"} || [] };
 	if (@bases == 0)
 	{
 	    my %ldap_object = %found;
-	    $ldap_object{"susedefaultbase"} = ["ou=DNS,$ldap_domain"];
+	    $ldap_object{"suseDefaultBase"} = ["ou=DNS,$ldap_domain"];
 	    my %ldap_request = (
 		"dn" => "$dns_conf_dn",
 	    );
