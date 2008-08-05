@@ -471,7 +471,7 @@ sub ZoneReadLdap {
     my %zonemap = %{$found[0] || {}};
 
     my $serial = $self->UpdateSerial ("");
-    my @soa_str_lst = @{$zonemap{"soarecord"}|| ["@ root $serial 3H 1H 1W 1D"]};
+    my @soa_str_lst = @{$zonemap{"sOARecord"}|| ["@ root $serial 3H 1H 1W 1D"]};
 
     my $soa_str = $soa_str_lst[0];
     my @soa_lst = split (" ", $soa_str);
@@ -479,7 +479,7 @@ sub ZoneReadLdap {
 	$_ ne ""
     } @soa_lst;
 
-    my @rel_lst = @{$zonemap{"relativedomainname"}};
+    my @rel_lst = @{$zonemap{"relativeDomainName"}};
 
     my %soa = (
 	"expiry" => $soa_lst[5],
@@ -517,7 +517,7 @@ sub ZoneReadLdap {
     foreach my $record_ref (@found)
     {
 	my %record = %{$record_ref};
-	my @rel_dn = @{$record{"relativedomainname"}};
+	my @rel_dn = @{$record{"relativeDomainName"}};
 	my $rel_dn = $rel_dn[0];
 
 	foreach my $rec_type (@all_rec_types)
@@ -571,12 +571,12 @@ sub ZoneFileWriteLdap {
     my $soa_record = join (" ", @soa_lst);
 
     my %ldap_record = (
-	"objectclass" => ["dnszone"],
-	"zonename" => [$zone],
-	"relativedomainname" => ["@"],
-	"dnsttl" => [DnsRoutines->NormalizeTime ($zone_map{"ttl"} || "2D")],
-	"dnsclass" => ["IN"],
-	"soarecord" => $soa_record,
+	"objectClass" => ["dNSZone"],
+	"zoneName" => [$zone],
+	"relativeDomainName" => ["@"],
+	"dNSTTL" => [DnsRoutines->NormalizeTime ($zone_map{"ttl"} || "2D")],
+	"dNSClass" => ["IN"],
+	"sOARecord" => $soa_record,
     );
 
     my @current_records = grep {
@@ -613,7 +613,7 @@ sub ZoneFileWriteLdap {
     else
     {
 	y2milestone ("Modifying existing record");
-	delete $ldap_record{"objectclass"}; # objectclass can be changed by mail-server
+	delete $ldap_record{"objectClass"}; # objectclass can be changed by mail-server
 	SCR->Write (".ldap.modify", \%ldap_cmd, \%ldap_record);
     }
 
@@ -635,7 +635,7 @@ sub ZoneFileWriteLdap {
     my @found = @{$found_ref};
 
     @found = map {
-	my @l = @{$_->{"relativedomainname"}};
+	my @l = @{$_->{"relativeDomainName"}};
 	$l[0];
     } @found;
 
@@ -651,7 +651,7 @@ sub ZoneFileWriteLdap {
     foreach my $d (@deleted)
     {
 	y2milestone ("Removing all records regarding $d");
-	SCR->Write (".ldap.delete", {"dn" => "relativedomainname=$d,$zone_dn"});
+	SCR->Write (".ldap.delete", {"dn" => "relativeDomainName=$d,$zone_dn"});
     }
 
     # write all the other records
@@ -668,11 +668,11 @@ sub ZoneFileWriteLdap {
     {
 	my $rec_dn = "relativeDomainName=$r,$zone_dn";
 	my %ldap_record = (
-	    "objectclass" => ["dnszone"],
-	    "zonename" => [$zone],
-	    "relativedomainname" => [$r],
-	    "dnsttl" => [DnsRoutines->NormalizeTime ($zone_map{"ttl"} || "2D")],
-	    "dnsclass" => ["IN"],
+	    "objectClass" => ["dNSZone"],
+	    "zoneName" => [$zone],
+	    "relativeDomainName" => [$r],
+	    "dNSTTL" => [DnsRoutines->NormalizeTime ($zone_map{"ttl"} || "2D")],
+	    "dNSClass" => ["IN"],
 	);
 
 	@current_records = grep {
@@ -751,7 +751,7 @@ sub ZonesListLdap {
     my $found = SCR->Read (".ldap.search", \%ldap_query);
     my @found = @{$found || []};
     @found = map {
-	$_->{"zonename"}[0];
+	$_->{"zoneName"}[0];
     } @found;
     @found = grep {
 	defined ($_);

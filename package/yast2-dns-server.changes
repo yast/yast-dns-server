@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Aug  5 10:53:13 CEST 2008 - locilka@suse.cz
+
+- Adjusted to the newest LDAP SCR agent (patch written by jsuchome)
+  (FATE #303596).
+- 2.17.4
+
+-------------------------------------------------------------------
 Wed Jul 23 12:33:54 CEST 2008 - locilka@suse.cz
 
 - Added support for dynamic updates initiated also out of the
