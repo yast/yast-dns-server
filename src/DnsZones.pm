@@ -58,13 +58,20 @@ sub GetFQDN {
     my $self = shift;
 
     my $out = SCR->Execute (".target.bash_output", "/bin/hostname --fqdn");
-    if ($out->{"exit"} ne 0)
-    {
-	return "@";
+    # standard return
+    if ($out->{"exit"} eq "0") {
+	my $stdout = $out->{"stdout"};
+	my ($ret, $rest) = split ("\n", $stdout, 2);
+
+	return $ret;
+    # fallback
+    } else {
+	my $hostname = SCR->Read (".target.string", "/etc/HOSTNAME");
+	my ($ret, $rest) = split ("\n", $hostname, 2);
+	y2warning ("Using fallback hostname: ".$ret);
+
+	return $ret;
     }
-    my $stdout = $out->{"stdout"};
-    my ($ret, $rest) = split ("\n", $stdout, 2);
-    return $ret;
 }
 
 BEGIN { $TYPEINFO{AbsoluteZoneFileName} = ["function", "string", "string" ]; }
@@ -129,7 +136,11 @@ BEGIN{$TYPEINFO{GetDefaultSOA} = ["function", ["map", "string", "string"]];}
 sub GetDefaultSOA {
     my $self = shift;
 
-    my $fqdn = $self->GetFQDN ();
+    my $fqdn = $self->GetFQDN();
+    if ($fqdn eq "") {
+	$fqdn = "linux.site";
+    }
+
     $fqdn = "$fqdn.";
     my $adm_mail = "root.$fqdn";
     my %soa = (

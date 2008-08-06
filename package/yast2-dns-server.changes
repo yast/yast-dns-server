@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Aug  6 15:54:32 CEST 2008 - locilka@suse.cz
+
+- DNS zones need a FQDN hostname, using /etc/HOSTNAME as a fallback
+  when hostname --fqdn returns empty string (bnc #403468).
+- 2.17.5
+
+-------------------------------------------------------------------
 Tue Aug  5 10:53:13 CEST 2008 - locilka@suse.cz
 
 - Adjusted to the newest LDAP SCR agent (patch written by jsuchome)
