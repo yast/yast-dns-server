@@ -24,6 +24,7 @@ textdomain("dns-server");
 
 YaST::YCP::Import ("Hostname");
 YaST::YCP::Import ("String");
+YaST::YCP::Import ("Mode");
 
 #use io_routines;
 #use check_routines;
@@ -58,6 +59,11 @@ sub GetFQDN {
     my $self = shift;
 
     my $out = SCR->Execute (".target.bash_output", "/bin/hostname --fqdn");
+
+    if (Mode->test()) {
+	return "";
+    }
+
     # standard return
     if ($out->{"exit"} eq "0") {
 	my $stdout = $out->{"stdout"};
