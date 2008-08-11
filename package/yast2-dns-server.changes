@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Mon Aug 11 11:49:45 CEST 2008 - locilka@suse.cz
+
+- Using netconfig to configure DNS forwarders (patch created by
+  sschober@suse.de) (FATE #303386).
+- Package sysconfig is newly required (because of /sbin/netconfig).
+- 2.17.6
+
+-------------------------------------------------------------------
 Wed Aug  6 15:54:32 CEST 2008 - locilka@suse.cz
 
 - DNS zones need a FQDN hostname, using /etc/HOSTNAME as a fallback

@@ -206,6 +206,7 @@ term ExpertForwardersDialog () {
 	`VBox (
 	    // label
 	    `VBox (
+		/*
 		`RadioButtonGroup( `id ( "who_sets_forwarder" ),
 		    `VBox (
 			// Radiobutton DNS-Forwarders
@@ -213,6 +214,17 @@ term ExpertForwardersDialog () {
 			// Radiobutton DNS-Forwarders
 			`Left( `RadioButton( `id ( "manually_forwarder" ), _("Set Forwarders &Manually"), true ) )
 		    )
+		)
+		*/
+		`HBox(
+		  `ComboBox( `id( "forwarder_policy" ), `opt(`notify),
+			    _("Netconfig DNS policy"),
+			    [ `item( `id(`nomodify), "disable" ),
+			      `item( `id(`auto), "auto"),
+			      `item( `id(`static), "static"),
+			      `item( `id(`custom), "custom" )]),
+		  `HSpacing(1),
+		  `InputField (`id( "custom_policy"), `opt (`hstretch), _("Custom policy"))
 		)
 	    ),
 	    `VSpacing ( 1 ),
@@ -264,9 +276,12 @@ void RedrawForwardersListWidget () {
 	    // Selectionbox for listing current DNS-Forwarders
 	    _("Forwarder &List"),
 	    forwarders));
+    boolean enabled = ( `nomodify != (symbol)
+      UI::QueryWidget(`id("forwarder_policy"), `Value));
     UI::ChangeWidget (`id ("forwarders_delete_ip_address"),
-	`Enabled, forwarders != []);
-    if (forwarders != [])
+	`Enabled, forwarders != [] && enabled );
+    UI::ChangeWidget (`id ("forwarders_list"),`Enabled, enabled );
+    if (forwarders != [] && enabled)
     {
 	UI::ChangeWidget (`id ("forwarders_list"),
 	    `CurrentItem, forwarders[0]:"");
@@ -300,11 +315,38 @@ void ValidCharsForwardersPage () {
     UI::ChangeWidget( `id("forwarders_new_ip_address"), `ValidChars,    IP::ValidChars4);
 }
 
+void handlePolicy( symbol policy ){
+  if( `nomodify == policy ){
+    UI::ChangeWidget( `id("custom_policy"), `Enabled, false );
+    UI::ChangeWidget( `id("custom_policy"), `Value, "" );
+    UI::ChangeWidget( `id("forwarders_new_ip_address"), `Enabled, false );
+    UI::ChangeWidget( `id("forwarders_add_ip_address"), `Enabled, false );
+  }
+  else{
+    if( `custom == policy ){
+      UI::ChangeWidget( `id("custom_policy"), `Enabled, true );
+      /* preinitialize with STATIC */
+      UI::ChangeWidget( `id("custom_policy"), `Value, "STATIC" );
+    }
+    else{
+      if( `static == policy ){
+	UI::ChangeWidget( `id("custom_policy"), `Value, "STATIC" );
+      }
+      else if ( `auto == policy ){
+	UI::ChangeWidget( `id("custom_policy"), `Value, "auto" );
+      }
+      UI::ChangeWidget( `id("custom_policy"), `Enabled, false );
+    }
+    UI::ChangeWidget( `id("forwarders_new_ip_address"), `Enabled, true );
+    UI::ChangeWidget( `id("forwarders_add_ip_address"), `Enabled, true );
+  }
+}
 /**
  * Initialize the tab of the dialog
  */
 void InitExpertForwardersPage (string key) {
     SetDNSSErverIcon();
+    /*
     if (DnsServer::GetModifyNamedConfDynamically ())
     {
 	UI::ChangeWidget (`id ("who_sets_forwarder"), `CurrentButton, "ppp_forwarder");
@@ -313,6 +355,24 @@ void InitExpertForwardersPage (string key) {
     {
 	UI::ChangeWidget (`id ("who_sets_forwarder"), `CurrentButton, "manually_forwarder");
     }
+    */
+    UI::ChangeWidget( `id("custom_policy"), `Enabled, false);
+    string policy = DnsServer::GetNetconfigDNSPolicy();
+    symbol policy_symb = `Empty;
+    if (policy == nil || policy == "" ){
+      policy_symb = `nomodify;
+    }
+    else if (policy == "auto" || policy == "STATIC *" ){
+      policy_symb = `auto;
+    }
+    else if (policy == "STATIC"){
+      policy_symb = `static;
+    }
+    else{
+      policy_symb =  `custom;
+    }
+    UI::ChangeWidget( `id("forwarder_policy"), `Value, policy_symb );
+    handlePolicy( policy_symb );
     ReadForwarders ();
     RedrawForwardersListWidget ();
     ValidCharsForwardersPage ();
@@ -322,6 +382,7 @@ void InitExpertForwardersPage (string key) {
  * Store settings of a tab of a dialog
  */
 void StoreExpertForwardersPage (string key, map event) {
+/*
     if (UI::QueryWidget (`id ("who_sets_forwarder"), `CurrentButton)
 	== "ppp_forwarder")
     {
@@ -333,6 +394,21 @@ void StoreExpertForwardersPage (string key, map event) {
 	DnsServer::SetModifyNamedConfDynamically (false);
 	DnsServer::SetModifyResolvConfDynamically (true);
     }
+*/
+    symbol policy = (symbol) UI::QueryWidget( `id("forwarder_policy"), `Value );
+    if( `custom == policy ){
+      DnsServer::SetNetconfigDNSPolicy( (string) UI::QueryWidget( `id("custom_policy"), `Value ));
+    }
+    else if( `auto == policy ){
+      DnsServer::SetNetconfigDNSPolicy( "auto" );
+    }
+    else if( `static == policy ){
+      DnsServer::SetNetconfigDNSPolicy( "STATIC" );
+    }
+    else{
+      DnsServer::SetNetconfigDNSPolicy( "" );
+    }
+
     list<map<string,any> > options = DnsServer::GetGlobalOptions ();
     options = filter (map<string,any> o, options, {
 	return o["key"]:"" != "forwarders"/* && o["key"]:"" != "forward"*/;
@@ -379,6 +455,9 @@ symbol HandleExpertForwardersPage (string key, map event) {
 	    UI::QueryWidget (`id ("forwarders_list"), `CurrentItem);
 	y2error ("DA: %1", old_addr);
 	forwarders = filter (string f, forwarders, ``(f != old_addr));
+    }
+    else if (ret == "forwarder_policy" ){
+	handlePolicy( (symbol) UI::QueryWidget( `id("forwarder_policy"), `Value));
     }
 
     RedrawForwardersListWidget ();
