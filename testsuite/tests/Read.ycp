@@ -189,6 +189,8 @@
 		"config" : $[
 		    "MODIFY_NAMED_CONF_DYNAMICALLY" : "yes",
 		    "MODIFY_RESOLV_CONF_DYNAMICALLY" : "yes",
+		    "NETCONFIG_DNS_POLICY" : "STATIC",
+		    "NETCONFIG_DNS_STATIC_SERVERS" : "",
 		],
 	    ],
 	    "console" : $[ "CONSOLE_ENCODING" : "utf8" ],
