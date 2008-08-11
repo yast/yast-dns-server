@@ -62,9 +62,11 @@ my $ldap_available = 0;
 
 my %yapi_conf = ();
 
-my $modify_named_conf_dynamically = 0;
+#my $modify_named_conf_dynamically = 0;
 
-my $modify_resolv_conf_dynamically = 0;
+#my $modify_resolv_conf_dynamically = 0;
+
+my $netconfig_dns_policy = 0;
 
 my @acl = ();
 
@@ -414,12 +416,12 @@ sub SaveGlobals {
 	# remove them from options because they will be written into single file
 	push @del_options, "forwarders";
 	# if forwarders are not included
-	my $forwarders_include_record = "\"".$forwarders_include."\"";
-	if (scalar (grep { $_->{"key"} eq "include" && $_->{"value"} eq $forwarders_include_record } @options ) == 0) {
+#	my $forwarders_include_record = "\"".$forwarders_include."\"";
+#	if (scalar (grep { $_->{"key"} eq "include" && $_->{"value"} eq $forwarders_include_record } @options ) == 0) {
 	    # include them
-	    y2milestone("Moving forwarders into single file ".$forwarders_include);
-	    push @options, { "key" => "include", "value" => $forwarders_include_record };
-	}
+#	    y2milestone("Moving forwarders into single file ".$forwarders_include);
+#	    push @options, { "key" => "include", "value" => $forwarders_include_record };
+#	}
 #    }
 
     foreach my $o (@del_options)
@@ -450,14 +452,19 @@ sub SaveGlobals {
 	    if (defined @{$opt_map{$key}}[0] && @{$opt_map{$key}}[0] ne "") {
 		$forwarders_found = 1;
 		# writing forwarders into single file
-		SCR->Write (".dns.named-forwarders", [$forwarders_include, @{$opt_map{$key}}[0]]);
+		#SCR->Write (".dns.named-forwarders", [$forwarders_include, @{$opt_map{$key}}[0]]);
+		my $fwd_list = @{$opt_map{$key}}[0];
+		$fwd_list =~ s/[\{,\}, ]//g;
+		$fwd_list = join(" ", split (/;/, $fwd_list));
+		SCR->Write(".sysconfig.network.config.NETCONFIG_DNS_STATIC_SERVERS", $fwd_list);
+		y2milestone( "Wrote NETCONFIG_DNS_STATIC_SERVERS: ".$fwd_list);
 	    }
 	}
     }
     # forwarders not defined, but they must be at least empty
-    if (!$forwarders_found) {
-	SCR->Write (".dns.named-forwarders", [$forwarders_include, "{}"]);
-    }
+#    if (!$forwarders_found) {
+#	SCR->Write (".dns.named-forwarders", [$forwarders_include, "{}"]);
+#    }
 
     # delete all removed logging options
     my @old_logging = ();
@@ -810,33 +817,47 @@ sub StartDnsService {
     return 0;
 }
 
-BEGIN{$TYPEINFO{GetModifyNamedConfDynamically} = ["function","boolean"];}
-sub GetModifyNamedConfDynamically {
+#BEGIN{$TYPEINFO{GetModifyNamedConfDynamically} = ["function","boolean"];}
+#sub GetModifyNamedConfDynamically {
+#    my $self = shift;
+#
+#    return $modify_named_conf_dynamically;
+#}
+
+#BEGIN{$TYPEINFO{SetModifyNamedConfDynamically} = ["function","void","boolean"];}
+#sub SetModifyNamedConfDynamically {
+#    my $self = shift;
+#    $modify_named_conf_dynamically = shift;
+#    $self->SetModified ();
+#}
+
+BEGIN{$TYPEINFO{GetNetconfigDNSPolicy} = ["function","string"];}
+sub GetNetconfigDNSPolicy{
     my $self = shift;
 
-    return $modify_named_conf_dynamically;
+    return $netconfig_dns_policy;
 }
 
-BEGIN{$TYPEINFO{SetModifyNamedConfDynamically} = ["function","void","boolean"];}
-sub SetModifyNamedConfDynamically {
+BEGIN{$TYPEINFO{SetNetconfigDNSPolicy} = ["function","void","string"];}
+sub SetNetconfigDNSPolicy{
     my $self = shift;
-    $modify_named_conf_dynamically = shift;
+    $netconfig_dns_policy= shift;
     $self->SetModified ();
 }
 
-BEGIN{$TYPEINFO{GetModifyResolvConfDynamically} = ["function","boolean"];}
-sub GetModifyResolvConfDynamically {
-    my $self = shift;
-
-    return $modify_resolv_conf_dynamically;
-}
-
-BEGIN{$TYPEINFO{SetModifyResolvConfDynamically} = ["function","void","boolean"];}
-sub SetModifyResolvConfDynamically {
-    my $self = shift;
-    $modify_resolv_conf_dynamically = shift;
-    $self->SetModified ();
-}
+#BEGIN{$TYPEINFO{GetModifyResolvConfDynamically} = ["function","boolean"];}
+#sub GetModifyResolvConfDynamically {
+#    my $self = shift;
+#
+#    return $modify_resolv_conf_dynamically;
+#}
+#
+#BEGIN{$TYPEINFO{SetModifyResolvConfDynamically} = ["function","void","boolean"];}
+#sub SetModifyResolvConfDynamically {
+#    my $self = shift;
+#    $modify_resolv_conf_dynamically = shift;
+#    $self->SetModified ();
+#}
 
 BEGIN{$TYPEINFO{GetAcl} = ["function",["list","string"]];}
 sub GetAcl {
@@ -960,18 +981,21 @@ sub Read {
 	    : 0;
     y2milestone ("Chroot: $chroot");
 
-    $modify_named_conf_dynamically = SCR->Read (
-	".sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY") || "no";
-    $modify_named_conf_dynamically = $modify_named_conf_dynamically eq "yes"
-	    ? 1
-	    : 0;
+#    $modify_named_conf_dynamically = SCR->Read (
+#	".sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY") || "no";
+#    $modify_named_conf_dynamically = $modify_named_conf_dynamically eq "yes"
+#	    ? 1
+#	    : 0;
+#
+#    $modify_resolv_conf_dynamically = SCR->Read (
+#	".sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY") || "no";
+#    $modify_resolv_conf_dynamically = $modify_resolv_conf_dynamically eq "yes"
+#	    ? 1
+#	    : 0;
 
-    $modify_resolv_conf_dynamically = SCR->Read (
-	".sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY") || "no";
-    $modify_resolv_conf_dynamically = $modify_resolv_conf_dynamically eq "yes"
-	    ? 1
-	    : 0;
-
+    $netconfig_dns_policy = SCR->Read(".sysconfig.network.config.NETCONFIG_DNS_POLICY") || "";
+    y2milestone ("NETCONFIG_DNS_POLICY: $netconfig_dns_policy");
+    
     my @zone_headers = @{SCR->Dir (".dns.named.section") || []};
     @zone_headers = grep (/^zone/, @zone_headers);
     y2milestone ("Read zone headers @zone_headers");
@@ -991,14 +1015,14 @@ sub Read {
 
     @opt_names = sort (keys (%opt_hash));
     my $forwarders_in_options = "";
-
+    
     my $forwarders_value = "";
     my $forwarders_include_record = "\"".$forwarders_include."\"";
     foreach $key (@opt_names) {
 	my @values = @{SCR->Read (".dns.named.value.options.$key") || []};
 	foreach my $value (@values) {
 	    if ($key eq "forwarders") {
-		$forwarders_in_options = $value;
+#		$forwarders_in_options = $value;
 		next;
 	    }
 	    push @options, {
@@ -1007,15 +1031,18 @@ sub Read {
 	    };
 	    if ($key eq "include" && $value eq $forwarders_include_record) {
 		$include_defined_in_conf = 1;
-		$forwarders_value = SCR->Read (".dns.named-forwarders", $forwarders_include) || "";
+#		$forwarders_value = SCR->Read (".dns.named-forwarders", $forwarders_include) || "";
 	    }
 	}
     }
+    $forwarders_value = SCR->Read(".sysconfig.network.config.NETCONFIG_DNS_STATIC_SERVERS") || "";
+    $forwarders_value = "{ ".join("; ", split( " ", $forwarders_value))." };";
+    y2milestone ("NETCONFIG_DNS_STATIC_SERVERS: $forwarders_value");
     # no forwarders are defined in single file or file doesn't exist
     # but forwarders are defined right in options
-    if (!$forwarders_value && $forwarders_in_options) {
-	$forwarders_value = $forwarders_in_options;
-    }
+#    if (!$forwarders_value && $forwarders_in_options) {
+#	$forwarders_value = $forwarders_in_options;
+#    }
     push @options, { "key" => "forwarders", "value" => $forwarders_value, };
 
     @logging = ();
@@ -1179,7 +1206,7 @@ sub Write {
     # DNS server read dialog caption
     my $caption = __("Saving DNS Server Configuration");
 
-    Progress->New( $caption, " ", 6, [
+    Progress->New( $caption, " ", 7, [
 	# progress stage
 	__("Flush caches of the DNS daemon"),
 	# progress stage
@@ -1190,6 +1217,8 @@ sub Write {
 	__("Update zone files"),
 	# progress stage
 	__("Adjust the DNS service"),
+	# progress stage
+	__("Call netconfig"),
 	# progress stage
 	__("Write the firewall settings")
     ],
@@ -1204,6 +1233,8 @@ sub Write {
 	__("Updating zone files..."),
 	# progress step
 	__("Adjusting the DNS service..."),
+	# progress step
+	__("Calling netconfig..."),
 	# progress step
 	__("Writing the firewall settings..."),
 	# progress step
@@ -1290,11 +1321,14 @@ sub Write {
     SCR->Write (".sysconfig.named.NAMED_RUN_CHROOTED", $chroot ? "yes" : "no");
     SCR->Write (".sysconfig.named", undef);
 
-    SCR->Write (".sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY",
-	$modify_named_conf_dynamically ? "yes" : "no");
-    SCR->Write (".sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY",
-	$modify_resolv_conf_dynamically ? "yes" : "no");
-    SCR->Write (".sysconfig.network.config", undef);
+#    SCR->Write (".sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY",
+#	$modify_named_conf_dynamically ? "yes" : "no");
+#    SCR->Write (".sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY",
+#	$modify_resolv_conf_dynamically ? "yes" : "no");
+
+    # Store the NETCONFIG_DNS_POLICY 
+    # Note: NETCONFIG_DNS_STATIC_SERVERS is stored in SaveGlobals();
+    SCR->Write (".sysconfig.network.config.NETCONFIG_DNS_POLICY", $netconfig_dns_policy);
 
     # set to sysconfig if LDAP is to be used
     # set the sysconfig also if LDAP is not to be used (bug #165189)
@@ -1333,11 +1367,11 @@ sub Write {
     }
 
     Progress->NextStage ();
-
+    my $forwarder = "resolver";
+    $ret = {};
     # named has to be started
     if ($start_service)
     {
-	my $ret = {};
 	$ret->{'exit'} = 0;
 	if (! $write_only)
 	{
@@ -1349,6 +1383,8 @@ sub Write {
 		y2milestone("Restarting service 'named'");
 		$ret = SCR->Execute (".target.bash_output", "/etc/init.d/named restart");
 	    }
+	    # 'named' is running. Set dns forwarder to 'bind'.
+	    $forwarder="bind";
 	}
 	Service->Enable ("named");
 	if ($ret->{'exit'} != 0)
@@ -1356,6 +1392,8 @@ sub Write {
 	    # Cannot start service 'named', because of error that follows Error:.  Do not translate named.
 	    Report->Error (__("Error occurred while starting service named.\nError: ".$ret->{'stdout'}));
 	    $ok = 0;
+	    # There's no 'named' running. Reset dns forwarder again
+	    $forwarder = "resolver";
 	}
     }
     # named has to be stopped
@@ -1365,6 +1403,8 @@ sub Write {
 	{
 	    y2milestone("Stopping service 'named'");
 	    SCR->Execute (".target.bash", "/etc/init.d/named stop");
+	    # There's no 'named' running. Reset dns forwarder again
+	    $forwarder = "resolver";
 	}
 	Service->Disable ("named");
     }
@@ -1373,6 +1413,20 @@ sub Write {
     {
 	# FIXME when YaST settings are needed
 	SCR->Write (".target.ycp", Directory->vardir() . "/dns_server", {});
+    }
+    
+    Progress->NextStage ();
+    
+    y2milestone("Setting dns forwarder: $forwarder");
+    SCR->Write (".sysconfig.network.config.NETCONFIG_DNS_FORWARDER",$forwarder);
+    SCR->Write (".sysconfig.network.config", undef);
+    
+    y2milestone("Calling netconfig");
+    $ret->{'exit'} = 0;
+    $ret = SCR->Execute (".target.bash_output", "/sbin/netconfig update");
+    if ($ret->{'exit'} != 0)
+    {
+	Report->Error (__("Error occurred while calling netconfig.\nError: ".$ret->{'stdout'}));
     }
 
     Progress->NextStage ();
