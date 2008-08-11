@@ -1036,7 +1036,7 @@ sub Read {
 	}
     }
     $forwarders_value = SCR->Read(".sysconfig.network.config.NETCONFIG_DNS_STATIC_SERVERS") || "";
-    $forwarders_value = "{ ".join("; ", split( " ", $forwarders_value))." };";
+    $forwarders_value = join("; ", split( " ", $forwarders_value));
     y2milestone ("NETCONFIG_DNS_STATIC_SERVERS: $forwarders_value");
     # no forwarders are defined in single file or file doesn't exist
     # but forwarders are defined right in options
