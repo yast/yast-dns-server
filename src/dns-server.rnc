@@ -8,10 +8,20 @@ dns-server = element dns-server {
     element start_service      { "1" | "0" }? &
     element use_ldap           { "1" | "0" }? &
 
+    dns-allowed_interfaces? &
+
     dns-server_logging? &
     dns-server_options? &
     dns-server_zones?
 }
+
+dns-allowed_interfaces = 
+  element allowed_interfaces {
+    LIST,
+    dns-allowed_interface*
+}  
+
+dns-allowed_interface = element allowed_interface { text }
 
 dns-server_logging = element logging {
     LIST,
@@ -45,6 +55,8 @@ dns-server_zones_entry = element listentry {
     element ttl          { text }? &
     element type         { text }? &
     element zone         { text }? &
+    element file         { text }? &
+    element this_zone_had_NS_record_at_start { text }? &
     element connected_with { text }? &
 
     zone_options? &

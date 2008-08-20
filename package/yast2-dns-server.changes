@@ -1,4 +1,9 @@
 -------------------------------------------------------------------
+Wed Aug 20 14:12:59 CEST 2008 - sschober@suse.de
+
+- fixed rnc file for autoyast 
+
+-------------------------------------------------------------------
 Mon Aug 11 11:49:45 CEST 2008 - locilka@suse.cz
 
 - Using netconfig to configure DNS forwarders (patch created by
