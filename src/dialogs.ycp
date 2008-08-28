@@ -21,6 +21,7 @@
     import "SuSEFirewall";
     import "Punycode";
     import "DnsServer";
+    import "Confirm";
 
     /**
       * Ask user if exit without saving

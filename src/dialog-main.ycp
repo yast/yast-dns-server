@@ -1864,6 +1864,28 @@ map<string, map<string, any> > tabs = $[
     ],
 ];
 
+    /**
+     * Ask for exit without saving
+     * @return event that should be handled, nil if user canceled the exit
+     */
+    global define boolean confirmAbort () ``{
+        return Popup::YesNo (
+    // Yes-No popup
+_("All changes will be lost.
+Really leave the DNS server configuration without saving?"));
+    }
+
+    /**
+     * Check whether settings were changed and if yes, ask for exit
+     * without saving
+     * @return event that should be handled, nil if user canceled the exit
+     */
+    global define boolean confirmAbortIfChanged () ``{
+        if (! DnsServer::WasModified ())
+            return true;
+        return confirmAbort ();
+    }
+
 global map<symbol,any> functions = $[
     `abort : confirmAbort,
 ];

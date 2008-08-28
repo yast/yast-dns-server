@@ -15,7 +15,6 @@ ynclude_DATA =			\
 	wizards.ycp		\
 	dialogs.ycp		\
 	misc.ycp		\
-	widgets.ycp		\
 	options.ycp		\
 	dialog-masterzone.ycp	\
 	dialog-main.ycp		\
