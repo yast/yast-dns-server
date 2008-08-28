@@ -10,6 +10,9 @@
 
 {
 
+    // dead source code
+    // not in use anymore
+
     textdomain "dns-server";
 
     import "Label";
@@ -739,11 +742,9 @@ global define symbol nsHandle (string id, map event) ``{
 	string new = nil;
 	UI::OpenDialog (`VBox (
 	    `InputField (`id (`address), `opt (`hstretch), _("&Name Server")),
-	    `HBox (
-		`HStretch (),
-		`PushButton (`id (`ok), Label::OKButton ()),
-		`PushButton (`id (`cancel), Label::CancelButton ()),
-		`HStretch ()
+	    `ButtonBox (
+		`PushButton (`id (`ok), `opt (`okButton, `default, `key_F10), Label::OKButton ()),
+		`PushButton (`id (`cancel), `opt (`cancelButton, `key_F9), Label::CancelButton ())
 	    )
 	));
 	any ret = nil;
@@ -862,11 +863,9 @@ global define symbol mxHandle (string id, map event) ``{
 	    `InputField (`id (`address), `opt (`hstretch), _("&Mail Relay")),
 	    // int field
 	    `IntField (`id (`priority), _("&Priority"), 0, 100, 10),
-	    `HBox (
-		`HStretch (),
-		`PushButton (`id (`ok), Label::OKButton ()),
-		`PushButton (`id (`cancel), Label::CancelButton ()),
-		`HStretch ()
+	    `ButtonBox (
+		`PushButton (`id (`ok), `opt (`okButton, `default, `key_F10), Label::OKButton ()),
+		`PushButton (`id (`cancel), `opt (`cancelButton, `key_F9), Label::CancelButton ())
 	    )
 	));
 	any ret = nil;
@@ -1120,11 +1119,9 @@ global define symbol zoneMastersHandle (string key, map event) ``{
 	UI::OpenDialog (`VBox (
 	    // text entry
 	    `InputField (`id (`address), `opt (`hstretch), _("Address of &Master")),
-	    `HBox (
-		`HStretch (),
-		`PushButton (`id (`ok), Label::OKButton ()),
-		`PushButton (`id (`cancel), Label::CancelButton ()),
-		`HStretch ()
+	    `ButtonBox (
+		`PushButton (`id (`ok), `opt (`okButton, `default, `key_F10), Label::OKButton ()),
+		`PushButton (`id (`cancel), `opt (`cancelButton, `key_F9), Label::CancelButton ())
 	    )
 	));
 	any ret = nil;
@@ -1394,28 +1391,6 @@ global define void AllowDdnsStore (string id, map event) ``{
 //	    "allow_ddns" : getAllowDdnsWidget (),
 //	    "ddns_keys" : getDdnsKeysWidget (),
 	];
-    }
-
-    /**
-     * Ask for exit without saving
-     * @return event that should be handled, nil if user canceled the exit
-     */
-    global define boolean confirmAbort () ``{
-	return Popup::YesNo (
-    // Yes-No popup
-_("All changes will be lost.
-Really leave the DNS server configuration without saving?"));
-    }
-
-    /**
-     * Check whether settings were changed and if yes, ask for exit
-     * without saving
-     * @return event that should be handled, nil if user canceled the exit
-     */
-    global define boolean confirmAbortIfChanged () ``{
-	if (! DnsServer::WasModified ())
-	    return true;
-	return confirmAbort ();
     }
 
 /* EOF */
