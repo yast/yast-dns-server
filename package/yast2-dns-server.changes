@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Tue Nov  4 19:18:14 CET 2008 - locilka@suse.cz
+
+- However entries are stored in LDAP, .ldap.search returns them
+  in thisStrangeFormat. Moreover, DNS records entries are stored
+  format tXTRecord for TXT record, cNAMERecord for CNAME, etc.
+  (bnc #433899)
+- 2.17.8
+
+-------------------------------------------------------------------
 Thu Aug 28 15:04:26 CEST 2008 - locilka@suse.cz
 
 - Dropped dead code (widgets.ycp).

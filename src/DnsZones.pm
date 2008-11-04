@@ -46,10 +46,26 @@ use Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw($zone_base_config_dn);
 
-my @all_rec_types = ("mx", "ns", "a", "aaaa", "md", "cname", "ptr", "hinfo",
+my @tmp_all_rec_types = ("mx", "ns", "a", "aaaa", "md", "cname", "ptr", "hinfo",
     "minfo", "txt", "sig", "key", "aaa", "loc", "nxtr", "srv",
     "naptr", "kx", "cert", "a6", "dname");
 
+my @all_rec_types = ();
+
+# See bnc #433899
+sub drunkCamelType {
+    my $rectype = shift;
+
+    if ($rectype =~ m/^(.)(.*)$/) {
+	$rectype = lc($1).uc($2);
+    }
+
+    return $rectype;
+}
+
+foreach my $one_rectype (@tmp_all_rec_types) {
+    push @all_rec_types, drunkCamelType ($one_rectype);
+}
 
 ##-------------------------------------------------------------------------
 ##----------------- various routines --------------------------------------
@@ -469,6 +485,8 @@ sub ZoneReadLdap {
 
     my $zone_dn = "zoneName=$zone,$zone_base_config_dn";
 
+    y2milestone ("Reading zone from LDAP: ".$zone_dn);
+
     # the search config map
     my %ldap_query = (
         "base_dn" => $zone_dn,
@@ -509,7 +527,7 @@ sub ZoneReadLdap {
 	"serial" => $self->UpdateSerial ($soa_lst[2]),
     );
 
-    my @ttl_lst = @{$zonemap{"dnsttl"} || []};
+    my @ttl_lst = @{$zonemap{"dNSTTL"} || []};
     my $ttl = $ttl_lst[0];
 
     my %ret = (
@@ -539,7 +557,7 @@ sub ZoneReadLdap {
 
 	foreach my $rec_type (@all_rec_types)
 	{
-	    my $value_key = $rec_type . "record";
+	    my $value_key = $rec_type."Record";
 	    my @values = @{$record{$value_key} || []};
 	    foreach my $value (@values)
 	    {
@@ -698,7 +716,7 @@ sub ZoneFileWriteLdap {
 	} @records;
 
 	foreach my $rec_ref (@current_records) {
-	    my $type = lc ($rec_ref->{"type"}) . "record";
+	    my $type = drunkCamelType ($rec_ref->{"type"})."Record";
 	    my @cur_vals = @{$ldap_record{$type} || []};
 	    push @cur_vals, $rec_ref->{"value"};
 	    $ldap_record{$type} = \@cur_vals;
