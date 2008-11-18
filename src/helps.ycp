@@ -334,7 +334,18 @@ _("<p>
 To allow transports of the zone, set <b>Enable Zone Transport</b>
 and select the <b>ACLs</b> to check when a remote host
 attempts to transfer the zone. At least one ACL must be defined
-to allow zone transports.</p>"),
+to allow zone transports.</p>") +
+
+/* Zone Editor - Help */
+_("<p>
+Reverse zone records can be generated from another master zone.
+If you want this, select the <b>Automatically Generate Records From</b>
+check-box and choose the zone to generate the records from.</p>") +
+
+/* Zone Editor - Help */
+_("<p>
+If this is not a reverse zone, you can see which zones are generated
+from the current on in the <b>Connected Reverse Zones</b> field.</p>"),
 
     /* Zone Editor - Help for tab - Name Servers */
 "zone_editor_nameservers"  : _("<p><b><big>NS Records</big></b><br>

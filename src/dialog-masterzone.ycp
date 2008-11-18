@@ -1962,8 +1962,12 @@ string qwerty = _("Ad&vanced");
 
         if (ret == `next ) {
 	    // The new ones are alerady stored there
-	    if (current_tab != "name_servers")
+	    if (current_tab != "name_servers") {
+		// BNC #436456
+		if (current_tab == "basics") StoreZoneBasicsTab();
+
 		RegenerateCurrentZoneNS();
+	    }
 
 	    // at least one NS server must be set
 	    if (size (current_zone_ns) == 0) {
