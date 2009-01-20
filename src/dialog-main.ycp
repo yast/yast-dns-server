@@ -442,7 +442,7 @@ symbol HandleExpertForwardersPage (string key, map event) {
 	    Report::Error (
 		_("Invalid IPv4 or IPv6 address.") +
 		"\n" +
-		IP::Valid4 () "\n" +
+		IP::Valid4 () + "\n" +
 		_("A valid IPv6 address consists of letters a-f, numbers,
 and colons.")
 	    );
