@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Jan 20 16:08:40 CET 2009 - locilka@suse.cz
+
+- Allowing IPv6 address to be used as DNS Server forwarder
+  (bnc #463539)
+- 2.18.0
+
+-------------------------------------------------------------------
 Tue Nov 18 13:42:01 CET 2008 - locilka@suse.cz
 
 - Added missing help text (bnc #436456).
