@@ -641,14 +641,14 @@ sub GetStartService {
     return $start_service;
 }
 
-BEGIN { $TYPEINFO{SetUseLdap} = [ "function", "void", "boolean" ];}
+BEGIN { $TYPEINFO{SetUseLdap} = [ "function", "boolean", "boolean" ];}
 sub SetUseLdap {
     my $self = shift;
     $use_ldap = shift;
 
     if ($use_ldap) {
 	# trying init LDAP if use_ldap selected
-	my $success = $self->LdapInit (1);
+	my $success = $self->LdapInit (1, 1);
 
 	if (!$success) {
 	    return 0;
@@ -948,7 +948,7 @@ sub Read {
     }
 
 #    if (ProductFeatures->GetFeature ("globals", "ui_mode") eq "expert") {
-	$self->LdapInit (0);
+	$self->LdapInit (0, 0);
 #    }
  
     Progress->NextStage ();
@@ -1488,7 +1488,7 @@ sub Import {
     {
 	# Initialize LDAP if needed
 	$self->InitYapiConfigOptions ({"use_ldap" => $use_ldap});
-	$self->LdapInit (0);
+	$self->LdapInit (0, 0);
 	$self->CleanYapiConfigOptions ();
     }
 
@@ -1555,11 +1555,11 @@ sub Summary {
     return \@ret;
 }
 
-BEGIN { $TYPEINFO{LdapInit} = ["function", "boolean", "boolean" ]; }
+BEGIN { $TYPEINFO{LdapInit} = ["function", "boolean", "boolean", "boolean" ]; }
 sub LdapInit {
     my $self = shift;
-    my $ask_user_to_enable_ldap = shift;
-    my $report_errors = shift || 0;
+    my $ask_user_to_enable_ldap	= shift || 0;
+    my $report_errors		= shift || 0;
 
     $ldap_available = 0;
     $use_ldap = 0;
@@ -1770,7 +1770,7 @@ sub LdapPrepareToWrite {
     }
 
     # connect to the LDAP server
-    my $ret = Ldap->LDAPInit ();
+    my $ret = Ldap->LDAPInit (0, 0);
     if ($ret ne "")
     {
 	Ldap->LDAPErrorMessage ("init", $ret);
