@@ -185,11 +185,12 @@ Continue?
 //	    return nil;
 //	}
 	boolean use_ldap = (boolean)UI::QueryWidget (`id ("use_ldap"), `Value);
-	DnsServer::SetUseLdap (use_ldap);
-	if (! Mode::config ())
+	boolean successful = DnsServer::SetUseLdap (use_ldap);
+	if (successful && ! Mode::config ())
 	{
 	    DnsServer::InitYapiConfigOptions ($["use_ldap" : use_ldap]);
-	    DnsServer::LdapInit (true);
+	    // error reported in SetUseLdap
+	    DnsServer::LdapInit (true, false);
 	    DnsServer::CleanYapiConfigOptions ();
 	}
 	use_ldap = DnsServer::GetUseLdap ();
