@@ -258,10 +258,13 @@ symbol runInstallWizardFinishDialog () {
 	{
 	    boolean use_ldap = (boolean)
 		UI::QueryWidget (`id ("use_ldap"), `Value);
-	    DnsServer::SetUseLdap (use_ldap);
-	    DnsServer::InitYapiConfigOptions ($["use_ldap" : use_ldap]);
-	    DnsServer::LdapInit (true);
-	    DnsServer::CleanYapiConfigOptions ();
+
+	    if (DnsServer::SetUseLdap (use_ldap)) {
+		DnsServer::InitYapiConfigOptions ($["use_ldap" : use_ldap]);
+		DnsServer::LdapInit (true, true);
+		DnsServer::CleanYapiConfigOptions ();
+	    }
+
 	    use_ldap = DnsServer::GetUseLdap ();
 	    UI::ChangeWidget (`id ("use_ldap"), `Value, use_ldap);
 	}
