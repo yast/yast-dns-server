@@ -28,6 +28,7 @@ Dir	.dns.named.value.options: ["directory", "notify"]
 Write	.dns.named.value.options."forwarders" nil true
 Write	.dns.named.value.options."directory" ["\"/var/lib/named\""] true
 Write	.sysconfig.network.config.NETCONFIG_DNS_STATIC_SERVERS "5.5.5.5 6.6.6.6 7.7.7.7" true
+Write	.dns.named.value.options."include" ["\"/etc/named.d/forwarders.conf\""] true
 Write	.dns.named.value.options."notify" ["no"] true
 Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
 Write	.dns.named nil true
