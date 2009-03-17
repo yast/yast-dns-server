@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Mar 17 12:37:46 CET 2009 - locilka@suse.cz
+
+- Fixed handling forwarders in netconfig, forwarders.conf have to
+  be included if some forwarders are defined (bnc #484736).
+- 2.18.2
+
+-------------------------------------------------------------------
 Fri Jan 23 18:37:17 CET 2009 - locilka@suse.cz
 
 - Fixed displaying an error pop-up if 'Set Use LDAP' fails
