@@ -28,8 +28,10 @@ Dir	.dns.named.value.options: ["directory", "notify"]
 Write	.dns.named.value.options."directory" nil true
 Write	.dns.named.value.options."notify" nil true
 Write	.dns.named.value.options."forwarders" nil true
+Write	.dns.named.value.options."include" nil true
 Write	.dns.named.value.options."dump-file" ["\"/var/log/named_dump.db\""] true
 Write	.dns.named.value.options."statistics-file" ["\"/var/log/named.stats\""] true
+Write	.sysconfig.network.config.NETCONFIG_DNS_STATIC_SERVERS "" true
 Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
 Write	.dns.named nil true
 Dir	.dns.named.value: ["acl", "options", "zone \"localhost\" in"]
