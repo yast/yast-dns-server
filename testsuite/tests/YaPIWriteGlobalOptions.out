@@ -28,8 +28,8 @@ Dir	.dns.named.value.options: ["directory", "notify"]
 Write	.dns.named.value.options."directory" nil true
 Write	.dns.named.value.options."notify" nil true
 Write	.dns.named.value.options."forwarders" nil true
-Write	.dns.named.value.options."include" nil true
 Write	.dns.named.value.options."dump-file" ["\"/var/log/named_dump.db\""] true
+Write	.dns.named.value.options."include" ["\"/etc/named.d/forwarders.conf\""] true
 Write	.dns.named.value.options."statistics-file" ["\"/var/log/named.stats\""] true
 Write	.sysconfig.network.config.NETCONFIG_DNS_STATIC_SERVERS "" true
 Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
@@ -47,6 +47,9 @@ Write	.sysconfig.network.config.NETCONFIG_DNS_POLICY "auto" true
 Read	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS nil
 Write	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS "" true
 Write	.sysconfig.named nil true
+Write	.sysconfig.network.config.NETCONFIG_DNS_FORWARDER "bind" true
+Write	.sysconfig.network.config nil true
+Execute	.target.bash_output "/sbin/netconfig update" $["exit":1, "stderr":"", "stdout":""]
 Execute	.target.bash "/etc/init.d/named stop" 0
 Write	.target.ycp "/var/lib/YaST2/dns_server" $[] true
 Write	.sysconfig.network.config.NETCONFIG_DNS_FORWARDER "resolver" true

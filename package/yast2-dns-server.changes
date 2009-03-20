@@ -3,6 +3,7 @@ Fri Mar 20 16:49:47 CET 2009 - locilka@suse.cz
 
 - Correcting the last change: forwarders.conf is always included.
   Netconfig is called before starting named (bnc #484736).
+- Adjusted testsuites.
 - 2.18.3
 
 -------------------------------------------------------------------
