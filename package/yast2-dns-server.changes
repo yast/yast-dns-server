@@ -1,8 +1,7 @@
 -------------------------------------------------------------------
 Fri Mar 20 10:14:16 CET 2009 - locilka@suse.cz
 
-- Including forwarders.conf in 'options' section if some forwarders
-  are defined, removing the inclusion otherwise.
+- Always including forwarders.conf in 'options' section.
 - 2.17.11
 
 -------------------------------------------------------------------
