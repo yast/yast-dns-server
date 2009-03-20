@@ -2,6 +2,7 @@
 Fri Mar 20 10:14:16 CET 2009 - locilka@suse.cz
 
 - Always including forwarders.conf in 'options' section.
+- Adapted testsuites.
 - 2.17.11
 
 -------------------------------------------------------------------
