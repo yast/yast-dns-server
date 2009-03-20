@@ -10,8 +10,10 @@ Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
 Dir	.dns.named.value.options: ["directory", "notify", "xxx"]
 Write	.dns.named.value.options."xxx" nil true
 Write	.dns.named.value.options."forwarders" nil true
+Write	.dns.named.value.options."include" nil true
 Write	.dns.named.value.options."directory" ["\"/var/lib/named\""] true
 Write	.dns.named.value.options."notify" ["no"] true
+Write	.sysconfig.network.config.NETCONFIG_DNS_STATIC_SERVERS "" true
 Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
 Write	.dns.named nil true
 Dir	.dns.named.value: ["options", "zone \"localhost\" in"]
