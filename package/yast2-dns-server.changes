@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Mar 20 10:14:16 CET 2009 - locilka@suse.cz
+
+- Including forwarders.conf in 'options' section if some forwarders
+  are defined, removing the inclusion otherwise.
+- 2.17.11
+
+-------------------------------------------------------------------
 Fri Jan 23 18:37:17 CET 2009 - locilka@suse.cz
 
 - Fixed displaying an error pop-up if 'Set Use LDAP' fails
