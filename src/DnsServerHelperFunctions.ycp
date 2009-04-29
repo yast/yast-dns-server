@@ -4,7 +4,7 @@
  * Summary:	Module containing helper functions.
  * Authors:	Lukas Ocilka <locilka@suse.cz>
  *
- * $Id:$
+ * $Id$
  *
  * Module handles dynamic update of zone using 'nsupdate' command.
  * Automatic generation of connected zones and much more!
