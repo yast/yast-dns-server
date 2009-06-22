@@ -2,6 +2,7 @@
 
 
 @HEADER@
+License: GPL v2 or later
 BuildRequires:	yast2-ldap-client perl-XML-Writer update-desktop-files yast2 yast2-devtools yast2-testsuite yast2-perl-bindings
 
 # requires DnsServerAPI::GetReverseIPforIPv6
