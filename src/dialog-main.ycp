@@ -238,7 +238,7 @@ term ExpertForwardersDialog () {
 			`HBox (
 			    `HWeight ( 9,
 				// Textentry for DNS-Forwarders adding IP
-				`InputField ( `id ( "forwarders_new_ip_address" ), `opt ( `hstretch ), _("IP A&ddress"), "" )
+				`InputField ( `id ( "forwarders_new_ip_address" ), `opt ( `hstretch ), _("IPv4 or IPv6 A&ddress"), "" )
 			    ),
 			    `HWeight ( 2,
 				`Bottom ( `PushButton ( `id ( "forwarders_add_ip_address" ), `opt ( `hstretch ), Label::AddButton() ) )
@@ -313,7 +313,7 @@ void ReadForwarders () {
  */
 void ValidCharsForwardersPage () {
     // setting `ValidChars
-    UI::ChangeWidget( `id("forwarders_new_ip_address"), `ValidChars,    IP::ValidChars4);
+    UI::ChangeWidget( `id("forwarders_new_ip_address"), `ValidChars,    IP::ValidChars4 + IP::ValidChars6);
 }
 
 void handlePolicy( symbol policy ){
@@ -437,9 +437,16 @@ symbol HandleExpertForwardersPage (string key, map event) {
     {
 	string new_addr = (string)
 	    UI::QueryWidget (`id ("forwarders_new_ip_address"), `Value);
-	if (! IP::Check4 (new_addr))
+	// both IPv4 and IPv6
+	if (! IP::Check (new_addr))
 	{
-	    Report::Error (IP::Valid4 ());
+	    Report::Error (
+		_("Invalid IPv4 or IPv6 address.") +
+		"\n" +
+		IP::Valid4 () +
+		_("A valid IPv6 address consists of letters a-f, numbers,
+and colons.")
+	    );
 	    return nil;
 	}
 	if (contains (forwarders, new_addr))
