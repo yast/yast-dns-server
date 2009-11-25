@@ -24,7 +24,8 @@ while ( <STDIN> ) {
 	    
 	    # convert the file content to the IniAgent-understandable format
 	    $file_content =~ s/(options|view|logging)[ \t\n]*\{/$1 {/g;
-	    $file_content =~ s/(zone)[ \t\n]*([^ \t\n]+)[ \t\n]*([^ \t\n]+)[ \t\n]*\{/$1 $2 $3 {/g;
+	    # zone "zone.name" in { ("in" is not necessary)
+	    $file_content =~ s/(zone)[ \t\n]*([^ \t\n]+)([ \t\n]+in)?[ \t\n]*\{/$1 $2 in {/gi;
 	    
 	    if ($file_content ne $file_content_backup) {
 		my $backup_file = $file.'.YaST-backup';
