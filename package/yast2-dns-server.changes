@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed Nov 25 10:34:29 CET 2009 - locilka@suse.cz
+
+- Enhanced agent for transforming user-defined named.conf to
+  understand zone definition without 'in' (#266717).
+- DNS zones need a FQDN hostname, using /etc/HOSTNAME as a fallback
+  when hostname --fqdn returns empty string (bnc #403468).
+- 2.13.24
+
+-------------------------------------------------------------------
 Tue Jan 16 13:05:47 CET 2007 - locilka@suse.cz
 
 - Adding X-SuSE-YaST-AutoInstSchema entry into the application
