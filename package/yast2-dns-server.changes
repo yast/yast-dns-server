@@ -5,7 +5,7 @@ Thu Nov 26 14:00:19 CET 2009 - locilka@suse.cz
 - 2.17.12
 
 -------------------------------------------------------------------
-Fri Mar 13 14:02:35 CET 2009 - locilka@suse.cz
+Fri Mar 20 14:02:35 CET 2009 - locilka@suse.cz
 
 - Allowing IPv6 address to be used as DNS Server forwarder
   (bnc #463539)
