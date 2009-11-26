@@ -1784,7 +1784,7 @@ sub LdapPrepareToWrite {
 
     # check if the schema is properly included
     NetworkInterfaces->Read ();
-    if ($ldap_server eq "127.0.0.1" || $ldap_server eq "localhost"
+    if ($ldap_server =~ /^127\.0\.0\.[0-9]+$/ || $ldap_server eq "localhost" || $ldap_server eq "::1"
 	|| -1 != index (lc ($ldap_server), lc (Hostname->CurrentHostname()))
 	|| 0 != scalar (@{NetworkInterfaces->Locate ("IPADDR", $ldap_server)}))
     {
@@ -1797,7 +1797,7 @@ sub LdapPrepareToWrite {
     }
 
     # connect to the LDAP server
-    my $ret = Ldap->LDAPInit (0, 0);
+    my $ret = Ldap->LDAPInit ();
     if ($ret ne "")
     {
 	Ldap->LDAPErrorMessage ("init", $ret);
