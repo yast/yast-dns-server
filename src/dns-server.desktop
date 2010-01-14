@@ -20,9 +20,8 @@ X-SuSE-YaST-AutoInstRequires=lan,ldap,ldap-server,ldap-client
 X-SuSE-YaST-AutoInstSchema=dns-server.rnc
 
 Icon=yast-dns-server
-Exec=/sbin/yast2 dns-server 
+Exec=xdg-su -c "/sbin/yast2 dns-server"
 
 Name=DNS Server
 GenericName=Configure a DNS server
-X-KDE-SubstituteUID=true
 StartupNotify=true
