@@ -1308,6 +1308,31 @@ void StoreZoneRecordsTab () {
 }
 
 /**
+ * Checks whether a given string is a valid TXT record key (name)
+ */
+boolean ValidTXTRecordName (string name) {
+    // Checking the length
+    if (name == nil || name == "") {
+	y2warning ("TXT record key must not be empty");
+	return false;
+    }
+
+    // Checking for forbidden '='
+    if (regexpmatch(name, "=")) {
+	y2warning ("TXT record key %1 must not contain a '=' character.", name);
+	return false;
+    }
+
+    // only US-ASCII characters are allowed
+    if (size(name) != size(toascii(name))) {
+	y2warning ("TXT record key %1 contains some non US-ASCII characters", name);
+	return false;
+    }
+
+    return true;
+}
+
+/**
  * Checking new record by the "type"
  */
 boolean CheckNewZoneRecordSyntax (map <string, string> record) {
@@ -1467,10 +1492,10 @@ or in the relative form to the current zone."));
 
     // -- TXT -- \\
     } else if (type == "TXT") {
-	// (hostname or FQ)
-	if (Hostname::Check(key) != true && Hostname::CheckFQ(key) != true) {
+	if (! ValidTXTRecordName(key)) {
 	    UI::SetFocus ( `id ("add_record_name") );
-	    Popup::Error (_("Invalid TXT record key. It should be similar to a hostname.") + "\n\n" + Hostname::ValidFQ() );
+	    Popup::Error (_("Invalid TXT record key. It should consist of printable US-ASCII characters excluding '='
+and must be at least one character long."));
 	    return false;
 	}
 	if (size (val) > 255) {
