@@ -304,8 +304,8 @@ Forward form without netmask bits: <tt>2001:db8:0:54::</tt>
 
 /* Expert Mode Configuration - Zones #5 */
 _("<p>To modify settings for a zone, such as zone transport and name and
-mail servers, select it, and click <b>Edit Zone</b>.
-To remove a configured zone, select it and click <b>Delete Zone</b>.</p>
+mail servers, select it, and click <b>Edit</b>.
+To remove a configured zone, select it and click <b>Delete</b>.</p>
 "),
 
 "zone_editor_basics"	:
