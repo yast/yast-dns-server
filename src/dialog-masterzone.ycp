@@ -1350,7 +1350,8 @@ boolean CheckNewZoneRecordSyntax (map <string, string> record) {
     // -- A -- \\
     if (type == "A") {
 	// (hostname or FQ -> IPv4)
-	if (Hostname::Check(key) != true && Hostname::CheckFQ(key) != true) {
+	// BNC #646895: Wildcard '*' not supported as valid hostname
+	if (Hostname::Check(key) != true && Hostname::CheckFQ(key) != true && key != "*") {
 	    UI::SetFocus ( `id ("add_record_name") );
 	    Popup::Error ( Hostname::ValidFQ() );
 	    return false;
@@ -1365,7 +1366,7 @@ boolean CheckNewZoneRecordSyntax (map <string, string> record) {
     // -- CNAME -- \\
     } else if (type == "CNAME") {
 	// (hostname or FQ -> hostname or FQ)
-	if (Hostname::Check(key) != true && Hostname::CheckFQ(key) != true) {
+	if (Hostname::Check(key) != true && Hostname::CheckFQ(key) != true && key != "*") {
 	    UI::SetFocus ( `id ("add_record_name") );
 	    Popup::Error ( Hostname::ValidFQ() );
 	    return false;
@@ -1382,7 +1383,8 @@ boolean CheckNewZoneRecordSyntax (map <string, string> record) {
 	// (hostname or domain or FQ -> hostname or FQ)
 	if (Hostname::Check(key) != true &&
 	    Hostname::CheckDomain(key) != true &&
-	    Hostname::CheckFQ(key) != true
+	    Hostname::CheckFQ(key) != true &&
+	    key != "*"
 	) {
 	    UI::SetFocus ( `id ("add_record_name") );
 	    Popup::Error ( Hostname::ValidFQ() );
@@ -1404,7 +1406,8 @@ boolean CheckNewZoneRecordSyntax (map <string, string> record) {
 	// (hostname or domain or FQ -> hostname or FQ)
 	if (Hostname::Check(key) != true &&
 	    Hostname::CheckDomain(key) != true &&
-	    Hostname::CheckFQ(key) != true
+	    Hostname::CheckFQ(key) != true &&
+	    key != "*"
 	) {
 	    UI::SetFocus ( `id ("add_record_name") );
 	    Popup::Error ( Hostname::ValidFQ() );
@@ -1464,7 +1467,7 @@ or in the relative form to the current zone."));
     // -- AAAA -- \\
     } else if (type == "AAAA") {
 	// (hostname or FQ)
-	if (Hostname::Check(key) != true && Hostname::CheckFQ(key) != true) {
+	if (Hostname::Check(key) != true && Hostname::CheckFQ(key) != true && key != "*") {
 	    UI::SetFocus ( `id ("add_record_name") );
 	    Popup::Error ( Hostname::ValidFQ() );
 	    return false;
