@@ -3,6 +3,7 @@ Fri Jan  7 10:31:22 CET 2011 - locilka@suse.cz
 
 - Fixed help text (BNC #620101)
 - Allowing wildcard '*' for some resource records (BNC #646895).
+- 2.20.2
 
 ------------------------------------------------------------------
 Thu Jan  6 14:17:25 CET 2011 - locilka@suse.cz
