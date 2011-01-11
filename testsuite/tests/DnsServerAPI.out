@@ -31,14 +31,17 @@ Read	.dns.named.value."zone \"localhost\" in"."type" ["master"]
 Return	true
 Dump	==========================================================
 Execute	.target.bash_output "/bin/hostname --fqdn" $["exit":1, "stderr":"", "stdout":""]
+Read	.target.string "/etc/HOSTNAME" "some text"
 Return	true
 Execute	.target.bash_output "/bin/hostname --fqdn" $["exit":1, "stderr":"", "stdout":""]
+Read	.target.string "/etc/HOSTNAME" "some text"
 Return	true
 Return	false
 Return	true
 Return	["192.168.0.1", "192.168.0.2"]
 Dump	==========================================================
 Execute	.target.bash_output "/bin/hostname --fqdn" $["exit":1, "stderr":"", "stdout":""]
+Read	.target.string "/etc/HOSTNAME" "some text"
 Return	true
 Return	false
 Return	true

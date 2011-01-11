@@ -42,6 +42,7 @@ Dir	.dns.named.value."zone \"example.com\" in": []
 Write	.dns.named.value."zone \"example.com\" in"."type" ["master"] true
 Write	.dns.named.value."zone \"example.com\" in"."file" ["\"example.com.zone\""] true
 Execute	.target.bash_output "/bin/hostname --fqdn" $["exit":1, "stderr":"", "stdout":""]
+Read	.target.string "/etc/HOSTNAME" nil
 Write	.dns.zone ["/var/lib/named/example.com", $["TTL":"1W", "records":[$["key":"host", "type":"A", "value":"127.0.0.1"], $["key":"example.com.", "type":"NS", "value":"@"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":"2004012701", "server":"@", "zone":"@"]]] true
 Write	.dns.named.value."zone \"example.com\" in".file ["\"example.com\""] true
 Write	.dns.named.value."zone \"example.com\" in".type ["master"] true
