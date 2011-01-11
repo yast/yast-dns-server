@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jan 11 08:25:03 CET 2011 - jsrain@suse.cz
+
+- fixed testsuite
+- 2.13.25
+
+-------------------------------------------------------------------
 Wed Nov 25 10:34:29 CET 2009 - locilka@suse.cz
 
 - Enhanced agent for transforming user-defined named.conf to
