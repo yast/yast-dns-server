@@ -1798,6 +1798,9 @@ sub LdapPrepareToWrite {
 
     # connect to the LDAP server
     my $ret = Ldap->LDAPInit ();
+    # BNC #679960
+    $ret = _("Unknown LDAP initialization error.") unless (defined $ret);
+
     if ($ret ne "")
     {
 	Ldap->LDAPErrorMessage ("init", $ret);
