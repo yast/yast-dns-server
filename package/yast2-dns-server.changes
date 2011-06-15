@@ -1,4 +1,10 @@
 ------------------------------------------------------------------
+Wed Mar 16 15:51:40 CET 2011 - locilka@suse.cz
+
+- Handling unknown error in LDAP initialization (BNC #679960).
+- 2.21.1
+
+------------------------------------------------------------------
 Fri Jan  7 10:31:22 CET 2011 - locilka@suse.cz
 
 - Fixed help text (BNC #620101)
