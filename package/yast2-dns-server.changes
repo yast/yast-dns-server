@@ -1,4 +1,11 @@
 ------------------------------------------------------------------
+Mon Jun 20 15:35:29 CEST 2011 - locilka@suse.cz
+
+- Automatically changing entered forwarder to a localhost IP if
+  the server would forward to itself (non-local IP) (BNC #676676).
+- 2.17.16
+
+------------------------------------------------------------------
 Wed Mar 16 15:51:40 CET 2011 - locilka@suse.cz
 
 - Handling unknown error in LDAP initialization (BNC #679960).
