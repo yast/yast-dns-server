@@ -16,6 +16,7 @@
  */
 
 {
+    // testedfiles: zoneag.ycp
 
     integer old = (integer)WFM::SCRGetDefault ();
 
