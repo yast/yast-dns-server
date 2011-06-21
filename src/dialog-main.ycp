@@ -36,6 +36,7 @@ import "DnsServerAPI";
 import "Punycode";
 import "DnsServer";
 import "DnsServerHelperFunctions";
+import "String";
 
 /* String defines the initial screen for the expert dialog */
 string initial_screen = "start_up";
@@ -441,8 +442,7 @@ list <string> CurrentlyUsedIPs (boolean including_local) {
 	return nil;
     }
 
-    list <string> used_ips = splitstring (cmd_ret["stdout"]:"", "\n");
-    used_ips = filter (string used_ip, used_ips, ``(used_ip != nil && used_ip != ""));
+    list <string> used_ips = String::NewlineItems (cmd_ret["stdout"]:"");
 
     // Filtering out all local IPs
     if (including_local != true) {
