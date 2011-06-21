@@ -18,6 +18,10 @@ Requires:	yast2-perl-bindings
 Requires:	bind-utils
 Requires:	yast2-ldap
 Requires:	yast2-ldap-client
+# /sbin/ip
+Requires:	iproute2
+# DnsServerUI::CurrentlyUsedIPs
+Requires:	grep sed
 
 # Script /sbin/netconfig 0.71.2+?
 # FATE #303386: Network setup tools
