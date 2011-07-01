@@ -1444,10 +1444,11 @@ boolean CheckNewZoneRecordSyntax (map <string, string> record) {
 	    if (! regexpmatch (key, "^[ \\t]*([0-9a-fA-F]\\.){32}ip6\\.arpa\\.[ \\t]*$")) {
 		y2error ("Wrong reverse IPv6: '%1'", key);
 		UI::SetFocus (`id ("add_record_name"));
-		Popup::Error (_("Invalid IPv6 reverse IP.
+		// Pop-up error message, %1 is replaced with an example
+		Popup::Error (sformat(_("Invalid IPv6 reverse IP.
 
-IPv6 reverse records are supported either in the full form (*.ip6.arpa.)
-or in the relative form to the current zone."));
+IPv6 reverse records are supported either in the full form (%1)
+or in the relative form to the current zone."), "*.ip6.arpa."));
 		return false;
 	    }
 	// IPv4 reverse zone
@@ -2052,7 +2053,7 @@ string qwerty = _("Ad&vanced");
 		// Automatically Generate Records From is a feature that makes YaST to generate
 		// DNS records manually from selected zone
 		show_warning = sformat (_("Current zone records are automatically generated from %1 zone.
-To change records manualy disable the Automatically Generate Records From feature."), current_zone["connected_with"]:"");
+To change records manually disable the Automatically Generate Records From feature."), current_zone["connected_with"]:"");
 	    }
 
 	    // Switch contents
