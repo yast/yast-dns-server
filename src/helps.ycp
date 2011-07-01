@@ -238,7 +238,7 @@ to specify how many log files should be saved.</p>
 
     /* Expert Mode Configuration - Logging 3/3 */
 _("<p>In <b>Additional Logging</b>,
-set which loggable actions should be logged. Common actions are always logged.
+set which actions should be logged. Common actions are always logged.
 <b>Log All DNS Queries</b> logs all queries from clients to the DNS server.
 <b>Log Zone Updates</b> logs when DNS has been updated.
 <b>Log Zone Transfers</b> logs when zone is completely transferred to the 
@@ -293,14 +293,17 @@ _("<p>To add a new IPv4 reverse zone, enter a part of the reverse IPv4 address f
 the <b>Zone Type</b>, and click <b>Add</b>.</p>
 ") +
 
-/* Expert Mode Configuration - Zones #4 */
-_("<p>To add a new IPv6 reverse zone, enter a part of the reverse IPv6 address followed by
-<tt>.ip6.arpa</tt> as its <b>Zone Name</b>. Several formats for entering the zone name are
-supported: Standard form: <tt>4.5.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.</tt>;
-Forward form: <tt>2001:db8:0:54::/64</tt>;
-Forward form without netmask bits: <tt>2001:db8:0:54::</tt>
-(default <tt>64</tt> netmask bits are used).</p>
-") +
+/*
+ * Expert Mode Configuration - Zones #4
+ * %1, %2, %3, and %4 are replaced with examples
+ */
+sformat(_("<p>To add a new IPv6 reverse zone, enter a part of the reverse IPv6 address followed by
+<tt>%1</tt> as its <b>Zone Name</b>. Several formats for entering the zone name are
+supported: Standard form: <tt>%2</tt>;
+Forward form: <tt>%3</tt>;
+Forward form without netmask bits: <tt>%4</tt>
+(by default <tt>64</tt> netmask bits are used).</p>
+"), ".ip6.arpa.", "4.5.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.", "2001:db8:0:54::/64", "2001:db8:0:54::") +
 
 /* Expert Mode Configuration - Zones #5 */
 _("<p>To modify settings for a zone, such as zone transport and name and
