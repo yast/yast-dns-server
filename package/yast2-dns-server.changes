@@ -4,6 +4,7 @@ Fri Jul  1 14:42:45 CEST 2011 - locilka@suse.cz
 - Fixed a typo (BNC #703099)
 - Texts changed to be easily translatable - not to confuse
   translators with constant strings
+- 2.17.17
 
 ------------------------------------------------------------------
 Tue Jun 21 09:40:41 CEST 2011 - locilka@suse.cz
