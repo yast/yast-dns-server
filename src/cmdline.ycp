@@ -77,10 +77,10 @@
 	    string content = "";
 	    if (DnsServer::GetStartService()) {
 		// TRANSLATORS: commandline DNS service status information
-		content = _("DNS server is enabled in the boot process");
+		content = _("DNS server is enabled in the boot process.");
 	    } else {
 		// TRANSLATORS: commandline DNS service status information
-		content = _("DNS server needs manual starting");
+		content = _("DNS server needs manual starting.");
 	    }
 	    // TRANSLATORS: commandline section header
 	    ScreenWizard(_("Start-Up Settings:"), content);
@@ -976,12 +976,12 @@
 	    "retry" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("An interval between retries of failed refresh"),
+		"help" : _("Interval between retries of failed refresh"),
 	    ],
 	    "expiry" : $[
 		"type" : "string",
 		// TRANSLATORS: commandline short help for command
-		"help" : _("An interval after which zone records are no longer authoritative"),
+		"help" : _("Interval after which zone records are no longer authoritative"),
 	    ],
 	    "minimum" : $[
 		"type" : "string",

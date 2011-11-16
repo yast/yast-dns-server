@@ -106,21 +106,23 @@ server.</p>"),
     "zone_direction" : _("<p><b><big>Zone Direction</big></b><br>
 DNS is used both for translating from domain names to IP addresses and back.
 Select if this zone will be used to translate from domain names to IP
-addresses (select <b>Forward</b>) or from IP addresses to domain names
-(select <b>Reverse</b>).</p>"),
+addresses (<b>Forward</b>) or from IP addresses to domain names
+(<b>Reverse</b>).</p>
+"),
 
     // firewall dialog
     // help text 1/2
     "iface_classes" : _("<p><b><big>Interface Classes</big></b><br>
-Select through which interface classes access to the DNS server should be
-allowed. The interface classes are defined in the
-firewall configuration component.</p>"),
+Select which interface classes should have access to the DNS server. The
+interface classes are defined in the firewall configuration component.</p>
+"),
 
     // help text 2/2
     "adapt_firewall" : _("<p><b><big>Adapting Firewall Settings</big></b><br>
-To adapt the firewall settings so the DNS server can be accessed
-through all network interfaces to which it listens, check
-<b>Adapt Firewall Settings</b>.</p>"),
+To adapt the firewall settings so that the DNS server can be accessed
+via all network interfaces to which it listens, check
+<b>Adapt Firewall Settings</b>.</p>
+"),
 
     // soa dialog
     // help text 1/9
@@ -137,12 +139,14 @@ of the primary name server.</p>")
 
     // help text 4/9 - Administrator's mail
     + _("<p><b>Administrator's Mail</b> must contain the e-mail address of
-administrator responsible for the zone.</p>")
+the administrator responsible for the zone.</p>
+")
 
     // help text 5/9 - Serial
     + _("<p><b>Serial</b> number is used for determining if the zone has changed on
-master servers (so slave servers do not always need to synchronize the
-entire zone).</p>")
+the master servers (so that slave servers do not always need to synchronize the
+entire zone).</p>
+")
 
     // help text 6/9 - Refresh
     + _("<p><b>Refresh</b> sets how often the zone should be synchronized from
@@ -254,7 +258,7 @@ access to zones.</p>
 
     /* Expert Mode Configuration - ACLs 2/2 */
 _("<p>To add a new ACL entry, just enter the option's <b>Name</b>
-and <b>Value</b> then click <b>Add</b>.  To remove an already set 
+and <b>Value</b> then click <b>Add</b>.  To remove an 
 ACL entry, select it and click <b>Delete</b>.</p>
 "),
 
@@ -342,8 +346,9 @@ to allow zone transports.</p>") +
 /* Zone Editor - Help */
 _("<p>
 Reverse zone records can be generated from another master zone.
-If you want this, select the <b>Automatically Generate Records From</b>
-check-box and choose the zone to generate the records from.</p>") +
+Select the <b>Automatically Generate Records From</b>
+check-box and choose the zone to generate the records from.</p>
+") +
 
 /* Zone Editor - Help */
 _("<p>
@@ -372,8 +377,9 @@ Set the entries of the SOA record.</p>")
     /* Zone Editor - Help for tab - Zone (SOA) 2/7 */
 + _("<p><b>Serial</b> is the number used for determining if the zone has 
 changed on
-master servers (so slave servers do not always need to synchronize the
-entire zone).</p>")
+the master servers (then slave servers do not always need to synchronize the
+entire zone).</p>
+")
 
     /* Zone Editor - Help for tab - Zone (SOA) 3/7 */
 + _("<p><b>TTL</b> specifies the time to live for all records in the
@@ -474,7 +480,8 @@ SuSEfirewall2 settings to allow all connections to your DNS server.</p>") +
 // Final step of the installation wizard - 3/5
 _("<p>
 To start the DNS server every time your computer is booted, set the 
-start-up behavior to <b>On</b>. Otherwise set <b>Off</b>.</p> ") +
+start-up behavior to <b>On</b>. Otherwise set it to <b>Off</b>.</p> 
+") +
 
 ((DnsServer::ExpertUI()) ? 
     // Final step of the installation wizard - 4/5

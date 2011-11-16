@@ -77,7 +77,7 @@ term ExpertStartUpDialog () {
 				    `Label (_("Current Status: ")),
 				    `ReplacePoint (`id ("service_status_rp"),
 					// service status - label
-					`Label (_("DNS server is running"))
+					`Label (_("DNS server is running."))
 				    ),
 				    `HStretch ()
 				),
@@ -109,9 +109,9 @@ void UpdateServiceStatusWidget () {
 	UI::ReplaceWidget (`id ("service_status_rp"),
 	    `Label (status
 		// service sttus - label
-		? _("DNS server is running")
+		? _("DNS server is running.")
 		// service sttus - label
-		: _("DNS server is not running")
+		: _("DNS server is not running.")
 	    )
 	);
     }
@@ -476,7 +476,7 @@ string ChangeIPToLocalEquivalent (string ip_address) {
 
     if (ret == nil) {
 	// An error message, %1 is replaced with a variable IP
-	Report::Error (sformat(_("Cannot find local equivalent for IP %1"), ret));
+	Report::Error (sformat(_("Cannot find local equivalent for IP %1."), ret));
     } else {
 	// TRANSLATORS: A warning message, %1 is replaced with the input IP, %2 with the output IP
 	Report::Warning (sformat(_("Forwarding DNS queries to itself would create an infinite loop.
@@ -1773,9 +1773,9 @@ map<string,map<string,any> > new_widgets = $[
     "start_stop" : CWMServiceStart::CreateStartStopWidget ($[
 	"service_id" : "named",
 	// label - service status, informative text
-	"service_running_label" : _("DNS server is running"),
+	"service_running_label" : _("DNS server is running."),
 	// label - service status, informative text
-	"service_not_running_label" : _("DNS server is not running"),
+	"service_not_running_label" : _("DNS server is not running."),
 	// push button (DNS service handling)
 	"start_now_button" : _("&Start DNS Server Now"),
 	// push button (DNS service handling)
