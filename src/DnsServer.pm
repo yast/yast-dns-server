@@ -1543,13 +1543,13 @@ sub Summary {
     if ($start_service)
     {
 	# summary string
-	push (@ret, __("The DNS server starts when booting the system"));
+	push (@ret, __("The DNS server starts when booting the system."));
     }
     else
     {
 	push (@ret,
 	    # summary string
-	    __("The DNS server does not start when booting the system"));
+	    __("The DNS server does not start when booting the system."));
     }
 
     my @zones_descr = map {

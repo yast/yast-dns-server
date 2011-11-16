@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Nov 16 11:55:12 CET 2011 - jsuchome@suse.cz
+
+- merged texts from proofreading
+- 2.22.0 
+
+-------------------------------------------------------------------
 Mon Sep 12 12:21:22 UTC 2011 - lslezak@suse.cz
 
 - updated testsuite (systemd support)
