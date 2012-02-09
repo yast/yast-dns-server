@@ -428,6 +428,66 @@ void StoreExpertForwardersPage (string key, map event) {
 }
 
 /**
+ * Returns list of IPs currently used by the system.
+ *
+ * @param boolean whether local addresses should be returned as well (the default is false)
+ */
+list <string> CurrentlyUsedIPs (boolean including_local) {
+    string cmd = "ip addr show | grep 'inet\\(6\\)\\?' | sed 's/^[ \\t]\\+inet\\(6\\)\\?[ \\t]\\+\\([^\\/]\\+\\)\\/.*$/\\2/'";
+    map cmd_ret = (map) SCR::Execute (.target.bash_output, cmd);
+
+    if (cmd_ret == nil || cmd_ret["exit"]:-1 != 0) {
+	y2error ("Cannot get list of used IPs: %1", cmd_ret);
+	return nil;
+    }
+
+    list <string> used_ips = splitstring (cmd_ret["stdout"]:"", "\n");
+    used_ips = filter (string used_ip, used_ips, ``(used_ip != nil && used_ip != ""));
+
+    // Filtering out all local IPs
+    if (including_local != true) {
+	used_ips = filter (string used_ip, used_ips, ``(
+	    !regexpmatch(used_ip, "127\.0\.0\..*") && used_ip != "::1"
+	));
+    }
+
+    return used_ips;
+}
+
+/**
+ * Gets an IP address and returns it's local equivalent: 127.0.0.1 for IPv4, ::1 for IPv6.
+ * If a given string is neither IPv4 nor IPv6, nil is returned.
+ *
+ * @param string IP to transform
+ * @returns string transformed IP
+ */
+string ChangeIPToLocalEquivalent (string ip_address) {
+    string ret = nil;
+
+    if (IP::Check4 (ip_address)) {
+	ret = "127.0.0.1";
+    } else if (IP::Check6 (ip_address)) {
+	ret = "::1";
+    } else {
+	ret = nil;
+    }
+
+    y2warning ("Transforming forwarder IP %1 to %2", ip_address, ret);
+
+    if (ret == nil) {
+	// An error message, %1 is replaced with a variable IP
+	Report::Error (sformat(_("Cannot find local equivalent for IP %1"), ret));
+    } else {
+	// TRANSLATORS: A warning message, %1 is replaced with the input IP, %2 with the output IP
+	Report::Warning (sformat(_("Forwarding DNS queries to itself would create an infinite loop.
+IP address %1 is currently used by this server, so it has
+been changed to its local equivalent %2."), ip_address, ret));
+    }
+
+    return ret;
+}
+
+/**
  * Handle events in a tab of a dialog
  */
 symbol HandleExpertForwardersPage (string key, map event) {
@@ -449,6 +509,13 @@ and colons.")
 	    );
 	    return nil;
 	}
+
+	list <string> used_ips = CurrentlyUsedIPs (false);
+	if (contains (used_ips, new_addr)) {
+	    new_addr = ChangeIPToLocalEquivalent (new_addr);
+	    if (new_addr == nil) return nil;
+	}
+
 	if (contains (forwarders, new_addr))
 	{
 	    // error report
