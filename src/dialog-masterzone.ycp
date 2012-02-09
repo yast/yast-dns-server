@@ -1560,6 +1560,21 @@ boolean CheckNewZoneRecordLogic (map <string, string> record) {
     return false;
 }
 
+// Transform a given key/value by adding the ending dot if
+// it ends with the current zone name
+string TransformRecord (string record) {
+    string zone_regexp = mergestring (
+	splitstring (current_zone["zone"]:"", "."),
+	"\\."
+    );
+
+    // key terminated with zone name without dot
+    if (regexpmatch (record, ".*\\." + zone_regexp + "$"))
+	record = record + ".";
+
+    return record;
+}
+
 boolean CheckAndModifyRecord (string & type, string & key, string & val) {
 	// (SYNTAX) Checking the record by record-type (true or false)
 	if (CheckNewZoneRecordSyntax ($[ "key" : key, "type" : type, "val" : val ]) != true) {
@@ -1600,11 +1615,15 @@ boolean CheckAndModifyRecord (string & type, string & key, string & val) {
 			y2milestone("MX Priority decrased to maximal 65535 from %1", prio);
 		    }
 		}
-	    } else if (contains (["ns", "mx", "cname"], tolower_type)) {
-		if (regexpmatch (val, "\\..*[^.]$"))
-		    val = val + ".";
-	    } else if (regexpmatch (key, "\\..*[^.]$")) {
-		key = key + ".";
+	    }
+
+	    if (tolower_type == "cname") {
+		key = TransformRecord (key);
+		val = TransformRecord (val);
+	    } else if (contains (["ns", "mx"], tolower_type)) {
+		val = TransformRecord (val);
+	    } else if (tolower_type == "a") {
+		key = TransformRecord (key);
 	    }
 	}
 
