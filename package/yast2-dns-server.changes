@@ -1,4 +1,11 @@
 ------------------------------------------------------------------
+Thu Feb  9 15:16:58 CET 2012 - locilka@suse.com
+
+- Fixed transforming records from relative to absolute format.
+  The final dot is added only to records including a zone name
+  (bnc#745560).
+
+------------------------------------------------------------------
 Fri Jul  1 14:42:45 CEST 2011 - locilka@suse.cz
 
 - Fixed a typo (BNC #703099)
