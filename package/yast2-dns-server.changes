@@ -3,6 +3,8 @@ Fri Feb 10 13:13:43 CET 2012 - locilka@suse.com
 
 - Fixed transforming records from absolute to relative format
   while they are listed in UI (bnc#746363).
+- Fixed saving the current status of all zones to LDAP/files while
+  switching from using files to LDAP and vice versa (bnc#746401).
 
 ------------------------------------------------------------------
 Thu Feb  9 15:16:58 CET 2012 - locilka@suse.com

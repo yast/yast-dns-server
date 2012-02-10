@@ -120,15 +120,21 @@ sub ZoneWrite {
 	return 0;
     }
 
-    if (! ($zone_map{"modified"} || $save_all))
-    {
-	y2milestone ("Skipping zone $zone_name, wasn't modified");
-	return 1;
-    }
-
     if ($zone_name eq "localhost" || $zone_name eq "0.0.127.in-addr.arpa")
     {
 	y2milestone ("Skipping system zone $zone_name");
+	return 1;
+    }
+
+    if ($save_all) {
+	y2milestone ("Saving all zones, flagging ".$zone_name." zone as modified");
+	$zone_map{"modified"} = 1;
+    }
+
+    # zone not modified (it's not modified if the flag is not set)
+    if (! (defined $zone_map{"modified"} ? $zone_map{"modified"} : 0))
+    {
+	y2milestone ("Skipping zone $zone_name, wasn't modified");
 	return 1;
     }
 
@@ -645,12 +651,20 @@ sub GetStartService {
     return $start_service;
 }
 
+sub UseLdapModified {
+    my $self = shift;
+
+    $self->SetModified ();
+    # Save all zones as they are into the new config location (LDAP/files)
+    $save_all = 1;
+}
+
 BEGIN { $TYPEINFO{SetUseLdap} = [ "function", "boolean", "boolean" ];}
 sub SetUseLdap {
     my $self = shift;
-    $use_ldap = shift;
+    my $new_use_ldap = shift;
 
-    if ($use_ldap) {
+    if ($new_use_ldap) {
 	# trying init LDAP if use_ldap selected
 	my $success = $self->LdapInit (1, 1);
 
@@ -659,9 +673,10 @@ sub SetUseLdap {
 	}
     }
 
-    $self->SetModified ();
+    $use_ldap = $new_use_ldap;
+    y2milestone ("Using LDAP set to: ".$use_ldap);
 
-    $save_all = 1;
+    $self->UseLdapModified();
 
     return 1;
 }
@@ -1674,7 +1689,8 @@ sub LdapInit {
 	    if ($ask_user_to_enable_ldap) {
 		# yes-no popup
 		$use_ldap = Popup->YesNo (__("Enable LDAP support?"));
-		y2milestone ("User choose to use LDAP: $use_ldap");
+		$self->UseLdapModified();
+		y2milestone ("User chose to use LDAP: $use_ldap");
 	    # just disable LDAP
 	    } else {
 		$use_ldap = 0;
