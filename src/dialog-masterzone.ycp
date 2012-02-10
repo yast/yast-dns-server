@@ -32,20 +32,6 @@ import "DnsServerHelperFunctions";
 
 include "dns-server/misc.ycp";
 
-string ToRelativeName (string absolute_name, string zone_name) {
-    if (absolute_name == nil || zone_name == nil) {
-	return nil;
-    }
-
-    string remove_this_to_be_relative = "." + zone_name + ".";
-    string relative_name = regexpsub(absolute_name, "(.*)" + remove_this_to_be_relative, "\\1");
-    if ((relative_name != nil) && (! regexpmatch(relative_name, "\\."))) {
-	return relative_name;
-    }
-
-    return absolute_name;
-}
-
 // zone ACL -->
 
 list <string> available_zones_to_connect = [];
@@ -1198,14 +1184,14 @@ void AdjustEditationWidgets (map current_record, string & decoded_zone_name, str
 
 	// Applies to all
 	UI::ChangeWidget (`id ("add_record_name"), `Value,
-	    ToRelativeName(
-		Punycode::DecodeDomainName (current_key), decoded_zone_name
+	    DnsServerHelperFunctions::RRToRelativeName(
+		Punycode::DecodeDomainName (current_key), decoded_zone_name, current_type, "key"
 	    )
 	);
 	UI::ChangeWidget (`id ("add_record_type"), `Value, current_type);
 	UI::ChangeWidget (`id ("add_record_val"), `Value,
-	    ToRelativeName(
-		Punycode::DecodeDomainName (current_val), decoded_zone_name
+	    DnsServerHelperFunctions::RRToRelativeName(
+		Punycode::DecodeDomainName (current_val), decoded_zone_name, current_type, "value"
 	    )
 	);
 }
@@ -1252,11 +1238,17 @@ void RedrawZonesTable () {
     list items = maplist (integer r, ret, {
 	counter = counter + 1;
 
+	string record_type = current_zone["records", r, "type"]:"";
+
 	return `item (
 	    `id (r),
-	    ToRelativeName (decoded_names[counter]:current_zone["records", r, "key"]:"", decoded_zone_name),
-	    current_zone["records", r, "type"]:"",
-	    ToRelativeName (decoded_names[counter+const_plus]:current_zone["records", r, "value"]:"", decoded_zone_name)
+	    DnsServerHelperFunctions::RRToRelativeName (
+		decoded_names[counter]:current_zone["records", r, "key"]:"", decoded_zone_name, record_type, "key"
+	    ),
+	    record_type,
+	    DnsServerHelperFunctions::RRToRelativeName (
+		decoded_names[counter+const_plus]:current_zone["records", r, "value"]:"", decoded_zone_name, record_type, "value"
+	    )
 	);
     });
 
