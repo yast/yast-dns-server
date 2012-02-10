@@ -1,4 +1,10 @@
 ------------------------------------------------------------------
+Fri Feb 10 13:13:43 CET 2012 - locilka@suse.com
+
+- Fixed transforming records from absolute to relative format
+  while they are listed in UI (bnc#746363).
+
+------------------------------------------------------------------
 Thu Feb  9 15:16:58 CET 2012 - locilka@suse.com
 
 - Fixed transforming records from relative to absolute format.

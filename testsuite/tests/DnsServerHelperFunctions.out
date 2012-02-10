@@ -1,0 +1,12 @@
+Dump	==========================================================
+Return	dhcp1
+Return	relative-name-1
+Return	relative-name-2
+Return	dhcp1.subdomain
+Return	dhcp1.different-example.com.
+Return	v=spf1 include:example.com -all
+Return	some-text
+Return	v=spf1 include:example.com -all
+Return	_http._tcp
+Return	0    5      80   example.com.
+Dump	==========================================================
