@@ -216,5 +216,39 @@ global void RegenerateReverseZoneFrom (string regenerate_zone, string from_zone)
     DnsServer::StoreZone ();
 }
 
+map <string, list <string> > skip_converting_to_relative = $[
+    "key" : [
+    ],
+    "value" : [
+        "TXT", "SPF", "SRV"
+    ]
+];
+
+global string RRToRelativeName (string absolute_name, string zone_name, string record_type, string key_or_value) {
+    if (absolute_name == nil || zone_name == nil) {
+	y2error ("Erroneous record: %1/%2/%3/%4", absolute_name, zone_name, record_type, key_or_value);
+        return nil;
+    }
+
+    if (key_or_value != "key" && key_or_value != "value") {
+        y2error ("Unknown key/value %1", key_or_value);
+        return absolute_name;
+    }
+
+    // these records are not wanted to be converted to a relative name
+    if (contains (skip_converting_to_relative[key_or_value]:[], toupper(record_type))) {
+        y2debug ("Not converting %1/%2", key_or_value, record_type);
+        return absolute_name;
+    }
+
+    string remove_this_to_be_relative = "\\." + zone_name + "\\.$";
+    string relative_name = regexpsub (absolute_name, "([^ \t]*)" + remove_this_to_be_relative, "\\1");
+    if (relative_name != nil) {
+        return relative_name;
+    }
+
+    return absolute_name;
+}
+
 /* EOF */
 }
