@@ -1281,7 +1281,10 @@ sub Write {
     # authenticate to LDAP 
     if ($use_ldap)
     {
-	LdapPrepareToWrite ();
+	unless (LdapPrepareToWrite ()) {
+	    y2error ("Cannot write to LDAP");
+	    return 0;
+	}
     }
 
     foreach my $z (@zones) {
@@ -1790,6 +1793,31 @@ LDAP support will not be active."));
     return;
 }
 
+# Checks whether all required schemas are correctly included
+# Gets an LDAP Domain as a parameter
+# Returns boolean
+sub LdapSchemasPresent ($) {
+    my $ldap_domain = shift;
+    my $ret = 1;
+    local $Data::Dumper::Indent = 0;
+
+    my $default_config = "ou=ldapconfig,".$ldap_domain;
+    my $dc_ret = Ldap->GetLDAPEntry ($default_config);
+    y2milestone ("LDAP: Default config (".$default_config.") found: ".Dumper($dc_ret));
+
+    # Record not found
+    $ret = 0 if (! defined $dc_ret || keys(%{$dc_ret}) == 0);
+
+    my $dns_zone = "ou=DNS,".$ldap_domain;
+    my $dz_ret = Ldap->GetLDAPEntry ($dns_zone);
+    y2milestone ("LDAP: DNS (".$dns_zone.") found: ".Dumper($dz_ret));
+
+    # Record not found
+    $ret = 0 if (! defined $dz_ret || keys(%{$dz_ret}) == 0);
+
+    return $ret;
+}
+
 BEGIN { $TYPEINFO{LdapPrepareToWrite} = ["function", "boolean"];}
 sub LdapPrepareToWrite {
     my $self = shift;
@@ -1805,6 +1833,7 @@ sub LdapPrepareToWrite {
 	|| 0 != scalar (@{NetworkInterfaces->Locate ("IPADDR", $ldap_server)}))
     {
 	y2milestone ("LDAP server is local, checking included schemas");
+	LdapServerAccess->AddLdapSchemas(["/etc/openldap/schema/yast.schema"],1);
 	LdapServerAccess->AddLdapSchemas(["/etc/openldap/schema/dnszone.schema"],1);
     }
     else
@@ -1856,6 +1885,14 @@ sub LdapPrepareToWrite {
     } 
     Ldap->SetGUI(YaST::YCP::Boolean(1)); 
 
+    # If non-local server is used, schemas are not handled but required anyway
+    # BNC #710430 and BNC #690237
+    unless (LdapSchemasPresent($ldap_domain)) {
+	y2error ("Required schemas not found.");
+	Report->Error (__("Required LDAP schemas (yast, dnszone) are not included.\nCannot write to LDAP."));
+	return 0;
+    }
+
     # find suseDnsConfiguration object
     %ldap_query = (
         "base_dn" => $ldap_config_dn,
@@ -1886,7 +1923,7 @@ sub LdapPrepareToWrite {
 	    my $err = SCR->Read (".ldap.error") || {};
 	    my $err_descr = Dumper ($err);
 	    y2error ("Error descr: $err_descr");
-	    return;
+	    return 0;
 	}
 	%found = %ldap_object;
     }
@@ -1912,7 +1949,7 @@ sub LdapPrepareToWrite {
 		my $err = SCR->Read (".ldap.error") || {};
 		my $err_descr = Dumper ($err);
 		y2error ("Error descr: $err_descr");
-		return;
+		return 0;
 	    }
 	    @bases = ("ou=DNS,$ldap_domain");
 	}
@@ -1947,9 +1984,11 @@ sub LdapPrepareToWrite {
 	    my $err = SCR->Read (".ldap.error") || {};
 	    my $err_descr = Dumper ($err);
 	    y2error ("Error descr: $err_descr");
-	    return;
+	    return 0;
 	}
     }
+
+    return 1;
 }
 
 BEGIN { $TYPEINFO{LdapStore} = ["function", "void" ]; }
