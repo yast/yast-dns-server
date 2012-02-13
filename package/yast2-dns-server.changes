@@ -1,4 +1,11 @@
 ------------------------------------------------------------------
+Mon Feb 13 18:06:25 CET 2012 - locilka@suse.com
+
+- Checking for and adding required LDAP schemas (yast, dnszone)
+  while writing the configuration. Fixed handling if configuration
+  cannot be written to LDAP (bnc#690237).
+
+------------------------------------------------------------------
 Fri Feb 10 13:13:43 CET 2012 - locilka@suse.com
 
 - Fixed transforming records from absolute to relative format
