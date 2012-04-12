@@ -261,7 +261,20 @@ while ( <STDIN> )
 		{
 		    my %rec = ();
 		    my $in = ""; my $ttl = "";
-		    ($rec{"key"}, $ttl, $in, $rec{"type"}, $rec{"value"}) = $line =~ /^([^ \t]*)([ \t]+[0-9a-zA-Z]+)?[ \t]*(IN)?[ \t]+([A-Za-z]+)[ \t]+([^;\n]+).*$/;
+		    $line =~ s/^([^ \t]*)([ \t]+[0-9a-zA-Z]+)?[ \t]*(IN)?[ \t]+([A-Za-z]+)[ \t]+//;
+		    ($rec{"key"}, $ttl, $in, $rec{"type"}, $rec{"value"}) = ($1, $2, $3, $4);
+
+		    # BNC #755766
+		    # TXT records (values) can contain semicolons
+		    if ($rec{"type"} =~ /txt/i) {
+			$line =~ s/^(\"[^\n]*\")[ \t]*(;.*)?$//;
+			$rec{"value"} = $1;
+			$rec{"value"} =~ s/\"[ \t]\"//g; # several texts merged into one
+		    # The other records consider each semicolon to be a comment
+		    } else {
+			$line =~ s/^([^;\n]+).*$//;
+			$rec{"value"} = $1;
+		    }
 
 		    # undefined key takes the key from the previous line
 		    if (!$rec{"key"}) {
