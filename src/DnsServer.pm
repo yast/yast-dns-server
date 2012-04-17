@@ -1270,6 +1270,14 @@ sub Write {
 
     my $ok = 1;
 
+    foreach my $z (@zones) {
+	if (defined $z->{"modified"} and $z->{"modified"} == 1) {
+	    y2milestone ("Some zones were modified");
+	    $self->SetModified();
+	    last;
+	}
+    }
+
     if ((! $modified) && (! SuSEFirewall->GetModified()))
     {
 	return $ok;
