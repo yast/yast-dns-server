@@ -357,8 +357,11 @@
 			(string) options["name"]:nil,
 			splitstring((string) options["forwarders"]:"", ",")
 		    );
+		} else {
+		    return true;
 		}
 	    } else {
+		y2error ("Cannot add new zone %1", options);
 		return false;
 	    }
 
@@ -366,7 +369,7 @@
 	} else if (options["remove"]:nil!=nil) {
 	    return DnsServerAPI::RemoveZone((string) options["name"]:nil);
 
-	// Chenging settings
+	// Changing settings
 	} else if (options["set"]:nil!=nil) {
 	    // Zone MasterServers
 	    if (options["masterserver"]:nil != nil) {
