@@ -4,6 +4,7 @@ Thu Apr 12 12:05:03 CEST 2012 - locilka@suse.com
 - Fixed zone-file agent to handle semicolons in TXT records
   correctly instead of considering them to represent comments
   (bnc#755766).
+- 2.17.14.2
 
 ------------------------------------------------------------------
 Mon Feb 13 18:06:25 CET 2012 - locilka@suse.com
