@@ -532,6 +532,8 @@ sub StoreZone {
 	$zones[$current_zone_index] = \%tmp_current_zone;
     }
 
+    $self->SetModified ();
+
     return 1;
 }
 
