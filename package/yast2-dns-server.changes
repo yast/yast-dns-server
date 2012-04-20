@@ -1,4 +1,10 @@
 ------------------------------------------------------------------
+Fri Apr 20 16:16:11 CEST 2012 - locilka@suse.com
+
+- Fixed removing RRs from LDAP when they share the same LDAP
+  object with another non-deleted RRs (BNC#755592).
+
+------------------------------------------------------------------
 Tue Apr 17 16:53:59 CEST 2012 - locilka@suse.com
 
 - Triggering the global "modified" flag while adding/modifying
