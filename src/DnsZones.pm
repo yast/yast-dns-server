@@ -33,6 +33,7 @@ our %TYPEINFO;
 
 my $zone_base_config_dn = "";
 
+my $LDAP_RECORD = 'Record';
 
 YaST::YCP::Import ("SCR");
 use DnsTsigKeys;
@@ -470,6 +471,11 @@ sub UpdateZones {
 
 # LDAP data
 
+# @param string record type
+sub LDAPRecordString {
+    return drunkCamelType (shift).$LDAP_RECORD;
+}
+
 BEGIN { $TYPEINFO{ZoneReadLdap} = ["function", [ "map", "any", "any" ], "string", "string" ]; }
 sub ZoneReadLdap {
     my $self = shift;
@@ -506,7 +512,7 @@ sub ZoneReadLdap {
     my %zonemap = %{$found[0] || {}};
 
     my $serial = $self->UpdateSerial ("");
-    my @soa_str_lst = @{$zonemap{"sOARecord"}|| ["@ root $serial 3H 1H 1W 1D"]};
+    my @soa_str_lst = @{$zonemap{LDAPRecordString('SOA')}|| ["@ root $serial 3H 1H 1W 1D"]};
 
     my $soa_str = $soa_str_lst[0];
     my @soa_lst = split (" ", $soa_str);
@@ -557,7 +563,7 @@ sub ZoneReadLdap {
 
 	foreach my $rec_type (@all_rec_types)
 	{
-	    my $value_key = $rec_type."Record";
+	    my $value_key = $rec_type.$LDAP_RECORD;
 	    my @values = @{$record{$value_key} || []};
 	    foreach my $value (@values)
 	    {
@@ -572,6 +578,41 @@ sub ZoneReadLdap {
     }
     $ret{"records"} = \@records;
     return \%ret;
+}
+
+sub FillUpTmpLDAPRecords {
+    my $ref_found = shift;
+
+    my ($ldap_key, $record_key);
+    my $ldap_records = {};
+
+    foreach my $l_record (@{$$ref_found}) {
+	$ldap_key = $l_record->{'relativeDomainName'}[0];
+	$ldap_records->{$ldap_key} = [] if not defined $ldap_records->{$ldap_key};
+	foreach $record_key (keys %{$l_record}) {
+	    push @{$ldap_records->{$ldap_key}}, $record_key if ($record_key =~ /^.*$LDAP_RECORD$/);
+	}
+    }
+
+    return $ldap_records;
+}
+
+sub MarkRemovedRecords {
+    my $ref_ldap_record = shift;
+    my $ref_relative_domain = shift;
+    my $ref_all_records = shift;
+
+    # Record is currently in LDAP
+    if (defined $$ref_all_records->{$$ref_relative_domain}) {
+	# All record types in relative domain
+	foreach my $recordtype (@{$$ref_all_records->{$$ref_relative_domain}}) {
+	    # The new record does not contain such record type (thus it's removed)
+	    if (not defined $$ref_ldap_record{$recordtype}) {
+		$$ref_ldap_record{$recordtype} = [];
+		y2milestone ("Record ".$recordtype." has been removed from ".$$ref_relative_domain." object");
+	    }
+	}
+    }
 }
 
 BEGIN { $TYPEINFO{ZoneFileWriteLdap} = ["function", "boolean", [ "map", "any", "any"]];}
@@ -611,16 +652,16 @@ sub ZoneFileWriteLdap {
 	"relativeDomainName" => ["@"],
 	"dNSTTL" => [DnsRoutines->NormalizeTime ($zone_map{"ttl"} || "2D")],
 	"dNSClass" => ["IN"],
-	"sOARecord" => $soa_record,
+	LDAPRecordString('SOA') => $soa_record,
     );
 
     my @current_records = grep {
 	my %r = %{$_};
-	$r{"key"} eq "@" || $r{"key"} eq $zone . "."
+	$r{"key"} eq "@" || $r{"key"} eq $zone."."
     } @records;
 
     foreach my $rec_ref (@current_records) {
-	my $type = lc ($rec_ref->{"type"}) . "record";
+	my $type = LDAPRecordString($rec_ref->{"type"});
 	my @cur_vals = @{$ldap_record{$type} || []};
 	push @cur_vals, $rec_ref->{"value"};
 	$ldap_record{$type} = \@cur_vals;
@@ -639,15 +680,24 @@ sub ZoneFileWriteLdap {
     );
 
     my $found_ref = SCR->Read (".ldap.search", \%ldap_query);
+    y2debug ("Base record: ".Dumper($found_ref));
+
+    my $ldap_records = FillUpTmpLDAPRecords(\$found_ref);
+
+    # Some (sub)records have been removed but the LDAP record have to stay
+    foreach my $r ('@', $zone.'.') {
+	MarkRemovedRecords (\%ldap_record, \$r, \$ldap_records);
+    }
+    y2debug ("New base record: ".Dumper(\%ldap_record));
 
     if (scalar (@{$found_ref || []}) == 0)
     {
-	y2milestone ("Creating new record");
+	y2milestone ("Creating new zone record");
 	SCR->Write (".ldap.add", \%ldap_cmd, \%ldap_record);
     }
     else
     {
-	y2milestone ("Modifying existing record");
+	y2milestone ("Modifying existing zone record");
 	delete $ldap_record{"objectClass"}; # objectclass can be changed by mail-server
 	SCR->Write (".ldap.modify", \%ldap_cmd, \%ldap_record);
     }
@@ -656,7 +706,9 @@ sub ZoneFileWriteLdap {
 	my %r = %{$_};
 	$r{"key"}
     } @records;
+    # Never delete the base entry
     push @all_records, "@";
+
     # the search config map
     %ldap_query = (
         "base_dn" => $zone_dn,
@@ -668,13 +720,16 @@ sub ZoneFileWriteLdap {
     $found_ref = SCR->Read (".ldap.search", \%ldap_query) || [];
 
     my @found = @{$found_ref};
-
     @found = map {
 	my @l = @{$_->{"relativeDomainName"}};
 	$l[0];
     } @found;
 
-   #remove removed entries
+    $ldap_records = FillUpTmpLDAPRecords(\$found_ref);
+    y2debug ("Records currently in LDAP: ".Dumper($ldap_records));
+    y2debug ("New state of records: ".Dumper(\@records));
+
+    # Delete removed entries (only fully removed entries will be deleted)
     my @deleted = grep {
 	my $current = $_;
 	my @equiv = grep {
@@ -716,11 +771,15 @@ sub ZoneFileWriteLdap {
 	} @records;
 
 	foreach my $rec_ref (@current_records) {
-	    my $type = drunkCamelType ($rec_ref->{"type"})."Record";
+	    my $type = LDAPRecordString($rec_ref->{"type"});
 	    my @cur_vals = @{$ldap_record{$type} || []};
 	    push @cur_vals, $rec_ref->{"value"};
 	    $ldap_record{$type} = \@cur_vals;
 	}
+
+	# Some (sub)records have been removed but the LDAP record have to stay
+	MarkRemovedRecords (\%ldap_record, \$r, \$ldap_records);
+	y2debug ("New record: ".Dumper(\%ldap_record));
 
 	# the search config map - to choose add or modify
 	my %ldap_query = (
