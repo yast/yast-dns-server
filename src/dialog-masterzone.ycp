@@ -1196,6 +1196,8 @@ void AdjustEditationWidgets (map current_record, string & decoded_zone_name, str
 	);
 }
 
+void SwitchAndAdjustEditationWidgets (string & type, map current_record, string & decoded_zone, string & zone);
+
 void RedrawZonesTable () {
     integer index = -1;
     string zone_name = current_zone["zone"]:"";
@@ -1270,10 +1272,12 @@ void RedrawZonesTable () {
 
     if (size (items) > 0)
     {
-	r = (integer)
-	    UI::QueryWidget (`id ("records_list"), `CurrentItem);
+	r = (integer) UI::QueryWidget (`id ("records_list"), `CurrentItem);
 
-	AdjustEditationWidgets (current_zone["records", r]:$[], decoded_zone_name, zone_name);
+	map current_record = current_zone["records", r]:$[];
+	string current_type = current_record["type"]:"A";
+
+	SwitchAndAdjustEditationWidgets (current_type, current_record, decoded_zone_name, zone_name);
     }
 }
 
