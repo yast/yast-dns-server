@@ -1811,13 +1811,6 @@ sub LdapSchemasPresent ($) {
     my $ret = 1;
     local $Data::Dumper::Indent = 0;
 
-    my $default_config = "ou=ldapconfig,".$ldap_domain;
-    my $dc_ret = Ldap->GetLDAPEntry ($default_config);
-    y2milestone ("LDAP: Default config (".$default_config.") found: ".Dumper($dc_ret));
-
-    # Record not found
-    $ret = 0 if (! defined $dc_ret || keys(%{$dc_ret}) == 0);
-
     my $dns_zone = "ou=DNS,".$ldap_domain;
     my $dz_ret = Ldap->GetLDAPEntry ($dns_zone);
     y2milestone ("LDAP: DNS (".$dns_zone.") found: ".Dumper($dz_ret));
@@ -1843,8 +1836,9 @@ sub LdapPrepareToWrite {
 	|| 0 != scalar (@{NetworkInterfaces->Locate ("IPADDR", $ldap_server)}))
     {
 	y2milestone ("LDAP server is local, checking included schemas");
-	LdapServerAccess->AddLdapSchemas(["/etc/openldap/schema/yast.schema"],1);
-	LdapServerAccess->AddLdapSchemas(["/etc/openldap/schema/dnszone.schema"],1);
+	LdapServerAccess->AddLdapSchemas(
+	    ["/etc/openldap/schema/yast.schema", "/etc/openldap/schema/dnszone.schema"],1
+	);
     }
     else
     {
@@ -1897,11 +1891,8 @@ sub LdapPrepareToWrite {
 
     # If non-local server is used, schemas are not handled but required anyway
     # BNC #710430 and BNC #690237
-    unless (LdapSchemasPresent($ldap_domain)) {
-	y2error ("Required schemas not found.");
-	Report->Error (__("Required LDAP schemas (yast, dnszone) are not included.\nCannot write to LDAP."));
-	return 0;
-    }
+    # Currently just for logging purpose here
+    LdapSchemasPresent($ldap_domain);
 
     # find suseDnsConfiguration object
     %ldap_query = (
