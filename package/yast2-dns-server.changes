@@ -1,4 +1,9 @@
 ------------------------------------------------------------------
+Tue Jun  5 09:04:05 UTC 2012 - locilka@suse.com
+
+- Handling missing /etc/named.conf (BNC #765445)
+
+------------------------------------------------------------------
 Fri Jun  1 13:58:36 UTC 2012 - locilka@suse.com
 
 - Fixed setting up the LDAP (BNC #690237)
