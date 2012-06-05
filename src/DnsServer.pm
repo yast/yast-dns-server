@@ -911,6 +911,11 @@ BEGIN { $TYPEINFO{GetConfigurationStat} = ["function", "string"]; }
 sub GetConfigurationStat {
     my $class = shift;
 
+    unless (-e $configfile) {
+        y2error('Cannot stat file '.$configfile.', file does not exist');
+        return undef;
+    }
+
     my $ret = SCR->Execute (".target.bash_output",
 	"stat --format='rights: %a, blocks: %b, size: %s, owner: %u:%g changed: %Z, modifyied: %Y' ".$configfile
     );
@@ -989,7 +994,11 @@ sub Read {
 
     Progress->NextStage ();
 
-    y2milestone("Converting configfile: ", SCR->Execute (".dns.named_conf_convert", $configfile));
+    if (-e $configfile) {
+        y2milestone('Converting configfile: ', SCR->Execute ('.dns.named_conf_convert', $configfile));
+    } else {
+        y2error('Config file '.$configfile.' does not exist, file cannot be converted');
+    }
 
     $configuration_timestamp = $self->GetConfigurationStat();
 
