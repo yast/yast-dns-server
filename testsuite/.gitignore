@@ -9,3 +9,6 @@ tmp.log*
 config
 run
 *.test
+tmp
+zone
+zone_new
