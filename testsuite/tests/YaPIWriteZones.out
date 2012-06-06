@@ -14,6 +14,7 @@ Read	.sysconfig.network.config.NETCONFIG_DNS_STATIC_SERVERS "5.5.5.5 6.6.6.6 7.7
 Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
 Read	.dns.named.value.acl []
 Read	.sysconfig.named.NAMED_CONF_INCLUDE_FILES nil
+Read	.target.ycp "/var/lib/YaST2/yast2-dns-server_reverse-zones" $[]
 Read	.dns.named.value."zone \"localhost\" in".type ["master"]
 Read	.dns.named.value."zone \"localhost\" in".file ["\"localhost.zone\""]
 Read	.dns.zone "/var/lib/named/localhost.zone" $["TTL":"1W", "records":[$["key":"", "type":"NS", "value":"@"], $["key":"", "type":"A", "value":"127.0.0.1"], $["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":42, "server":"@", "zone":"@"]]

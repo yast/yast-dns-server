@@ -51,8 +51,14 @@
 	],
 	"target" : $[
 	    "yast2" : $[ "lang2iso.ycp" : $[] ],
-	    "stat" : $[],
+            "stat" : $[
+                "atime":1101890288, "ctime":1101890286, "gid":0, "inode":29236,
+                "isblock":false, "ischr":false, "isdir":false, "isfifo":false,
+                "islink":false, "isreg":true, "issock":false,
+                "mtime":1101890286, "nlink":1, "size":804, "uid":0
+            ],
 	    "lstat" : $[],
+	    "ycp" : $[],
 	],
     ];
     map I_WRITE = $[];
@@ -115,7 +121,12 @@
 
 	"target" : $[
 	    "ycp" : $[],
-	    "stat" : $[],
+            "stat" : $[
+                "atime":1101890288, "ctime":1101890286, "gid":0, "inode":29236,
+                "isblock":false, "ischr":false, "isdir":false, "isfifo":false,
+                "islink":false, "isreg":true, "issock":false,
+                "mtime":1101890286, "nlink":1, "size":804, "uid":0
+            ],
 	    "lstat" : $[],
 	],
 	"dns" : $[
@@ -178,10 +189,16 @@
 	    ],
 	],
 	"target" : $[
-	    "stat" : $[],
+            "stat" : $[
+                "atime":1101890288, "ctime":1101890286, "gid":0, "inode":29236,
+                "isblock":false, "ischr":false, "isdir":false, "isfifo":false,
+                "islink":false, "isreg":true, "issock":false,
+                "mtime":1101890286, "nlink":1, "size":804, "uid":0
+            ],
 	    "lstat" : $[],
 	    "yast2" : $[ "lang2iso.ycp" : $[] ],
 	    "size" : 1,
+	    "ycp" : $[],
 	],
     ];
     map WRITE = $[];
