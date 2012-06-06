@@ -1,4 +1,15 @@
 ------------------------------------------------------------------
+Tue Jun  5 09:04:05 UTC 2012 - locilka@suse.com
+
+- Handling missing /etc/named.conf (BNC #765445)
+- 2.17.21
+
+------------------------------------------------------------------
+Fri Jun  1 13:58:36 UTC 2012 - locilka@suse.com
+
+- Fixed setting up the LDAP (BNC #690237)
+
+------------------------------------------------------------------
 Tue Apr 24 10:38:54 CEST 2012 - locilka@suse.com
 
 - Fixed redrawing records settings UI entries when deleting
