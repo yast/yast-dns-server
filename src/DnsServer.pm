@@ -911,7 +911,7 @@ BEGIN { $TYPEINFO{GetConfigurationStat} = ["function", "string"]; }
 sub GetConfigurationStat {
     my $class = shift;
 
-    unless (-e $configfile) {
+    unless (FileUtils->Exists ($configfile)) {
         y2error('Cannot stat file '.$configfile.', file does not exist');
         return undef;
     }
@@ -994,7 +994,7 @@ sub Read {
 
     Progress->NextStage ();
 
-    if (-e $configfile) {
+    if (FileUtils->Exists ($configfile)) {
         y2milestone('Converting configfile: ', SCR->Execute ('.dns.named_conf_convert', $configfile));
     } else {
         y2error('Config file '.$configfile.' does not exist, file cannot be converted');

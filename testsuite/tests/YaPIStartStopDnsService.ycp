@@ -49,7 +49,15 @@
 		"ROOT_USES_LANG" : "ctype",
 	    ],
 	],
-	"target" : $[ "yast2" : $[ "lang2iso.ycp" : $[] ] ],
+	"target" : $[
+	    "yast2" : $[ "lang2iso.ycp" : $[] ],
+            "stat" : $[
+                "atime":1101890288, "ctime":1101890286, "gid":0, "inode":29236,
+                "isblock":false, "ischr":false, "isdir":false, "isfifo":false,
+                "islink":false, "isreg":true, "issock":false,
+                "mtime":1101890286, "nlink":1, "size":804, "uid":0
+            ],
+	],
     ];
     map I_WRITE = $[];
     map I_EXEC = $[];
