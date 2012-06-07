@@ -228,6 +228,7 @@
     map EXEC = $[
 	"target" : $[
 	    "bash_output" : $["exit" : 1, "stdout" : "", "stderr" : ""],
+	    "bash" : 1,
 	],
 	"passwd" : $[ "init" : true ],
     ];
