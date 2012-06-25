@@ -1322,8 +1322,12 @@ sub Write {
     ### Bugzilla #46121, Configuration file changed by hand, INI-Agent would break
     my $new_configuration_timestamp = $self->GetConfigurationStat();
     my $yast2_suffix = ".yast2-save";
+
     # timestamp differs from the Read()
-    if ($new_configuration_timestamp ne $configuration_timestamp) {
+    if (defined $configuration_timestamp
+        and defined $new_configuration_timestamp
+        and $configuration_timestamp ne $new_configuration_timestamp
+    ) {
 	y2warning("Stat of the configuration file was changed during the YaST2 configuration");
 	# moving into yast2-save file
 	my $ret = SCR->Execute (".target.bash_output", "mv --force ".$configfile." ".$configfile.$yast2_suffix);
