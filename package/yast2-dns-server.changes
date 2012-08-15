@@ -1,4 +1,10 @@
 ------------------------------------------------------------------
+Wed Aug 15 16:30:42 UTC 2012 - locilka@suse.com
+
+- Checking for return values while writing into LDAP and reporting
+  errors (BNC #768708).
+
+------------------------------------------------------------------
 Wed Jun 20 09:42:53 UTC 2012 - locilka@suse.com
 
 - Additional fix for (BNC #765445). No error reported to stdout
