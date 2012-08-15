@@ -25,6 +25,7 @@ textdomain("dns-server");
 YaST::YCP::Import ("Hostname");
 YaST::YCP::Import ("String");
 YaST::YCP::Import ("Mode");
+YaST::YCP::Import ("Ldap");
 
 #use io_routines;
 #use check_routines;
@@ -690,16 +691,21 @@ sub ZoneFileWriteLdap {
     }
     y2debug ("New base record: ".Dumper(\%ldap_record));
 
+    my $ldap_write = 1;
     if (scalar (@{$found_ref || []}) == 0)
     {
 	y2milestone ("Creating new zone record");
-	SCR->Write (".ldap.add", \%ldap_cmd, \%ldap_record);
+	$ldap_write = SCR->Write(".ldap.add", \%ldap_cmd, \%ldap_record);
     }
     else
     {
 	y2milestone ("Modifying existing zone record");
 	delete $ldap_record{"objectClass"}; # objectclass can be changed by mail-server
-	SCR->Write (".ldap.modify", \%ldap_cmd, \%ldap_record);
+	$ldap_write = SCR->Write(".ldap.modify", \%ldap_cmd, \%ldap_record);
+    }
+    unless ($ldap_write) {
+        y2error("LDAP Error (write): ".Ldap->LDAPError());
+        Ldap->LDAPErrorMessage('write', Ldap->LDAPError());
     }
 
     my @all_records = map {
@@ -741,7 +747,12 @@ sub ZoneFileWriteLdap {
     foreach my $d (@deleted)
     {
 	y2milestone ("Removing all records regarding $d");
-	SCR->Write (".ldap.delete", {"dn" => "relativeDomainName=$d,$zone_dn"});
+	$ldap_write = SCR->Write(".ldap.delete", {"dn" => "relativeDomainName=$d,$zone_dn"});
+	last unless $ldap_write; # skip the rest
+    }
+    unless ($ldap_write) {
+        y2error("LDAP Error (delete): ".Ldap->LDAPError());
+        Ldap->LDAPErrorMessage('write', Ldap->LDAPError());
     }
 
     # write all the other records
@@ -797,14 +808,21 @@ sub ZoneFileWriteLdap {
 
 	if (scalar (@{$found_ref || []}) == 0)
 	{
-	    SCR->Write (".ldap.add", \%ldap_cmd, \%ldap_record);
+	    $ldap_write = SCR->Write (".ldap.add", \%ldap_cmd, \%ldap_record);
+	    last unless $ldap_write; # skip the rest
 	}
 	else
 	{
-	    SCR->Write (".ldap.modify", \%ldap_cmd, \%ldap_record);
+	    $ldap_write = SCR->Write (".ldap.modify", \%ldap_cmd, \%ldap_record);
+	    last unless $ldap_write; # skip the rest
 	}
     }
-    return 1;
+    unless ($ldap_write) {
+        y2error("LDAP Error (write): ".Ldap->LDAPError());
+        Ldap->LDAPErrorMessage('write', Ldap->LDAPError());
+    }
+
+    return $ldap_write;
 }
 
 BEGIN { $TYPEINFO{ZonesDeleteLdap} = ["function", "boolean", [ "list", "string",]];}
