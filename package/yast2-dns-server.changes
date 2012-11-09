@@ -1,4 +1,10 @@
 ------------------------------------------------------------------
+Fri Nov  9 13:19:35 UTC 2012 - locilka@suse.com
+
+- Enhanced checking for errors while writing to LDAP (BNC #768708)
+- 2.17.22
+
+------------------------------------------------------------------
 Wed Aug 15 16:30:42 UTC 2012 - locilka@suse.com
 
 - Checking for return values while writing into LDAP and reporting
