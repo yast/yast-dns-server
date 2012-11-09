@@ -706,6 +706,7 @@ sub ZoneFileWriteLdap {
     unless ($ldap_write) {
         y2error("LDAP Error (write): ".Ldap->LDAPError());
         Ldap->LDAPErrorMessage('write', Ldap->LDAPError());
+        return 0;
     }
 
     my @all_records = map {
@@ -753,6 +754,7 @@ sub ZoneFileWriteLdap {
     unless ($ldap_write) {
         y2error("LDAP Error (delete): ".Ldap->LDAPError());
         Ldap->LDAPErrorMessage('write', Ldap->LDAPError());
+        return 0;
     }
 
     # write all the other records
@@ -820,6 +822,7 @@ sub ZoneFileWriteLdap {
     unless ($ldap_write) {
         y2error("LDAP Error (write): ".Ldap->LDAPError());
         Ldap->LDAPErrorMessage('write', Ldap->LDAPError());
+        return 0;
     }
 
     return $ldap_write;
@@ -839,14 +842,24 @@ sub ZonesDeleteLdap {
 	@check_zones == 0;
     } @current_zones_in_ldap;
 
+    my $ldap_write = 1;
+
     foreach my $z (@zones_to_delete) {
 	y2milestone ("Removing zone $z from LDAP");
 	my %request = (
 	    "dn" => "zoneName=$z,$zone_base_config_dn",
 	    "subtree" => 1,
 	);
-	SCR->Write (".ldap.delete", \%request);
+	$ldap_write = SCR->Write (".ldap.delete", \%request);
+
+	unless ($ldap_write) {
+	    y2error("LDAP Error (write): ".Ldap->LDAPError());
+	    Ldap->LDAPErrorMessage('write', Ldap->LDAPError());
+	    last;
+	}
     }
+
+    return $ldap_write;
 }
 
 BEGIN{ $TYPEINFO{ZonesListLdap} = ["function", ["list", "string"]];}

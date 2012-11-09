@@ -402,7 +402,11 @@ sub SaveGlobals {
 	    my %zone = %{$_};
 	    $zone{"zone"};
 	} @zones;
-	DnsZones->ZonesDeleteLdap (\@zone_names);
+
+	unless (DnsZones->ZonesDeleteLdap (\@zone_names)) {
+	    y2error ("Cannot delete selected zones");
+	    return 0;
+	}
     }
 
     # delete all removed options
