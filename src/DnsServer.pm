@@ -967,7 +967,7 @@ sub Read {
     Progress->NextStage ();
 
     # Requires confirmation when NM is used
-    if (! NetworkService->ConfirmNetworkManager()) {
+    if (! Mode->test () && ! NetworkService->ConfirmNetworkManager()) {
 	return 0;
     }
 
