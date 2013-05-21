@@ -1,4 +1,5 @@
-[liby2] genericfrontend.cc(main):XXX Launched YaST2 component 'y2base'
+[liby2] genericfrontend.cc(main):XXX Launched YaST2 component 'y2base' '-l' '-' './tests.ag/zoneag.ycp' '("./tests.ag/zoneag.in.test")' 'testsuite'
+[ui-component] YUIComponentCreator.cc(createInternal):XXX Creating UI component for ""
 [liby2] genericfrontend.cc(main):XXX YAST_IS_RUNNING is yes
 [YCP] tests.ag/zoneag.ycp:36 Zone: $["TTL":"2W", "records":[$["key":"", "type":"MX", "value":"10 dns.domain.cz."], $["key":"", "type":"MX", "value":"20 sns.domain.cz."], $["key":"", "type":"NS", "value":"dns.domain.cz."], $["key":"", "type":"NS", "value":"sns.domain.cz."], $["key":"dns", "type":"A", "value":"1.2.3.4"], $["key":"sns", "type":"A", "value":"1.2.3.5"], $["key":"other", "type":"A", "value":"1.2.3.6"], $["key":"other2", "type":"A", "value":"1.2.3.7"], $["key":"other2", "type":"MX", "value":"10 other.domain.cz."], $["key":"alias", "type":"CNAME", "value":"dns"], $["key":"alias2", "type":"CNAME", "value":"other2.domain.cz."]], "soa":$["expiry":"1W", "mail":"root.domain.cz.", "minimum":"1D", "refresh":"1H", "retry":"1H", "serial":2003080400, "server":"dns.domain.cz", "zone":"@"]]
 [YCP] tests.ag/zoneag.ycp:39 Write ret: true
@@ -22,3 +23,4 @@ alias		IN CNAME	dns
 alias2		IN CNAME	other2.domain.cz.
 [liby2] Y2ProgramComponent.cc(result):XXX Sending result: `result (nil)
 [liby2] genericfrontend.cc(main):XXX Finished YaST2 component 'y2base'
+[liby2] genericfrontend.cc(main):XXX Exiting with client return value 'nil'
