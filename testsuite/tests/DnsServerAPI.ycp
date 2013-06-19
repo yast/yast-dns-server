@@ -10,7 +10,7 @@
 
 {
     include "testsuite.ycp";
-    // testedfiles: DnsServerAPI
+    // testedfiles: DnsServerAPI.pm DnsZones.pm DnsServer.pm
 
     map READ = $[
 	"passwd" : $[ "passwd" : $[ "pluslines" : [] ] ],
