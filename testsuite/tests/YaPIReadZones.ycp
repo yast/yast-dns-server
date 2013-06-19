@@ -12,7 +12,7 @@
 
 {
     include "testsuite.ycp";
-    // testedfiles: DnsServer.pm DNSD.pm
+    // testedfiles: DnsServer.pm DNSD.pm DnsZones.pm
 
     map I_READ = $[
 	"probe" : $[
