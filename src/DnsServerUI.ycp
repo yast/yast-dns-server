@@ -61,13 +61,6 @@
       */
     global map popups = InitPopups ();
 
-//    include "dns-server/widgets.ycp";
-
-    /**
-      * Map of widgets for CWM
-      */
-//    global map widgets = InitWidgets ();
-
     include "dns-server/dialogs.ycp";
     include "dns-server/dialog-main.ycp";
     include "dns-server/dialog-masterzone.ycp";
