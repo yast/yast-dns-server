@@ -1,52 +1,54 @@
-#
-# Makefile.am for devtools/devtools/skeletons/config/src
-#
+# Sources for dns-server
+
+module_DATA = \
+  modules/DnsServerUI.rb \
+  modules/DnsFakeTabs.rb \
+  modules/DnsServerHelperFunctions.rb \
+  modules/DnsZones.pm \
+  modules/DnsData.pm \
+  modules/DnsTsigKeys.pm \
+  modules/DnsServer.pm \
+  modules/DnsRoutines.pm
+
+module1dir = @moduledir@/YaPI
+module1_DATA = \
+  modules/YaPI/DNSD.pm
+
+client_DATA = \
+  clients/dns-server_auto.rb \
+  clients/dns-server.rb
 
 yncludedir = @yncludedir@/dns-server
+ynclude_DATA = \
+  include/dns-server/wizards.rb \
+  include/dns-server/options.rb \
+  include/dns-server/misc.rb \
+  include/dns-server/dialogs.rb \
+  include/dns-server/dialog-installwizard.rb \
+  include/dns-server/dialog-main.rb \
+  include/dns-server/dialog-masterzone.rb \
+  include/dns-server/cmdline.rb \
+  include/dns-server/helps.rb
 
-YCPCFLAGS = -M . -I .
+scrconf_DATA = \
+  scrconf/dns_zone.scr \
+  scrconf/cfg_named.scr \
+  scrconf/named_forwarders.scr \
+  scrconf/convert_named_conf.scr \
+  scrconf/dns_named.scr
 
-client_DATA =			\
-	dns-server.ycp		\
-	dns-server_auto.ycp
+agent_SCRIPTS = \
+  servers_non_y2/ag_convert_named_conf \
+  servers_non_y2/ag_dns_zone \
+  servers_non_y2/ag_named_forwarders
 
-ynclude_DATA =			\
-	helps.ycp		\
-	wizards.ycp		\
-	dialogs.ycp		\
-	misc.ycp		\
-	options.ycp		\
-	dialog-masterzone.ycp	\
-	dialog-main.ycp		\
-	dialog-installwizard.ycp	\
-	cmdline.ycp
+schemafilesdir = $(schemadir)/autoyast/rnc
+schemafiles_DATA = \
+  autoyast-rnc/dns-server.rnc
 
-desktop_DATA =			\
-	dns-server.desktop
+desktop_DATA = \
+  desktop/dns-server.desktop
 
-module_DATA =			\
-	DnsServer.pm		\
-	DnsData.pm		\
-	DnsRoutines.pm		\
-	DnsZones.pm		\
-	DnsTsigKeys.pm		\
-	DnsServerUI.ycp		\
-	DnsFakeTabs.ycp		\
-	DnsServerHelperFunctions.ycp
-
-YaPI_perldir = @moduledir@/YaPI
-
-YaPI_perl_DATA = \
-	DNSD.pm
-
-rncdir= $(schemadir)/autoyast/rnc/
-rnc_DATA = dns-server.rnc
-
-EXTRA_DIST = $(client_DATA) $(ynclude_DATA) $(module_DATA) $(desktop_DATA) $(YaPI_perl_DATA) $(rnc_DATA)
-
-dns-server:
-	test -l dns-server || ln -s . dns-server
-
-ycpchook = dns-server
+EXTRA_DIST = $(module_DATA) $(module1_DATA) $(client_DATA) $(ynclude_DATA) $(scrconf_DATA) $(agent_SCRIPTS) $(schemafiles_DATA) $(desktop_DATA)
 
 include $(top_srcdir)/Makefile.am.common
