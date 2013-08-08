@@ -11,6 +11,8 @@
 # Input and output routines.
 module Yast
   module DnsServerDialogMasterzoneInclude
+    MAX_TEXT_RECORD_LENGTH = 255
+
     def initialize_dns_server_dialog_masterzone(include_target)
       textdomain "dns-server"
 
@@ -32,13 +34,7 @@ module Yast
 
       Yast.include include_target, "dns-server/misc.rb"
 
-      # zone ACL -->
-
       @available_zones_to_connect = []
-
-      # <-- zone SOA
-
-      # --> zone RECORDS
 
       @supported_records = []
 
@@ -1377,6 +1373,7 @@ module Yast
               )
             )
           )
+        # "A", "AAAA", "CNAME", "NS", "PTR", "TXT", "SPF"
         else
           ret = HBox(
             # Textentry - zone settings - Record Name
@@ -1413,7 +1410,7 @@ module Yast
         )
         @supported_records = ["PTR", "NS"]
       else
-        @supported_records = ["A", "AAAA", "CNAME", "NS", "MX", "SRV", "TXT"]
+        @supported_records = ["A", "AAAA", "CNAME", "NS", "MX", "SRV", "TXT", "SPF"]
       end
 
       record_type_descriptions = {
@@ -1424,7 +1421,8 @@ module Yast
         "MX"    => _("MX: Mail Relay"),
         "PTR"   => _("PTR: Reverse Translation"),
         "SRV"   => _("SRV: Services Record"),
-        "TXT"   => _("TXT: Text Record")
+        "TXT"   => _("TXT: Text Record"),
+        "SPF"   => _("SPF: Sender Policy Framework"),
       }
 
       @supported_records = Builtins.maplist(@supported_records) do |one_rec_type|
@@ -1609,6 +1607,7 @@ module Yast
           end
 
           UI.ChangeWidget(Id("add_record_prio"), :Value, current_prio)
+        # "A", "AAAA", "CNAME", "NS", "PTR", "TXT", "SPF"
         else
 
       end
@@ -1771,7 +1770,7 @@ module Yast
     end
 
     # Checks whether a given string is a valid TXT record key (name)
-    def ValidTXTRecordName(name)
+    def ValidTextRecordName(name)
       # Checking the length
       if name == nil || name == ""
         Builtins.y2warning("TXT record key must not be empty")
@@ -1980,29 +1979,29 @@ module Yast
         end
         return true 
 
-        # -- TXT -- \\
-      elsif type == "TXT"
-        if !ValidTXTRecordName(key)
+      # TXT or SPF
+      elsif type == "TXT" or type == "SPF"
+        if !ValidTextRecordName(key)
           UI.SetFocus(Id("add_record_name"))
+          # TRANSLATORS: Error message
+          # %{type} replaced with record type (TXT or SPF)
           Popup.Error(
             _(
-              "Invalid TXT record key. It should consist of printable US-ASCII characters excluding '='\nand must be at least one character long."
-            )
+              "Invalid %{type} record key. It should consist of printable US-ASCII characters excluding '='\nand must be at least one character long."
+            ) % {:type => type}
           )
           return false
         end
-        if Ops.greater_than(Builtins.size(val), 255)
+        if val.size > MAX_TEXT_RECORD_LENGTH
           UI.SetFocus(Id("add_record_val"))
-          # TRANSLATORS: Error message, %1 is replaced with the maximal length
-          # %2 with the current length of a new TXT record.
+          # TRANSLATORS: Error message
+          # %{type}    - replaced with record type (TXT or SPF)
+          # %{max}     - replaced with the maximal length
+          # %{current} - replaced with the current length of a new TXT record.
           Popup.Error(
-            Builtins.sformat(
-              _(
-                "Maximal length of a TXT record is %1 characters.\nThis message is %2 characters long."
-              ),
-              255,
-              Builtins.size(val)
-            )
+            _(
+                "Maximal length of a %{type} record is %{max} characters.\nThis message is %{current} characters long."
+            ) % {:type => type, :max => MAX_TEXT_RECORD_LENGTH, :current => val.size}
           )
           return false
         end
@@ -2048,7 +2047,7 @@ module Yast
       elsif type == "SRV"
         # FIXME: SRV should point to an A or AAAA record (if it is in the same domain)
         return true
-      elsif type == "TXT"
+      elsif type == "TXT" or type == "SPF"
         return true
       end
 
@@ -2277,6 +2276,7 @@ module Yast
           )
 
           val = Builtins.sformat("%1 %2", record_prio, val)
+        # "A", "AAAA", "CNAME", "NS", "PTR", "TXT", "SPF"
         else
 
       end
