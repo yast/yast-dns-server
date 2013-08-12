@@ -36,7 +36,8 @@ module Yast
 
       @available_zones_to_connect = []
 
-      @supported_records = []
+      @supported_records    = []
+      @supported_records_ui = []
 
       @last_add_record_type = nil
 
@@ -1298,7 +1299,7 @@ module Yast
                 Id("add_record_type"),
                 Opt(:notify),
                 _("T&ype"),
-                @supported_records
+                @supported_records_ui
               )
             ),
             # IntField - zone settings - Record Value
@@ -1357,7 +1358,7 @@ module Yast
                 Id("add_record_type"),
                 Opt(:notify),
                 _("T&ype"),
-                @supported_records
+                @supported_records_ui
               )
             ),
             VBox(
@@ -1390,7 +1391,7 @@ module Yast
                 Id("add_record_type"),
                 Opt(:notify),
                 _("T&ype"),
-                @supported_records
+                @supported_records_ui
               )
             ),
             # Textentry - zone settings - Record Value
@@ -1425,7 +1426,7 @@ module Yast
         "SPF"   => _("SPF: Sender Policy Framework"),
       }
 
-      @supported_records = Builtins.maplist(@supported_records) do |one_rec_type|
+      @supported_records_ui = Builtins.maplist(@supported_records) do |one_rec_type|
         Item(
           Id(one_rec_type),
           Ops.get(record_type_descriptions, one_rec_type, one_rec_type)
@@ -2014,45 +2015,32 @@ module Yast
 
     # Checking new record by the "type"
     def CheckNewZoneRecordLogic(record)
-      record = deep_copy(record)
-      # $[ "key" : key, "type" : type, "val" : val ]
 
-      type = Ops.get(record, "type", "")
-      key = Ops.get(record, "key", "")
-      val = Ops.get(record, "val", "")
+      type = record['type']
+      key  = record['key']
+      val  = record['val']
 
-      if type == "A"
-        # A record should point to IPv4 address
-        return true
-      elsif type == "AAAA"
-        # AAAA record should point to IPv6 address
-        return true
-      elsif type == "CNAME"
-        # (hostname or FQ -> hostname or FQ)
-        if key == val
-          UI.SetFocus(Id("add_record_val"))
-          # TRANSLATORS: a popup message, CNAME (link) points to itself
-          Popup.Error(_("CNAME cannot point to itself."))
+      case type
+        when "CNAME"
+          # (hostname or FQ -> hostname or FQ)
+          if key == val
+            UI.SetFocus(Id("add_record_val"))
+            # TRANSLATORS: a popup message, CNAME (link) points to itself
+            Popup.Error(_("CNAME cannot point to itself."))
+            return false
+          end
+          return true
+        when *@supported_records
+          # FIXME: A record should point to an IPv4 address
+          # FIXME: AAAA record should point to IPv6 address
+          # FIXME: NS should point to an A or AAAA record (if it is in the same domain)
+          # FIXME: MX should point to an A or AAAA record (if it is in the same domain)
+          # FIXME: SRV should point to an A or AAAA record (if it is in the same domain)
+          return true
+        else
+          Builtins.y2error("unknown record type: #{type}")
           return false
-        end
-        return true
-      elsif type == "NS"
-        # FIXME: NS should point to an A or AAAA record (if it is in the same domain)
-        return true
-      elsif type == "MX"
-        # FIXME: MX should point to an A or AAAA record (if it is in the same domain)
-        return true
-      elsif type == "PTR"
-        return true
-      elsif type == "SRV"
-        # FIXME: SRV should point to an A or AAAA record (if it is in the same domain)
-        return true
-      elsif type == "TXT" or type == "SPF"
-        return true
       end
-
-      Builtins.y2error("unknown record type: %1", Ops.get(record, "type", ""))
-      false
     end
 
     # Transform a given key/value by adding the ending dot if
