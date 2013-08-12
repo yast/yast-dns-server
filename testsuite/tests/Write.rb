@@ -9,6 +9,8 @@
 # $Id$
 #
 # Testsuite for writting configuration for dns-server
+require "yast"
+
 module Yast
   class WriteClient < Client
     def main
