@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Aug 13 14:29:08 CEST 2013 - locilka@suse.com
+
+- Added missing SPF record handling
+- 3.0.1
+
+-------------------------------------------------------------------
 Wed Jul 31 08:28:36 UTC 2013 - yast-devel@opensuse.org
 
 - converted from YCP to Ruby by YCP Killer

@@ -9,6 +9,8 @@
 # $Id$
 #
 # Testsuite for helper functions module
+require "yast"
+
 module Yast
   class DnsServerHelperFunctionsClient < Client
     def main
