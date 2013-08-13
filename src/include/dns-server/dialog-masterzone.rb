@@ -1148,7 +1148,7 @@ module Yast
                          @current_zone['soa'].fetch('retry',   SOADefaults::RETRY),
                          @current_zone['soa'].fetch('expiry',  SOADefaults::EXPIRY),
                          @current_zone['soa'].fetch('minimum', SOADefaults::MINIMUM)
-                       ].join ' '
+                       ].join(' ')
       }
     end
 
