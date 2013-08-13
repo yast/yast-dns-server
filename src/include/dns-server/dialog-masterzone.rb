@@ -1140,15 +1140,15 @@ module Yast
         'operation' => 'add',
         'type'      => 'SOA',
         'key'       => @current_zone['zone'] + '.',
-        'value'     => "%{server} %{mail} %{serial} %{refresh} %{retry} %{expiry} %{minimum}" % {
-                         :server  => @current_zone['soa'].fetch('server',  SOADefaults::DNS_SERVER),
-                         :mail    => @current_zone['soa'].fetch('mail',    SOADefaults::EMAIL_ADDRESS),
-                         :serial  => @current_zone['soa'].fetch('serial',  SOADefaults::SERIAL),
-                         :refresh => @current_zone['soa'].fetch('refresh', SOADefaults::REFRESH),
-                         :retry   => @current_zone['soa'].fetch('retry',   SOADefaults::RETRY),
-                         :expiry  => @current_zone['soa'].fetch('expiry',  SOADefaults::EXPIRY),
-                         :minimum => @current_zone['soa'].fetch('minimum', SOADefaults::MINIMUM)
-                       }
+        'value'     => [
+                         @current_zone['soa'].fetch('server',  SOADefaults::DNS_SERVER),
+                         @current_zone['soa'].fetch('mail',    SOADefaults::EMAIL_ADDRESS),
+                         @current_zone['soa'].fetch('serial',  SOADefaults::SERIAL),
+                         @current_zone['soa'].fetch('refresh', SOADefaults::REFRESH),
+                         @current_zone['soa'].fetch('retry',   SOADefaults::RETRY),
+                         @current_zone['soa'].fetch('expiry',  SOADefaults::EXPIRY),
+                         @current_zone['soa'].fetch('minimum', SOADefaults::MINIMUM)
+                       ].join ' '
       }
     end
 
@@ -1927,8 +1927,13 @@ module Yast
           # %{current} - replaced with the current length of a new TXT record.
           Popup.Error(
             _(
-                "Maximal length of a %{type} record is %{max} characters.\nThis message is %{current} characters long."
-            ) % {:type => type, :max => MAX_TEXT_RECORD_LENGTH, :current => val.size}
+              "Maximal length of a %{type} record is %{max} characters.\n"
+              "This message is %{current} characters long."
+            ) % {
+              :type => type,
+              :max => MAX_TEXT_RECORD_LENGTH,
+              :current => val.size
+            }
           )
           return false
         end
