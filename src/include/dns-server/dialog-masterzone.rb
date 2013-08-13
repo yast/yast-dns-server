@@ -1132,10 +1132,10 @@ module Yast
         }
       }
 
-      @current_zone['soa'] = {} unless @current_zone.has_key?('soa')
+      @current_zone['soa'] ||= {}
       @current_zone['soa'].merge!(soa_update)
 
-      @current_zone['update_actions'] = [] unless @current_zone.has_key?('update_actions')
+      @current_zone['update_actions'] ||= []
       @current_zone['update_actions'] << {
         'operation' => 'add',
         'type'      => 'SOA',
