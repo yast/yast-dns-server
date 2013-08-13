@@ -1927,7 +1927,7 @@ module Yast
           # %{current} - replaced with the current length of a new TXT record.
           Popup.Error(
             _(
-              "Maximal length of a %{type} record is %{max} characters.\n"
+              "Maximal length of a %{type} record is %{max} characters.\n" +
               "This message is %{current} characters long."
             ) % {
               :type => type,
