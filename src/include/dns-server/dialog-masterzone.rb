@@ -1137,9 +1137,9 @@ module Yast
       @current_zone['update_actions'] = [] unless @current_zone.has_key?('update_actions')
 
       @current_zone['update_actions'] << {
-        "operation" => "add",
-        "type"      => "SOA",
-        "key"       => @current_zone['zone'] + '.',
+        'operation' => 'add',
+        'type'      => 'SOA',
+        'key'       => @current_zone['zone'] + '.',
         'value'     => "%{server} %{mail} %{serial} %{refresh} %{retry} %{expiry} %{minimum}" % {
                          :server  => @current_zone['soa'].fetch('server',  SOADefaults::DNS_SERVER),
                          :mail    => @current_zone['soa'].fetch('mail',    SOADefaults::EMAIL_ADDRESS),
