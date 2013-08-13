@@ -13,6 +13,16 @@ module Yast
   module DnsServerDialogMasterzoneInclude
     MAX_TEXT_RECORD_LENGTH = 255
 
+    module SOADefaults
+      DNS_SERVER = '.'
+      EMAIL_ADDRESS = 'root.'
+      SERIAL = '1111111111'
+      REFRESH = '3h'
+      RETRY = '1h'
+      EXPIRY = '1w'
+      MINIMUM = '1d'
+    end
+
     def initialize_dns_server_dialog_masterzone(include_target)
       textdomain "dns-server"
 
@@ -1097,141 +1107,57 @@ module Yast
 
     # Store settings of a tab of a dialog
     def StoreSoaTab
-      Ops.set(
-        @current_zone,
-        "ttl",
-        Builtins.sformat(
-          "%1%2",
-          UI.QueryWidget(Id("zone_settings_ttl_value"), :Value),
-          UI.QueryWidget(Id("zone_settings_ttl_units"), :Value)
-        )
-      )
+      @current_zone['ttl'] = "%{ttl_value}%{ttl_units}" % {
+        :ttl_value => UI.QueryWidget(Id('zone_settings_ttl_value'), :Value),
+        :ttl_units => UI.QueryWidget(Id('zone_settings_ttl_units'), :Value)
+      }
 
-      Ops.set(@current_zone, "soa", Ops.get_map(@current_zone, "soa", {}))
+      @current_zone['soa'] = {} unless @current_zone.has_key?('soa')
 
-      Ops.set(
-        @current_zone,
-        ["soa", "serial"],
-        UI.QueryWidget(Id("zone_settings_serial"), :Value)
-      )
-      Ops.set(
-        @current_zone,
-        ["soa", "refresh"],
-        Builtins.sformat(
-          "%1%2",
-          UI.QueryWidget(Id("zone_settings_refresh_value"), :Value),
-          UI.QueryWidget(Id("zone_settings_refresh_units"), :Value)
-        )
-      )
-      Ops.set(
-        @current_zone,
-        ["soa", "retry"],
-        Builtins.sformat(
-          "%1%2",
-          UI.QueryWidget(Id("zone_settings_retry_value"), :Value),
-          UI.QueryWidget(Id("zone_settings_retry_units"), :Value)
-        )
-      )
-      Ops.set(
-        @current_zone,
-        ["soa", "expiry"],
-        Builtins.sformat(
-          "%1%2",
-          UI.QueryWidget(Id("zone_settings_expiry_value"), :Value),
-          UI.QueryWidget(Id("zone_settings_expiry_units"), :Value)
-        )
-      )
-      Ops.set(
-        @current_zone,
-        ["soa", "minimum"],
-        Builtins.sformat(
-          "%1%2",
-          UI.QueryWidget(Id("zone_settings_minimum_value"), :Value),
-          UI.QueryWidget(Id("zone_settings_minimum_units"), :Value)
-        )
-      )
+      @current_zone['soa'].merge! {
+        'serial' => UI.QueryWidget(Id('zone_settings_serial'), :Value),
+        'refresh' => "%{refresh_value}%{refresh_units}" % {
+          :refresh_value => UI.QueryWidget(Id('zone_settings_refresh_value'), :Value),
+          :refresh_units => UI.QueryWidget(Id('zone_settings_refresh_units'), :Value)
+        },
+        'retry' => "%{retry_value}%{retry_units}" % {
+          :retry_value => UI.QueryWidget(Id('zone_settings_retry_value'), :Value),
+          :retry_units => UI.QueryWidget(Id('zone_settings_retry_units'), :Value)
+        },
+        'expiry' => "%{expiry_value}%{expiry_units}" % {
+          :expiry_value => UI.QueryWidget(Id('zone_settings_expiry_value'), :Value),
+          :expiry_units => UI.QueryWidget(Id('zone_settings_expiry_units'), :Value)
+        },
+        'minimum' => "%{minimum_value}%{minimum_units}" % {
+          :minimum_value => UI.QueryWidget(Id('zone_settings_minimum_value'), :Value),
+          :minimum_units => UI.QueryWidget(Id('zone_settings_minimum_units'), :Value)
+        }
+      }
 
-      zn = Ops.add(Ops.get_string(@current_zone, "zone", ""), ".")
-      Ops.set(
-        @current_zone,
-        "update_actions",
-        Builtins.add(
-          Ops.get_list(@current_zone, "update_actions", []),
-          {
-            "operation" => "add",
-            "type"      => "SOA",
-            "key"       => zn,
-            "value"     => Ops.add(
-              Ops.add(
-                Ops.add(
-                  Ops.add(
-                    Ops.add(
-                      Ops.add(
-                        Ops.add(
-                          Ops.add(
-                            Ops.add(
-                              Ops.add(
-                                Ops.add(
-                                  Ops.add(
-                                    Ops.add(
-                                      Ops.get_string(
-                                        @current_zone,
-                                        ["soa", "server"],
-                                        "."
-                                      ),
-                                      " "
-                                    ),
-                                    Ops.get_string(
-                                      @current_zone,
-                                      ["soa", "mail"],
-                                      "root."
-                                    )
-                                  ),
-                                  " "
-                                ),
-                                Ops.get_string(
-                                  @current_zone,
-                                  ["soa", "serial"],
-                                  "1111111111"
-                                )
-                              ),
-                              " "
-                            ),
-                            Ops.get_string(
-                              @current_zone,
-                              ["soa", "refresh"],
-                              "3h"
-                            )
-                          ),
-                          " "
-                        ),
-                        Ops.get_string(@current_zone, ["soa", "retry"], "1h")
-                      ),
-                      " "
-                    ),
-                    Ops.get_string(@current_zone, ["soa", "expiry"], "1w")
-                  ),
-                  " "
-                ),
-                Ops.get_string(@current_zone, ["soa", "minimum"], "1d")
-              ),
-              " "
-            )
-          }
-        )
-      )
+      @current_zone['update_actions'] = [] unless @current_zone.has_key?('update_actions')
 
-      nil
+      @current_zone['update_actions'] << {
+        "operation" => "add",
+        "type"      => "SOA",
+        "key"       => @current_zone['zone'] + '.',
+        'value'     => "%{server} %{mail} %{serial} %{refresh} %{retry} %{expiry} %{minimum}" % {
+                         :server  => @current_zone['soa'].fetch('server',  SOADefaults::DNS_SERVER),
+                         :mail    => @current_zone['soa'].fetch('mail',    SOADefaults::EMAIL_ADDRESS),
+                         :serial  => @current_zone['soa'].fetch('serial',  SOADefaults::SERIAL),
+                         :refresh => @current_zone['soa'].fetch('refresh', SOADefaults::REFRESH),
+                         :retry   => @current_zone['soa'].fetch('retry',   SOADefaults::RETRY),
+                         :expiry  => @current_zone['soa'].fetch('expiry',  SOADefaults::EXPIRY),
+                         :minimum => @current_zone['soa'].fetch('minimum', SOADefaults::MINIMUM)
+                       }
+      }
     end
 
     # Handle events in a tab of a dialog
     def HandleSoaTab(event)
-      event = deep_copy(event)
       nil
     end
 
     def ValidateSoaTab(event)
-      event = deep_copy(event)
       serial = Convert.to_string(
         UI.QueryWidget(Id("zone_settings_serial"), :Value)
       )
