@@ -1105,16 +1105,14 @@ module Yast
       nil
     end
 
-    # Store settings of a tab of a dialog
+    # Store SOA dialog settings
     def StoreSoaTab
       @current_zone['ttl'] = "%{ttl_value}%{ttl_units}" % {
         :ttl_value => UI.QueryWidget(Id('zone_settings_ttl_value'), :Value),
         :ttl_units => UI.QueryWidget(Id('zone_settings_ttl_units'), :Value)
       }
 
-      @current_zone['soa'] = {} unless @current_zone.has_key?('soa')
-
-      @current_zone['soa'].merge! {
+      soa_update = {
         'serial' => UI.QueryWidget(Id('zone_settings_serial'), :Value),
         'refresh' => "%{refresh_value}%{refresh_units}" % {
           :refresh_value => UI.QueryWidget(Id('zone_settings_refresh_value'), :Value),
@@ -1134,8 +1132,10 @@ module Yast
         }
       }
 
-      @current_zone['update_actions'] = [] unless @current_zone.has_key?('update_actions')
+      @current_zone['soa'] = {} unless @current_zone.has_key?('soa')
+      @current_zone['soa'].merge!(soa_update)
 
+      @current_zone['update_actions'] = [] unless @current_zone.has_key?('update_actions')
       @current_zone['update_actions'] << {
         'operation' => 'add',
         'type'      => 'SOA',
