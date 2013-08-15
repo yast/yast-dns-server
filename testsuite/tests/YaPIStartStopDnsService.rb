@@ -9,6 +9,8 @@
 # $Id$
 #
 # Testsuite for starting/stopping dns-server
+require "yast"
+
 module Yast
   class YaPIStartStopDnsServiceClient < Client
     def main

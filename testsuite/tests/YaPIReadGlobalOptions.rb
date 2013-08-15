@@ -9,6 +9,8 @@
 # $Id$
 #
 # Testsuite for reading global options for dns-server
+require "yast"
+
 module Yast
   class YaPIReadGlobalOptionsClient < Client
     def main

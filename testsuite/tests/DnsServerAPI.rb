@@ -7,6 +7,8 @@
 # Copyright:	Copyright 2004, Novell, Inc.  All rights reserved.
 #
 # $Id: DnsServerAPI.ycp 48293 2008-06-13 13:24:54Z locilka $
+require "yast"
+
 module Yast
   class DnsServerAPIClient < Client
     def main

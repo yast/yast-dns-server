@@ -9,6 +9,8 @@
 # $Id$
 #
 # Testsuite for reading configuration for dns-server
+require "yast"
+
 module Yast
   class YaPIWriteZonesClient < Client
     def main

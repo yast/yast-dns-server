@@ -1,4 +1,5 @@
 # encoding: utf-8
+require "yast"
 
 module Yast
   class DnsServerUIClient < Client

@@ -11,6 +11,18 @@
 # Input and output routines.
 module Yast
   module DnsServerDialogMasterzoneInclude
+    MAX_TEXT_RECORD_LENGTH = 255
+
+    module SOADefaults
+      DNS_SERVER = '.'
+      EMAIL_ADDRESS = 'root.'
+      SERIAL = '1111111111'
+      REFRESH = '3h'
+      RETRY = '1h'
+      EXPIRY = '1w'
+      MINIMUM = '1d'
+    end
+
     def initialize_dns_server_dialog_masterzone(include_target)
       textdomain "dns-server"
 
@@ -32,15 +44,10 @@ module Yast
 
       Yast.include include_target, "dns-server/misc.rb"
 
-      # zone ACL -->
-
       @available_zones_to_connect = []
 
-      # <-- zone SOA
-
-      # --> zone RECORDS
-
-      @supported_records = []
+      @supported_records    = []
+      @supported_records_ui = []
 
       @last_add_record_type = nil
 
@@ -1098,143 +1105,59 @@ module Yast
       nil
     end
 
-    # Store settings of a tab of a dialog
+    # Store SOA dialog settings
     def StoreSoaTab
-      Ops.set(
-        @current_zone,
-        "ttl",
-        Builtins.sformat(
-          "%1%2",
-          UI.QueryWidget(Id("zone_settings_ttl_value"), :Value),
-          UI.QueryWidget(Id("zone_settings_ttl_units"), :Value)
-        )
-      )
+      @current_zone['ttl'] = "%{ttl_value}%{ttl_units}" % {
+        :ttl_value => UI.QueryWidget(Id('zone_settings_ttl_value'), :Value),
+        :ttl_units => UI.QueryWidget(Id('zone_settings_ttl_units'), :Value)
+      }
 
-      Ops.set(@current_zone, "soa", Ops.get_map(@current_zone, "soa", {}))
+      soa_update = {
+        'serial' => UI.QueryWidget(Id('zone_settings_serial'), :Value),
+        'refresh' => "%{refresh_value}%{refresh_units}" % {
+          :refresh_value => UI.QueryWidget(Id('zone_settings_refresh_value'), :Value),
+          :refresh_units => UI.QueryWidget(Id('zone_settings_refresh_units'), :Value)
+        },
+        'retry' => "%{retry_value}%{retry_units}" % {
+          :retry_value => UI.QueryWidget(Id('zone_settings_retry_value'), :Value),
+          :retry_units => UI.QueryWidget(Id('zone_settings_retry_units'), :Value)
+        },
+        'expiry' => "%{expiry_value}%{expiry_units}" % {
+          :expiry_value => UI.QueryWidget(Id('zone_settings_expiry_value'), :Value),
+          :expiry_units => UI.QueryWidget(Id('zone_settings_expiry_units'), :Value)
+        },
+        'minimum' => "%{minimum_value}%{minimum_units}" % {
+          :minimum_value => UI.QueryWidget(Id('zone_settings_minimum_value'), :Value),
+          :minimum_units => UI.QueryWidget(Id('zone_settings_minimum_units'), :Value)
+        }
+      }
 
-      Ops.set(
-        @current_zone,
-        ["soa", "serial"],
-        UI.QueryWidget(Id("zone_settings_serial"), :Value)
-      )
-      Ops.set(
-        @current_zone,
-        ["soa", "refresh"],
-        Builtins.sformat(
-          "%1%2",
-          UI.QueryWidget(Id("zone_settings_refresh_value"), :Value),
-          UI.QueryWidget(Id("zone_settings_refresh_units"), :Value)
-        )
-      )
-      Ops.set(
-        @current_zone,
-        ["soa", "retry"],
-        Builtins.sformat(
-          "%1%2",
-          UI.QueryWidget(Id("zone_settings_retry_value"), :Value),
-          UI.QueryWidget(Id("zone_settings_retry_units"), :Value)
-        )
-      )
-      Ops.set(
-        @current_zone,
-        ["soa", "expiry"],
-        Builtins.sformat(
-          "%1%2",
-          UI.QueryWidget(Id("zone_settings_expiry_value"), :Value),
-          UI.QueryWidget(Id("zone_settings_expiry_units"), :Value)
-        )
-      )
-      Ops.set(
-        @current_zone,
-        ["soa", "minimum"],
-        Builtins.sformat(
-          "%1%2",
-          UI.QueryWidget(Id("zone_settings_minimum_value"), :Value),
-          UI.QueryWidget(Id("zone_settings_minimum_units"), :Value)
-        )
-      )
+      @current_zone['soa'] ||= {}
+      @current_zone['soa'].merge!(soa_update)
 
-      zn = Ops.add(Ops.get_string(@current_zone, "zone", ""), ".")
-      Ops.set(
-        @current_zone,
-        "update_actions",
-        Builtins.add(
-          Ops.get_list(@current_zone, "update_actions", []),
-          {
-            "operation" => "add",
-            "type"      => "SOA",
-            "key"       => zn,
-            "value"     => Ops.add(
-              Ops.add(
-                Ops.add(
-                  Ops.add(
-                    Ops.add(
-                      Ops.add(
-                        Ops.add(
-                          Ops.add(
-                            Ops.add(
-                              Ops.add(
-                                Ops.add(
-                                  Ops.add(
-                                    Ops.add(
-                                      Ops.get_string(
-                                        @current_zone,
-                                        ["soa", "server"],
-                                        "."
-                                      ),
-                                      " "
-                                    ),
-                                    Ops.get_string(
-                                      @current_zone,
-                                      ["soa", "mail"],
-                                      "root."
-                                    )
-                                  ),
-                                  " "
-                                ),
-                                Ops.get_string(
-                                  @current_zone,
-                                  ["soa", "serial"],
-                                  "1111111111"
-                                )
-                              ),
-                              " "
-                            ),
-                            Ops.get_string(
-                              @current_zone,
-                              ["soa", "refresh"],
-                              "3h"
-                            )
-                          ),
-                          " "
-                        ),
-                        Ops.get_string(@current_zone, ["soa", "retry"], "1h")
-                      ),
-                      " "
-                    ),
-                    Ops.get_string(@current_zone, ["soa", "expiry"], "1w")
-                  ),
-                  " "
-                ),
-                Ops.get_string(@current_zone, ["soa", "minimum"], "1d")
-              ),
-              " "
-            )
-          }
-        )
-      )
-
-      nil
+      @current_zone['update_actions'] ||= []
+      @current_zone['update_actions'] << {
+        'operation' => 'add',
+        'type'      => 'SOA',
+        'key'       => @current_zone['zone'] + '.',
+        'value'     => [
+                         @current_zone['soa'].fetch('server',  SOADefaults::DNS_SERVER),
+                         @current_zone['soa'].fetch('mail',    SOADefaults::EMAIL_ADDRESS),
+                         @current_zone['soa'].fetch('serial',  SOADefaults::SERIAL),
+                         @current_zone['soa'].fetch('refresh', SOADefaults::REFRESH),
+                         @current_zone['soa'].fetch('retry',   SOADefaults::RETRY),
+                         @current_zone['soa'].fetch('expiry',  SOADefaults::EXPIRY),
+                         @current_zone['soa'].fetch('minimum', SOADefaults::MINIMUM)
+                       ].join(' ')
+      }
     end
 
     # Handle events in a tab of a dialog
     def HandleSoaTab(event)
-      event = deep_copy(event)
       nil
     end
 
     def ValidateSoaTab(event)
-      event = deep_copy(event)
       serial = Convert.to_string(
         UI.QueryWidget(Id("zone_settings_serial"), :Value)
       )
@@ -1302,7 +1225,7 @@ module Yast
                 Id("add_record_type"),
                 Opt(:notify),
                 _("T&ype"),
-                @supported_records
+                @supported_records_ui
               )
             ),
             # IntField - zone settings - Record Value
@@ -1361,7 +1284,7 @@ module Yast
                 Id("add_record_type"),
                 Opt(:notify),
                 _("T&ype"),
-                @supported_records
+                @supported_records_ui
               )
             ),
             VBox(
@@ -1377,6 +1300,7 @@ module Yast
               )
             )
           )
+        # "A", "AAAA", "CNAME", "NS", "PTR", "TXT", "SPF"
         else
           ret = HBox(
             # Textentry - zone settings - Record Name
@@ -1393,7 +1317,7 @@ module Yast
                 Id("add_record_type"),
                 Opt(:notify),
                 _("T&ype"),
-                @supported_records
+                @supported_records_ui
               )
             ),
             # Textentry - zone settings - Record Value
@@ -1413,7 +1337,7 @@ module Yast
         )
         @supported_records = ["PTR", "NS"]
       else
-        @supported_records = ["A", "AAAA", "CNAME", "NS", "MX", "SRV", "TXT"]
+        @supported_records = ["A", "AAAA", "CNAME", "NS", "MX", "SRV", "TXT", "SPF"]
       end
 
       record_type_descriptions = {
@@ -1424,10 +1348,11 @@ module Yast
         "MX"    => _("MX: Mail Relay"),
         "PTR"   => _("PTR: Reverse Translation"),
         "SRV"   => _("SRV: Services Record"),
-        "TXT"   => _("TXT: Text Record")
+        "TXT"   => _("TXT: Text Record"),
+        "SPF"   => _("SPF: Sender Policy Framework"),
       }
 
-      @supported_records = Builtins.maplist(@supported_records) do |one_rec_type|
+      @supported_records_ui = Builtins.maplist(@supported_records) do |one_rec_type|
         Item(
           Id(one_rec_type),
           Ops.get(record_type_descriptions, one_rec_type, one_rec_type)
@@ -1609,6 +1534,7 @@ module Yast
           end
 
           UI.ChangeWidget(Id("add_record_prio"), :Value, current_prio)
+        # "A", "AAAA", "CNAME", "NS", "PTR", "TXT", "SPF"
         else
 
       end
@@ -1771,7 +1697,7 @@ module Yast
     end
 
     # Checks whether a given string is a valid TXT record key (name)
-    def ValidTXTRecordName(name)
+    def ValidTextRecordName(name)
       # Checking the length
       if name == nil || name == ""
         Builtins.y2warning("TXT record key must not be empty")
@@ -1980,29 +1906,34 @@ module Yast
         end
         return true 
 
-        # -- TXT -- \\
-      elsif type == "TXT"
-        if !ValidTXTRecordName(key)
+      # TXT or SPF
+      elsif type == "TXT" or type == "SPF"
+        if !ValidTextRecordName(key)
           UI.SetFocus(Id("add_record_name"))
+          # TRANSLATORS: Error message
+          # %{type} replaced with record type (TXT or SPF)
           Popup.Error(
             _(
-              "Invalid TXT record key. It should consist of printable US-ASCII characters excluding '='\nand must be at least one character long."
-            )
+              "Invalid %{type} record key. It should consist of printable US-ASCII characters excluding '='\nand must be at least one character long."
+            ) % {:type => type}
           )
           return false
         end
-        if Ops.greater_than(Builtins.size(val), 255)
+        if val.size > MAX_TEXT_RECORD_LENGTH
           UI.SetFocus(Id("add_record_val"))
-          # TRANSLATORS: Error message, %1 is replaced with the maximal length
-          # %2 with the current length of a new TXT record.
+          # TRANSLATORS: Error message
+          # %{type}    - replaced with record type (TXT or SPF)
+          # %{max}     - replaced with the maximal length
+          # %{current} - replaced with the current length of a new TXT record.
           Popup.Error(
-            Builtins.sformat(
-              _(
-                "Maximal length of a TXT record is %1 characters.\nThis message is %2 characters long."
-              ),
-              255,
-              Builtins.size(val)
-            )
+            _(
+              "Maximal length of a %{type} record is %{max} characters.\n" +
+              "This message is %{current} characters long."
+            ) % {
+              :type => type,
+              :max => MAX_TEXT_RECORD_LENGTH,
+              :current => val.size
+            }
           )
           return false
         end
@@ -2015,45 +1946,32 @@ module Yast
 
     # Checking new record by the "type"
     def CheckNewZoneRecordLogic(record)
-      record = deep_copy(record)
-      # $[ "key" : key, "type" : type, "val" : val ]
 
-      type = Ops.get(record, "type", "")
-      key = Ops.get(record, "key", "")
-      val = Ops.get(record, "val", "")
+      type = record['type']
+      key  = record['key']
+      val  = record['val']
 
-      if type == "A"
-        # A record should point to IPv4 address
-        return true
-      elsif type == "AAAA"
-        # AAAA record should point to IPv6 address
-        return true
-      elsif type == "CNAME"
-        # (hostname or FQ -> hostname or FQ)
-        if key == val
-          UI.SetFocus(Id("add_record_val"))
-          # TRANSLATORS: a popup message, CNAME (link) points to itself
-          Popup.Error(_("CNAME cannot point to itself."))
+      case type
+        when "CNAME"
+          # (hostname or FQ -> hostname or FQ)
+          if key == val
+            UI.SetFocus(Id("add_record_val"))
+            # TRANSLATORS: a popup message, CNAME (link) points to itself
+            Popup.Error(_("CNAME cannot point to itself."))
+            return false
+          end
+          return true
+        when *@supported_records
+          # FIXME: A record should point to an IPv4 address
+          # FIXME: AAAA record should point to IPv6 address
+          # FIXME: NS should point to an A or AAAA record (if it is in the same domain)
+          # FIXME: MX should point to an A or AAAA record (if it is in the same domain)
+          # FIXME: SRV should point to an A or AAAA record (if it is in the same domain)
+          return true
+        else
+          Builtins.y2error("unknown record type: #{type}")
           return false
-        end
-        return true
-      elsif type == "NS"
-        # FIXME: NS should point to an A or AAAA record (if it is in the same domain)
-        return true
-      elsif type == "MX"
-        # FIXME: MX should point to an A or AAAA record (if it is in the same domain)
-        return true
-      elsif type == "PTR"
-        return true
-      elsif type == "SRV"
-        # FIXME: SRV should point to an A or AAAA record (if it is in the same domain)
-        return true
-      elsif type == "TXT"
-        return true
       end
-
-      Builtins.y2error("unknown record type: %1", Ops.get(record, "type", ""))
-      false
     end
 
     # Transform a given key/value by adding the ending dot if
@@ -2277,6 +2195,7 @@ module Yast
           )
 
           val = Builtins.sformat("%1 %2", record_prio, val)
+        # "A", "AAAA", "CNAME", "NS", "PTR", "TXT", "SPF"
         else
 
       end
