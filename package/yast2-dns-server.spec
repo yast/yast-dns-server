@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dns-server
-Version:        3.0.2
+Version:        3.1.0
 Release:        0
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
