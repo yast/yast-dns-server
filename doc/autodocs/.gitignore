@@ -2,3 +2,6 @@ Makefile
 Makefile.in
 *.html
 pod2htm*
+.yardoc
+css
+js
