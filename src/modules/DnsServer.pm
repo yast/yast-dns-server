@@ -806,38 +806,32 @@ sub SetLoggingOptions {
 
 BEGIN{$TYPEINFO{StopDnsService} = ["function", "boolean"];}
 sub StopDnsService {
-    my $self = shift;
-
-    my $ret = SCR->Execute (".target.bash", "/etc/init.d/named stop");
-    if ($ret == 0)
+    if (Service->Stop("named"))
     {
 	return 1;
     }
+
     y2error ("Stopping DNS daemon failed");
     return 0;
 }
 
 BEGIN{$TYPEINFO{GetDnsServiceStatus} = ["function", "boolean"];}
 sub GetDnsServiceStatus {
-    my $self = shift;
-
-    my $ret = SCR->Execute (".target.bash", "/etc/init.d/named status");
-    if ($ret == 0)
+    if (Service->Status("named") == 0)
     {
 	return 1;
     }
+
     return 0;
 }
 
 BEGIN{$TYPEINFO{StartDnsService} = ["function", "boolean"];}
 sub StartDnsService { 
-    my $self = shift;
-
-    my $ret = SCR->Execute (".target.bash", "/etc/init.d/named restart");
-    if ($ret == 0)
+    if (Service->Restart("named"))
     {
         return 1;
     }
+
     y2error ("Starting DNS daemon failed");
     return 0;
 }
@@ -1277,8 +1271,6 @@ sub Write {
     ""
     );
 
-    my $sl = 0;
-
     Progress->NextStage ();
 
     my $ok = 1;
@@ -1392,12 +1384,12 @@ sub Write {
 	$ok = $self->ZoneWrite ($z) && $ok;
     }
 
-    my $ret = 0;
+    my $ret = 1;
     if (scalar (@zones_update_actions) > 0)
     {
 	# named is running
-	if (Service->Status("named")==0) {
-	    $ret = SCR->Execute (".target.bash", "/etc/init.d/named reload");
+	if (Service->Status("named") == 0) {
+	    $ret = Service->Reload("named");
 	}
     }
 
@@ -1405,7 +1397,7 @@ sub Write {
 
     if (scalar (@zones_update_actions) > 0)
     {
-	if ($ret != 0)
+	if (! $ret)
 	{
 	    $ok = 0;
 	}
@@ -1428,7 +1420,7 @@ sub Write {
     # update forwarders.conf
     y2milestone("Calling netconfig");
     $ret->{'exit'} = 0;
-    $ret = SCR->Execute (".target.bash_output", "/sbin/netconfig update");
+    $ret = SCR->Execute (".target.bash_output", "/sbin/netconfig update -m dns");
     if ($ret->{'exit'} != 0)
     {
 	Report->Error (__("Error occurred while calling netconfig.\nError: ".$ret->{'stdout'}));
@@ -1440,25 +1432,25 @@ sub Write {
     # named has to be started
     if ($start_service)
     {
-	$ret->{'exit'} = 0;
+	my $success = 1;
 	if (! $write_only)
 	{
 	    # named is running
-	    if (Service->Status("named")==0) {
+	    if (Service->Status("named") == 0) {
 		y2milestone("Reloading service 'named'");
-		$ret = SCR->Execute (".target.bash_output", "/etc/init.d/named reload");
+		$success = Service->Reload("named")
 	    } else {
 		y2milestone("Restarting service 'named'");
-		$ret = SCR->Execute (".target.bash_output", "/etc/init.d/named restart");
+		$success = Service->Restart("named")
 	    }
 	    # 'named' is running. Set dns forwarder to 'bind'.
-	    $forwarder="bind";
+	    $forwarder = "bind";
 	}
 	Service->Enable ("named");
-	if ($ret->{'exit'} != 0)
+	if (! $success)
 	{
 	    # Cannot start service 'named', because of error that follows Error:.  Do not translate named.
-	    Report->Error (__("Error occurred while starting service named.\nError: ".$ret->{'stdout'}));
+	    Report->Error (__("Error occurred while starting service named.\n\n".Service->FullInfo("named")));
 	    $ok = 0;
 	    # There's no 'named' running. Reset dns forwarder again
 	    $forwarder = "resolver";
@@ -1470,7 +1462,7 @@ sub Write {
 	if (! $write_only)
 	{
 	    y2milestone("Stopping service 'named'");
-	    SCR->Execute (".target.bash", "/etc/init.d/named stop");
+	    Service->Stop("named");
 	    # There's no 'named' running. Reset dns forwarder again
 	    $forwarder = "resolver";
 	}
@@ -1495,7 +1487,7 @@ sub Write {
 
 	y2milestone("Calling netconfig");
 	$ret->{'exit'} = 0;
-	$ret = SCR->Execute (".target.bash_output", "/sbin/netconfig update");
+	$ret = SCR->Execute (".target.bash_output", "/sbin/netconfig update -m dns");
 	if ($ret->{'exit'} != 0) {
 	    Report->Error (__("Error occurred while calling netconfig.\nError: ".$ret->{'stdout'}));
 	}
@@ -1509,7 +1501,6 @@ sub Write {
     Progress->set ($progress_orig);
 
     Progress->NextStage ();
-    sleep ($sl);
 
     return $ok;
 }

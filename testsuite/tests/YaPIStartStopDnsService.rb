@@ -95,7 +95,15 @@ module Yast
         }
       }
       @I_WRITE = {}
-      @I_EXEC = {}
+      @I_EXEC = {
+          "target" => {
+              "bash_output" => {
+                  "exit" => 0,
+                  "stdout" => "[OK]",
+                  "stderr" => "",
+              }
+          }
+      }
 
       TESTSUITE_INIT([@I_READ, @I_WRITE, @I_EXEC], nil)
 
@@ -105,11 +113,11 @@ module Yast
       Mode.SetMode("test")
 
       DUMP("==========================================================")
-      TEST(lambda { YaPI::DNSD.StartDnsService({}) }, [], nil)
+      TEST(lambda { YaPI::DNSD.StartDnsService({}) }, [@I_READ, @I_WRITE, @I_EXEC], nil)
       DUMP("==========================================================")
-      TEST(lambda { YaPI::DNSD.StopDnsService({}) }, [], nil)
+      TEST(lambda { YaPI::DNSD.StopDnsService({}) }, [@I_READ, @I_WRITE, @I_EXEC], nil)
       DUMP("==========================================================")
-      TEST(lambda { YaPI::DNSD.GetDnsServiceStatus({}) }, [], nil)
+      TEST(lambda { YaPI::DNSD.GetDnsServiceStatus({}) }, [@I_READ, @I_WRITE, @I_EXEC], nil)
       DUMP("==========================================================")
 
       nil
