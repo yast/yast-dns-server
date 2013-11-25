@@ -1,6 +1,4 @@
 Dump	==========================================================
-Execute	.target.bash "/etc/init.d/named status" 1
-Execute	.target.bash "/etc/init.d/named stop" 1
 Execute	.dns.named_conf_convert "/etc/named.conf" 0
 Execute	.target.bash_output "stat --format='rights: %a, blocks: %b, size: %s, owner: %u:%g changed: %Z, modifyied: %Y' /etc/named.conf" $["exit":1, "stderr":"", "stdout":""]
 Read	.sysconfig.named.NAMED_RUN_CHROOTED nil
@@ -49,11 +47,10 @@ Write	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS "" true
 Write	.sysconfig.named nil true
 Write	.sysconfig.network.config.NETCONFIG_DNS_FORWARDER "bind" true
 Write	.sysconfig.network.config nil true
-Execute	.target.bash_output "/sbin/netconfig update" $["exit":1, "stderr":"", "stdout":""]
-Execute	.target.bash "/etc/init.d/named stop" 1
+Execute	.target.bash_output "/sbin/netconfig update -m dns" $["exit":1, "stderr":"", "stdout":""]
 Write	.target.ycp "/var/lib/YaST2/dns_server" $[] true
 Write	.sysconfig.network.config.NETCONFIG_DNS_FORWARDER "resolver" true
 Write	.sysconfig.network.config nil true
-Execute	.target.bash_output "/sbin/netconfig update" $["exit":1, "stderr":"", "stdout":""]
+Execute	.target.bash_output "/sbin/netconfig update -m dns" $["exit":1, "stderr":"", "stdout":""]
 Return	true
 Dump	==========================================================
