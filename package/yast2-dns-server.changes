@@ -1,7 +1,15 @@
 -------------------------------------------------------------------
+Mon Nov 25 15:48:26 CET 2013 - locilka@suse.com
+
+- Switched to using Service library instead of calling init script
+  directly
+- 3.1.2
+
+-------------------------------------------------------------------
 Wed Nov 13 15:56:18 UTC 2013 - jreidinger@suse.com
 
 - Add explicit COPYING file
+- 3.1.1
 
 -------------------------------------------------------------------
 Wed Sep 18 15:53:18 UTC 2013 - lslezak@suse.cz
