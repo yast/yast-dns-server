@@ -44,7 +44,8 @@ use DnsData qw(@tsig_keys $start_service $chroot @allowed_interfaces
 @zones @options @logging $ddns_file_name
 $modified $save_all @files_to_delete %current_zone $current_zone_index
 $write_only @new_includes @deleted_includes
-@zones_update_actions $firewall_support @new_includes_tsig @deleted_includes_tsig);
+@zones_update_actions $firewall_support @new_includes_tsig @deleted_includes_tsig
+$local_forwarder);
 use DnsRoutines;
 
 my $reverse_zones_connections = 'yast2-dns-server_reverse-zones';
@@ -52,6 +53,8 @@ my $reverse_zones_connections = 'yast2-dns-server_reverse-zones';
 my %reverse_zones_connections_data = ();
 
 my $forwarders_include = '/etc/named.d/forwarders.conf';
+
+my $data_file = Directory->vardir."/dns_server";
 
 # include of forwarders
 my $include_defined_in_conf = 0;
@@ -836,20 +839,6 @@ sub StartDnsService {
     return 0;
 }
 
-#BEGIN{$TYPEINFO{GetModifyNamedConfDynamically} = ["function","boolean"];}
-#sub GetModifyNamedConfDynamically {
-#    my $self = shift;
-#
-#    return $modify_named_conf_dynamically;
-#}
-
-#BEGIN{$TYPEINFO{SetModifyNamedConfDynamically} = ["function","void","boolean"];}
-#sub SetModifyNamedConfDynamically {
-#    my $self = shift;
-#    $modify_named_conf_dynamically = shift;
-#    $self->SetModified ();
-#}
-
 BEGIN{$TYPEINFO{GetNetconfigDNSPolicy} = ["function","string"];}
 sub GetNetconfigDNSPolicy{
     my $self = shift;
@@ -860,23 +849,30 @@ sub GetNetconfigDNSPolicy{
 BEGIN{$TYPEINFO{SetNetconfigDNSPolicy} = ["function","void","string"];}
 sub SetNetconfigDNSPolicy{
     my $self = shift;
-    $netconfig_dns_policy= shift;
+    $netconfig_dns_policy = shift;
     $self->SetModified ();
 }
 
-#BEGIN{$TYPEINFO{GetModifyResolvConfDynamically} = ["function","boolean"];}
-#sub GetModifyResolvConfDynamically {
-#    my $self = shift;
-#
-#    return $modify_resolv_conf_dynamically;
-#}
-#
-#BEGIN{$TYPEINFO{SetModifyResolvConfDynamically} = ["function","void","boolean"];}
-#sub SetModifyResolvConfDynamically {
-#    my $self = shift;
-#    $modify_resolv_conf_dynamically = shift;
-#    $self->SetModified ();
-#}
+BEGIN{$TYPEINFO{GetLocalForwarder} = ["function","string"];}
+sub GetLocalForwarder {
+    my $self = shift;
+
+    return "resolver" if (not defined $local_forwarder or $local_forwarder eq "");
+    return $local_forwarder;
+}
+
+BEGIN{$TYPEINFO{SetLocalForwarder} = ["function","void","string"];}
+sub SetLocalForwarder {
+    my $self = shift;
+    my $new_local_forwarder = shift;
+
+    if (not defined $new_local_forwarder) {
+        y2error("New local forwarder must be defined");
+    } elsif ($local_forwarder ne $new_local_forwarder) {
+        $local_forwarder = $new_local_forwarder;
+        $self->SetModified();
+    }
+}
 
 BEGIN{$TYPEINFO{GetAcl} = ["function",["list","string"]];}
 sub GetAcl {
@@ -1009,21 +1005,12 @@ sub Read {
 	    : 0;
     y2milestone ("Chroot: $chroot");
 
-#    $modify_named_conf_dynamically = SCR->Read (
-#	".sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY") || "no";
-#    $modify_named_conf_dynamically = $modify_named_conf_dynamically eq "yes"
-#	    ? 1
-#	    : 0;
-#
-#    $modify_resolv_conf_dynamically = SCR->Read (
-#	".sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY") || "no";
-#    $modify_resolv_conf_dynamically = $modify_resolv_conf_dynamically eq "yes"
-#	    ? 1
-#	    : 0;
-
     $netconfig_dns_policy = SCR->Read(".sysconfig.network.config.NETCONFIG_DNS_POLICY") || "";
     y2milestone ("NETCONFIG_DNS_POLICY: $netconfig_dns_policy");
-    
+
+    $local_forwarder = SCR->Read(".sysconfig.network.config.NETCONFIG_DNS_FORWARDER") || "resolver";
+    y2milestone ("NETCONFIG_DNS_FORWARDER: $local_forwarder");
+
     my @zone_headers = @{SCR->Dir (".dns.named.section") || []};
     @zone_headers = grep (/^zone/, @zone_headers);
     y2milestone ("Read zone headers @zone_headers");
@@ -1227,6 +1214,18 @@ sub GetWhichZonesAreConnectedWith {
     return \@ret;
 }
 
+sub write_local_forwarder {
+    y2milestone("Setting dns forwarder: ".GetLocalForwarder());
+    SCR->Write (".sysconfig.network.config.NETCONFIG_DNS_FORWARDER", GetLocalForwarder());
+    SCR->Write (".sysconfig.network.config", undef);
+
+    y2milestone("Updating forwarders by netconfig");
+    my $ret = SCR->Execute (".target.bash_output", "/sbin/netconfig update -m dns");
+    if ($ret->{'exit'} != 0) {
+        Report->Error (__("Error occurred while calling netconfig.\nError: ".$ret->{'stdout'}));
+    }
+}
+
 BEGIN { $TYPEINFO{Write} = ["function", "boolean"]; }
 sub Write {
     my $self = shift;
@@ -1409,24 +1408,11 @@ sub Write {
 
     Progress->NextStage ();
 
-    # set and write forwarding
-    my $forwarder = "bind";
     $ret = {};
 
-    y2milestone("Setting dns forwarder: $forwarder");
-    SCR->Write (".sysconfig.network.config.NETCONFIG_DNS_FORWARDER",$forwarder);
-    SCR->Write (".sysconfig.network.config", undef);
+    write_local_forwarder();
 
-    # update forwarders.conf
-    y2milestone("Calling netconfig");
-    $ret->{'exit'} = 0;
-    $ret = SCR->Execute (".target.bash_output", "/sbin/netconfig update -m dns");
-    if ($ret->{'exit'} != 0)
-    {
-	Report->Error (__("Error occurred while calling netconfig.\nError: ".$ret->{'stdout'}));
-    }
-
-    my $last_forwarder = $forwarder;
+    my $last_forwarder = GetLocalForwarder();
 
     $ret = {};
     # named has to be started
@@ -1443,8 +1429,6 @@ sub Write {
 		y2milestone("Restarting service 'named'");
 		$success = Service->Restart("named")
 	    }
-	    # 'named' is running. Set dns forwarder to 'bind'.
-	    $forwarder = "bind";
 	}
 	Service->Enable ("named");
 	if (! $success)
@@ -1452,8 +1436,9 @@ sub Write {
 	    # Cannot start service 'named', because of error that follows Error:.  Do not translate named.
 	    Report->Error (__("Error occurred while starting service named.\n\n".Service->FullInfo("named")));
 	    $ok = 0;
-	    # There's no 'named' running. Reset dns forwarder again
-	    $forwarder = "resolver";
+	    # There's no 'named' running -> prevent from blocking DNS queries
+	    SetLocalForwarder("resolver") if GetLocalForwarder() eq "bind";
+	    y2warning("Local forwarder set to: ".GetLocalForwarder());
 	}
     }
     # named has to be stopped
@@ -1464,33 +1449,24 @@ sub Write {
 	    y2milestone("Stopping service 'named'");
 	    Service->Stop("named");
 	    # There's no 'named' running. Reset dns forwarder again
-	    $forwarder = "resolver";
+	    SetLocalForwarder("resolver") if GetLocalForwarder() eq "bind";
+	    y2warning("Local forwarder set to: ".GetLocalForwarder());
 	}
 	Service->Disable ("named");
     }
 
-    if ($ok)
+    # First run finished
+    if ($ok and first_run())
     {
-	# FIXME when YaST settings are needed
-	SCR->Write (".target.ycp", Directory->vardir() . "/dns_server", {});
+	SCR->Write (".target.string", $data_file, "");
     }
     
     Progress->NextStage ();
 
-    # if $forwarder has changed
-    if ($last_forwarder ne $forwarder) {
-	y2milestone ("NETCONFIG_DNS_FORWARDER has been changed from ".$last_forwarder." to ".$forwarder);
-
-	y2milestone("Setting dns forwarder: $forwarder");
-	SCR->Write (".sysconfig.network.config.NETCONFIG_DNS_FORWARDER",$forwarder);
-	SCR->Write (".sysconfig.network.config", undef);
-
-	y2milestone("Calling netconfig");
-	$ret->{'exit'} = 0;
-	$ret = SCR->Execute (".target.bash_output", "/sbin/netconfig update -m dns");
-	if ($ret->{'exit'} != 0) {
-	    Report->Error (__("Error occurred while calling netconfig.\nError: ".$ret->{'stdout'}));
-	}
+    # if local forwarder has changed
+    if ($last_forwarder ne GetLocalForwarder()) {
+        y2milestone ("NETCONFIG_DNS_FORWARDER has been changed from ".$last_forwarder." to ".GetLocalForwarder());
+        write_local_forwarder();
     }
 
     Progress->NextStage ();
@@ -2087,6 +2063,11 @@ sub ExpertUI () {
     # $expert_ui = (ProductFeatures->GetFeature ("globals", "ui_mode") eq "simple" ? 0 : 1);
     $expert_ui = 1;
     return $expert_ui;
+}
+
+BEGIN { $TYPEINFO{first_run} = ["function", "boolean"]; };
+sub first_run () {
+    return ! FileUtils->Exists($data_file);
 }
 
 1;
