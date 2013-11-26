@@ -3,6 +3,7 @@ Execute	.dns.named_conf_convert "/etc/named.conf" 0
 Execute	.target.bash_output "stat --format='rights: %a, blocks: %b, size: %s, owner: %u:%g changed: %Z, modifyied: %Y' /etc/named.conf" $["exit":1, "stderr":"", "stdout":""]
 Read	.sysconfig.named.NAMED_RUN_CHROOTED nil
 Read	.sysconfig.network.config.NETCONFIG_DNS_POLICY "auto"
+Read	.sysconfig.network.config.NETCONFIG_DNS_FORWARDER "resolver"
 Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
 Dir	.dns.named.value.options: ["directory", "notify"]
 Read	.dns.named.value.options.directory ["\"/var/lib/named\""]
@@ -45,10 +46,6 @@ Write	.sysconfig.network.config.NETCONFIG_DNS_POLICY "auto" true
 Read	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS nil
 Write	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS "" true
 Write	.sysconfig.named nil true
-Write	.sysconfig.network.config.NETCONFIG_DNS_FORWARDER "bind" true
-Write	.sysconfig.network.config nil true
-Execute	.target.bash_output "/sbin/netconfig update -m dns" $["exit":1, "stderr":"", "stdout":""]
-Write	.target.ycp "/var/lib/YaST2/dns_server" $[] true
 Write	.sysconfig.network.config.NETCONFIG_DNS_FORWARDER "resolver" true
 Write	.sysconfig.network.config nil true
 Execute	.target.bash_output "/sbin/netconfig update -m dns" $["exit":1, "stderr":"", "stdout":""]

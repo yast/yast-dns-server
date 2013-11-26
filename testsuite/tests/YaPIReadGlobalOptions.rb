@@ -232,7 +232,8 @@ module Yast
               "MODIFY_NAMED_CONF_DYNAMICALLY"  => "yes",
               "MODIFY_RESOLV_CONF_DYNAMICALLY" => "yes",
               "NETCONFIG_DNS_POLICY"           => "STATIC",
-              "NETCONFIG_DNS_STATIC_SERVERS"   => "1.2.3.4 5.6.7.8 9.10.11.12"
+              "NETCONFIG_DNS_STATIC_SERVERS"   => "1.2.3.4 5.6.7.8 9.10.11.12",
+              "NETCONFIG_DNS_FORWARDER"        => "resolver",
             }
           }
         },
