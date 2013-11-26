@@ -7,7 +7,8 @@ require "yast"
 Yast.import "DnsServer"
 
 describe "#GetLocalForwarder" do
-  it "returns default forwarder if not initalized" do
+
+  it "returns default forwarder if it's not initalized" do
     expect(Yast::DnsServer.GetLocalForwarder).to eq "resolver"
   end
 
@@ -16,20 +17,23 @@ describe "#GetLocalForwarder" do
     expect(Yast::DnsServer.GetLocalForwarder).to eq "resolver"
   end
 
-  it "returns given forwarder if previously set" do
+  it "returns given forwarder if it's previously set" do
     new_forwarder = "whichever-forwarder"
     Yast::DnsServer.SetLocalForwarder(new_forwarder)
     expect(Yast::DnsServer.GetLocalForwarder).to eq new_forwarder
   end
+
 end
 
 describe "#SetLocalForwarder" do
-  it "does not set new forwarder if not defined" do
+
+  it "does not set new forwarder if the forwarder is undefined" do
     expect(Yast::DnsServer.SetLocalForwarder(nil)).to be_false
   end
 
-  it "sets new local forwarder if defined" do
+  it "sets new local forwarder if it's defined" do
     expect(Yast::DnsServer.SetLocalForwarder("")).to be_true
     expect(Yast::DnsServer.SetLocalForwarder("new_forwarder")).to be_true
   end
+
 end
