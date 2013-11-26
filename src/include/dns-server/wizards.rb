@@ -122,13 +122,7 @@ module Yast
       Wizard.CreateDialog
       SetDNSSErverIcon()
 
-      if {} ==
-          SCR.Read(
-            path(".target.stat"),
-            Ops.add(Directory.vardir, "/dns_server")
-          )
-        Ops.set(sequence, ["read", :next], "wizard")
-      end
+      sequence["read"][:next] = "wizard" if DnsServer.first_run
 
       ret = Sequencer.Run(aliases, sequence)
 
