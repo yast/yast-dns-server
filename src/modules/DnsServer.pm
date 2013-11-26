@@ -861,17 +861,20 @@ sub GetLocalForwarder {
     return $local_forwarder;
 }
 
-BEGIN{$TYPEINFO{SetLocalForwarder} = ["function","void","string"];}
+BEGIN{$TYPEINFO{SetLocalForwarder} = ["function","boolean","string"];}
 sub SetLocalForwarder {
     my $self = shift;
     my $new_local_forwarder = shift;
 
     if (not defined $new_local_forwarder) {
         y2error("New local forwarder must be defined");
-    } elsif ($local_forwarder ne $new_local_forwarder) {
+        return 0;
+    } elsif (not defined $local_forwarder or $local_forwarder ne $new_local_forwarder) {
         $local_forwarder = $new_local_forwarder;
         $self->SetModified();
     }
+
+    return 1;
 }
 
 BEGIN{$TYPEINFO{GetAcl} = ["function",["list","string"]];}

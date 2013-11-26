@@ -996,7 +996,9 @@ module Yast
       end
 
       forwarder = (UI.QueryWidget(Id("forwarder"), :Value)).to_s
-      DnsServer.SetLocalForwarder(forwarder)
+      if ! DnsServer.SetLocalForwarder(forwarder)
+        Report.Error(_("Cannot set local forwarder to %{forwarder}") % { 'forwarder' => forwarder })
+      end
 
       options = DnsServer.GetGlobalOptions
       options = Builtins.filter(options) do |o|
