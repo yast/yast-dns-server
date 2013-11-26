@@ -22,3 +22,4 @@ autodocs-cc*
 autodocs-ycp.ami
 pluglib-bindings.ami
 *.ami
+test-driver
