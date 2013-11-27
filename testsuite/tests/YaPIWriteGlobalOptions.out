@@ -46,6 +46,9 @@ Write	.sysconfig.network.config.NETCONFIG_DNS_POLICY "auto" true
 Read	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS nil
 Write	.sysconfig.named.NAMED_INITIALIZE_SCRIPTS "" true
 Write	.sysconfig.named nil true
+Write	.sysconfig.network.config.NETCONFIG_DNS_FORWARDER "bind" true
+Write	.sysconfig.network.config nil true
+Execute	.target.bash_output "/sbin/netconfig update -m dns" $["exit":1, "stderr":"", "stdout":""]
 Write	.sysconfig.network.config.NETCONFIG_DNS_FORWARDER "resolver" true
 Write	.sysconfig.network.config nil true
 Execute	.target.bash_output "/sbin/netconfig update -m dns" $["exit":1, "stderr":"", "stdout":""]
