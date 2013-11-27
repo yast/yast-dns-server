@@ -70,7 +70,8 @@ module Yast
           "language"          => {
             "RC_LANG"        => "en_US.UTF-8",
             "ROOT_USES_LANG" => "ctype"
-          }
+          },
+          "network"           => { "NETCONFIG_DNS_FORWARDER" => "resolver" },
         },
         "target"    => {
           "stat"  => {

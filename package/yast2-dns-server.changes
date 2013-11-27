@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Nov 26 15:10:30 CET 2013 - locilka@suse.com
+
+- Added possibility to set local DNS forwarder (FATE#309036)
+- 3.1.3
+
+-------------------------------------------------------------------
 Mon Nov 25 15:48:26 CET 2013 - locilka@suse.com
 
 - Switched to using Service library instead of calling init script

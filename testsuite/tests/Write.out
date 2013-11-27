@@ -38,7 +38,6 @@ Write	.dns.named.value."zone \"example.com\" in".type ["master"] true
 Write	.sysconfig.network.config.NETCONFIG_DNS_FORWARDER "bind" true
 Write	.sysconfig.network.config nil true
 Execute	.target.bash_output "/sbin/netconfig update -m dns" $["exit":0, "stdout":"20030806"]
-Write	.target.ycp "/var/lib/YaST2/dns_server" $[] true
 Write	.sysconfig.network.config.NETCONFIG_DNS_FORWARDER "resolver" true
 Write	.sysconfig.network.config nil true
 Execute	.target.bash_output "/sbin/netconfig update -m dns" $["exit":0, "stdout":"20030806"]

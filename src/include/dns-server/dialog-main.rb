@@ -743,28 +743,41 @@ module Yast
       dialog = VBox(
         # label
         VBox(
-          # `RadioButtonGroup( `id ( "who_sets_forwarder" ),
-          #     `VBox (
-          # 	// Radiobutton DNS-Forwarders
-          # 	`Left( `RadioButton( `id ( "ppp_forwarder" ), _("&PPP Daemon Sets Forwarders") ) ),
-          # 	// Radiobutton DNS-Forwarders
-          # 	`Left( `RadioButton( `id ( "manually_forwarder" ), _("Set Forwarders &Manually"), true ) )
-          #     )
-          # )
           HBox(
             ComboBox(
               Id("forwarder_policy"),
               Opt(:notify),
-              _("Netconfig DNS policy"),
+              # T: ComboBox label
+              _("Local DNS Resolution &Policy"),
               [
-                Item(Id(:nomodify), "disable"),
-                Item(Id(:auto), "auto"),
-                Item(Id(:static), "static"),
-                Item(Id(:custom), "custom")
+                # T: ComboBox item
+                Item(Id(:nomodify), _("Merging forwarders is disabled")),
+                # T: ComboBox item
+                Item(Id(:auto),     _("Automatic merging")),
+                # T: ComboBox item
+                Item(Id(:static),   _("Merging forwarders is enabled")),
+                # T: ComboBox item
+                Item(Id(:custom),   _("Custom configuration"))
               ]
             ),
             HSpacing(1),
             InputField(Id("custom_policy"), Opt(:hstretch), _("Custom policy"))
+          ),
+          VSpacing(1),
+          Left(
+            ComboBox(
+              Id("forwarder"),
+              # T: ComboBox label
+              _("Local DNS Resolution &Forwarder"),
+              [
+                # T: ComboBox item
+                Item(Id(:resolver), _("Using system name servers")),
+                # T: ComboBox item
+                Item(Id(:bind),     _("This name server (bind)")),
+                # T: ComboBox item
+                Item(Id(:dnsmasq),  _("Local dnsmasq server")),
+              ]
+            )
           )
         ),
         VSpacing(1),
@@ -900,44 +913,55 @@ module Yast
     end
 
     def handlePolicy(policy)
-      if :nomodify == policy
+      if policy == :nomodify
         UI.ChangeWidget(Id("custom_policy"), :Enabled, false)
         UI.ChangeWidget(Id("custom_policy"), :Value, "")
         UI.ChangeWidget(Id("forwarders_new_ip_address"), :Enabled, false)
         UI.ChangeWidget(Id("forwarders_add_ip_address"), :Enabled, false)
+        UI.ChangeWidget(Id("forwarder"), :Enabled, false)
       else
-        if :custom == policy
-          UI.ChangeWidget(Id("custom_policy"), :Enabled, true)
+        if policy == :custom
           # preinitialize with STATIC
           UI.ChangeWidget(Id("custom_policy"), :Value, "STATIC")
+          UI.ChangeWidget(Id("custom_policy"), :Enabled, true)
         else
-          if :static == policy
+          if policy == :static
             UI.ChangeWidget(Id("custom_policy"), :Value, "STATIC")
-          elsif :auto == policy
+          elsif policy == :auto
             UI.ChangeWidget(Id("custom_policy"), :Value, "auto")
           end
           UI.ChangeWidget(Id("custom_policy"), :Enabled, false)
         end
+
         UI.ChangeWidget(Id("forwarders_new_ip_address"), :Enabled, true)
         UI.ChangeWidget(Id("forwarders_add_ip_address"), :Enabled, true)
+        UI.ChangeWidget(Id("forwarder"), :Enabled, true)
       end
 
       nil
     end
+
+    def initialize_local_forwarder
+      local_forwarder = DnsServer.GetLocalForwarder
+
+      if local_forwarder != DnsServerUIClass::PREFERRED_LOCAL_FORWARDER && DnsServer.first_run
+        Builtins.y2milestone(
+          "Current local forwarder: #{local_forwarder}, proposing new: #{DnsServerUIClass::PREFERRED_LOCAL_FORWARDER}"
+        )
+        local_forwarder = DnsServerUIClass::PREFERRED_LOCAL_FORWARDER
+      end
+
+      UI.ChangeWidget(Id("forwarder"), :Value, local_forwarder.to_sym)
+    end
+
     # Initialize the tab of the dialog
     def InitExpertForwardersPage(key)
       SetDNSSErverIcon()
-      # if (DnsServer::GetModifyNamedConfDynamically ())
-      # {
-      # 	UI::ChangeWidget (`id ("who_sets_forwarder"), `CurrentButton, "ppp_forwarder");
-      # }
-      # else
-      # {
-      # 	UI::ChangeWidget (`id ("who_sets_forwarder"), `CurrentButton, "manually_forwarder");
-      # }
+
       UI.ChangeWidget(Id("custom_policy"), :Enabled, false)
       policy = DnsServer.GetNetconfigDNSPolicy
       policy_symb = :Empty
+
       if policy == nil || policy == ""
         policy_symb = :nomodify
       elsif policy == "auto" || policy == "STATIC *"
@@ -947,8 +971,10 @@ module Yast
       else
         policy_symb = :custom
       end
+
       UI.ChangeWidget(Id("forwarder_policy"), :Value, policy_symb)
       handlePolicy(policy_symb)
+      initialize_local_forwarder
       ReadForwarders()
       RedrawForwardersListWidget()
       ValidCharsForwardersPage()
@@ -959,28 +985,20 @@ module Yast
     # Store settings of a tab of a dialog
     def StoreExpertForwardersPage(key, event)
       event = deep_copy(event)
-      #     if (UI::QueryWidget (`id ("who_sets_forwarder"), `CurrentButton)
-      # 	== "ppp_forwarder")
-      #     {
-      # 	DnsServer::SetModifyNamedConfDynamically (true);
-      # 	DnsServer::SetModifyResolvConfDynamically (false);
-      #     }
-      #     else
-      #     {
-      # 	DnsServer::SetModifyNamedConfDynamically (false);
-      # 	DnsServer::SetModifyResolvConfDynamically (true);
-      #     }
+
       policy = Convert.to_symbol(UI.QueryWidget(Id("forwarder_policy"), :Value))
-      if :custom == policy
-        DnsServer.SetNetconfigDNSPolicy(
-          Convert.to_string(UI.QueryWidget(Id("custom_policy"), :Value))
-        )
-      elsif :auto == policy
-        DnsServer.SetNetconfigDNSPolicy("auto")
-      elsif :static == policy
-        DnsServer.SetNetconfigDNSPolicy("STATIC")
-      else
-        DnsServer.SetNetconfigDNSPolicy("")
+      new_dns_policy = case policy
+        when :custom   then UI.QueryWidget(Id("custom_policy"), :Value)
+        when :auto     then "auto"
+        when :static   then "static"
+        when :nomodify then ""
+        else raise ArgumentError.new("Unknown forwarder_policy '#{policy}'")
+      end
+      DnsServer.SetNetconfigDNSPolicy(new_dns_policy)
+
+      forwarder = (UI.QueryWidget(Id("forwarder"), :Value)).to_s
+      if ! DnsServer.SetLocalForwarder(forwarder)
+        Report.Error(_("Cannot set local forwarder to %{forwarder}") % { 'forwarder' => forwarder })
       end
 
       options = DnsServer.GetGlobalOptions

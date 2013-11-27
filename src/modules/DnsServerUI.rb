@@ -13,6 +13,9 @@ require "yast"
 
 module Yast
   class DnsServerUIClass < Module
+
+    PREFERRED_LOCAL_FORWARDER = "bind"
+
     def main
       Yast.import "UI"
       textdomain "dns-server"

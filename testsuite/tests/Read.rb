@@ -75,7 +75,8 @@ module Yast
             "FW_ALLOW_FW_BROADCAST"    => ""
           },
           "personal-firewall" => { "REJECT_ALL_INCOMING_CONNECTIONS" => "" },
-          "displaymanager"    => { "DISPLAYMANAGER" => "" }
+          "displaymanager"    => { "DISPLAYMANAGER" => "" },
+          "network"           => { "NETCONFIG_DNS_FORWARDER"  => "resolver" },
         },
         "target"    => {
           "stat"  => {

@@ -21,7 +21,8 @@ our @EXPORT_OK = qw(@tsig_keys $start_service $chroot @allowed_interfaces
 @zones @options @logging $ddns_file_name
 $modified $save_all @files_to_delete %current_zone $current_zone_index
 $adapt_firewall %firewall_settings $write_only @new_includes @deleted_includes
-@zones_update_actions $firewall_support @new_includes_tsig @deleted_includes_tsig);
+@zones_update_actions $firewall_support @new_includes_tsig @deleted_includes_tsig
+$local_forwarder);
 
 # persistent variables
 
@@ -70,6 +71,8 @@ my $firewall_support = 1;
 my @new_includes_tsig = ();
 
 my @deleted_includes_tsig = ();
+
+my $local_forwarder = "";
 
 1;
 
