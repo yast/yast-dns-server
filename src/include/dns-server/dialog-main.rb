@@ -918,11 +918,12 @@ module Yast
         UI.ChangeWidget(Id("custom_policy"), :Value, "")
         UI.ChangeWidget(Id("forwarders_new_ip_address"), :Enabled, false)
         UI.ChangeWidget(Id("forwarders_add_ip_address"), :Enabled, false)
+        UI.ChangeWidget(Id("forwarder"), :Enabled, false)
       else
         if policy == :custom
-          UI.ChangeWidget(Id("custom_policy"), :Enabled, true)
           # preinitialize with STATIC
           UI.ChangeWidget(Id("custom_policy"), :Value, "STATIC")
+          UI.ChangeWidget(Id("custom_policy"), :Enabled, true)
         else
           if policy == :static
             UI.ChangeWidget(Id("custom_policy"), :Value, "STATIC")
@@ -934,6 +935,7 @@ module Yast
 
         UI.ChangeWidget(Id("forwarders_new_ip_address"), :Enabled, true)
         UI.ChangeWidget(Id("forwarders_add_ip_address"), :Enabled, true)
+        UI.ChangeWidget(Id("forwarder"), :Enabled, true)
       end
 
       nil
