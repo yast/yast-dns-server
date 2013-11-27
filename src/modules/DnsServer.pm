@@ -871,6 +871,7 @@ sub SetLocalForwarder {
         return 0;
     } elsif (not defined $local_forwarder or $local_forwarder ne $new_local_forwarder) {
         $local_forwarder = $new_local_forwarder;
+        y2milestone("New local forwarder: ".$local_forwarder);
         $self->SetModified();
     }
 
@@ -1217,8 +1218,12 @@ sub GetWhichZonesAreConnectedWith {
     return \@ret;
 }
 
+# Writes forwarding settings and updates the system using netconfig.
+# This also automatically updates /etc/named.d/forwarders.conf
 sub write_local_forwarder {
-    y2milestone("Setting dns forwarder: ".GetLocalForwarder());
+    my $self = shift;
+
+    y2milestone("Current dns forwarder: ".GetLocalForwarder());
     SCR->Write (".sysconfig.network.config.NETCONFIG_DNS_FORWARDER", GetLocalForwarder());
     SCR->Write (".sysconfig.network.config", undef);
 
@@ -1227,6 +1232,35 @@ sub write_local_forwarder {
     if ($ret->{'exit'} != 0) {
         Report->Error (__("Error occurred while calling netconfig.\nError: ".$ret->{'stdout'}));
     }
+}
+
+sub update_forwarding {
+    # Netconfig updates /etc/named.d/forwarders.conf only if 'bind' is selected
+    # as resolver. Manual writing of forwarders.conf is otherwise requested to be
+    # done by Yast.
+    #
+    # Cheating netconfig by using local 'bind' as resolver temporarily to generate
+    # correct /etc/named.d/forwarders.conf and then returning back to user-defined
+    # resolver.
+    #
+    # This behavior including requested manual changes is described in FATE#309036
+
+    my $self = shift;
+    my $current_forwarder = $self->GetLocalForwarder();
+
+    if ($current_forwarder ne 'bind') {
+        y2milestone(
+            "User-defined forwarder: ".$current_forwarder.", using 'bind' for a while to update forwarders.conf"
+        );
+        $self->SetLocalForwarder('bind');
+
+        $self->write_local_forwarder();
+
+        y2milestone("Returning back to user-defined forwarder: ".$current_forwarder);
+        $self->SetLocalForwarder($current_forwarder);
+    }
+
+    $self->write_local_forwarder();
 }
 
 BEGIN { $TYPEINFO{Write} = ["function", "boolean"]; }
@@ -1413,9 +1447,10 @@ sub Write {
 
     $ret = {};
 
-    write_local_forwarder();
+    my $user_defined_forwarder = GetLocalForwarder();
 
-    my $last_forwarder = GetLocalForwarder();
+    # Write forwarding settings before starting 'named'
+    $self->update_forwarding();
 
     $ret = {};
     # named has to be started
@@ -1440,7 +1475,7 @@ sub Write {
 	    Report->Error (__("Error occurred while starting service named.\n\n".Service->FullInfo("named")));
 	    $ok = 0;
 	    # There's no 'named' running -> prevent from blocking DNS queries
-	    SetLocalForwarder("resolver") if GetLocalForwarder() eq "bind";
+	    $self->SetLocalForwarder("resolver") if GetLocalForwarder() eq "bind";
 	    y2warning("Local forwarder set to: ".GetLocalForwarder());
 	}
     }
@@ -1452,7 +1487,7 @@ sub Write {
 	    y2milestone("Stopping service 'named'");
 	    Service->Stop("named");
 	    # There's no 'named' running. Reset dns forwarder again
-	    SetLocalForwarder("resolver") if GetLocalForwarder() eq "bind";
+	    $self->SetLocalForwarder("resolver") if GetLocalForwarder() eq "bind";
 	    y2warning("Local forwarder set to: ".GetLocalForwarder());
 	}
 	Service->Disable ("named");
@@ -1466,10 +1501,11 @@ sub Write {
     
     Progress->NextStage ();
 
-    # if local forwarder has changed
-    if ($last_forwarder ne GetLocalForwarder()) {
-        y2milestone ("NETCONFIG_DNS_FORWARDER has been changed from ".$last_forwarder." to ".GetLocalForwarder());
-        write_local_forwarder();
+    # local forwarder has been changed because 'named' was unable to start
+    # or it was disabled by user
+    if ($user_defined_forwarder ne GetLocalForwarder()) {
+        y2milestone ("NETCONFIG_DNS_FORWARDER has been changed from ".$user_defined_forwarder." to ".GetLocalForwarder());
+        $self->write_local_forwarder();
     }
 
     Progress->NextStage ();
