@@ -942,7 +942,7 @@ module Yast
     def initialize_local_forwarder
       local_forwarder = DnsServer.GetLocalForwarder
 
-      if local_forwarder != DnsServerUIClass::PREFERRED_LOCAL_FORWARDER and DnsServer.first_run
+      if local_forwarder != DnsServerUIClass::PREFERRED_LOCAL_FORWARDER && DnsServer.first_run
         Builtins.y2milestone(
           "Current local forwarder: #{local_forwarder}, proposing new: #{DnsServerUIClass::PREFERRED_LOCAL_FORWARDER}"
         )
@@ -985,15 +985,14 @@ module Yast
       event = deep_copy(event)
 
       policy = Convert.to_symbol(UI.QueryWidget(Id("forwarder_policy"), :Value))
-      if policy == :custom
-        DnsServer.SetNetconfigDNSPolicy(UI.QueryWidget(Id("custom_policy"), :Value))
-      elsif policy == :auto
-        DnsServer.SetNetconfigDNSPolicy("auto")
-      elsif policy == :static
-        DnsServer.SetNetconfigDNSPolicy("STATIC")
-      else
-        DnsServer.SetNetconfigDNSPolicy("")
+      new_dns_policy = case policy
+        when :custom   then UI.QueryWidget(Id("custom_policy"), :Value)
+        when :auto     then "auto"
+        when :static   then "static"
+        when :nomodify then ""
+        else raise ArgumentError.new("Unknown forwarder_policy '#{policy}'")
       end
+      DnsServer.SetNetconfigDNSPolicy(new_dns_policy)
 
       forwarder = (UI.QueryWidget(Id("forwarder"), :Value)).to_s
       if ! DnsServer.SetLocalForwarder(forwarder)
