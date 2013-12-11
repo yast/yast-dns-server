@@ -26,7 +26,7 @@ Source0:        %{name}-%{version}.tar.bz2
 Group:	        System/YaST
 License:        GPL-2.0
 BuildRequires:	yast2-ldap-client perl-XML-Writer update-desktop-files yast2 yast2-testsuite yast2-perl-bindings
-BuildRequires:  yast2-devtools >= 3.0.6
+BuildRequires:  yast2-devtools >= 3.1.10
 BuildRequires:  rubygem-rspec
 
 # requires DnsServerAPI::GetReverseIPforIPv6
