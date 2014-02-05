@@ -1,7 +1,7 @@
 #
 # spec file for package yast2-dns-server
 #
-# Copyright (c) 2013 SUSE LINUX Products GmbH, Nuernberg, Germany.
+# Copyright (c) 2014 SUSE LINUX Products GmbH, Nuernberg, Germany.
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -23,42 +23,48 @@ Release:        0
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Source0:        %{name}-%{version}.tar.bz2
 
-Group:	        System/YaST
-License:        GPL-2.0
-BuildRequires:	yast2-ldap-client perl-XML-Writer update-desktop-files yast2 yast2-testsuite yast2-perl-bindings
-BuildRequires:  yast2-devtools >= 3.1.10
+BuildRequires:  perl-XML-Writer
 BuildRequires:  rubygem-rspec
+BuildRequires:  update-desktop-files
+BuildRequires:  yast2
+BuildRequires:  yast2-devtools >= 3.1.10
+BuildRequires:  yast2-ldap >= 3.1.4
+BuildRequires:  yast2-perl-bindings
+BuildRequires:  yast2-testsuite
 
 # requires DnsServerAPI::GetReverseIPforIPv6
 BuildRequires:  yast2 >= 2.17.8
-Requires:	/usr/bin/host
-Requires:	perl-gettext
+Requires:       /usr/bin/host
+Requires:       perl-gettext
 # Exporter Data::Dumper
-Requires:	perl-base
+Requires:       perl-base
 # Time
-Requires:	perl
-Requires:	yast2-perl-bindings
-Requires:	bind-utils
-Requires:	yast2-ldap
-Requires:	yast2-ldap-client
+Requires:       bind-utils
+Requires:       perl
+Requires:       yast2-perl-bindings
+# Ldap module and agents
+Requires:       yast2-ldap >= 3.1.4
 # /sbin/ip
-Requires:	iproute2
+Requires:       iproute2
 # DnsServerUI::CurrentlyUsedIPs
-Requires:	grep sed
+Requires:       grep
+Requires:       sed
 
 # Script /sbin/netconfig 0.71.2+?
 # FATE #303386: Network setup tools
-Requires:	yast2-sysconfig
+Requires:       yast2-sysconfig
 
 # DnsServerApi moved to yast2.rpm (bnc#392606)
 # DnsServerAPI::GetReverseIPforIPv6
-Requires:	yast2 >= 2.17.8
+Requires:       yast2 >= 2.17.8
 
-BuildArchitectures:	noarch
+BuildArch:      noarch
 
 Requires:       yast2-ruby-bindings >= 1.0.0
 
-Summary:	YaST2 - DNS Server Configuration
+Summary:        YaST2 - DNS Server Configuration
+License:        GPL-2.0
+Group:          System/YaST
 
 %description
 This package contains the YaST2 component for DNS server configuration.
@@ -71,7 +77,6 @@ This package contains the YaST2 component for DNS server configuration.
 
 %install
 %yast_install
-
 
 %files
 %defattr(-,root,root)
@@ -93,3 +98,4 @@ This package contains the YaST2 component for DNS server configuration.
 %{yast_schemadir}/autoyast/rnc/dns-server.rnc
 %doc %{yast_docdir}
 
+%changelog
