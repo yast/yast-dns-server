@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Feb  5 16:33:04 UTC 2014 - jreidinger@suse.com
+
+- Use new yast2-ldap instead of yast2-ldap-client
+- 3.1.4
+
+-------------------------------------------------------------------
 Tue Nov 26 15:10:30 CET 2013 - locilka@suse.com
 
 - Added possibility to set local DNS forwarder (FATE#309036)

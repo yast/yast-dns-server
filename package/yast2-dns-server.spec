@@ -25,7 +25,8 @@ Source0:        %{name}-%{version}.tar.bz2
 
 Group:	        System/YaST
 License:        GPL-2.0
-BuildRequires:	yast2-ldap-client perl-XML-Writer update-desktop-files yast2 yast2-testsuite yast2-perl-bindings
+BuildRequires:	perl-XML-Writer update-desktop-files yast2 yast2-testsuite yast2-perl-bindings
+BuildRequires:  yast2-ldap >= 3.1.4
 BuildRequires:  yast2-devtools >= 3.1.10
 BuildRequires:  rubygem-rspec
 
@@ -39,8 +40,8 @@ Requires:	perl-base
 Requires:	perl
 Requires:	yast2-perl-bindings
 Requires:	bind-utils
-Requires:	yast2-ldap
-Requires:	yast2-ldap-client
+# Ldap module and agents
+Requires:	yast2-ldap >= 3.1.4
 # /sbin/ip
 Requires:	iproute2
 # DnsServerUI::CurrentlyUsedIPs
