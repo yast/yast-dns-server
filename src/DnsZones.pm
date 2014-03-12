@@ -49,7 +49,7 @@ our @ISA = qw(Exporter);
 our @EXPORT_OK = qw($zone_base_config_dn);
 
 my @tmp_all_rec_types = ("mx", "ns", "a", "aaaa", "md", "cname", "ptr", "hinfo",
-    "minfo", "txt", "sig", "key", "aaa", "loc", "nxtr", "srv",
+    "minfo", "txt", "spf", "sig", "key", "aaa", "loc", "nxtr", "srv",
     "naptr", "kx", "cert", "a6", "dname");
 
 my @all_rec_types = ();
@@ -261,7 +261,7 @@ sub ZoneRead {
 	}
 
 	# Handle special cases
-	if ($type =~ /^txt$/i) {
+	if ($type =~ /^(txt|spf)$/i) {
 	    $value =~ s/(^\"|\"$)//g;
 	    $value =~ s/\\\"/\"/g;
 	}
@@ -312,7 +312,7 @@ sub ZoneFileWrite {
 	my $type = $r->{"type"} || "";
 	my $value = $r->{"value"} || "";
 
-	if ($type =~ /^txt$/i && $value !~ /^\"/ && $value !~ /\"$/) {
+	if ($type =~ /^(txt|spf)$/i && $value !~ /^\"/ && $value !~ /\"$/) {
 	    $value =~ s/\"/\\\"/g;
 	    $value = '"'.$value.'"';
 	}
