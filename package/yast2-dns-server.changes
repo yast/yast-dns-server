@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Mar 12 16:26:57 CET 2014 - locilka@suse.com
+
+- Fixed splitting/joining longer TXT and SPF records (bnc#867596)
+- 3.1.5
+
+-------------------------------------------------------------------
 Wed Feb  5 16:33:04 UTC 2014 - jreidinger@suse.com
 
 - Use new yast2-ldap instead of yast2-ldap-client
