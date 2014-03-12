@@ -19,6 +19,7 @@
 Name:           yast2-dns-server
 Version:        3.1.5
 Release:        0
+Url:            https://github.com/yast/yast-dns-server
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Source0:        %{name}-%{version}.tar.bz2
