@@ -132,6 +132,15 @@ while ( <STDIN> )
 		my $type  = $record{"type"} || '';
 		my $value = $record{"value"} || '';
 		my $key   = $record{"key"} || '';
+
+		# BNC#867596: Single TXT/SPF records longer that 255 chars need to be split
+		# into more shorter strings (if possible)
+		if ($type =~ /^(TXT|SPF)$/i && length($value) > 255)
+		{
+		    # Converting "a b c" -> "a" "b" "c"
+		    $value =~ s/[ \t]+/" "/g;
+		}
+
 		if ($type eq "TTL")
 		{
 		    print OUT "\$TTL $value\n";
@@ -265,11 +274,12 @@ while ( <STDIN> )
 		    ($rec{"key"}, $ttl, $in, $rec{"type"}, $rec{"value"}) = ($1, $2, $3, $4);
 
 		    # BNC #755766
-		    # TXT records (values) can contain semicolons
-		    if ($rec{"type"} =~ /txt/i) {
+		    # TXT/SPF records (values) can contain semicolons
+		    if ($rec{"type"} =~ /^(TXT|SPF)$/i) {
 			$line =~ s/^(\"[^\n]*\")[ \t]*(;.*)?$//;
 			$rec{"value"} = $1;
-			$rec{"value"} =~ s/\"[ \t]\"//g; # several texts merged into one
+			# BNC#867596: several texts merged into one: "a" "b" "c" -> "a b c"
+			$rec{"value"} =~ s/\"[ \t]\"/ /g;
 		    # The other records consider each semicolon to be a comment
 		    } else {
 			$line =~ s/^([^;\n]+).*$//;
