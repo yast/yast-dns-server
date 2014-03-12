@@ -1502,13 +1502,23 @@ or in the relative form to the current zone."), "*.ip6.arpa."));
 and must be at least one character long."), type));
 	    return false;
 	}
-	if (size (val) > max_text_record_length) {
+
+	integer max_length = 0;
+	integer current_length = 0;
+
+	# bnc#867596: Finds the longest string that cannot be split into more strings
+	foreach(string val_part, splitstring(val, " \n"), {
+	    current_length = size(val_part);
+	    if (current_length > max_length) max_length = current_length;
+	});
+
+	if (max_length > max_text_record_length) {
 	    UI::SetFocus (`id ("add_record_val"));
 	    // TRANSLATORS: Error message, %1 is replaced with either TXT or SPF,
 	    // %2 with the maximal length,
 	    // %3 with the current length of a new record
 	    Popup::Error (sformat(_("Maximal %1 record length is %2 characters.
-This one is %3 characters long."), type, max_text_record_length, size (val)));
+This one is %3 characters long."), type, max_text_record_length, max_length));
 	    return false;
 	}
 	return true;
