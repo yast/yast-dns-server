@@ -1919,7 +1919,12 @@ module Yast
           )
           return false
         end
-        if val.size > MAX_TEXT_RECORD_LENGTH
+
+        # Too long records need to be split into more smaller parts
+        # Although splitting is done while writing it to the config file,
+        # checking, whether it's possible, is done here in advance.
+        max_val_size = val.split.map{|s| s.size}.max
+        if max_val_size > MAX_TEXT_RECORD_LENGTH
           UI.SetFocus(Id("add_record_val"))
           # TRANSLATORS: Error message
           # %{type}    - replaced with record type (TXT or SPF)
@@ -1932,7 +1937,7 @@ module Yast
             ) % {
               :type => type,
               :max => MAX_TEXT_RECORD_LENGTH,
-              :current => val.size
+              :current => max_val_size
             }
           )
           return false
