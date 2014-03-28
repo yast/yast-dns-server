@@ -255,7 +255,7 @@ module Yast
       }
       @WRITE = {}
       @EXEC = {
-        "target" => { "bash_output" => { "exit" => 0, "stdout" => "20030806" } }
+        "target" => { "bash_output" => { "exit" => 0, "stdout" => "20030806", "stderr"=>"" } }
       }
 
       DUMP("=======================")
