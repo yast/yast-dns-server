@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Mar 28 15:04:54 UTC 2014 - vmoravec@suse.com
+
+- Fix failing testsuite
+- 3.1.6
+
+-------------------------------------------------------------------
 Wed Mar 12 16:26:57 CET 2014 - locilka@suse.com
 
 - Fixed splitting/joining longer TXT and SPF records (bnc#867596)
