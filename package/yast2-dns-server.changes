@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Sep  4 12:20:11 UTC 2014 - mvidner@suse.com
+
+- Use a more flexible rubygem requirement syntax (bnc#895069)
+- 3.1.7
+
+-------------------------------------------------------------------
 Fri Mar 28 15:04:54 UTC 2014 - vmoravec@suse.com
 
 - Fix failing testsuite

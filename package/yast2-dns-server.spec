@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dns-server
-Version:        3.1.6
+Version:        3.1.7
 Release:        0
 Url:            https://github.com/yast/yast-dns-server
 
@@ -25,7 +25,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Source0:        %{name}-%{version}.tar.bz2
 
 BuildRequires:  perl-XML-Writer
-BuildRequires:  rubygem-rspec
+BuildRequires:  rubygem(rspec)
 BuildRequires:  update-desktop-files
 BuildRequires:  yast2
 BuildRequires:  yast2-devtools >= 3.1.10
