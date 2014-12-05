@@ -1,10 +1,10 @@
 Dump	=======================
+Execute	.target.bash_output "stat --format='rights: %a, blocks: %b, size: %s, owner: %u:%g changed: %Z, modifyied: %Y' /etc/named.conf" $["exit":0, "stderr":"", "stdout":"20030806"]
 Return	true
 Dump	=======================
+Execute	.target.bash "mkdir -pv '/etc/named.d/'" 0
 Write	.target.ycp "/var/lib/YaST2/yast2-dns-server_reverse-zones" $[] true
 Execute	.target.bash_output "stat --format='rights: %a, blocks: %b, size: %s, owner: %u:%g changed: %Z, modifyied: %Y' /etc/named.conf" $["exit":0, "stderr":"", "stdout":"20030806"]
-Execute	.target.bash_output "mv --force /etc/named.conf /etc/named.conf.yast2-save" $["exit":0, "stderr":"", "stdout":"20030806"]
-Execute	.target.bash "touch /etc/named.conf" 0
 Write	.dns.named.value.acl [] true
 Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
 Dir	.dns.named.value.options: ["directory", "notify", "xxx"]
