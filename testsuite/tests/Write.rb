@@ -98,7 +98,12 @@ module Yast
         }
       }
       @I_WRITE = {}
-      @I_EXEC = {}
+      @I_EXEC = {
+        "target" => {
+          "bash_output" => { "exit" => 0, "stdout" => "20030806", "stderr"=>"" },
+          "bash" => 0,
+        }
+      }
 
       TESTSUITE_INIT([@I_READ, @I_WRITE, @I_EXEC], nil)
 
@@ -255,7 +260,10 @@ module Yast
       }
       @WRITE = {}
       @EXEC = {
-        "target" => { "bash_output" => { "exit" => 0, "stdout" => "20030806", "stderr"=>"" } }
+        "target" => {
+          "bash_output" => { "exit" => 0, "stdout" => "20030806", "stderr"=>"" },
+          "bash" => 0,
+        }
       }
 
       DUMP("=======================")
@@ -306,7 +314,7 @@ module Yast
             ]
           }
         )
-      end, [], 0)
+      end, [@READ, @WRITE, @EXEC], 0)
       DUMP("=======================")
       TEST(lambda { DnsServer.Write }, [@READ, @WRITE, @EXEC], 0)
 

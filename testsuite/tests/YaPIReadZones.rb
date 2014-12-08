@@ -263,7 +263,8 @@ module Yast
       @WRITE = {}
       @EXEC = {
         "target" => {
-          "bash_output" => { "exit" => 1, "stdout" => "", "stderr" => "" }
+          "bash_output" => { "exit" => 1, "stdout" => "", "stderr" => "" },
+          "bash" => 0,
         },
         "passwd" => { "init" => true }
       }

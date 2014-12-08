@@ -46,8 +46,7 @@ module Yast
 
       # Create a summary
       if @func == "Summary"
-        @ret_list = DnsServer.Summary
-        @ret = Ops.get_string(@ret_list, 0, "")
+        @ret = DnsServer.Summary.join("<br>\n")
       # Reset configuration
       elsif @func == "Reset"
         DnsServer.Import({})
