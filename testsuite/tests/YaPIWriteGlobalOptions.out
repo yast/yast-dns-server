@@ -19,6 +19,7 @@ Read	.dns.zone "/var/lib/named/localhost.zone" $["TTL":"1W", "records":[$["key":
 Dir	.dns.named.value."zone \"localhost\" in": ["file", "type"]
 Read	.dns.named.value."zone \"localhost\" in"."file" ["\"localhost.zone\""]
 Read	.dns.named.value."zone \"localhost\" in"."type" ["master"]
+Execute	.target.bash "mkdir -pv '/etc/named.d/'" 0
 Write	.target.ycp "/var/lib/YaST2/yast2-dns-server_reverse-zones" $[] true
 Execute	.target.bash_output "stat --format='rights: %a, blocks: %b, size: %s, owner: %u:%g changed: %Z, modifyied: %Y' /etc/named.conf" $["exit":1, "stderr":"", "stdout":""]
 Write	.dns.named.value.acl [] true
