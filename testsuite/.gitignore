@@ -13,4 +13,4 @@ tmp
 zone
 zone_new
 *.bak
-
+raw.tmp.*

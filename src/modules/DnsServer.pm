@@ -34,6 +34,7 @@ YaST::YCP::Import ("NetworkService");
 YaST::YCP::Import ("Hostname");
 YaST::YCP::Import ("FileUtils");
 YaST::YCP::Import ("DnsServerHelperFunctions");
+YaST::YCP::Import ("String");
 
 use DnsZones;
 use DnsTsigKeys;
@@ -52,7 +53,9 @@ my $reverse_zones_connections = 'yast2-dns-server_reverse-zones';
 
 my %reverse_zones_connections_data = ();
 
-my $forwarders_include = '/etc/named.d/forwarders.conf';
+my $includes_dir = '/etc/named.d/';
+
+my $forwarders_include = $includes_dir.'forwarders.conf';
 
 my $data_file = Directory->vardir."/dns_server";
 
@@ -123,7 +126,7 @@ sub ZoneWrite {
 	return 0;
     }
 
-    if ($zone_name eq "localhost" || $zone_name eq "0.0.127.in-addr.arpa")
+    if ($zone_name eq "localhost" || $zone_name eq "0.0.127.in-addr.arpa" || $zone_name =~ /^(0\.)+ip6.arpa$/)
     {
 	y2milestone ("Skipping system zone $zone_name");
 	return 1;
@@ -1338,6 +1341,9 @@ sub Write {
 	}
     }
 
+    # Make sure the includes dir really exists
+    SCR->Execute(".target.bash", "mkdir -pv '".String->Quote($includes_dir)."'");
+
     foreach my $z (@zones) {
 
 	if (defined $z->{"connected_with"} && $z->{"connected_with"} ne "") {
@@ -1547,11 +1553,22 @@ sub Import {
     my $self = shift;
     my %settings = %{+shift};
 
+    # Cache the timestamp as done in Read() otherwise the named.conf
+    # is re-created from scratch in Write() as is pretends to be changed
+    # while Yast was running.
+    $configuration_timestamp = $self->GetConfigurationStat();
+
     $start_service = $settings{"start_service"} || 0;
     $chroot = $settings{"chroot"} || 1;
     $use_ldap = $settings{"use_ldap"} || 0;
     @allowed_interfaces = @{$settings{"allowed_interfaces"} || []};
-    @zones = @{$settings{"zones"} || []}; 
+
+    @zones = @{$settings{"zones"} || []};
+    for my $i (0..@zones-1) {
+      $zones[$i]{"modified"} = 1;
+      y2milestone("Imported zone: ".$zones[$i]{"zone"});
+    }
+
     @options = @{$settings{"options"} || []};
     @logging = @{$settings{"logging"} || []};
 
@@ -1604,8 +1621,7 @@ sub Summary {
     }
 
     my @zones_descr = map {
-	my $zone_ref = $_;
-	my %zone_map = %{$zone_ref};	
+	my %zone_map = %{$_};
 	my $zone_name = $zone_map{"zone"} || "";
 	my $zone_type = $zone_map{"type"} || "";
 	$zone_type = $zone_types{$zone_type} || $zone_type;
@@ -1627,7 +1643,7 @@ sub Summary {
 	$_ ne "";
     } @zones_descr;
 
-    my $zones_list = join (", ", @zones_descr);
+    my $zones_list = join (",<br>\n", @zones_descr);
     #  summary string, %s is list of DNS zones (their names), coma separated
     push (@ret, sprintf (__("Configured Zones: %s"), $zones_list));
     return \@ret;
