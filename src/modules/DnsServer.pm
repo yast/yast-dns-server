@@ -72,7 +72,7 @@ my %yapi_conf = ();
 
 #my $modify_resolv_conf_dynamically = 0;
 
-my $netconfig_dns_policy = 0;
+my $netconfig_dns_policy = "";
 
 my @acl = ();
 
@@ -111,6 +111,21 @@ sub contains {
     $found;
 }
 
+# System zones are not allowed to be edited in YaST DNS Server
+#
+# @param [String] zone name
+# @return [Boolean] whether zone is a system one (included in bind package)
+sub is_system_zone {
+    my $zone_name = shift;
+
+    return (
+        $zone_name eq "localhost" ||
+        $zone_name eq "0.0.127.in-addr.arpa" ||
+        $zone_name =~ /^(0\.)+ip6.arpa$/ ||
+        $zone_name eq "."
+    )
+}
+
 ##------------------------------------
 # Routines for reading/writing configuration
 
@@ -126,9 +141,10 @@ sub ZoneWrite {
 	return 0;
     }
 
-    if ($zone_name eq "localhost" || $zone_name eq "0.0.127.in-addr.arpa" || $zone_name =~ /^(0\.)+ip6.arpa$/)
+    # Do not write system zones to LDAP (bnc#746401)
+    if ($use_ldap && is_system_zone($zone_name))
     {
-	y2milestone ("Skipping system zone $zone_name");
+	y2milestone ("Using LDAP, skipping system zone $zone_name");
 	return 1;
     }
 
@@ -390,16 +406,23 @@ sub SaveGlobals {
     my @del_zones = grep {
 	! $self->contains (\@current_zones, $_);
     } @old_zones;
+
+    # Do not remove system zones
     @del_zones = grep {
-	$_ ne "zone \".\" in" && $_ ne "zone \"localhost\" in"
-	    && $_ ne "zone \"0.0.127.in-addr.arpa\" in"
+        $_ =~ /^zone[ \t]+\"([^ \t]+)\".*/;
+        my $zone = $1;
+        !is_system_zone($zone)
     } @del_zones;
-    y2milestone ("Deleting zones @del_zones");
-    foreach my $z (@del_zones) {
-	$z =~ /^zone[ \t]+\"([^ \t]+)\".*/;
-	$z = $1;
-	$z = "zone \"$z\" in";
-	SCR->Write (".dns.named.section.\"\Q$z\E\"", undef);
+
+    if (@del_zones > 0) {
+        y2milestone ("Deleting zones @del_zones");
+        foreach my $z (@del_zones) {
+            $z =~ /^zone[ \t]+\"([^ \t]+)\".*/;
+            $z = $1;
+            y2milestone("Deleting zone: ".$z);
+            $z = "zone \"$z\" in";
+            SCR->Write (".dns.named.section.\"\Q$z\E\"", undef);
+        }
     }
 
     if ($use_ldap)
@@ -1190,9 +1213,16 @@ sub Read {
 	}
 	\%zd;
     } @zone_headers;
+
     @zones = grep {
 	scalar (keys (%{$_})) > 0
     } @zones;
+
+    # System zones cannot be edited in Yast
+    @zones = grep {
+        ! is_system_zone($_->{"zone"})
+    } @zones;
+
     $modified = 0;
 
     Progress->NextStage ();
@@ -1266,6 +1296,27 @@ sub update_forwarding {
     $self->write_local_forwarder();
 }
 
+# Server package should be installed already, but we have to check, e.g.,
+# when applying configuration in AutoYast config module
+sub check_and_install_package {
+    my $self = shift;
+    return 1 if (PackageSystem->Installed("bind"));
+
+    # Package cannot be installed in some modes, changing the mode temporarily
+    my $previous_mode = Mode->mode();
+    Mode->SetMode("normal");
+    my $installed = PackageSystem->CheckAndInstallPackagesInteractive(["bind"]);
+
+    # Reread the configuration stat if it has changed
+    $configuration_timestamp = $self->GetConfigurationStat() if $installed;
+    Mode->SetMode($previous_mode);
+
+    return 1 if $installed;
+
+    y2error("Server package cannot be installed, cannot write configuration");
+    return 0;
+}
+
 BEGIN { $TYPEINFO{Write} = ["function", "boolean"]; }
 sub Write {
     my $self = shift;
@@ -1311,6 +1362,8 @@ sub Write {
     );
 
     Progress->NextStage ();
+
+    return 0 unless $self->check_and_install_package();
 
     my $ok = 1;
 
@@ -1397,17 +1450,9 @@ sub Write {
     #ensure that if there is an include file, named.conf.include gets recreated
     $ok = $self->EnsureNamedConfIncludeIsRecreated () && $ok;
 
-    #be sure the named.conf file is saved
-    SCR->Write (".dns.named", undef);
-    
     #set daemon starting
     SCR->Write (".sysconfig.named.NAMED_RUN_CHROOTED", $chroot ? "yes" : "no");
     SCR->Write (".sysconfig.named", undef);
-
-#    SCR->Write (".sysconfig.network.config.MODIFY_NAMED_CONF_DYNAMICALLY",
-#	$modify_named_conf_dynamically ? "yes" : "no");
-#    SCR->Write (".sysconfig.network.config.MODIFY_RESOLV_CONF_DYNAMICALLY",
-#	$modify_resolv_conf_dynamically ? "yes" : "no");
 
     # Store the NETCONFIG_DNS_POLICY 
     # Note: NETCONFIG_DNS_STATIC_SERVERS is stored in SaveGlobals();
@@ -1425,6 +1470,10 @@ sub Write {
     foreach my $z (@zones) {
 	$ok = $self->ZoneWrite ($z) && $ok;
     }
+
+    # Flush the cache after writing zones, but before re/starting service
+    # (otherwise new zones aren't written before closing Yast)
+    SCR->Write (".dns.named", undef);
 
     my $ret = 1;
     if (scalar (@zones_update_actions) > 0)
@@ -1478,7 +1527,7 @@ sub Write {
 	if (! $success)
 	{
 	    # Cannot start service 'named', because of error that follows Error:.  Do not translate named.
-	    Report->Error (__("Error occurred while starting service named.\n\n".Service->FullInfo("named")));
+	    Report->Error (__("Error occurred while starting service named.\n\n"));
 	    $ok = 0;
 	    # There's no 'named' running -> prevent from blocking DNS queries
 	    $self->SetLocalForwarder("resolver") if GetLocalForwarder() eq "bind";
@@ -1564,9 +1613,11 @@ sub Import {
     @allowed_interfaces = @{$settings{"allowed_interfaces"} || []};
 
     @zones = @{$settings{"zones"} || []};
-    for my $i (0..@zones-1) {
-      $zones[$i]{"modified"} = 1;
-      y2milestone("Imported zone: ".$zones[$i]{"zone"});
+    for my $zone (@zones) {
+      $zone->{"modified"} = 1;
+      # Local zones are already part of the 'bind' package
+      $zone->{"is_new"} = 1 unless is_system_zone($zone->{"zone"});
+      y2milestone("Imported zone: ".$zone->{"zone"});
     }
 
     @options = @{$settings{"options"} || []};
