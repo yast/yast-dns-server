@@ -278,7 +278,7 @@ module Yast
             "start_service" => false,
             "zones"         => [
               {
-                "file"     => "example.com",
+                "file"     => "master/example.com",
                 "records"  => [
                   {
                     "key"   => "localhost",
