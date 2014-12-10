@@ -178,15 +178,15 @@ module Yast
         },
         "dns"       => {
           "named" => {
-            "section" => { "options" => "", "zone \"localhost\" in" => "" },
+            "section" => { "options" => "", "zone \"example.org\" in" => "" },
             "value"   => {
               "options"               => {
                 "directory" => ["\"/var/lib/named\""],
                 "notify"    => ["no"]
               },
-              "zone \"localhost\" in" => {
+              "zone \"example.org\" in" => {
                 "type" => ["master"],
-                "file" => ["\"localhost.zone\""]
+                "file" => ["\"master/example.org\""]
               },
               "acl"                   => []
             }
@@ -195,8 +195,8 @@ module Yast
             "TTL"     => "1W",
             "records" => [
               { "key" => "", "type" => "NS", "value" => "@" },
-              { "key" => "", "type" => "A", "value" => "127.0.0.1" },
-              { "key" => "localhost2", "type" => "A", "value" => "127.0.0.2" }
+              { "key" => "", "type" => "A", "value" => "10.0.0.1" },
+              { "key" => "server_name", "type" => "A", "value" => "10.0.0.2" }
             ],
             "soa"     => {
               "expiry"  => "6W",

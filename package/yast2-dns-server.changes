@@ -1,4 +1,25 @@
 -------------------------------------------------------------------
+Tue Dec  9 16:35:24 CET 2014 - locilka@suse.com
+
+- Fixed handling of zones (bnc#898659)
+  - Checking for system zones was moved to separate function
+  - Extended list of zones marked as system (internal) ones with
+    (0\.)+ip6.arpa
+  - Not allowing to edit system zones (belong to bind package)
+  - Added check for 'bind' package to be installed before writing
+    the configuration
+  - Marking all imported zones as 'modified' to be written later
+  - Marking all imported non-system zones as 'is_new' to create
+    a zone file for them
+  - Flushing /etc/named.conf cache 'after' writing zones (instead
+    of 'before')
+  - Using "" as the default NETCONFIG_DNS_POLICY (instead of 0)
+  - Do not write system zones to LDAP (bnc#746401)
+  - If systems zones are marked as modified, they are written to
+    named configuration (if LDAP is not in use)
+- 3.1.10
+
+-------------------------------------------------------------------
 Fri Dec  5 16:44:27 CET 2014 - locilka@suse.com
 
 - Fixed Import() and Write() in AutoYast (bnc#898659)
