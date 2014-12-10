@@ -4,21 +4,21 @@ Execute	.target.bash_output "stat --format='rights: %a, blocks: %b, size: %s, ow
 Read	.sysconfig.named.NAMED_RUN_CHROOTED 0
 Read	.sysconfig.network.config.NETCONFIG_DNS_POLICY "STATIC"
 Read	.sysconfig.network.config.NETCONFIG_DNS_FORWARDER 0
-Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
+Dir	.dns.named.section: ["options", "zone \"example.org\" in"]
 Dir	.dns.named.value.options: ["directory", "notify"]
 Read	.dns.named.value.options.directory ["\"/var/lib/named\""]
 Read	.dns.named.value.options.notify ["no"]
 Read	.sysconfig.network.config.NETCONFIG_DNS_STATIC_SERVERS ""
-Dir	.dns.named.section: ["options", "zone \"localhost\" in"]
+Dir	.dns.named.section: ["options", "zone \"example.org\" in"]
 Read	.dns.named.value.acl []
 Read	.sysconfig.named.NAMED_CONF_INCLUDE_FILES 0
 Read	.target.ycp "/var/lib/YaST2/yast2-dns-server_reverse-zones" $[]
-Read	.dns.named.value."zone \"localhost\" in".type ["master"]
-Read	.dns.named.value."zone \"localhost\" in".file ["\"localhost.zone\""]
-Read	.dns.zone "/var/lib/named/localhost.zone" $["TTL":"1W", "records":[$["key":"", "type":"NS", "value":"@"], $["key":"", "type":"A", "value":"127.0.0.1"], $["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":42, "server":"@", "zone":"@"]]
-Dir	.dns.named.value."zone \"localhost\" in": ["file", "type"]
-Read	.dns.named.value."zone \"localhost\" in"."file" ["\"localhost.zone\""]
-Read	.dns.named.value."zone \"localhost\" in"."type" ["master"]
+Read	.dns.named.value."zone \"example.org\" in".type ["master"]
+Read	.dns.named.value."zone \"example.org\" in".file ["\"master/example.org\""]
+Read	.dns.zone "/var/lib/named/master/example.org" $["TTL":"1W", "records":[$["key":"", "type":"NS", "value":"@"], $["key":"", "type":"A", "value":"10.0.0.1"], $["key":"server_name", "type":"A", "value":"10.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":42, "server":"@", "zone":"@"]]
+Dir	.dns.named.value."zone \"example.org\" in": ["file", "type"]
+Read	.dns.named.value."zone \"example.org\" in"."file" ["\"master/example.org\""]
+Read	.dns.named.value."zone \"example.org\" in"."type" ["master"]
 Return	true
 Dump	=======================
-Return	$["allowed_interfaces":[], "chroot":"1", "logging":[], "options":[$["key":"directory", "value":"\"/var/lib/named\""], $["key":"notify", "value":"no"], $["key":"forwarders", "value":""]], "start_service":"0", "use_ldap":"0", "zones":[$["file":"localhost.zone", "options":[$["key":"file", "value":"\"localhost.zone\""], $["key":"type", "value":"master"]], "records":[$["key":"localhost.", "type":"NS", "value":"@"], $["key":"localhost.", "type":"A", "value":"127.0.0.1"], $["key":"localhost2", "type":"A", "value":"127.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":"42", "server":"@", "zone":"@"], "this_zone_had_NS_record_at_start":"1", "ttl":"1W", "type":"master", "zone":"localhost"]]]
+Return	$["allowed_interfaces":[], "chroot":"1", "logging":[], "options":[$["key":"directory", "value":"\"/var/lib/named\""], $["key":"notify", "value":"no"], $["key":"forwarders", "value":""]], "start_service":"0", "use_ldap":"0", "zones":[$["file":"master/example.org", "options":[$["key":"file", "value":"\"master/example.org\""], $["key":"type", "value":"master"]], "records":[$["key":"example.org.", "type":"NS", "value":"@"], $["key":"example.org.", "type":"A", "value":"10.0.0.1"], $["key":"server_name", "type":"A", "value":"10.0.0.2"]], "soa":$["expiry":"6W", "mail":"root", "minimum":"1W", "refresh":"2D", "retry":"4H", "serial":"42", "server":"@", "zone":"@"], "this_zone_had_NS_record_at_start":"1", "ttl":"1W", "type":"master", "zone":"example.org"]]]
