@@ -263,7 +263,7 @@ module Yast
       @EXEC = {
         "target" => {
           "bash_output" => { "exit" => 1, "stdout" => "", "stderr" => "" },
-          "bash"        => 1
+          "bash"        => 0
         },
         "passwd" => { "init" => true }
       }
