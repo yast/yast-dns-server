@@ -123,7 +123,7 @@ sub is_system_zone {
         $zone_name eq "0.0.127.in-addr.arpa" ||
         $zone_name =~ /^(0\.)+ip6.arpa$/ ||
         $zone_name eq "."
-    )
+    );
 }
 
 ##------------------------------------
@@ -1302,14 +1302,22 @@ sub check_and_install_package {
     my $self = shift;
     return 1 if (PackageSystem->Installed("bind"));
 
-    # Package cannot be installed in some modes, changing the mode temporarily
-    my $previous_mode = Mode->mode();
-    Mode->SetMode("normal");
-    my $installed = PackageSystem->CheckAndInstallPackagesInteractive(["bind"]);
+    my $installed = 0;
 
-    # Reread the configuration stat if it has changed
-    $configuration_timestamp = $self->GetConfigurationStat() if $installed;
-    Mode->SetMode($previous_mode);
+    # Try to install the required package
+    if (Mode->autoinst()) {
+        # Non-interactively, as we can't ask user in this case
+        $installed = PackageSystem->CheckAndInstallPackages(["bind"]);
+    } else {
+        # Package cannot be installed in some modes, changing the mode temporarily
+        my $previous_mode = Mode->mode();
+        Mode->SetMode("normal");
+        $installed = PackageSystem->CheckAndInstallPackagesInteractive(["bind"]);
+
+        # Reread the configuration stat if it has changed
+        $configuration_timestamp = $self->GetConfigurationStat() if $installed;
+        Mode->SetMode($previous_mode);
+    }
 
     return 1 if $installed;
 

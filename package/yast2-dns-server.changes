@@ -14,6 +14,9 @@ Tue Dec  9 16:35:24 CET 2014 - locilka@suse.com
   - Flushing /etc/named.conf cache 'after' writing zones (instead
     of 'before')
   - Using "" as the default NETCONFIG_DNS_POLICY (instead of 0)
+  - Do not write system zones to LDAP (bnc#746401)
+  - If systems zones are marked as modified, they are written to
+    named configuration (if LDAP is not in use)
 - 3.1.7.2
 
 -------------------------------------------------------------------
