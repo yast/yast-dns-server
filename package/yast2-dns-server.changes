@@ -1,7 +1,39 @@
 -------------------------------------------------------------------
-Thu Dec  4 09:50:05 UTC 2014 - jreidinger@suse.com
+Tue Dec  9 16:35:24 CET 2014 - locilka@suse.com
+
+- Fixed handling of zones (bnc#898659)
+  - Checking for system zones was moved to separate function
+  - Extended list of zones marked as system (internal) ones with
+    (0\.)+ip6.arpa
+  - Not allowing to edit system zones (belong to bind package)
+  - Added check for 'bind' package to be installed before writing
+    the configuration
+  - Marking all imported zones as 'modified' to be written later
+  - Marking all imported non-system zones as 'is_new' to create
+    a zone file for them
+  - Flushing /etc/named.conf cache 'after' writing zones (instead
+    of 'before')
+  - Using "" as the default NETCONFIG_DNS_POLICY (instead of 0)
+  - Do not write system zones to LDAP (bnc#746401)
+  - If systems zones are marked as modified, they are written to
+    named configuration (if LDAP is not in use)
+- 3.1.10
+
+-------------------------------------------------------------------
+Fri Dec  5 16:44:27 CET 2014 - locilka@suse.com
+
+- Fixed Import() and Write() in AutoYast (bnc#898659)
+  - Imported zones were not written to the system as they were not
+    marked as 'modified'
+  - Directory /etc/named.d/ was used even if it didn't exist
+  - The whole named.conf was rewritten from scratch as Yast thought
+    that something has changed that file while Yast was running
+- 3.1.9
+
+-------------------------------------------------------------------
 
 - remove X-KDE-Library from desktop file (bnc#899104)
+- 3.1.8
 
 -------------------------------------------------------------------
 Thu Sep  4 12:20:11 UTC 2014 - mvidner@suse.com
