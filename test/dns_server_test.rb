@@ -28,12 +28,12 @@ end
 describe "#SetLocalForwarder" do
 
   it "does not set new forwarder if the forwarder is undefined" do
-    expect(Yast::DnsServer.SetLocalForwarder(nil)).to be_false
+    expect(Yast::DnsServer.SetLocalForwarder(nil)).to eq false
   end
 
   it "sets new local forwarder if it's defined" do
-    expect(Yast::DnsServer.SetLocalForwarder("")).to be_true
-    expect(Yast::DnsServer.SetLocalForwarder("new_forwarder")).to be_true
+    expect(Yast::DnsServer.SetLocalForwarder("")).to eq true
+    expect(Yast::DnsServer.SetLocalForwarder("new_forwarder")).to eq true
   end
 
 end

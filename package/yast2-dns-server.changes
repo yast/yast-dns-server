@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Feb 13 11:18:34 UTC 2015 - ancor@suse.com
+
+- The unit tests are now compatible with RSpec 3
+- 3.1.11
+
+-------------------------------------------------------------------
 Tue Dec  9 16:35:24 CET 2014 - locilka@suse.com
 
 - Fixed handling of zones (bnc#898659)
