@@ -30,6 +30,10 @@ ynclude_DATA = \
   include/dns-server/cmdline.rb \
   include/dns-server/helps.rb
 
+ylibdir = @ylibdir@/ui
+ylib_DATA = \
+  lib/ui/srv_status_component.rb
+
 scrconf_DATA = \
   scrconf/dns_zone.scr \
   scrconf/cfg_named.scr \
@@ -49,6 +53,6 @@ schemafiles_DATA = \
 desktop_DATA = \
   desktop/dns-server.desktop
 
-EXTRA_DIST = $(module_DATA) $(module1_DATA) $(client_DATA) $(ynclude_DATA) $(scrconf_DATA) $(agent_SCRIPTS) $(schemafiles_DATA) $(desktop_DATA)
+EXTRA_DIST = $(module_DATA) $(module1_DATA) $(client_DATA) $(ynclude_DATA) $(scrconf_DATA) $(agent_SCRIPTS) $(schemafiles_DATA) $(desktop_DATA) $(ylib_DATA)
 
 include $(top_srcdir)/Makefile.am.common

@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dns-server
-Version:        3.1.11
+Version:        3.1.11.1
 Release:        0
 Url:            https://github.com/yast/yast-dns-server
 
@@ -83,6 +83,7 @@ This package contains the YaST2 component for DNS server configuration.
 %defattr(-,root,root)
 %dir %{yast_yncludedir}/dns-server
 %{yast_yncludedir}/dns-server/*
+%{yast_dir}/lib/ui
 %{yast_clientdir}/dns-server.rb
 %{yast_clientdir}/dns-server_*.rb
 %{yast_moduledir}/*
