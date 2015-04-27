@@ -59,21 +59,6 @@ module Yast
       ret ? :next : :abort
     end
 
-    # Write settings dialog
-    # @return `abort if aborted and `next otherwise
-    def WriteDialog
-      Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
-      ret = DnsServer.Write
-      # yes-no popup
-      if !ret &&
-          Popup.YesNo(
-            _("Saving the configuration failed. Change the settings?")
-          )
-        return :back
-      end
-      ret ? :next : :abort
-    end
-
     def runZoneTypeSwitch
       type = Ops.get_string(@current_zone, "type", "master")
       name = Ops.get_string(@current_zone, "zone", "unknown")

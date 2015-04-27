@@ -9,6 +9,9 @@
 #
 # Representation of the configuration of dns-server.
 # Input and output routines.
+
+require "ui/srv_status_component"
+
 module Yast
   module DnsServerDialogMainInclude
     def initialize_dns_server_dialog_main(include_target)
@@ -37,7 +40,14 @@ module Yast
       Yast.import "String"
 
       # String defines the initial screen for the expert dialog
-      @initial_screen = "start_up"
+      @initial_screen = "status"
+
+      # Do not let DnsServer manage the service status, let the user decide
+      DnsServer.SetWriteOnly(true)
+      @status_component = ::UI::SrvStatusComponent.new(
+        "named",
+        save_button_callback: method(:SaveAndRestart)
+      )
 
       @global_options_add_items = Builtins.sort(
         [
@@ -283,44 +293,19 @@ module Yast
             )
           }
         ),
-        "start_stop"    => CWMServiceStart.CreateStartStopWidget(
-          {
-            "service_id"                => "named",
-            # label - service status, informative text
-            "service_running_label"     => _(
-              "DNS server is running."
-            ),
-            # label - service status, informative text
-            "service_not_running_label" => _(
-              "DNS server is not running."
-            ),
-            # push button (DNS service handling)
-            "start_now_button"          => _(
-              "&Start DNS Server Now"
-            ),
-            # push button (DNS service handling)
-            "stop_now_button"           => _(
-              "S&top DNS Server Now"
-            ),
-            "save_now_action"           => fun_ref(
-              method(:SaveAndRestart),
-              "void ()"
-            ),
-            # push button (DNS service handling)
-            "save_now_button"           => _(
-              "Save Settings and Reload DNS Server &Now"
-            ),
-            "help"                      => Builtins.sformat(
-              CWMServiceStart.StartStopHelpTemplate(true),
-              # part of help text, used to describe pusbuttons (matching DNS service handling but without "&")
-              _("Start DNS Server Now"),
-              # part of help text, used to describe pusbuttons (matching DNS service handling but without "&")
-              _("Stop DNS Server Now"),
-              # part of help text, used to describe pusbuttons (matching DNS service handling but without "&")
-              _("Save Settings and Reload DNS Server Now")
-            )
-          }
-        ),
+        "status"    => {
+          "widget"        => :custom,
+          "custom_widget" => VBox(),
+          "init"          => fun_ref(
+            method(:InitStatus),
+            "void (string)"
+          ),
+          "handle"        => fun_ref(
+            method(:HandleStatus),
+            "symbol (string, map)"
+          ),
+          "help"          => @HELPS["status"]
+        },
         "firewall"      => CWMFirewallInterfaces.CreateOpenFirewallWidget(
           { "services" => ["service:bind"], "display_details" => true }
         ),
@@ -455,16 +440,21 @@ module Yast
       }
 
       @tabs = {
+        "status" => {
+          "contents"        => @status_component.widget,
+          "caption"         => "#{@dns_server_label}: #{_('Service status')}",
+          "tree_item_label" => _(
+            "Service status"
+          ),
+          "widget_names"    => ["status"]
+        },
         "start_up"      => {
           # FIXME: new startup
           "contents"        => VBox(
             "auto_start_up",
             VSpacing(),
             "firewall",
-            "use_ldap",
-            VSpacing(),
-            "start_stop",
-            VStretch()
+            "use_ldap"
           ),
           # Dialog Label - DNS - expert settings
           "caption"         => Ops.add(
@@ -478,9 +468,9 @@ module Yast
           # FIXME: new startup
           "widget_names"    => DnsServer.ExpertUI ?
             # expert mode
-            ["auto_start_up", "firewall", "use_ldap", "start_stop"] :
+            ["auto_start_up", "firewall", "use_ldap"] :
             # simple mode
-            ["auto_start_up", "firewall", "start_stop", "set_icon"]
+            ["auto_start_up", "firewall", "set_icon"]
         },
         "forwarders"    => {
           "contents"        => ExpertForwardersDialog(),
@@ -570,91 +560,14 @@ module Yast
       @functions = { :abort => fun_ref(method(:confirmAbort), "boolean ()") }
     end
 
-    # Dialog Expert Settings - Start Up
-    # @return [Yast::Term] for Get_ExpertDialog()
-    def ExpertStartUpDialog
-      dialog = Top(
-        VBox(
-          # Frame label (DNS starting)
-          Frame(
-            _("Start-Up"),
-            Left(
-              RadioButtonGroup(
-                Id("dns_server_type"),
-                VBox(
-                  # Radiobutton label
-                  Left(RadioButton(Id(:on), _("Now and When Booting"))),
-                  # Radiobutton label
-                  Left(RadioButton(Id(:off), _("Only Manually"))),
-                  VSpacing(1)
-                )
-              )
-            )
-          ),
-          VSpacing(1),
-          # check box
-          Left(
-            CheckBox(Id("use_ldap"), Opt(:notify), _("&LDAP Support Active"))
-          ),
-          VSpacing(1),
-          # Frame label (stoping starting DNS server)
-          Frame(
-            _("Switch On and Off"),
-            Left(
-              HSquash(
-                VBox(
-                  HBox(
-                    # Current status
-                    Label(_("Current Status: ")),
-                    ReplacePoint(
-                      Id("service_status_rp"),
-                      # service status - label
-                      Label(_("DNS server is running."))
-                    ),
-                    HStretch()
-                  ),
-                  # Pushbutton for starting the DNS server
-                  PushButton(
-                    Id("start_dns_now"),
-                    Opt(:hstretch),
-                    _("&Start DNS Server Now")
-                  ),
-                  # Pushbutton for stopping the DNS server
-                  PushButton(
-                    Id("stop_dns_now"),
-                    Opt(:hstretch),
-                    _("S&top DNS Server Now")
-                  )
-                )
-              )
-            )
-          )
-        )
-      )
-      deep_copy(dialog)
+    def InitStatus(_key)
+      @status_component.refresh_widget
+      nil
     end
 
-    def UpdateServiceStatusWidget
-      if Mode.config
-        UI.ChangeWidget(Id("start_dns_now"), :Enabled, false)
-        UI.ChangeWidget(Id("stop_dns_now"), :Enabled, false)
-        UI.ReplaceWidget(Id("service_status_rp"), Label(""))
-      else
-        status = DnsServer.GetDnsServiceStatus
-        UI.ChangeWidget(Id("start_dns_now"), :Enabled, !status)
-        UI.ChangeWidget(Id("stop_dns_now"), :Enabled, status)
-        UI.ReplaceWidget(
-          Id("service_status_rp"),
-          Label(
-            status ?
-              # service sttus - label
-              _("DNS server is running.") :
-              # service sttus - label
-              _("DNS server is not running.")
-          )
-        )
-      end
-
+    def HandleStatus(_key, event)
+      event_id = event["ID"]
+      @status_component.handle_input(event_id)
       nil
     end
 
@@ -676,7 +589,6 @@ module Yast
       )
       use_ldap = DnsServer.GetUseLdap
       UI.ChangeWidget(Id("use_ldap"), :Value, use_ldap)
-      UpdateServiceStatusWidget()
 
       nil
     end
@@ -695,25 +607,7 @@ module Yast
     def HandleExpertStartUpPage(key, event)
       event = deep_copy(event)
       ret = Ops.get(event, "ID")
-      if ret == "start_dns_now"
-        status = DnsServer.StartDnsService
-        if !status
-          # error report
-          Report.Error(Message.CannotStartService("named"))
-        else
-          Builtins.sleep(500)
-          UpdateServiceStatusWidget()
-        end
-      elsif ret == "stop_dns_now"
-        status = DnsServer.StopDnsService
-        if !status
-          # error report
-          Report.Error(Message.CannotStopService("named"))
-        else
-          Builtins.sleep(500)
-          UpdateServiceStatusWidget()
-        end
-      elsif ret == "use_ldap"
+      if ret == "use_ldap"
         # yes-no popup
         #	if (! Popup::YesNo (
         popup = _(
@@ -2329,10 +2223,32 @@ module Yast
       nil
     end
 
+    # Write settings dialog
+    # @return `abort if aborted and `next otherwise
+    def WriteDialog
+      Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
+      ret = DnsServer.Write
+      if ret
+        @status_component.adjust_service_status
+        :next
+      else
+        if Popup.YesNo(_("Saving the configuration failed. Change the settings?"))
+          :back
+        else
+          :abort
+        end
+      end
+    end
+
     def SaveAndRestart
       Wizard.CreateDialog
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
-      DnsServer.Write
+      ret = DnsServer.Write
+      if ret
+        @status_component.adjust_service_status
+      else
+        Report.Error(_("Saving the configuration failed"))
+      end
       Builtins.sleep(1000)
       UI.CloseDialog
 
@@ -2362,6 +2278,7 @@ module Yast
     # @return [Symbol] for the wizard sequencer
     def runExpertDialog
       expert_dialogs = [
+        "status",
         "start_up",
         "forwarders",
         "basic_options",
