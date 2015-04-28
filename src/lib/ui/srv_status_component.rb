@@ -18,10 +18,12 @@ module UI
 
     def widget
       VBox(
-        ReplacePoint(Id(id_prefix),
-          status_widget
+        Frame("Service state",
+          ReplacePoint(Id(id_prefix),
+            status_widget
+          )
         ),
-        VSpacing(1),
+        VSpacing(0.4),
         Right(
           PushButton(Id("#{id_prefix}_apply"), _("Save settings now without closing"))
         )
@@ -94,12 +96,12 @@ module UI
       VBox(
         Left(
           HBox(
-            Label(_("Current status:")),
+            Label(_("Currently:")),
             Label(" "),
             *label_and_action_widgets
           )
         ),
-        VSpacing(1),
+        VSpacing(0.4),
         Left(Label(_("After saving settings:"))),
         RadioButtonGroup(
           VBox(
