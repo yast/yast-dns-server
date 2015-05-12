@@ -553,59 +553,6 @@ module Yast
       nil
     end
 
-    # Initialize the tab of the dialog
-    def InitExpertStartUpPage(key)
-      SetDNSSErverIcon()
-      auto_start = DnsServer.GetStartService
-      UI.ChangeWidget(
-        Id("dns_server_type"),
-        :CurrentButton,
-        auto_start ? :on : :off
-      )
-      use_ldap = DnsServer.GetUseLdap
-      UI.ChangeWidget(Id("use_ldap"), :Value, use_ldap)
-
-      nil
-    end
-
-    # Store settings of a tab of a dialog
-    def StoreExpertStartUpPage(key, event)
-      event = deep_copy(event)
-      auto_start = UI.QueryWidget(Id("dns_server_type"), :CurrentButton) == :on
-      use_ldap = Convert.to_boolean(UI.QueryWidget(Id("use_ldap"), :Value))
-      DnsServer.SetStartService(auto_start)
-
-      nil
-    end
-
-    # Handle events in a tab of a dialog
-    def HandleExpertStartUpPage(key, event)
-      event = deep_copy(event)
-      ret = Ops.get(event, "ID")
-      if ret == "use_ldap"
-        # yes-no popup
-        #	if (! Popup::YesNo (
-        popup = _(
-          "All your changes will be lost. Settings will\n" +
-            "be reread from new data storage.\n" +
-            "Continue?\n"
-        ) #))
-        #	{
-        #	    return nil;
-        #	}
-        use_ldap = Convert.to_boolean(UI.QueryWidget(Id("use_ldap"), :Value))
-        successful = DnsServer.SetUseLdap(use_ldap)
-        if successful && !Mode.config
-          DnsServer.InitYapiConfigOptions({ "use_ldap" => use_ldap })
-          # error reported in SetUseLdap
-          DnsServer.LdapInit(true, false)
-          DnsServer.CleanYapiConfigOptions
-        end
-        use_ldap = DnsServer.GetUseLdap
-        UI.ChangeWidget(Id("use_ldap"), :Value, use_ldap)
-      end
-      nil
-    end
     # Dialog Expert Settings - Forwarders
     # @return [Yast::Term] for Get_ExpertDialog()
     def ExpertForwardersDialog
