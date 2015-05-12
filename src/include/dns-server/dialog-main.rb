@@ -439,8 +439,8 @@ module Yast
         },
         "use_ldap"      => {
           "contents"        => VBox("use_ldap"),
-          "caption"         => "LDAP FIXME",
-          "tree_item_label" => "LDAP FIXME",
+          "caption"         => "#{@dns_server_label}: #{_('LDAP Support')}",
+          "tree_item_label" => _("LDAP Support"),
           "widget_names"    => ["use_ldap"]
         },
         "forwarders"    => {
