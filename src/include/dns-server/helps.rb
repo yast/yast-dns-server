@@ -204,11 +204,6 @@ module Yast
               "<b>Start DNS Server Now</b> or\n" +
               "<b>Stop DNS Server Now</b>.</p>\n"
           ),
-        # TODO
-        "status"                  => _(
-          "<p><b><big>TODO</big></b><br>\n" +
-            "TODO\n"
-        ),
         # Expert Mode Configuration - Forwarders 1/3
         "forwarders"                  => _(
           "<p><b><big>Forwarders</big></b><br>\n" +

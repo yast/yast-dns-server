@@ -40,7 +40,7 @@ module Yast
       Yast.import "String"
 
       # String defines the initial screen for the expert dialog
-      @initial_screen = "status"
+      @initial_screen = "start_up"
 
       # Do not let DnsServer manage the service status, let the user decide
       DnsServer.SetWriteOnly(true)
@@ -304,7 +304,7 @@ module Yast
             method(:HandleStatus),
             "symbol (string, map)"
           ),
-          "help"          => @HELPS["status"]
+          "help"          => "TODO"
         },
         "firewall"      => CWMFirewallInterfaces.CreateOpenFirewallWidget(
           { "services" => ["service:bind"], "display_details" => true }
@@ -440,21 +440,12 @@ module Yast
       }
 
       @tabs = {
-        "status" => {
-          "contents"        => @status_component.widget,
-          "caption"         => "#{@dns_server_label}: #{_('Service status')}",
-          "tree_item_label" => _(
-            "Service status"
-          ),
-          "widget_names"    => ["status"]
-        },
         "start_up"      => {
           # FIXME: new startup
           "contents"        => VBox(
-            "auto_start_up",
+            @status_component.widget,
             VSpacing(),
             "firewall",
-            "use_ldap"
           ),
           # Dialog Label - DNS - expert settings
           "caption"         => Ops.add(
@@ -468,9 +459,15 @@ module Yast
           # FIXME: new startup
           "widget_names"    => DnsServer.ExpertUI ?
             # expert mode
-            ["auto_start_up", "firewall", "use_ldap"] :
+            ["status", "firewall"] :
             # simple mode
-            ["auto_start_up", "firewall", "set_icon"]
+            ["status", "firewall", "set_icon"]
+        },
+        "use_ldap"      => {
+          "contents"        => VBox("use_ldap"),
+          "caption"         => "LDAP FIXME",
+          "tree_item_label" => "LDAP FIXME",
+          "widget_names"    => ["use_ldap"]
         },
         "forwarders"    => {
           "contents"        => ExpertForwardersDialog(),
@@ -2229,7 +2226,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @status_component.adjust_service_status
+        @status_component.adjust_service
         :next
       else
         if Popup.YesNo(_("Saving the configuration failed. Change the settings?"))
@@ -2245,7 +2242,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @status_component.adjust_service_status
+        @status_component.adjust_service
       else
         Report.Error(_("Saving the configuration failed"))
       end
@@ -2278,8 +2275,8 @@ module Yast
     # @return [Symbol] for the wizard sequencer
     def runExpertDialog
       expert_dialogs = [
-        "status",
         "start_up",
+        "use_ldap",
         "forwarders",
         "basic_options",
         "logging",

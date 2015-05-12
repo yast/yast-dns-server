@@ -8,22 +8,23 @@ module UI
     include Yast::I18n
     include Yast::Logger
 
-    def initialize(service_name, save_button_callback: nil)
+    def initialize(service_name, save_button_callback: nil, default_reload: true)
       @service_name = service_name
       @save_button_callback = save_button_callback
+      @reload = default_reload
 
-      @after_save_action = :nothing
+      @enabled = service_enabled?
       @id_prefix = "_srv_status_#{@service_name}"
     end
 
     def widget
       VBox(
-        Frame("Service state",
-          ReplacePoint(Id(id_prefix),
-            status_widget
-          )
-        ),
-        VSpacing(0.4),
+        ReplacePoint(Id("#{id_prefix}_status"), status_widget),
+        VSpacing(),
+        on_boot_widget,
+        VSpacing(),
+        reload_widget,
+        VSpacing(),
         Right(
           PushButton(Id("#{id_prefix}_apply"), _("Save settings now without closing"))
         )
@@ -41,21 +42,28 @@ module UI
         when "#{id_prefix}_apply"
           @save_button_callback.call if @save_button_callback
           refresh_widget
-        when /^#{id_prefix}_as_(.*)/
-          @after_save_action = $1.to_sym
+        when "#{id_prefix}_reload"
+          @reload = Yast::UI.QueryWidget(Id(input), :Value)
+        when "#{id_prefix}_enabled"
+          @enabled = Yast::UI.QueryWidget(Id(input), :Value)
       end
     end
 
-    def adjust_service_status
-      return unless @after_save_action
-      return if @after_save_action == :nothing
-      send(:"#{@after_save_action}_service")
+    def init_widget
+      Yast::UI.ChangeWidget(Id("#{id_prefix}_reload"), :Enabled, service_running?)
+      Yast::UI.ChangeWidget(Id("#{id_prefix}_reload"), :Value, @reload)
+      Yast::UI.ChangeWidget(Id("#{id_prefix}_enabled"), :Value, @enabled)
     end
 
     def refresh_widget
-      Yast::UI.ReplaceWidget(Id(id_prefix), status_widget)
+      init_widget
+      Yast::UI.ReplaceWidget(Id("#{id_prefix}_status"), status_widget)
     end
 
+    def adjust_service
+      @enabled ? enable_service : disable_service
+      reload_service if service_running? && @reload
+    end
 
     protected
 
@@ -67,46 +75,66 @@ module UI
     end
 
     # Should be redefined by services not following standard procedures
+    def service_enabled?
+      Yast::Service.enabled?(@service_name)
+    end
+
+    # Should be redefined by services not following standard procedures
     def start_service
-      log.info "Default implementation of SrvStatusComponent#start for #{@service_name}"
-      ret = Yast::Service.Start(@service_name)
-      if ret && @after_save_action == :start
-        @after_save_action = :reload
-      end
-      ret
+      log.info "Default implementation of SrvStatusComponent#start_service for #{@service_name}"
+      Yast::Service.Start(@service_name)
     end
 
     # Should be redefined by services not following standard procedures
     def stop_service
-      log.info "Default implementation of SrvStatusComponent#stop for #{@service_name}"
-      ret = Yast::Service.Stop(@service_name)
-      if ret && @after_save_action == :stop
-        @after_save_action = :nothing
-      end
-      ret
+      log.info "Default implementation of SrvStatusComponent#stop_service for #{@service_name}"
+      Yast::Service.Stop(@service_name)
     end
 
     # Should be redefined by services not following standard procedures
     def reload_service
-      log.info "Default implementation of SrvStatusComponent#reload for #{@service_name}"
+      log.info "Default implementation of SrvStatusComponent#reload_service for #{@service_name}"
       Yast::Service.Reload(@service_name)
     end
 
+    # Should be redefined by services not following standard procedures
+    def enable_service
+      log.info "Default implementation of SrvStatusComponent#enable_service for #{@service_name}"
+      Yast::Service.Enable(@service_name)
+    end
+
+    # Should be redefined by services not following standard procedures
+    def disable_service
+      log.info "Default implementation of SrvStatusComponent#disable_service for #{@service_name}"
+      Yast::Service.Disable(@service_name)
+    end
+
     def status_widget
-      VBox(
-        Left(
-          HBox(
-            Label(_("Currently:")),
-            Label(" "),
-            *label_and_action_widgets
-          )
-        ),
-        VSpacing(0.4),
-        Left(Label(_("After saving settings:"))),
-        RadioButtonGroup(
-          VBox(
-            *after_save_widgets
-          )
+      Left(
+        HBox(
+          Label(_("Current status:")),
+          Label(" "),
+          *label_and_action_widgets
+        )
+      )
+    end
+
+    def on_boot_widget
+      Left(
+        CheckBox(
+          Id("#{id_prefix}_enabled"),
+          Opt(:notify),
+          _("Start service during boot"),
+        )
+      )
+    end
+
+    def reload_widget
+      Left(
+        CheckBox(
+          Id("#{id_prefix}_reload"),
+          Opt(:notify),
+          _("Reload/restart the service after saving settings"),
         )
       )
     end
@@ -127,48 +155,6 @@ module UI
           PushButton(Id("#{id_prefix}_start"), _("Start now"))
         ]
       end
-    end
-
-    def after_save_widgets
-      widgets = [
-        Left(
-          RadioButton(
-            Id("#{id_prefix}_as_nothing"),
-            Opt(:notify),
-            "Do nothing",
-            @after_save_action == :nothing
-          )
-        )
-      ]
-      if service_running?
-        widgets << Left(
-          RadioButton(
-            Id("#{id_prefix}_as_reload"),
-            Opt(:notify),
-            "Reload/restart the service",
-            @after_save_action == :reload
-          )
-        )
-        widgets << Left(
-          RadioButton(
-            Id("#{id_prefix}_as_stop"),
-            Opt(:notify),
-            "Stop the service",
-            @after_save_action == :stop
-          )
-        )
-      else
-        widgets << Left(
-          RadioButton(
-            Id("#{id_prefix}_as_start"),
-            Opt(:notify),
-            "Start the service",
-            @after_save_action == :start
-          )
-        )
-        widgets << VSpacing(1)
-      end
-      widgets
     end
   end
 end
