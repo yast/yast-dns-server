@@ -8,10 +8,9 @@ module UI
     include Yast::I18n
     include Yast::Logger
 
-    def initialize(service_name, save_button_callback: nil, default_reload: true)
+    def initialize(service_name, reload: true)
       @service_name = service_name
-      @save_button_callback = save_button_callback
-      @reload = default_reload
+      @reload = reload
 
       @enabled = service_enabled?
       @id_prefix = "_srv_status_#{@service_name}"
@@ -23,11 +22,7 @@ module UI
         VSpacing(),
         on_boot_widget,
         VSpacing(),
-        reload_widget,
-        VSpacing(),
-        Right(
-          PushButton(Id("#{id_prefix}_apply"), _("Save settings now without closing"))
-        )
+        reload_widget
       )
     end
 
@@ -38,9 +33,6 @@ module UI
           refresh_widget
         when "#{id_prefix}_start"
           start_service
-          refresh_widget
-        when "#{id_prefix}_apply"
-          @save_button_callback.call if @save_button_callback
           refresh_widget
         when "#{id_prefix}_reload"
           @reload = Yast::UI.QueryWidget(Id(input), :Value)

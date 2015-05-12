@@ -1530,8 +1530,11 @@ sub Write {
 		y2milestone("Restarting service 'named'");
 		$success = Service->Restart("named")
 	    }
+
+	    # FIXME: TODO check if it's safe to move enabling/disabling to the
+	    # !$write_only part
+	    Service->Enable ("named");
 	}
-	Service->Enable ("named");
 	if (! $success)
 	{
 	    # Cannot start service 'named', because of error that follows Error:.  Do not translate named.
@@ -1552,8 +1555,11 @@ sub Write {
 	    # There's no 'named' running. Reset dns forwarder again
 	    $self->SetLocalForwarder("resolver") if GetLocalForwarder() eq "bind";
 	    y2warning("Local forwarder set to: ".GetLocalForwarder());
+
+	    # FIXME: TODO check if it's safe to move enabling/disabling to the
+	    # !$write_only part
+	    Service->Disable ("named");
 	}
-	Service->Disable ("named");
     }
 
     # First run finished

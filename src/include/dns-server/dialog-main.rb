@@ -44,10 +44,7 @@ module Yast
 
       # Do not let DnsServer manage the service status, let the user decide
       DnsServer.SetWriteOnly(true)
-      @status_component = ::UI::SrvStatusComponent.new(
-        "named",
-        save_button_callback: method(:SaveAndRestart)
-      )
+      @status_component = ::UI::SrvStatusComponent.new("named")
 
       @global_options_add_items = Builtins.sort(
         [
@@ -266,42 +263,15 @@ module Yast
       @dns_server_label = _("DNS Server")
 
       @new_widgets = {
-        "auto_start_up" => CWMServiceStart.CreateAutoStartWidget(
-          {
-            "get_service_auto_start" => fun_ref(
-              DnsServer.method(:GetStartService),
-              "boolean ()"
-            ),
-            "set_service_auto_start" => fun_ref(
-              DnsServer.method(:SetStartService),
-              "void (boolean)"
-            ),
-            # radio button (starting DNS service - option 1)
-            "start_auto_button"      => _(
-              "When &Booting"
-            ),
-            # radio button (starting DNS service - option 2)
-            "start_manual_button"    => _(
-              "&Manually"
-            ),
-            "help"                   => Builtins.sformat(
-              CWMServiceStart.AutoStartHelpTemplate,
-              # part of help text, used to describe radiobuttons (matching starting DNS service but without "&")
-              _("When Booting"),
-              # part of help text, used to describe radiobuttons (matching starting DNS service but without "&")
-              _("Manually")
-            )
-          }
-        ),
-        "status"    => {
+        "start_up"    => {
           "widget"        => :custom,
           "custom_widget" => VBox(),
           "init"          => fun_ref(
-            method(:InitStatus),
+            method(:InitStartUp),
             "void (string)"
           ),
           "handle"        => fun_ref(
-            method(:HandleStatus),
+            method(:HandleStartUp),
             "symbol (string, map)"
           ),
           "help"          => "TODO"
@@ -446,6 +416,10 @@ module Yast
             @status_component.widget,
             VSpacing(),
             "firewall",
+            VStretch(),
+            Right(
+              PushButton(Id("apply"), _("Save settings now without closing"))
+            )
           ),
           # Dialog Label - DNS - expert settings
           "caption"         => Ops.add(
@@ -459,9 +433,9 @@ module Yast
           # FIXME: new startup
           "widget_names"    => DnsServer.ExpertUI ?
             # expert mode
-            ["status", "firewall"] :
+            ["start_up", "firewall"] :
             # simple mode
-            ["status", "firewall", "set_icon"]
+            ["start_up", "firewall", "set_icon"]
         },
         "use_ldap"      => {
           "contents"        => VBox("use_ldap"),
@@ -557,14 +531,18 @@ module Yast
       @functions = { :abort => fun_ref(method(:confirmAbort), "boolean ()") }
     end
 
-    def InitStatus(_key)
+    def InitStartUp(_key)
       @status_component.refresh_widget
       nil
     end
 
-    def HandleStatus(_key, event)
+    def HandleStartUp(_key, event)
       event_id = event["ID"]
-      @status_component.handle_input(event_id)
+      if event_id == "apply"
+        SaveAndRestart()
+      else
+        @status_component.handle_input(event_id)
+      end
       nil
     end
 
