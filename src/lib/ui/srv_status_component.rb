@@ -8,9 +8,11 @@ module UI
     include Yast::I18n
     include Yast::Logger
 
-    def initialize(service_name, reload: true)
+    def initialize(service_name, reload: true, reload_callback: nil, enabled_callback: nil)
       @service_name = service_name
       @reload = reload
+      @reload_callback = reload_callback
+      @enabled_callback = enabled_callback
 
       @enabled = service_enabled?
       @id_prefix = "_srv_status_#{@service_name}"
@@ -18,7 +20,7 @@ module UI
 
     def widget
       VBox(
-        ReplacePoint(Id("#{id_prefix}_status"), status_widget),
+        ReplacePoint(Id("#{id_prefix}_status"), HBox()),
         VSpacing(),
         on_boot_widget,
         VSpacing(),
@@ -30,31 +32,45 @@ module UI
       case input
         when "#{id_prefix}_stop"
           stop_service
-          refresh_widget
+          update_widget
         when "#{id_prefix}_start"
           start_service
-          refresh_widget
+          update_widget
         when "#{id_prefix}_reload"
           @reload = Yast::UI.QueryWidget(Id(input), :Value)
+	  @reload_callback.call(@reload) if @reload_callback
         when "#{id_prefix}_enabled"
           @enabled = Yast::UI.QueryWidget(Id(input), :Value)
+	  @enabled_callback.call(@enabled) if @enabled_callback
       end
     end
 
-    def init_widget
+    def update_widget
       Yast::UI.ChangeWidget(Id("#{id_prefix}_reload"), :Enabled, service_running?)
       Yast::UI.ChangeWidget(Id("#{id_prefix}_reload"), :Value, @reload)
       Yast::UI.ChangeWidget(Id("#{id_prefix}_enabled"), :Value, @enabled)
-    end
-
-    def refresh_widget
-      init_widget
       Yast::UI.ReplaceWidget(Id("#{id_prefix}_status"), status_widget)
     end
 
+    # Adjusts the current status only
+    def adjust_status
+      reload_service if service_running? && @reload
+    end
+
+    # Adjusts both the current status and the status on boot
     def adjust_service
       @enabled ? enable_service : disable_service
-      reload_service if service_running? && @reload
+      adjust_service_status
+    end
+
+    # Checks if the user decided to enable the service on boot
+    def enabled?
+      @enabled
+    end
+
+    # Checks if the user decided to reload the service after saving
+    def reload?
+      @reload
     end
 
     protected

@@ -44,7 +44,10 @@ module Yast
 
       # Do not let DnsServer manage the service status, let the user decide
       DnsServer.SetWriteOnly(true)
-      @status_component = ::UI::SrvStatusComponent.new("named")
+      @status_component = ::UI::SrvStatusComponent.new(
+	      "named",
+	      enabled_callback: ->(e) { DnsServer.SetStartService(e) }
+      )
 
       @global_options_add_items = Builtins.sort(
         [
@@ -532,7 +535,7 @@ module Yast
     end
 
     def InitStartUp(_key)
-      @status_component.refresh_widget
+      @status_component.update_widget
       nil
     end
 
@@ -2151,7 +2154,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @status_component.adjust_service
+        @status_component.adjust_status
         :next
       else
         if Popup.YesNo(_("Saving the configuration failed. Change the settings?"))
@@ -2167,7 +2170,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @status_component.adjust_service
+        @status_component.adjust_status
       else
         Report.Error(_("Saving the configuration failed"))
       end
