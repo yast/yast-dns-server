@@ -8,10 +8,9 @@ module UI
     include Yast::I18n
     include Yast::Logger
 
-    def initialize(service_name, reload: true, reload_callback: nil, enabled_callback: nil)
+    def initialize(service_name, reload: true, enabled_callback: nil)
       @service_name = service_name
       @reload = reload
-      @reload_callback = reload_callback
       @enabled_callback = enabled_callback
 
       @enabled = service_enabled?
@@ -38,7 +37,6 @@ module UI
           update_widget
         when "#{id_prefix}_reload"
           @reload = Yast::UI.QueryWidget(Id(input), :Value)
-	  @reload_callback.call(@reload) if @reload_callback
         when "#{id_prefix}_enabled"
           @enabled = Yast::UI.QueryWidget(Id(input), :Value)
 	  @enabled_callback.call(@enabled) if @enabled_callback
@@ -66,11 +64,6 @@ module UI
     # Checks if the user decided to enable the service on boot
     def enabled?
       @enabled
-    end
-
-    # Checks if the user decided to reload the service after saving
-    def reload?
-      @reload
     end
 
     protected
