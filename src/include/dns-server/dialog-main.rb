@@ -277,7 +277,7 @@ module Yast
             method(:HandleStartUp),
             "symbol (string, map)"
           ),
-          "help"          => "TODO"
+          "help"          => @status_component.help
         },
         "firewall"      => CWMFirewallInterfaces.CreateOpenFirewallWidget(
           { "services" => ["service:bind"], "display_details" => true }
@@ -535,7 +535,7 @@ module Yast
     end
 
     def InitStartUp(_key)
-      @status_component.update_widget
+      @status_component.refresh_widget
       nil
     end
 
@@ -2154,7 +2154,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @status_component.adjust_status
+        @status_component.reload_if_requested
         :next
       else
         if Popup.YesNo(_("Saving the configuration failed. Change the settings?"))
@@ -2165,12 +2165,13 @@ module Yast
       end
     end
 
+    # Writes settings and restores the dialog without exiting
     def SaveAndRestart
       Wizard.CreateDialog
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @status_component.adjust_status
+        @status_component.reload_if_requested
       else
         Report.Error(_("Saving the configuration failed"))
       end
