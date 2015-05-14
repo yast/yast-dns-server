@@ -22,7 +22,7 @@ Yast.import "UI"
 
 module UI
   # Component encapsulating the widgets for managing the status of services (both
-  # currently and on system's boot) and the behavior associated to those widgets
+  # currently and on system boot) and the behavior associated to those widgets
   #
   # As long as #handle_input is invoked in the event loop, the component will
   # handle interactive starting and stopping of the service on user demand. In
@@ -38,7 +38,9 @@ module UI
 
     # @param service_name [String] name of the service as expected by
     #   Yast::Service
-    # @param reload [Boolean] initial value for the "reload" checkbox
+    # @param reload [Boolean] initial value for the "reload" checkbox.
+    #   Keep in mind it will always be displayed as unchecked if the service is
+    #   not running, despite the real value.
     # @param enabled_callback [Proc] callback executed when the "enabled on
     #   boot" checkbox is changed. The only parameter of the callback is the new
     #   state of the checkbox (boolean).
@@ -53,11 +55,14 @@ module UI
 
     # @return [YaST::Term]
     def widget
-      VBox(
-        ReplacePoint(Id("#{id_prefix}_status"), status_widget),
-        reload_widget,
-        VSpacing(),
-        on_boot_widget
+      Frame(
+        _("Service Status"),
+        VBox(
+          ReplacePoint(Id("#{id_prefix}_status"), status_widget),
+          reload_widget,
+          VSpacing(),
+          on_boot_widget
+        )
       )
     end
 
@@ -83,7 +88,7 @@ module UI
     # settings
     def refresh_widget
       Yast::UI.ChangeWidget(Id("#{id_prefix}_reload"), :Enabled, service_running?)
-      Yast::UI.ChangeWidget(Id("#{id_prefix}_reload"), :Value, @reload)
+      Yast::UI.ChangeWidget(Id("#{id_prefix}_reload"), :Value, service_running? && @reload)
       Yast::UI.ChangeWidget(Id("#{id_prefix}_enabled"), :Value, @enabled)
       Yast::UI.ReplaceWidget(Id("#{id_prefix}_status"), status_widget)
     end
@@ -108,13 +113,13 @@ module UI
         "Displays the current status of the service. The status will remain "\
         "the same after saving the settings, independently of the value of "\
         "'start service during boot'.</p>\n"\
-        "<p><b><big>Reload the service after saving settings</big></b><br>\n"\
+        "<p><b><big>Reload After Saving Settings</big></b><br>\n"\
         "Only applicable if the service is currently running. "\
         "Ensures the running service reloads the new configuration after "\
         "saving it (via 'ok' or 'save' buttons).</p>\n"\
-        "<p><b><big>Start service during boot</big></b><br>\n"\
-        "Check this field to enable the service at system's boot. "\
-        "Un-check it to disable the service."\
+        "<p><b><big>Start During System Boot</big></b><br>\n"\
+        "Check this field to enable the service at system boot. "\
+        "Un-check it to disable the service. "\
         "This does not affect the current status of the service in the already "\
         "running system.</p>\n"
       )
@@ -183,7 +188,7 @@ module UI
         CheckBox(
           Id("#{id_prefix}_enabled"),
           Opt(:notify),
-          _("Start service during boot"),
+          _("Start During System Boot"),
           @enabled
         )
       )
@@ -197,8 +202,8 @@ module UI
         CheckBox(
           Id("#{id_prefix}_reload"),
           Opt(*opts),
-          _("Reload the service after saving settings"),
-          @reload
+          _("Reload After Saving Settings"),
+          service_running? && @reload
         )
       )
     end
