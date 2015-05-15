@@ -1,10 +1,4 @@
 -------------------------------------------------------------------
-Mon Apr 27 09:33:03 UTC 2015 - ancor@suse.com
-
-- Experiments
-- 3.1.11.1
-
--------------------------------------------------------------------
 Fri Feb 13 11:18:34 UTC 2015 - ancor@suse.com
 
 - The unit tests are now compatible with RSpec 3
