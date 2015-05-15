@@ -421,7 +421,7 @@ module Yast
             "firewall",
             VStretch(),
             Right(
-              PushButton(Id("apply"), _("Save settings now without closing"))
+              PushButton(Id("apply"), _("Apply Changes"))
             )
           ),
           # Dialog Label - DNS - expert settings
@@ -439,12 +439,6 @@ module Yast
             ["start_up", "firewall"] :
             # simple mode
             ["start_up", "firewall", "set_icon"]
-        },
-        "use_ldap"      => {
-          "contents"        => VBox("use_ldap"),
-          "caption"         => "#{@dns_server_label}: #{_('LDAP Support')}",
-          "tree_item_label" => _("LDAP Support"),
-          "widget_names"    => ["use_ldap"]
         },
         "forwarders"    => {
           "contents"        => ExpertForwardersDialog(),
@@ -517,7 +511,11 @@ module Yast
           "widget_descr"    => @new_widgets
         },
         "zones"         => {
-          "contents"        => ExpertZonesDialog(),
+          "contents"        => VBox(
+            "use_ldap",
+            VSpacing(),
+            ExpertZonesDialog()
+          ),
           # Dialog Label - DNS - expert settings
           "caption"         => Ops.add(
             Ops.add(@dns_server_label, ": "),
@@ -527,7 +525,7 @@ module Yast
           "tree_item_label" => _(
             "DNS Zones"
           ),
-          "widget_names"    => ["zones"]
+          "widget_names"    => ["use_ldap", "zones"]
         }
       }
 
@@ -2205,7 +2203,6 @@ module Yast
     def runExpertDialog
       expert_dialogs = [
         "start_up",
-        "use_ldap",
         "forwarders",
         "basic_options",
         "logging",
