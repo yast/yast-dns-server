@@ -26,7 +26,7 @@ module UI
   #
   # As long as #handle_input is invoked in the event loop, the component will
   # handle interactive starting and stopping of the service on user demand. In
-  # addition #reload_if_requested can be used after saving the settings.
+  # addition #reload can be used after saving the settings.
   #
   # To manage the status on boot, the component can be queried for the user
   # selection using #enabled?. In addition enabled_callback (in constructor)

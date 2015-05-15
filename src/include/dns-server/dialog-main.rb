@@ -2149,7 +2149,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @status_component.reload_if_requested
+        @status_component.reload
         :next
       else
         if Popup.YesNo(_("Saving the configuration failed. Change the settings?"))
@@ -2166,7 +2166,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @status_component.reload_if_requested
+        @status_component.reload
       else
         Report.Error(_("Saving the configuration failed"))
       end
