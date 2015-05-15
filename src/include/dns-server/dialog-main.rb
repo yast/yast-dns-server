@@ -4,15 +4,12 @@
 # Package:	Configuration of dns-server
 # Summary:	Data for configuration of dns-server, input and output functions.
 # Authors:	Jiri Srain <jsrain@suse.cz>
-#
-# $Id$
-#
-# Representation of the configuration of dns-server.
-# Input and output routines.
 
 require "ui/srv_status_component"
 
 module Yast
+  # Representation of the configuration of dns-server.
+  # Input and output routines.
   module DnsServerDialogMainInclude
     def initialize_dns_server_dialog_main(include_target)
       textdomain "dns-server"
