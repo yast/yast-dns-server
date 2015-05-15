@@ -51,6 +51,7 @@ module UI
 
       @enabled = service_enabled?
       @id_prefix = "_srv_status_#{@service_name}"
+      textdomain "base"
     end
 
     # @return [YaST::Term]
@@ -81,6 +82,8 @@ module UI
       when "#{id_prefix}_enabled"
         @enabled = Yast::UI.QueryWidget(Id(input), :Value)
         @enabled_callback.call(@enabled) if @enabled_callback
+      else
+        log.info "Input not handled by SrvStatusComponent: #{input}"
       end
     end
 
@@ -93,9 +96,9 @@ module UI
       Yast::UI.ReplaceWidget(Id("#{id_prefix}_status"), status_widget)
     end
 
-    # Reloads the service if the user requested so. It should be called after
-    # saving the settings.
-    def reload_if_requested
+    # Reloads the service only if the user requested so. It should be called
+    # after saving the settings.
+    def reload
       reload_service if service_running? && @reload
     end
 
