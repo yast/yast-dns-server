@@ -39,8 +39,6 @@ module Yast
       # String defines the initial screen for the expert dialog
       @initial_screen = "start_up"
 
-      # Do not let DnsServer manage the service status, let the user decide
-      DnsServer.SetWriteOnly(true)
       @status_component = ::UI::SrvStatusComponent.new(
 	      "named",
 	      enabled_callback: ->(e) { DnsServer.SetStartService(e) }
