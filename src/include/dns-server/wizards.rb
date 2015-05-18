@@ -51,6 +51,8 @@ module Yast
         "forward_zone_tab" => { :abort => :abort, :next => "main" }
       }
 
+      # Do not let DnsServer manage the service status, let the user decide
+      DnsServer.SetWriteOnly(true)
       ret = Sequencer.Run(aliases, sequence)
 
       ret
@@ -96,6 +98,8 @@ module Yast
         "forward_zone_tab" => { :abort => :abort, :next => "zones" }
       }
 
+      # In wizard mode, the current status and the status at boot are synced
+      DnsServer.SetWriteOnly(false)
       ret = Sequencer.Run(aliases, sequence)
 
       ret
