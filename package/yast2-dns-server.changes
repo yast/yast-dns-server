@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Jun 18 11:23:54 UTC 2015 - igonzalezsosa@suse.com
+
+- Avoid duplicated lines on /etc/named.conf file
+  (bsc#935129)
+- 3.1.12
+
+-------------------------------------------------------------------
 Fri Feb 13 11:18:34 UTC 2015 - ancor@suse.com
 
 - The unit tests are now compatible with RSpec 3
