@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Jun 15 19:50:56 UTC 2015 - mfilka@suse.com
+
+- bnc#922765
+  - changed default TLD from .site to .suse
+- 2.17.24 
+
+-------------------------------------------------------------------
 Wed Mar 12 16:26:57 CET 2014 - locilka@suse.com
 
 - Fixed splitting/joining longer TXT and SPF records (bnc#867596)

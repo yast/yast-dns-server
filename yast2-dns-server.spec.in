@@ -25,9 +25,8 @@ Requires:	grep sed
 # FATE #303386: Network setup tools
 Requires:	yast2-sysconfig
 
-# DnsServerApi moved to yast2.rpm (bnc#392606)
-# DnsServerAPI::GetReverseIPforIPv6
-Requires:	yast2 >= 2.17.8
+# for default TLD definition
+Requires:	yast2 >= 2.17.140
 
 BuildArchitectures:	noarch
 
