@@ -18,7 +18,7 @@
     `IniAgent( "/etc/named.conf",
 	$[
 	    // join_multiline for multiline values without newlines
-	    "options"	: [ "global_values", "repeat_names", "join_multiline" ],
+	    "options"	: [ "global_values", "repeat_names", "join_multiline", "ignore_case" ],
 	    "comments"	: [ "^[ \t]*#.*$", "^[ \t]*$" ],
 	    "params"    : [
 		$[
