@@ -1,4 +1,26 @@
 -------------------------------------------------------------------
+Thu Jun 18 10:20:45 CEST 2015 - schubi@suse.de
+
+- Fixed handling of zones (bnc#931019)
+  Backporting fix from SLES12 written by locilka@suse.com :
+  - Checking for system zones was moved to separate function
+  - Extended list of zones marked as system (internal) ones with
+  (0\.)+ip6.arpa
+  - Not allowing to edit system zones (belong to bind package)
+  - Added check for 'bind' package to be installed before writing
+    the configuration
+  - Marking all imported zones as 'modified' to be written later
+  - Marking all imported non-system zones as 'is_new' to create
+    a zone file for them
+  - Flushing /etc/named.conf cache 'after' writing zones (instead
+    of 'before')
+  - Using "" as the default NETCONFIG_DNS_POLICY (instead of 0)
+  - Do not write system zones to LDAP (bnc#746401)
+  - If systems zones are marked as modified, they are written to
+    named configuration (if LDAP is not in use)
+- 2.17.25
+
+-------------------------------------------------------------------
 Mon Jun 15 19:50:56 UTC 2015 - mfilka@suse.com
 
 - bnc#922765
