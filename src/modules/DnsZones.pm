@@ -162,7 +162,8 @@ sub GetDefaultSOA {
 
     my $fqdn = $self->GetFQDN();
     if ($fqdn eq "") {
-	$fqdn = "linux.site";
+        my $tld = $Hostname::DefaultDomain;
+        $fqdn = "linux.$tld";
     }
 
     $fqdn = "$fqdn.";

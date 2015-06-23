@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dns-server
-Version:        3.1.12
+Version:        3.1.13
 Release:        0
 Url:            https://github.com/yast/yast-dns-server
 
@@ -55,9 +55,8 @@ Requires:       sed
 # FATE #303386: Network setup tools
 Requires:       yast2-sysconfig
 
-# DnsServerApi moved to yast2.rpm (bnc#392606)
-# DnsServerAPI::GetReverseIPforIPv6
-Requires:       yast2 >= 2.17.8
+# for default TLD definition
+Requires:       yast2 >= 3.1.134
 
 BuildArch:      noarch
 
