@@ -1,8 +1,14 @@
 -------------------------------------------------------------------
+Tue Aug  4 08:49:23 UTC 2015 - ancor@suse.com
+
+- Added automated tests for some CLI commands (bnc#940466)
+- 3.1.15
+
+-------------------------------------------------------------------
 Mon Aug  3 15:59:19 UTC 2015 - ancor@suse.com
 
 - Remove duplicated code causing the CLI commands to be executed
-  twice
+  twice (bnc#940466)
 
 -------------------------------------------------------------------
 Tue Jun 30 06:40:26 UTC 2015 - mfilka@suse.com
