@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Fri Sep  4 11:49:22 UTC 2015 - mvidner@suse.com
+
+- Fix "Unescaped left brace in regex is deprecated" (boo#944490).
+- 3.1.16
+
+-------------------------------------------------------------------
 Tue Aug  4 08:49:23 UTC 2015 - ancor@suse.com
 
 - Added automated tests for some CLI commands (bnc#940466)
