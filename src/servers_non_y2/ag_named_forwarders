@@ -62,7 +62,7 @@ while ( <STDIN> )
 		$line =~ s/#.*//;
 		$forwarders_string .= $line;
 	    }
-	    if ($forwarders_string =~ /forwarders[ \t]*({[^{}]*})/) {
+	    if ($forwarders_string =~ /forwarders[ \t]*(\{[^{}]*\})/) {
 		$forwarders = $1;
 	    }
 

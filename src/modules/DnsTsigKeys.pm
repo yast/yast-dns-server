@@ -94,7 +94,7 @@ sub AnalyzeTSIGKeyFile {
 	$filename = "/etc/named.d/$filename";
     }
     my $contents = SCR->Read (".target.string", $filename);
-    if (defined $contents && $contents =~ /.*key[ \t]+([^ \t}{;]+).* {/)
+    if (defined $contents && $contents =~ /.*key[ \t]+([^ \t}{;]+).* \{/)
     {
 	return [$1];
     }
