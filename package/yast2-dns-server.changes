@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Oct  2 11:09:19 UTC 2015 - ancor@suse.com
+
+- UI component for services handling moved from yast2-dns-server
+  to yast2 (fate#318771)
+- 3.1.17
+
+-------------------------------------------------------------------
 Fri Sep  4 11:49:22 UTC 2015 - mvidner@suse.com
 
 - Fix "Unescaped left brace in regex is deprecated" (boo#944490).
