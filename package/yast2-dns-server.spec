@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dns-server
-Version:        3.1.16
+Version:        3.1.17
 Release:        0
 Url:            https://github.com/yast/yast-dns-server
 
@@ -33,8 +33,8 @@ BuildRequires:  yast2-ldap >= 3.1.4
 BuildRequires:  yast2-perl-bindings
 BuildRequires:  yast2-testsuite
 
-# requires DnsServerAPI::GetReverseIPforIPv6
-BuildRequires:  yast2 >= 2.17.8
+# requires SrvStatusComponent
+BuildRequires:  yast2 >= 3.1.151
 Requires:       /usr/bin/host
 Requires:       perl-gettext
 # Exporter Data::Dumper
@@ -55,8 +55,8 @@ Requires:       sed
 # FATE #303386: Network setup tools
 Requires:       yast2-sysconfig
 
-# for default TLD definition
-Requires:       yast2 >= 3.1.134
+# for SrvStatusComponent
+Requires:       yast2 >= 3.1.151
 
 BuildArch:      noarch
 
@@ -82,7 +82,6 @@ This package contains the YaST2 component for DNS server configuration.
 %defattr(-,root,root)
 %dir %{yast_yncludedir}/dns-server
 %{yast_yncludedir}/dns-server/*
-%{yast_dir}/lib/ui
 %{yast_clientdir}/dns-server.rb
 %{yast_clientdir}/dns-server_*.rb
 %{yast_moduledir}/*
