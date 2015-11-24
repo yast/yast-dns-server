@@ -5,7 +5,7 @@
 # Summary:	Data for configuration of dns-server, input and output functions.
 # Authors:	Jiri Srain <jsrain@suse.cz>
 
-require "ui/srv_status_component"
+require "ui/service_status"
 
 module Yast
   # Representation of the configuration of dns-server.
@@ -39,10 +39,8 @@ module Yast
       # String defines the initial screen for the expert dialog
       @initial_screen = "start_up"
 
-      @status_component = ::UI::SrvStatusComponent.new(
-	      "named",
-	      enabled_callback: ->(e) { DnsServer.SetStartService(e) }
-      )
+      @service = SystemdService.find("named")
+      @status_widget = ::UI::ServiceStatus.new(@service)
 
       @global_options_add_items = Builtins.sort(
         [
@@ -272,7 +270,7 @@ module Yast
             method(:HandleStartUp),
             "symbol (string, map)"
           ),
-          "help"          => @status_component.help
+          "help"          => @status_widget.help
         },
         "firewall"      => CWMFirewallInterfaces.CreateOpenFirewallWidget(
           { "services" => ["service:bind"], "display_details" => true }
@@ -411,7 +409,7 @@ module Yast
         "start_up"      => {
           # FIXME: new startup
           "contents"        => VBox(
-            @status_component.widget,
+            @status_widget.widget,
             VSpacing(),
             "firewall",
             VStretch(),
@@ -528,7 +526,7 @@ module Yast
     end
 
     def InitStartUp(_key)
-      @status_component.refresh_widget
+      @status_widget.refresh
       nil
     end
 
@@ -537,7 +535,9 @@ module Yast
       if event_id == "apply"
         SaveAndRestart()
       else
-        @status_component.handle_input(event_id)
+        if @status_widget.handle_input(event_id) == :enabled_changed
+          DnsServer.SetStartService(@status_widget.enabled?)
+        end
       end
       nil
     end
@@ -2147,7 +2147,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @status_component.reload
+        @service.reload if @status_widget.reload?
         :next
       else
         if Popup.YesNo(_("Saving the configuration failed. Change the settings?"))
@@ -2164,7 +2164,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @status_component.reload
+        @service.reload if @status_widget.reload?
       else
         Report.Error(_("Saving the configuration failed"))
       end
