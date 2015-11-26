@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Thu Nov 26 08:56:08 UTC 2015 - ancor@suse.com
+
+- Use new version of the UI component for services handling
+- 3.1.18
+
+-------------------------------------------------------------------
 Fri Oct  2 11:09:19 UTC 2015 - ancor@suse.com
 
 - UI component for services handling moved from yast2-dns-server

@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dns-server
-Version:        3.1.17
+Version:        3.1.18
 Release:        0
 Url:            https://github.com/yast/yast-dns-server
 
@@ -33,8 +33,8 @@ BuildRequires:  yast2-ldap >= 3.1.4
 BuildRequires:  yast2-perl-bindings
 BuildRequires:  yast2-testsuite
 
-# requires SrvStatusComponent
-BuildRequires:  yast2 >= 3.1.151
+# UI::ServiceStatus
+BuildRequires:  yast2 >= 3.1.160
 Requires:       /usr/bin/host
 Requires:       perl-gettext
 # Exporter Data::Dumper
@@ -55,8 +55,8 @@ Requires:       sed
 # FATE #303386: Network setup tools
 Requires:       yast2-sysconfig
 
-# for SrvStatusComponent
-Requires:       yast2 >= 3.1.151
+# UI::ServiceStatus
+Requires:       yast2 >= 3.1.160
 
 BuildArch:      noarch
 
