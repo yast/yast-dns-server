@@ -535,8 +535,8 @@ module Yast
       if event_id == "apply"
         SaveAndRestart()
       else
-        if @status_widget.handle_input(event_id) == :enabled_changed
-          DnsServer.SetStartService(@status_widget.enabled?)
+        if @status_widget.handle_input(event_id) == :enabled_flag
+          DnsServer.SetStartService(@status_widget.enabled_flag?)
         end
       end
       nil
@@ -2147,7 +2147,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @service.reload if @status_widget.reload?
+        @service.reload if @status_widget.reload_flag?
         :next
       else
         if Popup.YesNo(_("Saving the configuration failed. Change the settings?"))
@@ -2164,7 +2164,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @service.reload if @status_widget.reload?
+        @service.reload if @status_widget.reload_flag?
       else
         Report.Error(_("Saving the configuration failed"))
       end
