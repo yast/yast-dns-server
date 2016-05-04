@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed May  4 08:45:09 UTC 2016 - cwh@suse.com
+
+- Fix handling of trailing spaces in named.conf (bsc#976643)
+- 3.1.20
+
+-------------------------------------------------------------------
 Fri Nov 27 09:35:39 UTC 2015 - ancor@suse.com
 
 - Adapted to latest changes in UI::ServiceStatus API (fate#318771)
