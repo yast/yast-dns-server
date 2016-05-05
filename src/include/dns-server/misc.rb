@@ -38,7 +38,6 @@ module Yast
     # @param [String] zone string zone identification
     # @return [Symbol] zone type
     def getZoneType(zone)
-      relevant_zone_part = ""
       if Ops.greater_than(Builtins.size(zone), 12) &&
           Builtins.substring(zone, Ops.subtract(Builtins.size(zone), 12)) == "in-addr.arpa"
         return :reverse
