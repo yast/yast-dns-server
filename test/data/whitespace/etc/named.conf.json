@@ -1,0 +1,109 @@
+{
+  "comment": "",
+  "file": -1,
+  "kind": "section",
+  "name": "",
+  "type": -1,
+  "value": [
+    {
+      "comment": "# https://bugzilla.suse.com/show_bug.cgi?id=976643\n# Yast2 dns-server is not parsing the named.conf file correctly\n# if there is white space after an option\n\n",
+      "file": -1,
+      "kind": "section",
+      "name": "options",
+      "type": 0,
+      "value": [
+        {
+          "comment": "\n\t# The directory statement defines the name server's working directory\n\n",
+          "kind": "value",
+          "name": "directory",
+          "type": 0,
+          "value": "\"/var/lib/named\""
+        },
+        {
+          "comment": "       \n        # NOTE the following line ends with whitespace\n",
+          "kind": "value",
+          "name": "version",
+          "type": 0,
+          "value": "\"unavailable\""
+        },
+        {
+          "comment": "",
+          "kind": "value",
+          "name": "allow-transfer",
+          "type": 0,
+          "value": "{ none; }"
+        },
+        {
+          "comment": "",
+          "kind": "value",
+          "name": "allow-recursion",
+          "type": 0,
+          "value": "{ none; }"
+        },
+        {
+          "comment": "",
+          "kind": "value",
+          "name": "recursion",
+          "type": 0,
+          "value": "no"
+        },
+        {
+          "comment": "\n",
+          "kind": "value",
+          "name": "also-notify",
+          "type": 0,
+          "value": "{ 10.1.2.3; }"
+        },
+        {
+          "comment": "\n\t# enable DNSSEC validation\n\t#\n\t# If BIND logs error messages about the root key being expired, you\n\t# will need to update your keys. See https://www.isc.org/bind-keys\n\t#\n\t# dnssec-enable yes (default), indicates that a secure DNS service\n\t# is being used which may be one, or more, of TSIG\n\t# (for securing zone transfers or DDNS updates), SIG(0)\n\t# (for securing DDNS updates) or DNSSEC.\n\n\t#dnssec-enable yes;\n\n\t# dnssec-validation yes (default), indicates that a resolver\n\t# (a caching or caching-only name server) will attempt to validate\n\t# replies from DNSSEC enabled (signed) zones. To perform this task\n\t# the server also needs either a valid trusted-keys clause\n\t# (containing one or more trusted-anchors or a managed-keys clause.\n\n\t#dnssec-validation auto;\n",
+          "kind": "value",
+          "name": "managed-keys-directory",
+          "type": 0,
+          "value": "\"/var/lib/named/dyn/\""
+        },
+        {
+          "comment": "\n\t# Write dump and statistics file to the log subdirectory.  The\n\t# pathenames are relative to the chroot jail.\n\n",
+          "kind": "value",
+          "name": "dump-file",
+          "type": 0,
+          "value": "\"/var/log/named_dump.db\""
+        },
+        {
+          "comment": "",
+          "kind": "value",
+          "name": "statistics-file",
+          "type": 0,
+          "value": "\"/var/log/named.stats\""
+        },
+        {
+          "comment": "\n\t# The forwarders record contains a list of servers to which queries\n\t# should be forwarded.  Enable this line and modify the IP address to\n\t# your provider's name server.  Up to three servers may be listed.\n\n\t#forwarders { 192.0.2.1; 192.0.2.2; };\n\n\t# Enable the next entry to prefer usage of the name server declared in\n\t# the forwarders section.\n\n\t#forward first;\n\n\t# The listen-on record contains a list of local network interfaces to\n\t# listen on.  Optionally the port can be specified.  Default is to\n\t# listen on all interfaces found on your system.  The default port is\n\t# 53.\n\n\t#listen-on port 53 { 127.0.0.1; };\n\n\t# The listen-on-v6 record enables or disables listening on IPv6\n\t# interfaces.  Allowed values are 'any' and 'none' or a list of\n\t# addresses.\n\n",
+          "kind": "value",
+          "name": "listen-on-v6",
+          "type": 0,
+          "value": "{ none; }"
+        },
+        {
+          "comment": "\n\t# The next three statements may be needed if a firewall stands between\n\t# the local server and the internet.\n\n\t#query-source address * port 53;\n\t#transfer-source * port 53;\n\t#notify-source * port 53;\n\n\t# The allow-query record contains a list of networks or IP addresses\n\t# to accept and deny queries from. The default is to allow queries\n\t# from all hosts.\n\n\t#allow-query { 127.0.0.1; };\n\n\t# If notify is set to yes (default), notify messages are sent to other\n\t# name servers when the the zone data is changed.  Instead of setting\n\t# a global 'notify' statement in the 'options' section, a separate\n\t# 'notify' can be added to each zone definition.\n\n",
+          "kind": "value",
+          "name": "notify",
+          "type": 0,
+          "value": "explicit"
+        },
+        {
+          "comment": "\n",
+          "kind": "value",
+          "name": "disable-empty-zone",
+          "type": 0,
+          "value": "\"1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.IP6.ARPA\""
+        },
+        {
+          "comment": "",
+          "kind": "value",
+          "name": "include",
+          "type": 0,
+          "value": "\"/etc/named.d/forwarders.conf\""
+        }
+      ]
+    }
+  ]
+}
