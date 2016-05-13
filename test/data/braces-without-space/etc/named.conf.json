@@ -60,8 +60,8 @@
           "comment": "        # here a space is missing which caused trouble in bsc#976643 (c16)\n",
           "kind": "value",
           "name": "allow-update",
-          "type": 1,
-          "value": ""
+          "type": 0,
+          "value": "{none;}"
         }
       ]
     }
