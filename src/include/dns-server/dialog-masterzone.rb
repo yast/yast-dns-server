@@ -58,6 +58,20 @@ module Yast
       @current_zone_forwarders = []
     end
 
+    BUILTIN_ACLS = ["any", "none", "localhost", "localnets"]
+
+    def acl_names
+      acls = DnsServer.GetAcl
+      names = acls.map do |a|
+        a.strip.split(/ \t/).fetch(0, "")
+      end
+      names = (names + BUILTIN_ACLS).sort
+      # bug #203910
+      # hide "none" from listed ACLs
+      # "none" means, not allowed and thus multiselectbox of ACLs is disabled
+      names.find_all {|a| a != "none"}
+    end
+
     # Dialog Tab - Zone Editor - Basics
     # @return [Yast::Term] for Get_ZoneEditorTab()
     def GetMasterZoneEditorTabBasics
@@ -65,24 +79,6 @@ module Yast
       updater_keys = Builtins.maplist(updater_keys_m) do |m|
         Ops.get_string(m, "key", "")
       end
-      acl = DnsServer.GetAcl
-      acl = Builtins.maplist(acl) do |a|
-        while Builtins.substring(a, 0, 1) == " " ||
-            Builtins.substring(a, 0, 1) == "\t"
-          a = Builtins.substring(a, 1)
-        end
-        s = Builtins.splitstring(a, " \t")
-        type = Ops.get(s, 0, "")
-        type
-      end
-      acl = Builtins.filter(acl) { |a| a != "" }
-      acl = Convert.convert(
-        Builtins.sort(
-          Builtins.merge(acl, ["any", "none", "localhost", "localnets"])
-        ),
-        :from => "list",
-        :to   => "list <string>"
-      )
 
       expert_settings = Empty()
       if DnsServer.ExpertUI
@@ -113,11 +109,6 @@ module Yast
           VSpacing(1)
         )
       end
-
-      # bug #203910
-      # hide "none" from listed ACLs
-      # "none" means, not allowed and thus multiselectbox of ACLs is disabled
-      acl = Builtins.filter(acl) { |one_acl| one_acl != "none" }
 
       @available_zones_to_connect = []
       zone_name = ""
@@ -160,7 +151,7 @@ module Yast
             # multi selection box
             VSquash(
               HSquash(
-                MinWidth(30, MultiSelectionBox(Id("acls_list"), _("ACLs"), acl))
+                MinWidth(30, MultiSelectionBox(Id("acls_list"), _("ACLs"), acl_names))
               )
             )
           )
@@ -2679,23 +2670,6 @@ module Yast
     # Dialog Zone Editor - Slave
     # @return [Object] dialog result for wizard
     def runSlaveZoneTabDialog
-      acl = Builtins.maplist(DnsServer.GetAcl) do |acl_record|
-        acl_splitted = Builtins.splitstring(acl_record, " \t")
-        Ops.get(acl_splitted, 0, "")
-      end
-      acl = Convert.convert(
-        Builtins.sort(
-          Builtins.merge(acl, ["any", "none", "localhost", "localnets"])
-        ),
-        :from => "list",
-        :to   => "list <string>"
-      )
-
-      # bug #203910
-      # hide "none" from listed ACLs
-      # "none" means, not allowed and thus multiselectbox of ACLs is disabled
-      acl = Builtins.filter(acl) { |one_acl| one_acl != "none" }
-
       zone_name = Ops.get_string(@current_zone, "zone", "")
       contents = VBox(
         HBox(
@@ -2726,7 +2700,7 @@ module Yast
           )
         ),
         # multi selection box
-        VSquash(MultiSelectionBox(Id("acls_list"), _("ACLs"), acl)),
+        VSquash(MultiSelectionBox(Id("acls_list"), _("ACLs"), acl_names)),
         VStretch()
       )
 
