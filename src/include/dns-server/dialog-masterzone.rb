@@ -60,12 +60,14 @@ module Yast
 
     BUILTIN_ACLS = ["any", "none", "localhost", "localnets"]
 
+    # ACL names to present in a multiselection box
     def acl_names
       acls = DnsServer.GetAcl
       names = acls.map do |a|
         a.strip.split(/ \t/).fetch(0, "")
       end
-      names = (names + BUILTIN_ACLS).sort
+      # bsc#976643#c23
+      names = (names + current_zone_allow_transfer + BUILTIN_ACLS).sort
       # bug #203910
       # hide "none" from listed ACLs
       # "none" means, not allowed and thus multiselectbox of ACLs is disabled
@@ -198,37 +200,37 @@ module Yast
       deep_copy(contents)
     end
 
-    def ZoneAclInit
-      allowed = false
-      keys = []
-      Builtins.foreach(Ops.get_list(@current_zone, "options", [])) do |m|
-        if Ops.get_string(m, "key", "") == "allow-transfer" && !allowed
-          key = Builtins.regexpsub(
-            Ops.get_string(m, "value", ""),
-            "^.*\\{[ \t]*(.*)[ \t]*\\}.*$",
-            "\\1"
-          )
+    # @return [Array<String>]
+    def current_zone_allow_transfer
+      items = []
+      @current_zone.fetch("options", []).each do |m|
+        if m["key"] == "allow-transfer"
+          key = m.fetch("value", "")
+          key = key[/\A.*\{[ \t]*(.*)[ \t]*\}.*\z/, 1]
           if key != nil
-            keys = Builtins.splitstring(key, " ;")
-            keys = Builtins.filter(keys) { |k| k != "" }
-            allowed = true
+            items = key.split(/[ \t;]/).find_all{|i| !i.empty?}
+            break
           end
         end
       end
+      items
+    end
+
+    def ZoneAclInit
+      keys = current_zone_allow_transfer
 
       # bug #203910
       # no keys in allow-transfer means that transfer is allowed for all
       # explicitly say that
-      if Builtins.size(keys) == 0
-        allowed = true
+      if keys.empty?
         keys = ["any"] 
         # the only way how to disable the transfer is to set "allow-transfer { none; };"
         # "none" must be alone, remove it from the list, it is not present in the multi-sel box
-      elsif Builtins.size(keys) == 1 && keys == ["none"]
-        allowed = false
+      elsif keys == ["none"]
         keys = []
       end
 
+      allowed = !keys.empty?
       UI.ChangeWidget(Id("enable_zone_transport"), :Value, allowed)
       UI.ChangeWidget(Id("acls_list"), :Enabled, allowed)
       UI.ChangeWidget(Id("acls_list"), :SelectedItems, keys) if allowed
