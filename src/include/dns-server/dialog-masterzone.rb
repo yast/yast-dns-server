@@ -64,7 +64,7 @@ module Yast
     def acl_names
       acls = DnsServer.GetAcl
       names = acls.map do |a|
-        a.strip.split(/ \t/).fetch(0, "")
+        a.strip.split(/[ \t]/).fetch(0, "")
       end
       # bsc#976643#c23
       names = (names + current_zone_allow_transfer + BUILTIN_ACLS).sort
