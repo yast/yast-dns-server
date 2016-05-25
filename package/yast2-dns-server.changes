@@ -1,4 +1,13 @@
 -------------------------------------------------------------------
+Wed May 25 11:11:30 UTC 2016 - mvidner@suse.com
+
+- Keep non-ACL items in allow-transfer AKA Enable Zone Transport
+  (bsc#976643#c23)
+- Fix parsing 'keyword{value;};' (no spaces) in named.conf
+  (bsc#976643#c16).
+- 3.1.21
+
+-------------------------------------------------------------------
 Wed May  4 08:45:09 UTC 2016 - cwh@suse.com
 
 - Fix handling of trailing spaces in named.conf (bsc#976643)
