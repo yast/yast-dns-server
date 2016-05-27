@@ -354,7 +354,6 @@ module Yast
 
     def ZoneAclHandle(event)
       event = deep_copy(event)
-      ret = Ops.get(event, "ID")
       UI.ChangeWidget(
         Id("acls_list"),
         :Enabled,
@@ -2449,7 +2448,6 @@ module Yast
 
 
       contents =
-        #`Top (
         VBox(
           Opt(:hvstretch),
           HBox(
@@ -2488,13 +2486,6 @@ module Yast
               )
             )
         )
-      #);
-      # Menu Item - Zone Editor - Tab
-      qwerty = _("Ad&vanced")
-      # error report
-      #qwerty = _("The input value is invalid.");
-      # error report
-      #qwerty = _("At least one name server must be defined.");
 
       # FIXME: Only one help is used for all tabs. Maybe would be better to change the help for every single tab.
       Wizard.SetContentsButtons(

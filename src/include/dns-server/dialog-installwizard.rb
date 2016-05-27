@@ -237,7 +237,6 @@ module Yast
         UI.ChangeWidget(Id("use_ldap"), :Value, use_ldap)
       end
 
-      ldap_changed = false
       event = {}
       ret = nil
       CWMFirewallInterfaces.OpenFirewallInit(firewall_widget, "")
