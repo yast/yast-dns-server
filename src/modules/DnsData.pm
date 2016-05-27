@@ -32,6 +32,23 @@ our $chroot = 0;
 
 my @allowed_interfaces = ();
 
+=head3 @zones
+
+See also L</%current_zone>
+
+One zone is a hash with this content:
+
+=over
+
+=item - "modified" -> boolean
+
+=item - "options" -> list of hashes {"key" => ..., "value" => ...}
+
+=item - ...
+
+=back
+
+=cut
 my @zones = ();
 
 my @options = ();
@@ -50,8 +67,24 @@ my $save_all = 0;
 
 my @files_to_delete = ();
 
+=head3 %current_zone
+
+A copy of an item from @zones
+
+Get it with SelectZone(integer); see also FindZone(string) -> integer
+
+Put it back with StoreZone() -> true
+
+=cut
 my %current_zone = ();
 
+=head3 $current_zone_index
+
+SelectZone sets this
+
+StoreZone will append a zone if this is -1
+
+=cut
 my $current_zone_index = -1;
 
 my $adapt_firewall = 0;

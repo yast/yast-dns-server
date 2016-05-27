@@ -58,6 +58,22 @@ module Yast
       @current_zone_forwarders = []
     end
 
+    BUILTIN_ACLS = ["any", "none", "localhost", "localnets"]
+
+    # ACL names to present in a multiselection box
+    def acl_names
+      acls = DnsServer.GetAcl
+      names = acls.map do |a|
+        a.strip.split(/[ \t]/).fetch(0, "")
+      end
+      # bsc#976643#c23
+      names = (names + current_zone_allow_transfer + BUILTIN_ACLS).sort.uniq
+      # bug #203910
+      # hide "none" from listed ACLs
+      # "none" means, not allowed and thus multiselectbox of ACLs is disabled
+      names.find_all {|a| a != "none"}
+    end
+
     # Dialog Tab - Zone Editor - Basics
     # @return [Yast::Term] for Get_ZoneEditorTab()
     def GetMasterZoneEditorTabBasics
@@ -65,24 +81,6 @@ module Yast
       updater_keys = Builtins.maplist(updater_keys_m) do |m|
         Ops.get_string(m, "key", "")
       end
-      acl = DnsServer.GetAcl
-      acl = Builtins.maplist(acl) do |a|
-        while Builtins.substring(a, 0, 1) == " " ||
-            Builtins.substring(a, 0, 1) == "\t"
-          a = Builtins.substring(a, 1)
-        end
-        s = Builtins.splitstring(a, " \t")
-        type = Ops.get(s, 0, "")
-        type
-      end
-      acl = Builtins.filter(acl) { |a| a != "" }
-      acl = Convert.convert(
-        Builtins.sort(
-          Builtins.merge(acl, ["any", "none", "localhost", "localnets"])
-        ),
-        :from => "list",
-        :to   => "list <string>"
-      )
 
       expert_settings = Empty()
       if DnsServer.ExpertUI
@@ -113,11 +111,6 @@ module Yast
           VSpacing(1)
         )
       end
-
-      # bug #203910
-      # hide "none" from listed ACLs
-      # "none" means, not allowed and thus multiselectbox of ACLs is disabled
-      acl = Builtins.filter(acl) { |one_acl| one_acl != "none" }
 
       @available_zones_to_connect = []
       zone_name = ""
@@ -160,7 +153,7 @@ module Yast
             # multi selection box
             VSquash(
               HSquash(
-                MinWidth(30, MultiSelectionBox(Id("acls_list"), _("ACLs"), acl))
+                MinWidth(30, MultiSelectionBox(Id("acls_list"), _("ACLs"), acl_names))
               )
             )
           )
@@ -207,37 +200,35 @@ module Yast
       deep_copy(contents)
     end
 
-    def ZoneAclInit
-      allowed = false
-      keys = []
-      Builtins.foreach(Ops.get_list(@current_zone, "options", [])) do |m|
-        if Ops.get_string(m, "key", "") == "allow-transfer" && !allowed
-          key = Builtins.regexpsub(
-            Ops.get_string(m, "value", ""),
-            "^.*\\{[ \t]*(.*)[ \t]*\\}.*$",
-            "\\1"
-          )
-          if key != nil
-            keys = Builtins.splitstring(key, " ;")
-            keys = Builtins.filter(keys) { |k| k != "" }
-            allowed = true
-          end
-        end
+    # @return [Array<String>]
+    def current_zone_allow_transfer
+      target_pair = @current_zone.fetch("options", []).find do |m|
+        m["key"] == "allow-transfer"
       end
+      return [] unless target_pair
+
+      value = target_pair["value"] || ""
+      value = value[/\A.*\{[ \t]*(.*)[ \t]*\}.*\z/, 1]
+      return [] unless value
+
+      value.split(/[ \t;]/).reject(&:empty?)
+    end
+
+    def ZoneAclInit
+      keys = current_zone_allow_transfer
 
       # bug #203910
       # no keys in allow-transfer means that transfer is allowed for all
       # explicitly say that
-      if Builtins.size(keys) == 0
-        allowed = true
+      if keys.empty?
         keys = ["any"] 
         # the only way how to disable the transfer is to set "allow-transfer { none; };"
         # "none" must be alone, remove it from the list, it is not present in the multi-sel box
-      elsif Builtins.size(keys) == 1 && keys == ["none"]
-        allowed = false
+      elsif keys == ["none"]
         keys = []
       end
 
+      allowed = !keys.empty?
       UI.ChangeWidget(Id("enable_zone_transport"), :Value, allowed)
       UI.ChangeWidget(Id("acls_list"), :Enabled, allowed)
       UI.ChangeWidget(Id("acls_list"), :SelectedItems, keys) if allowed
@@ -2670,23 +2661,6 @@ module Yast
     # Dialog Zone Editor - Slave
     # @return [Object] dialog result for wizard
     def runSlaveZoneTabDialog
-      acl = Builtins.maplist(DnsServer.GetAcl) do |acl_record|
-        acl_splitted = Builtins.splitstring(acl_record, " \t")
-        Ops.get(acl_splitted, 0, "")
-      end
-      acl = Convert.convert(
-        Builtins.sort(
-          Builtins.merge(acl, ["any", "none", "localhost", "localnets"])
-        ),
-        :from => "list",
-        :to   => "list <string>"
-      )
-
-      # bug #203910
-      # hide "none" from listed ACLs
-      # "none" means, not allowed and thus multiselectbox of ACLs is disabled
-      acl = Builtins.filter(acl) { |one_acl| one_acl != "none" }
-
       zone_name = Ops.get_string(@current_zone, "zone", "")
       contents = VBox(
         HBox(
@@ -2717,7 +2691,7 @@ module Yast
           )
         ),
         # multi selection box
-        VSquash(MultiSelectionBox(Id("acls_list"), _("ACLs"), acl)),
+        VSquash(MultiSelectionBox(Id("acls_list"), _("ACLs"), acl_names)),
         VStretch()
       )
 
