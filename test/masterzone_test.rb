@@ -28,6 +28,14 @@ describe "DnsServerDialogMasterzoneInclude" do
     }
   end
 
+  let(:any_zone_options) do
+    {
+      "options" => [
+        { "key" => "allow-transfer", "value" => "{ any; }" }
+      ]
+    }
+  end
+
   let(:none_zone_options) do
     {
       "options" => [
@@ -47,6 +55,12 @@ describe "DnsServerDialogMasterzoneInclude" do
       z = CurrentZoneMock.new
       z.current_zone = none_zone_options
       expect(z.current_zone_allow_transfer).to eq ["none"]
+    end
+
+    it "parses an 'any' case" do
+      z = CurrentZoneMock.new
+      z.current_zone = any_zone_options
+      expect(z.current_zone_allow_transfer).to eq ["any"]
     end
 
     it "parses an empty case" do
@@ -69,10 +83,15 @@ describe "DnsServerDialogMasterzoneInclude" do
       expect(z.acl_names).to eq ["any", "localhost", "localnets"]
     end
 
-
     it "omits 'none'" do
       z = CurrentZoneMock.new
       z.current_zone = none_zone_options
+      expect(z.acl_names).to eq ["any", "localhost", "localnets"]
+    end
+
+    it "deduplicates 'any'" do
+      z = CurrentZoneMock.new
+      z.current_zone = any_zone_options
       expect(z.acl_names).to eq ["any", "localhost", "localnets"]
     end
 
@@ -108,6 +127,19 @@ describe "DnsServerDialogMasterzoneInclude" do
         .with(Id("enable_zone_transport"), :Value, false)
       expect(Yast::UI).to receive(:ChangeWidget)
         .with(Id("acls_list"), :Enabled, false)
+      expect { z.ZoneAclInit }.to_not raise_error
+    end
+
+    it "sets up an 'any' case" do
+      z = CurrentZoneMock.new
+      z.current_zone = any_zone_options
+
+      expect(Yast::UI).to receive(:ChangeWidget)
+        .with(Id("enable_zone_transport"), :Value, true)
+      expect(Yast::UI).to receive(:ChangeWidget)
+        .with(Id("acls_list"), :Enabled, true)
+      expect(Yast::UI).to receive(:ChangeWidget)
+        .with(Id("acls_list"), :SelectedItems, ["any"])
       expect { z.ZoneAclInit }.to_not raise_error
     end
 

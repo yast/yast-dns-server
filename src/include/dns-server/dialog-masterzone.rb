@@ -67,7 +67,7 @@ module Yast
         a.strip.split(/[ \t]/).fetch(0, "")
       end
       # bsc#976643#c23
-      names = (names + current_zone_allow_transfer + BUILTIN_ACLS).sort
+      names = (names + current_zone_allow_transfer + BUILTIN_ACLS).sort.uniq
       # bug #203910
       # hide "none" from listed ACLs
       # "none" means, not allowed and thus multiselectbox of ACLs is disabled
