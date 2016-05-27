@@ -571,6 +571,8 @@ sub StoreZone {
 }
 
 BEGIN { $TYPEINFO{FindZone} = ["function", "integer", "string"]; }
+# Find zone by name ("zone" key)
+# Return -1 if not found
 sub FindZone {
     my $self = shift;
     my $zone_name = shift;
@@ -611,6 +613,10 @@ sub RemoveZone {
 }
 
 BEGIN { $TYPEINFO{SelectZone} = ["function", "boolean", "integer"]; }
+# SelectZone(index) copies that zone to %current_zone
+# SelectZone(-1) is valid, initializes a default %current_zone,
+#   later StoreZone will append it to the @zones list
+# The index is stored to $current_zone_index
 sub SelectZone {
     my $self = shift;
     my $zone_index = shift;
@@ -773,7 +779,9 @@ sub GetAllowedInterfaces {
 
     return \@allowed_interfaces;
 }
+
 BEGIN {$TYPEINFO{FetchCurrentZone} = [ "function", ["map", "string", "any"] ]; }
+# read %current_zone
 sub FetchCurrentZone {
     my $self = shift;
 
@@ -781,6 +789,7 @@ sub FetchCurrentZone {
 }
 
 BEGIN {$TYPEINFO{StoreCurrentZone} = [ "function", "boolean", ["map", "string", "any"] ]; }
+# write %current_zone
 sub StoreCurrentZone {
     my $self = shift;
     %current_zone = %{+shift};
