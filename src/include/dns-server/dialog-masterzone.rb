@@ -202,18 +202,16 @@ module Yast
 
     # @return [Array<String>]
     def current_zone_allow_transfer
-      items = []
-      @current_zone.fetch("options", []).each do |m|
-        if m["key"] == "allow-transfer"
-          key = m.fetch("value", "")
-          key = key[/\A.*\{[ \t]*(.*)[ \t]*\}.*\z/, 1]
-          if key != nil
-            items = key.split(/[ \t;]/).find_all{|i| !i.empty?}
-            break
-          end
-        end
+      target_pair = @current_zone.fetch("options", []).find do |m|
+        m["key"] == "allow-transfer"
       end
-      items
+      return [] unless target_pair
+
+      value = target_pair["value"] || ""
+      value = value[/\A.*\{[ \t]*(.*)[ \t]*\}.*\z/, 1]
+      return [] unless value
+
+      value.split(/[ \t;]/).reject(&:empty?)
     end
 
     def ZoneAclInit
