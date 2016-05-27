@@ -1,5 +1,6 @@
 TESTS = \
-  dns_server_test.rb
+  dns_server_test.rb \
+  dns_server_ui_test.rb
 
 TEST_EXTENSIONS = .rb
 RB_LOG_COMPILER = rspec
