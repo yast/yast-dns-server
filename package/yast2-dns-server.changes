@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Tue Jun  7 11:28:51 UTC 2016 - igonzalezsosa@suse.com
+
+- Stop generating autodocs (fate#320356)
+- 3.1.22
+
+-------------------------------------------------------------------
 Wed May 25 11:11:30 UTC 2016 - mvidner@suse.com
 
 - Keep non-ACL items in allow-transfer AKA Enable Zone Transport
