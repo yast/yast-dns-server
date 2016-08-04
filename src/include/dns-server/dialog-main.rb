@@ -40,6 +40,9 @@ module Yast
       @initial_screen = "start_up"
 
       @service = SystemdService.find("named")
+
+      raise "Service 'named' not found. Please, install the required packages." unless @service
+
       @status_widget = ::UI::ServiceStatus.new(@service)
 
       @global_options_add_items = Builtins.sort(

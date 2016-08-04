@@ -49,6 +49,10 @@ schemafiles_DATA = \
 desktop_DATA = \
   desktop/dns-server.desktop
 
-EXTRA_DIST = $(module_DATA) $(module1_DATA) $(client_DATA) $(ynclude_DATA) $(scrconf_DATA) $(agent_SCRIPTS) $(schemafiles_DATA) $(desktop_DATA)
+ylibclientdir = @ylibdir@/lib/dns-server/clients
+ylibclient_DATA = \
+  lib/dns-server/clients/dns_server.rb
+
+EXTRA_DIST = $(module_DATA) $(module1_DATA) $(client_DATA) $(ynclude_DATA) $(scrconf_DATA) $(agent_SCRIPTS) $(schemafiles_DATA) $(desktop_DATA) $(ylibclient_DATA)
 
 include $(top_srcdir)/Makefile.am.common

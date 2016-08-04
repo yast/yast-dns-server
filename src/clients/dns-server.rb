@@ -1,48 +1,17 @@
 # encoding: utf-8
 
-# File:	clients/dns-server.ycp
-# Package:	Configuration of dns-server
-# Summary:	Main file
-# Authors:	Jiri Srain <jsrain@suse.cz>
-#		Lukas Ocilka <locilka@suse.cz>
+# ------------------------------------------------------------------------------
+# Copyright (c) 2016 SUSE LLC
 #
-# $Id$
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of version 2 of the GNU General Public License as published by the
+# Free Software Foundation.
 #
-# Main file for dns-server configuration. Uses all other files.
-module Yast
-  class DnsServerClient < Client
-    def main
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# ------------------------------------------------------------------------------
 
-      #**
-      # <h3>Configuration of the dns-server</h3>
-
-      textdomain "dns-server"
-      Yast.import "DnsServerUI"
-
-      # The main ()
-      Builtins.y2milestone("----------------------------------------")
-      Builtins.y2milestone("DnsServer module started")
-
-      # main ui function
-      @ret = nil
-
-      # there are some arguments - starting commandline
-      if Ops.greater_than(Builtins.size(WFM.Args), 0)
-        Yast.include self, "dns-server/cmdline.rb" 
-      else
-        @ret = DnsServerUI.DnsSequence
-        Builtins.y2debug("ret=%1", @ret)
-      end
-
-      # Finish
-      Builtins.y2milestone("DnsServer module finished")
-      Builtins.y2milestone("----------------------------------------")
-
-      deep_copy(@ret) 
-
-      # EOF
-    end
-  end
-end
-
+require "dns-server/clients/dns_server"
 Yast::DnsServerClient.new.main
