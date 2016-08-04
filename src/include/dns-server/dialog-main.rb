@@ -39,9 +39,6 @@ module Yast
       # String defines the initial screen for the expert dialog
       @initial_screen = "start_up"
 
-      @service = SystemdService.find("named")
-      @status_widget = ::UI::ServiceStatus.new(@service)
-
       @global_options_add_items = Builtins.sort(
         [
           "additional-from-auth",
@@ -258,275 +255,12 @@ module Yast
       # Dialog label DNS - expert settings
       @dns_server_label = _("DNS Server")
 
-      @new_widgets = {
-        "start_up"    => {
-          "widget"        => :custom,
-          "custom_widget" => VBox(),
-          "init"          => fun_ref(
-            method(:InitStartUp),
-            "void (string)"
-          ),
-          "handle"        => fun_ref(
-            method(:HandleStartUp),
-            "symbol (string, map)"
-          ),
-          "help"          => @status_widget.help
-        },
-        "firewall"      => CWMFirewallInterfaces.CreateOpenFirewallWidget(
-          { "services" => ["service:bind"], "display_details" => true }
-        ),
-        "use_ldap"      => CWMServiceStart.CreateLdapWidget(
-          {
-            "get_use_ldap"      => fun_ref(
-              DnsServer.method(:GetUseLdap),
-              "boolean ()"
-            ),
-            "set_use_ldap"      => fun_ref(
-              DnsServer.method(:SetUseLdap),
-              "boolean (boolean)"
-            ),
-            # TRANSLATORS: checkbox label, turning LDAP support on or off
-            "use_ldap_checkbox" => _(
-              "&LDAP Support Active"
-            ),
-            "help"              => CWMServiceStart.EnableLdapHelp
-          }
-        ),
-        "forwarders"    => {
-          "widget"        => :custom,
-          "custom_widget" => VBox(),
-          "init"          => fun_ref(
-            method(:InitExpertForwardersPage),
-            "void (string)"
-          ),
-          "handle"        => fun_ref(
-            method(:HandleExpertForwardersPage),
-            "symbol (string, map)"
-          ),
-          "store"         => fun_ref(
-            method(:StoreExpertForwardersPage),
-            "void (string, map)"
-          ),
-          "help"          => Ops.get_string(@HELPS, "forwarders", "")
-        },
-        "basic_options" => {
-          "widget"        => :custom,
-          "custom_widget" => VBox(),
-          "init"          => fun_ref(
-            method(:InitExpertBasicOptionsPage),
-            "void (string)"
-          ),
-          "handle"        => fun_ref(
-            method(:HandleExpertBasicOptionsPage),
-            "symbol (string, map)"
-          ),
-          "store"         => fun_ref(
-            method(:StoreExpertBasicOptionsPage),
-            "void (string, map)"
-          ),
-          "help"          => Ops.get_string(@HELPS, "basic_options", "")
-        },
-        "logging"       => {
-          "widget"        => :custom,
-          "custom_widget" => VBox(),
-          "init"          => fun_ref(
-            method(:InitExpertLoggingPage),
-            "void (string)"
-          ),
-          "handle"        => fun_ref(
-            method(:HandleExpertLoggingPage),
-            "symbol (string, map)"
-          ),
-          "store"         => fun_ref(
-            method(:StoreExpertLoggingPage),
-            "void (string, map)"
-          ),
-          "help"          => Ops.get_string(@HELPS, "logging", "")
-        },
-        "acls"          => {
-          "widget"        => :custom,
-          "custom_widget" => VBox(),
-          "init"          => fun_ref(
-            method(:InitExpertAclPage),
-            "void (string)"
-          ),
-          "handle"        => fun_ref(
-            method(:HandleExpertAclPage),
-            "symbol (string, map)"
-          ),
-          "store"         => fun_ref(
-            method(:StoreExpertAclPage),
-            "void (string, map)"
-          ),
-          "help"          => Ops.get_string(@HELPS, "acls", "")
-        },
-        "tsig_keys"     => CWMTsigKeys.CreateWidget(
-          {
-            "get_keys_info" => fun_ref(
-              DnsTsigKeys.method(:GetTSIGKeys),
-              "map <string, any> ()"
-            ),
-            "set_keys_info" => fun_ref(
-              DnsTsigKeys.method(:SetTSIGKeys),
-              "void (map <string, any>)"
-            )
-          }
-        ),
-        "keys"          => {
-          "widget"        => :custom,
-          "custom_widget" => VBox(),
-          "help"          => Ops.get_string(@HELPS, "keys", "")
-        },
-        "zones"         => {
-          "widget"        => :custom,
-          "custom_widget" => VBox(),
-          "init"          => fun_ref(
-            method(:InitExpertZonesPage),
-            "void (string)"
-          ),
-          "handle"        => fun_ref(
-            method(:HandleExpertZonesPage),
-            "symbol (string, map)"
-          ),
-          "store"         => fun_ref(
-            method(:StoreExpertZonesPage),
-            "void (string, map)"
-          ),
-          "help"          => Ops.get_string(@HELPS, "zones", "")
-        },
-        "set_icon"      => {
-          "widget"        => :custom,
-          "custom_widget" => Empty(),
-          "init"          => fun_ref(
-            method(:InitDNSSErverIcon),
-            "void (string)"
-          ),
-          "help"          => " "
-        }
-      }
-
-      @tabs = {
-        "start_up"      => {
-          # FIXME: new startup
-          "contents"        => VBox(
-            @status_widget.widget,
-            VSpacing(),
-            "firewall",
-            VStretch(),
-            Right(
-              PushButton(Id("apply"), _("Apply Changes"))
-            )
-          ),
-          # Dialog Label - DNS - expert settings
-          "caption"         => Ops.add(
-            Ops.add(@dns_server_label, ": "),
-            _("Start-Up")
-          ),
-          # Tree Menu Item - DNS - expert settings
-          "tree_item_label" => _(
-            "Start-Up"
-          ),
-          # FIXME: new startup
-          "widget_names"    => DnsServer.ExpertUI ?
-            # expert mode
-            ["start_up", "firewall"] :
-            # simple mode
-            ["start_up", "firewall", "set_icon"]
-        },
-        "forwarders"    => {
-          "contents"        => ExpertForwardersDialog(),
-          # Dialog Label - DNS - expert settings
-          "caption"         => Ops.add(
-            Ops.add(@dns_server_label, ": "),
-            _("Forwarders")
-          ),
-          # Tree Menu Item - DNS - expert settings
-          "tree_item_label" => _(
-            "Forwarders"
-          ),
-          "widget_names"    => ["forwarders"]
-        },
-        "basic_options" => {
-          "contents"        => ExpertBasicOptionsDialog(),
-          # Dialog Label - DNS - expert settings
-          "caption"         => Ops.add(
-            Ops.add(@dns_server_label, ": "),
-            _("Basic Options")
-          ),
-          # Tree Menu Item - DNS - expert settings
-          "tree_item_label" => _(
-            "Basic Options"
-          ),
-          "widget_names"    => ["basic_options"]
-        },
-        "logging"       => {
-          "contents"        => Expert_Logging_Dialog(),
-          # Dialog Label - DNS - expert settings
-          "caption"         => Ops.add(
-            Ops.add(@dns_server_label, ": "),
-            _("Logging")
-          ),
-          "tree_item_label" => _("Logging"),
-          # Tree Menu Item - DNS - expert settings
-          "widget_names"    => [
-            "logging"
-          ]
-        },
-        "acls"          => {
-          "contents"        => Expert_ACLs_Dialog(),
-          # Dialog Label - DNS - expert settings
-          "caption"         => Ops.add(
-            Ops.add(@dns_server_label, ": "),
-            _("ACLs")
-          ),
-          # Tree Menu Item - DNS - expert settings
-          "tree_item_label" => _(
-            "ACLs"
-          ),
-          "widget_names"    => ["acls"]
-        },
-        "keys"          => {
-          "contents"        => HBox(
-            HSpacing(2),
-            VBox(VSpacing(1), "tsig_keys", VSpacing(1)),
-            HSpacing(2)
-          ),
-          # Dialog Label - DNS - expert settings
-          "caption"         => Ops.add(
-            Ops.add(@dns_server_label, ": "),
-            _("TSIG Keys")
-          ),
-          # Tree Menu Item - DNS - expert settings
-          "tree_item_label" => _(
-            "TSIG Keys"
-          ),
-          "widget_names"    => ["tsig_keys"],
-          "widget_descr"    => @new_widgets
-        },
-        "zones"         => {
-          "contents"        => VBox(
-            "use_ldap",
-            VSpacing(),
-            ExpertZonesDialog()
-          ),
-          # Dialog Label - DNS - expert settings
-          "caption"         => Ops.add(
-            Ops.add(@dns_server_label, ": "),
-            _("DNS Zones")
-          ),
-          # Tree Menu Item - DNS - expert settings
-          "tree_item_label" => _(
-            "DNS Zones"
-          ),
-          "widget_names"    => ["use_ldap", "zones"]
-        }
-      }
 
       @functions = { :abort => fun_ref(method(:confirmAbort), "boolean ()") }
     end
 
     def InitStartUp(_key)
-      @status_widget.refresh
+      status_widget.refresh
       nil
     end
 
@@ -535,8 +269,8 @@ module Yast
       if event_id == "apply"
         SaveAndRestart()
       else
-        if @status_widget.handle_input(event_id) == :enabled_flag
-          DnsServer.SetStartService(@status_widget.enabled_flag?)
+        if status_widget.handle_input(event_id) == :enabled_flag
+          DnsServer.SetStartService(status_widget.enabled_flag?)
         end
       end
       nil
@@ -2147,7 +1881,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @service.reload if @status_widget.reload_flag?
+        service.reload if status_widget.reload_flag?
         :next
       else
         if Popup.YesNo(_("Saving the configuration failed. Change the settings?"))
@@ -2164,7 +1898,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        @service.reload if @status_widget.reload_flag?
+        service.reload if status_widget.reload_flag?
       else
         Report.Error(_("Saving the configuration failed"))
       end
@@ -2211,14 +1945,300 @@ module Yast
         {
           "ids_order"      => DnsServer.ExpertUI ? expert_dialogs : normal_dialog,
           "initial_screen" => @initial_screen,
-          "screens"        => @tabs,
-          "widget_descr"   => @new_widgets,
+          "screens"        => tabs,
+          "widget_descr"   => new_widgets,
           "back_button"    => "",
           "abort_button"   => Label.CancelButton,
           "next_button"    => Label.OKButton,
           "functions"      => @functions
         }
       )
+    end
+
+    # Returns a hash describing the UI tabs
+    def tabs
+      @tabs ||= {
+        "start_up"      => {
+          # FIXME: new startup
+          "contents"        => VBox(
+            status_widget.widget,
+            VSpacing(),
+            "firewall",
+            VStretch(),
+            Right(
+              PushButton(Id("apply"), _("Apply Changes"))
+            )
+          ),
+          # Dialog Label - DNS - expert settings
+          "caption"         => Ops.add(
+            Ops.add(@dns_server_label, ": "),
+            _("Start-Up")
+          ),
+          # Tree Menu Item - DNS - expert settings
+          "tree_item_label" => _(
+            "Start-Up"
+          ),
+          # FIXME: new startup
+          "widget_names"    => DnsServer.ExpertUI ?
+            # expert mode
+            ["start_up", "firewall"] :
+            # simple mode
+            ["start_up", "firewall", "set_icon"]
+        },
+        "forwarders"    => {
+          "contents"        => ExpertForwardersDialog(),
+          # Dialog Label - DNS - expert settings
+          "caption"         => Ops.add(
+            Ops.add(@dns_server_label, ": "),
+            _("Forwarders")
+          ),
+          # Tree Menu Item - DNS - expert settings
+          "tree_item_label" => _(
+            "Forwarders"
+          ),
+          "widget_names"    => ["forwarders"]
+        },
+        "basic_options" => {
+          "contents"        => ExpertBasicOptionsDialog(),
+          # Dialog Label - DNS - expert settings
+          "caption"         => Ops.add(
+            Ops.add(@dns_server_label, ": "),
+            _("Basic Options")
+          ),
+          # Tree Menu Item - DNS - expert settings
+          "tree_item_label" => _(
+            "Basic Options"
+          ),
+          "widget_names"    => ["basic_options"]
+        },
+        "logging"       => {
+          "contents"        => Expert_Logging_Dialog(),
+          # Dialog Label - DNS - expert settings
+          "caption"         => Ops.add(
+            Ops.add(@dns_server_label, ": "),
+            _("Logging")
+          ),
+          "tree_item_label" => _("Logging"),
+          # Tree Menu Item - DNS - expert settings
+          "widget_names"    => [
+            "logging"
+          ]
+        },
+        "acls"          => {
+          "contents"        => Expert_ACLs_Dialog(),
+          # Dialog Label - DNS - expert settings
+          "caption"         => Ops.add(
+            Ops.add(@dns_server_label, ": "),
+            _("ACLs")
+          ),
+          # Tree Menu Item - DNS - expert settings
+          "tree_item_label" => _(
+            "ACLs"
+          ),
+          "widget_names"    => ["acls"]
+        },
+        "keys"          => {
+          "contents"        => HBox(
+            HSpacing(2),
+            VBox(VSpacing(1), "tsig_keys", VSpacing(1)),
+            HSpacing(2)
+          ),
+          # Dialog Label - DNS - expert settings
+          "caption"         => Ops.add(
+            Ops.add(@dns_server_label, ": "),
+            _("TSIG Keys")
+          ),
+          # Tree Menu Item - DNS - expert settings
+          "tree_item_label" => _(
+            "TSIG Keys"
+          ),
+          "widget_names"    => ["tsig_keys"],
+          "widget_descr"    => new_widgets
+        },
+        "zones"         => {
+          "contents"        => VBox(
+            "use_ldap",
+            VSpacing(),
+            ExpertZonesDialog()
+          ),
+          # Dialog Label - DNS - expert settings
+          "caption"         => Ops.add(
+            Ops.add(@dns_server_label, ": "),
+            _("DNS Zones")
+          ),
+          # Tree Menu Item - DNS - expert settings
+          "tree_item_label" => _(
+            "DNS Zones"
+          ),
+          "widget_names"    => ["use_ldap", "zones"]
+        }
+      }
+    end
+
+    # Returns a hash describing the UI widgets
+    def new_widgets
+      @new_widgets ||= {
+        "start_up"    => {
+          "widget"        => :custom,
+          "custom_widget" => VBox(),
+          "init"          => fun_ref(
+            method(:InitStartUp),
+            "void (string)"
+          ),
+          "handle"        => fun_ref(
+            method(:HandleStartUp),
+            "symbol (string, map)"
+          ),
+          "help"          => status_widget.help
+        },
+        "firewall"      => CWMFirewallInterfaces.CreateOpenFirewallWidget(
+          { "services" => ["service:bind"], "display_details" => true }
+        ),
+        "use_ldap"      => CWMServiceStart.CreateLdapWidget(
+          {
+            "get_use_ldap"      => fun_ref(
+              DnsServer.method(:GetUseLdap),
+              "boolean ()"
+            ),
+            "set_use_ldap"      => fun_ref(
+              DnsServer.method(:SetUseLdap),
+              "boolean (boolean)"
+            ),
+            # TRANSLATORS: checkbox label, turning LDAP support on or off
+            "use_ldap_checkbox" => _(
+              "&LDAP Support Active"
+            ),
+            "help"              => CWMServiceStart.EnableLdapHelp
+          }
+        ),
+        "forwarders"    => {
+          "widget"        => :custom,
+          "custom_widget" => VBox(),
+          "init"          => fun_ref(
+            method(:InitExpertForwardersPage),
+            "void (string)"
+          ),
+          "handle"        => fun_ref(
+            method(:HandleExpertForwardersPage),
+            "symbol (string, map)"
+          ),
+          "store"         => fun_ref(
+            method(:StoreExpertForwardersPage),
+            "void (string, map)"
+          ),
+          "help"          => Ops.get_string(@HELPS, "forwarders", "")
+        },
+        "basic_options" => {
+          "widget"        => :custom,
+          "custom_widget" => VBox(),
+          "init"          => fun_ref(
+            method(:InitExpertBasicOptionsPage),
+            "void (string)"
+          ),
+          "handle"        => fun_ref(
+            method(:HandleExpertBasicOptionsPage),
+            "symbol (string, map)"
+          ),
+          "store"         => fun_ref(
+            method(:StoreExpertBasicOptionsPage),
+            "void (string, map)"
+          ),
+          "help"          => Ops.get_string(@HELPS, "basic_options", "")
+        },
+        "logging"       => {
+          "widget"        => :custom,
+          "custom_widget" => VBox(),
+          "init"          => fun_ref(
+            method(:InitExpertLoggingPage),
+            "void (string)"
+          ),
+          "handle"        => fun_ref(
+            method(:HandleExpertLoggingPage),
+            "symbol (string, map)"
+          ),
+          "store"         => fun_ref(
+            method(:StoreExpertLoggingPage),
+            "void (string, map)"
+          ),
+          "help"          => Ops.get_string(@HELPS, "logging", "")
+        },
+        "acls"          => {
+          "widget"        => :custom,
+          "custom_widget" => VBox(),
+          "init"          => fun_ref(
+            method(:InitExpertAclPage),
+            "void (string)"
+          ),
+          "handle"        => fun_ref(
+            method(:HandleExpertAclPage),
+            "symbol (string, map)"
+          ),
+          "store"         => fun_ref(
+            method(:StoreExpertAclPage),
+            "void (string, map)"
+          ),
+          "help"          => Ops.get_string(@HELPS, "acls", "")
+        },
+        "tsig_keys"     => CWMTsigKeys.CreateWidget(
+          {
+            "get_keys_info" => fun_ref(
+              DnsTsigKeys.method(:GetTSIGKeys),
+              "map <string, any> ()"
+            ),
+            "set_keys_info" => fun_ref(
+              DnsTsigKeys.method(:SetTSIGKeys),
+              "void (map <string, any>)"
+            )
+          }
+        ),
+        "keys"          => {
+          "widget"        => :custom,
+          "custom_widget" => VBox(),
+          "help"          => Ops.get_string(@HELPS, "keys", "")
+        },
+        "zones"         => {
+          "widget"        => :custom,
+          "custom_widget" => VBox(),
+          "init"          => fun_ref(
+            method(:InitExpertZonesPage),
+            "void (string)"
+          ),
+          "handle"        => fun_ref(
+            method(:HandleExpertZonesPage),
+            "symbol (string, map)"
+          ),
+          "store"         => fun_ref(
+            method(:StoreExpertZonesPage),
+            "void (string, map)"
+          ),
+          "help"          => Ops.get_string(@HELPS, "zones", "")
+        },
+        "set_icon"      => {
+          "widget"        => :custom,
+          "custom_widget" => Empty(),
+          "init"          => fun_ref(
+            method(:InitDNSSErverIcon),
+            "void (string)"
+          ),
+          "help"          => " "
+        }
+      }
+    end
+
+    # Returns the status widget for service
+    #
+    # @return [::UI::ServiceStatus] status widget
+    #
+    # @see #service
+    def status_widget
+      @status_widget ||= ::UI::ServiceStatus.new(service)
+    end
+
+    # Returns the 'named' systemd service
+    #
+    # @return [SystemdService] 'named' systemd service instance
+    def service
+      @service ||= SystemdService.find("named")
     end
   end
 end

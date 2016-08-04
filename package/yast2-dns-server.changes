@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Thu Aug  4 11:53:40 UTC 2016 - igonzalezsosa@suse.com
+
+- Fix an Internal Error 'undefined method DnsSequence' in case
+  bind.rpm is not installed (bsc#990453)
+- 3.1.23
+
+-------------------------------------------------------------------
 Tue Jun  7 11:28:51 UTC 2016 - igonzalezsosa@suse.com
 
 - Stop generating autodocs (fate#320356)
