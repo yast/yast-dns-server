@@ -8,7 +8,10 @@
 proc run_ag_tests { agent_basename } {
     global srcdir
 
-    set test_cases [lsort [glob $srcdir/tests.ag/*.ycp]]
+    if [catch {set test_cases [lsort [glob $srcdir/tests.ag/*.ycp]]}] {
+      puts "\nNo test cases found\n"
+      return 0
+    }
 
     foreach test_case $test_cases {
 	run_case $test_case $agent_basename
