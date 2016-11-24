@@ -2,6 +2,7 @@
 Thu Nov 24 14:13:00 UTC 2016 - igonzalezsosa@suse.com
 
 - Remove dead code regarding help messages (bsc#1012048) 
+- 3.2.0
 
 -------------------------------------------------------------------
 Fri Aug  5 09:39:32 UTC 2016 - igonzalezsosa@suse.com
