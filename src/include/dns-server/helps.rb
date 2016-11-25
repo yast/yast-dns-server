@@ -34,37 +34,6 @@ module Yast
               "Abort the save procedure by pressing <b>Abort</b>.\n" +
               "An additional dialog informs you whether it is safe to do so.</p>"
           ),
-        # main dialog
-        # help 1/4
-        "start"                       => _(
-          "<p><b><big>Start DNS Server</big></b><br>\n" +
-            "To run the DNS server every time your computer is started, set\n" +
-            "<b>Start DNS Server</b>.</p>"
-        ),
-        # help 2/4
-        "chroot"                      => _(
-          "<p><b><big>Chroot Jail</big></b><br>\n" +
-            "To run the DNS server in chroot jail, set\n" +
-            "<b>Run DNS Server in Chroot Jail</b>. Starting any daemon in a chroot jail\n" +
-            "is more secure and strongly recommended.</p>"
-        ),
-        # help 3/4
-        "zones"                       => _(
-          "<p><b><big>Editing DNS Zones</big></b><br>\n" +
-            "To edit settings of a DNS zone, choose the appropriate\n" +
-            "entry of the table and click <B>Edit</B>.\n" +
-            "To add a new DNS zone, use <B>Add</B>. To remove\n" +
-            "a configured DNS zone, select it and click <B>Delete</B>.</P>"
-        ),
-        # help 4/4
-        "adv_mbutton"                 => _(
-          "<p><b><big>Advanced Functions</big></b><br>\n" +
-            "To edit global options,\n" +
-            "adjust firewall settings,\n" +
-            "manage the TSIG keys for dynamic updates of the zones,\n" +
-            "or display the log of the DNS server,\n" +
-            "use <b>Advanced</b>.</p>"
-        ),
         # zone dialog
         # help 1/5
         "zone_name"                   => _(
