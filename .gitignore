@@ -26,3 +26,5 @@ pluglib-bindings.ami
 test-driver
 /test/*.log
 /test/*.trs
+/coverage
+/.yardoc
