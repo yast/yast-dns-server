@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Mon Nov  6 11:55:43 UTC 2017 - knut.anderssen@suse.com
+
+- Fix teststuite once SuSEFirewall2 is bein replaced by Firewalld
+  (fate#323460)
+- 4.0.0
+
+-------------------------------------------------------------------
 Thu Nov 24 14:13:00 UTC 2016 - igonzalezsosa@suse.com
 
 - Remove dead code regarding help messages (bsc#1012048) 
