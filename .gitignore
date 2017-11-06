@@ -27,8 +27,6 @@ test-driver
 /test/*.log
 /test/*.trs
 doc/
-.yardoc/*
 coverage/
 .yardoc/
-doc/autodocs
 *.pot

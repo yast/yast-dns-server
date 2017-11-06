@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 Mon Nov  6 11:55:43 UTC 2017 - knut.anderssen@suse.com
 
-- Fix teststuite once SuSEFirewall2 is bein replaced by Firewalld
+- Fix teststuite once SuSEFirewall2 is being replaced by Firewalld
   (fate#323460)
 - 4.0.0
 
