@@ -113,7 +113,6 @@ module Yast
 
       # avoid reading SuSEFirewall sysconfig
       Yast.import "SuSEFirewall"
-      SuSEFirewall.SuSEFirewall_variables = []
 
       @progress_orig = Progress.set(false)
 
