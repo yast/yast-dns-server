@@ -2092,7 +2092,7 @@ module Yast
           "help"          => status_widget.help
         },
         "firewall"      => CWMFirewallInterfaces.CreateOpenFirewallWidget(
-          { "services" => ["bind"], "display_details" => true }
+          { "services" => ["dns"], "display_details" => true }
         ),
         "use_ldap"      => CWMServiceStart.CreateLdapWidget(
           {
