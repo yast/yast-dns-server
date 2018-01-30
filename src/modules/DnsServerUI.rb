@@ -28,7 +28,7 @@ module Yast
       Yast.import "Progress"
       Yast.import "Report"
       Yast.import "Summary"
-      Yast.import "SuSEFirewall"
+      Yast.import "FirewalldWrapper"
 
       Yast.import "DnsFakeTabs" # FIXME remove when possbile
 

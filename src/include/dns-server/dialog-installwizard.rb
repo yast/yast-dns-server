@@ -158,7 +158,7 @@ module Yast
       )
 
       firewall_settings = {
-        "services"        => ["service:bind"],
+        "services"        => ["dns"],
         "display_details" => true
       }
       firewall_widget = CWMFirewallInterfaces.CreateOpenFirewallWidget(

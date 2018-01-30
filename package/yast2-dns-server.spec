@@ -1,7 +1,7 @@
 #
 # spec file for package yast2-dns-server
 #
-# Copyright (c) 2014 SUSE LINUX Products GmbH, Nuernberg, Germany.
+# Copyright (c) 2018 SUSE LINUX GmbH, Nuernberg, Germany.
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dns-server
-Version:        4.0.0
+Version:        4.0.1
 Release:        0
 Url:            https://github.com/yast/yast-dns-server
 
@@ -25,16 +25,16 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Source0:        %{name}-%{version}.tar.bz2
 
 BuildRequires:  perl-XML-Writer
-BuildRequires:  rubygem(rspec)
 BuildRequires:  update-desktop-files
 BuildRequires:  yast2
 BuildRequires:  yast2-devtools >= 3.1.10
 BuildRequires:  yast2-ldap >= 3.1.4
 BuildRequires:  yast2-perl-bindings
 BuildRequires:  yast2-testsuite
+BuildRequires:  rubygem(rspec)
 
-# UI::ServiceStatus
-BuildRequires:  yast2 >= 3.1.161
+# SuSEFirewall2 replaced by firewalld
+BuildRequires:  yast2 >= 4.0.39
 Requires:       /usr/bin/host
 Requires:       perl-gettext
 # Exporter Data::Dumper
@@ -55,8 +55,8 @@ Requires:       sed
 # FATE #303386: Network setup tools
 Requires:       yast2-sysconfig
 
-# UI::ServiceStatus
-Requires:       yast2 >= 3.1.161
+# SuSEFirewall2 replaced by firewalld
+Requires:       yast2 >= 4.0.39
 
 BuildArch:      noarch
 

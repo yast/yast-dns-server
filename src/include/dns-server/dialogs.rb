@@ -21,7 +21,7 @@ module Yast
       Yast.import "CWM"
       Yast.import "Wizard"
       Yast.import "Message"
-      Yast.import "SuSEFirewall"
+      Yast.import "FirewalldWrapper"
       Yast.import "Punycode"
       Yast.import "Confirm"
     end

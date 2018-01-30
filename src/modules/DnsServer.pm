@@ -27,7 +27,7 @@ YaST::YCP::Import ("Popup");
 YaST::YCP::Import ("Progress");
 YaST::YCP::Import ("Report");
 YaST::YCP::Import ("Service");
-YaST::YCP::Import ("SuSEFirewall");
+YaST::YCP::Import ("FirewalldWrapper");
 YaST::YCP::Import ("Message");
 YaST::YCP::Import ("CWMTsigKeys");
 YaST::YCP::Import ("NetworkService");
@@ -1022,7 +1022,7 @@ sub Read {
     Progress->NextStage ();
     
     my $current_progress = Progress->set(0);
-    SuSEFirewall->Read();
+    FirewalldWrapper->read();
     Progress->set($current_progress);
 
     Progress->NextStage ();
@@ -1392,7 +1392,7 @@ sub Write {
 	}
     }
 
-    if ((! $modified) && (! SuSEFirewall->GetModified()))
+    if ((! $modified) && (! FirewalldWrapper->read()))
     {
 	return $ok;
     }
@@ -1582,10 +1582,7 @@ sub Write {
 
     Progress->NextStage ();
 
-    # Firewall has it's own Progress
-    my $progress_orig = Progress->set (0);
-    SuSEFirewall::Write();
-    Progress->set ($progress_orig);
+    FirewalldWrapper->write();
 
     Progress->NextStage ();
 
