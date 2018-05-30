@@ -3,7 +3,6 @@
 require_relative "test_helper"
 require "yast"
 require "yast/rspec"
-require "abstract_method"
 
 describe "DnsServerDialogMainInclude" do
   class CurrentDialogMain
