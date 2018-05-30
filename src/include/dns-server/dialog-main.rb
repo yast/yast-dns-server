@@ -1883,7 +1883,7 @@ module Yast
       if ret
         if status_widget.reload_flag?
           if service.running?
-            service.restart
+            service.reload
           else
             service.restart
           end
