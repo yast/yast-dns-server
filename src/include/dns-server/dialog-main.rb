@@ -1904,13 +1904,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        if status_widget.reload_flag?
-          if service.running?
-            service.reload
-          else
-            service.restart
-          end
-        end
+        service.reload if status_widget.reload_flag?
       else
         Report.Error(_("Saving the configuration failed"))
       end
