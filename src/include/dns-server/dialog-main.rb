@@ -1881,13 +1881,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        if status_widget.reload_flag?
-          if service.running?
-            service.reload
-          else
-            service.restart
-          end
-        end
+        service.reload if service.running? && status_widget.reload_flag?
         :next
       else
         if Popup.YesNo(_("Saving the configuration failed. Change the settings?"))
@@ -1904,7 +1898,7 @@ module Yast
       Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
       ret = DnsServer.Write
       if ret
-        service.reload if status_widget.reload_flag?
+        service.reload if service.running? && status_widget.reload_flag?
       else
         Report.Error(_("Saving the configuration failed"))
       end
