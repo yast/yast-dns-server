@@ -23,22 +23,44 @@ describe "DnsServerDialogMainInclude" do
   end
 
   describe "#WriteDialog" do
-    it "reloads running named.service" do
-      m = CurrentDialogMain.new
-      expect(Yast::DnsServer).to receive(:Write).and_return true
-      expect(m.service).to receive(:running?).and_return true
-      expect(m.status_widget).to receive(:reload_flag?).and_return true
-      expect(m.service).to receive(:reload)
-      expect(m.WriteDialog ).to eq(:next)
+    context "when the named service is running" do
+      context "and the config is marked to be reloaded" do
+        it "reloads the service" do
+          m = CurrentDialogMain.new
+          expect(Yast::DnsServer).to receive(:Write).and_return true
+          expect(m.service).to receive(:running?).and_return true
+          expect(m.status_widget).to receive(:reload_flag?).and_return true
+          expect(m.service).to receive(:reload)
+          expect(m.WriteDialog ).to eq(:next)
+        end
+      end
+
+      context "and the config is not marked to be reloaded" do
+        it "does not restart nor reload the service" do
+          m = CurrentDialogMain.new
+          expect(Yast::DnsServer).to receive(:Write).and_return true
+          expect(m.service).to receive(:running?).and_return true
+          expect(m.status_widget).to receive(:reload_flag?).and_return false
+          expect(m.service).to_not receive(:reload)
+          expect(m.service).to_not receive(:restart)
+          expect(m.WriteDialog ).to eq(:next)
+        end
+      end
     end
 
-    it "restarts not running named.service" do
-      m = CurrentDialogMain.new
-      expect(Yast::DnsServer).to receive(:Write).and_return true
-      expect(m.service).to receive(:running?).and_return false
-      expect(m.status_widget).to receive(:reload_flag?).and_return true
-      expect(m.service).to receive(:restart)
-      expect(m.WriteDialog ).to eq(:next)
+    context "when the named service is not running" do
+      let(:m) { CurrentDialogMain.new }
+      before do
+        allow(m.status_widget).to receive(:reload_flag?).and_return true
+      end
+
+      it "does not restart nor reload the service" do
+        expect(Yast::DnsServer).to receive(:Write).and_return true
+        expect(m.service).to receive(:running?).and_return false
+        expect(m.service).to_not receive(:restart)
+        expect(m.service).to_not receive(:reload)
+        expect(m.WriteDialog ).to eq(:next)
+      end
     end
   end
 
