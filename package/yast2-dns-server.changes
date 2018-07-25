@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Wed Jul 25 18:20:26 UTC 2018 - knut.anderssen@suse.com
+
+- Reload the configuration only if the service is running but do
+  not restart the service. (bsc#1102235)
+- 4.0.4
+
+-------------------------------------------------------------------
 Tue Jun 26 16:51:49 CEST 2018 - schubi@suse.de
 
 - Added additional searchkeys to desktop file (fate#321043).
