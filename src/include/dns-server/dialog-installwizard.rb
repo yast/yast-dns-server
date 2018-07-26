@@ -189,7 +189,6 @@ module Yast
             Left(
               RadioButtonGroup(
                 Id("dns_server_type"),
-                Opt(:shrinkable),
                 VBox(
                   # Radiobutton label - DNS starting
                   Left(
