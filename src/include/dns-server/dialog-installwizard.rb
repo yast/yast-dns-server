@@ -9,6 +9,10 @@
 #
 # Representation of the configuration of dns-server.
 # Input and output routines.
+
+require "cwm/service_widget"
+require "yast2/system_service"
+
 module Yast
   module DnsServerDialogInstallwizardInclude
     def initialize_dns_server_dialog_installwizard(include_target)
@@ -21,6 +25,19 @@ module Yast
       Yast.import "CWM"
       Yast.import "Wizard"
       Yast.import "CWMFirewallInterfaces"
+    end
+
+    def service
+      @service ||= Yast2::SystemService.find("named")
+    end
+
+    def service_widget
+      @service_widget ||= ::CWM::ServiceWidget.new(service)
+    end
+
+    def write_dns_settings
+      service_widget.store
+      service.save
     end
 
     def runInstallWizardForwardersDialog
@@ -184,22 +201,7 @@ module Yast
           VBox(
             firewall_layout,
             ldap_support,
-            # Label for Radiobuttons - DNS starting
-            Left(Label(_("Start-up Behavior"))),
-            Left(
-              RadioButtonGroup(
-                Id("dns_server_type"),
-                VBox(
-                  # Radiobutton label - DNS starting
-                  Left(
-                    RadioButton(Id(:on), _("O&n: Start Now and When Booting"))
-                  ),
-                  # Radiobutton label - DNS starting
-                  Left(RadioButton(Id(:off), _("O&ff: Only Start Manually"))),
-                  VSpacing(1)
-                )
-              )
-            )
+            service_widget.contents,
           ),
           RichText(Id("installation_overview"), rich_text),
           VSpacing(2),
@@ -221,13 +223,6 @@ module Yast
       )
       SetDNSSErverIcon()
       Wizard.SetNextButton(:next, Label.FinishButton)
-
-      auto_start = DnsServer.GetStartService
-      UI.ChangeWidget(
-        Id("dns_server_type"),
-        :CurrentButton,
-        auto_start ? :on : :off
-      )
 
       use_ldap = false
       # only expert allows to store data in ldap
@@ -270,10 +265,8 @@ module Yast
       end
 
       if ret == :next || ret == :expert
-        DnsServer.SetModified
+        write_dns_settings
 
-        auto_start2 = UI.QueryWidget(Id("dns_server_type"), :CurrentButton) == :on
-        DnsServer.SetStartService(auto_start2)
         CWMFirewallInterfaces.OpenFirewallStore(firewall_widget, "", event)
       end
 
