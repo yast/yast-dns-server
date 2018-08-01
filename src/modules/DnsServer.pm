@@ -1525,44 +1525,48 @@ sub Write {
     $self->update_forwarding();
 
     $ret = {};
-    # named has to be started
-    if ($start_service)
+
+    if (Mode->auto() || Mode->config())
     {
-	my $success = 1;
-	if (! $write_only)
-	{
-	    # named is running
-	    if (Service->Status("named") == 0) {
-		y2milestone("Reloading service 'named'");
-		$success = Service->Reload("named")
-	    } else {
-		y2milestone("Restarting service 'named'");
-		$success = Service->Restart("named")
-	    }
-	}
-	Service->Enable ("named");
-	if (! $success)
-	{
-	    # Cannot start service 'named', because of error that follows Error:.  Do not translate named.
-	    Report->Error (__("Error occurred while starting service named.\n\n"));
-	    $ok = 0;
-	    # There's no 'named' running -> prevent from blocking DNS queries
-	    $self->SetLocalForwarder("resolver") if GetLocalForwarder() eq "bind";
-	    y2warning("Local forwarder set to: ".GetLocalForwarder());
-	}
-    }
-    # named has to be stopped
-    else
-    {
-	if (! $write_only)
-	{
-	    y2milestone("Stopping service 'named'");
-	    Service->Stop("named");
-	    # There's no 'named' running. Reset dns forwarder again
-	    $self->SetLocalForwarder("resolver") if GetLocalForwarder() eq "bind";
-	    y2warning("Local forwarder set to: ".GetLocalForwarder());
-	}
-	Service->Disable ("named");
+        # named has to be started
+        if ($start_service)
+        {
+        my $success = 1;
+        if (! $write_only)
+        {
+            # named is running
+            if (Service->Status("named") == 0) {
+            y2milestone("Reloading service 'named'");
+            $success = Service->Reload("named")
+            } else {
+            y2milestone("Restarting service 'named'");
+            $success = Service->Restart("named")
+            }
+        }
+        Service->Enable ("named");
+        if (! $success)
+        {
+            # Cannot start service 'named', because of error that follows Error:.  Do not translate named.
+            Report->Error (__("Error occurred while starting service named.\n\n"));
+            $ok = 0;
+            # There's no 'named' running -> prevent from blocking DNS queries
+            $self->SetLocalForwarder("resolver") if GetLocalForwarder() eq "bind";
+            y2warning("Local forwarder set to: ".GetLocalForwarder());
+        }
+        }
+        # named has to be stopped
+        else
+        {
+        if (! $write_only)
+        {
+            y2milestone("Stopping service 'named'");
+            Service->Stop("named");
+            # There's no 'named' running. Reset dns forwarder again
+            $self->SetLocalForwarder("resolver") if GetLocalForwarder() eq "bind";
+            y2warning("Local forwarder set to: ".GetLocalForwarder());
+        }
+        Service->Disable ("named");
+        }
     }
 
     # First run finished
