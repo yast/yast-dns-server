@@ -33,8 +33,8 @@ BuildRequires:  yast2-perl-bindings
 BuildRequires:  yast2-testsuite
 BuildRequires:  rubygem(rspec)
 
-# SuSEFirewall2 replaced by firewalld
-BuildRequires:  yast2 >= 4.0.39
+# Yast2::ServiceWidget
+BuildRequires:  yast2 >= 4.1.0
 Requires:       /usr/bin/host
 Requires:       perl-gettext
 # Exporter Data::Dumper
@@ -55,8 +55,8 @@ Requires:       sed
 # FATE #303386: Network setup tools
 Requires:       yast2-sysconfig
 
-# SuSEFirewall2 replaced by firewalld
-Requires:       yast2 >= 4.0.39
+# Yast2::ServiceWidget
+Requires:       yast2 >= 4.1.0
 
 BuildArch:      noarch
 
