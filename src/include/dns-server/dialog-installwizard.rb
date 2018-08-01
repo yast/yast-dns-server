@@ -10,11 +10,12 @@
 # Representation of the configuration of dns-server.
 # Input and output routines.
 
-require "cwm/service_widget"
-require "yast2/system_service"
+require "dns-server/service_widget_helpers"
 
 module Yast
   module DnsServerDialogInstallwizardInclude
+    include Y2DnsServer::ServiceWidgetHelpers
+
     def initialize_dns_server_dialog_installwizard(include_target)
       textdomain "dns-server"
 
@@ -27,14 +28,9 @@ module Yast
       Yast.import "CWMFirewallInterfaces"
     end
 
-    def service
-      @service ||= Yast2::SystemService.find("named")
-    end
-
-    def service_widget
-      @service_widget ||= ::CWM::ServiceWidget.new(service)
-    end
-
+    # Writes settings and save the service
+    #
+    # @return [Boolean] true if service is saved successfully; false otherwise
     def write_dns_settings
       service_widget.store
       service.save

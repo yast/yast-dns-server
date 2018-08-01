@@ -5,14 +5,14 @@
 # Summary:	Data for configuration of dns-server, input and output functions.
 # Authors:	Jiri Srain <jsrain@suse.cz>
 
-require "cwm/service_widget"
-require "yast2/system_service"
+require "dns-server/service_widget_helpers"
 
 module Yast
   # Representation of the configuration of dns-server.
   # Input and output routines.
   module DnsServerDialogMainInclude
     include Yast::Logger
+    include Y2DnsServer::ServiceWidgetHelpers
 
     def initialize_dns_server_dialog_main(include_target)
       textdomain "dns-server"
@@ -2235,22 +2235,6 @@ module Yast
           "help"          => " "
         }
       }
-    end
-
-    # Returns the 'named' system service
-    #
-    # @return [Yast2::SystemService] 'named' system service
-    def service
-      @service ||= Yast2::SystemService.find("named")
-    end
-
-    # Returns the status widget for service
-    #
-    # @return [::CWM::ServiceWidget] service status widget
-    #
-    # @see #service
-    def service_widget
-      @service_widget ||= ::CWM::ServiceWidget.new(service)
     end
   end
 end

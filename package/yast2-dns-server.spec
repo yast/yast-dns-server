@@ -82,6 +82,8 @@ This package contains the YaST2 component for DNS server configuration.
 %defattr(-,root,root)
 %dir %{yast_yncludedir}/dns-server
 %{yast_yncludedir}/dns-server/*
+%dir %{yast_libdir}/dns-server
+%{yast_libdir}/dns-server/*.rb
 %{yast_clientdir}/dns-server.rb
 %{yast_clientdir}/dns-server_*.rb
 %{yast_moduledir}/*
