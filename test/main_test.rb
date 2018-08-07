@@ -32,14 +32,14 @@ describe "DnsServerDialogMainInclude" do
 
     context "when the configuration is not written" do
       let(:written) { false }
-      let(:change_settings) { true }
+      let(:change_settings) { :yes }
 
       before do
-        allow(Yast::Popup).to receive(:YesNo).and_return(change_settings)
+        allow(Yast2::Popup).to receive(:show).and_return(change_settings)
       end
 
       it "aks for changing the current settings" do
-        expect(Yast::Popup).to receive(:YesNo)
+        expect(Yast2::Popup).to receive(:show).with(instance_of(String), hash_including(buttons: :yes_no))
 
         subject.WriteDialog
       end
@@ -51,7 +51,7 @@ describe "DnsServerDialogMainInclude" do
       end
 
       context "and user decides to cancel" do
-        let(:change_settings) { false }
+        let(:change_settings) { :no }
 
         it "returns :abort" do
           expect(subject.WriteDialog).to eq(:abort)
