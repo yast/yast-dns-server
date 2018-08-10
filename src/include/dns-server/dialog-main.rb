@@ -5,12 +5,17 @@
 # Summary:	Data for configuration of dns-server, input and output functions.
 # Authors:	Jiri Srain <jsrain@suse.cz>
 
-require "ui/service_status"
+require "yast"
+require "yast2/popup"
+require "dns-server/service_widget_helpers"
 
 module Yast
   # Representation of the configuration of dns-server.
   # Input and output routines.
   module DnsServerDialogMainInclude
+    include Yast::Logger
+    include Y2DnsServer::ServiceWidgetHelpers
+
     def initialize_dns_server_dialog_main(include_target)
       textdomain "dns-server"
 
@@ -259,20 +264,9 @@ module Yast
       @functions = { :abort => fun_ref(method(:confirmAbort), "boolean ()") }
     end
 
-    def InitStartUp(_key)
-      status_widget.refresh
-      nil
-    end
+    def handle_apply(_key, event)
+      SaveAndRestart(event) if event["ID"] == "apply"
 
-    def HandleStartUp(_key, event)
-      event_id = event["ID"]
-      if event_id == "apply"
-        SaveAndRestart()
-      else
-        if status_widget.handle_input(event_id) == :enabled_flag
-          DnsServer.SetStartService(status_widget.enabled_flag?)
-        end
-      end
       nil
     end
 
@@ -895,7 +889,7 @@ module Yast
             _("Really set this\noption without any value?\n")
           )
           return false
-        end 
+        end
         # it is a YES or NO type
       elsif OptionsIsYesNoType(option)
         # it has not a yes/no value
@@ -913,7 +907,7 @@ module Yast
             )
             return false
           end
-        end 
+        end
         # it must be a number
       elsif OptionsIsNumberType(option)
         # if has not a number value
@@ -1876,36 +1870,70 @@ module Yast
     end
 
     # Write settings dialog
-    # @return `abort if aborted and `next otherwise
+    #
+    # @return [Symbol] :next whether configuration is saved successfully
+    #                  :back if user decided to change settings
+    #                  :abort otherwise
     def WriteDialog
-      Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
-      ret = DnsServer.Write
-      if ret
-        service.reload if service.running? && status_widget.reload_flag?
-        :next
-      else
-        if Popup.YesNo(_("Saving the configuration failed. Change the settings?"))
-          :back
-        else
-          :abort
-        end
-      end
+      Wizard.RestoreHelp(write_help_text)
+
+      return :next if write_settings
+      return :back if back_to_change_setting?
+      :abort
     end
 
-    # Writes settings and restores the dialog without exiting
-    def SaveAndRestart
+    # Writes settings without exiting
+    def SaveAndRestart(event)
+      return nil unless validate_and_save_widgets(event)
+
       Wizard.CreateDialog
-      Wizard.RestoreHelp(Ops.get_string(@HELPS, "write", ""))
-      ret = DnsServer.Write
-      if ret
-        service.reload if service.running? && status_widget.reload_flag?
-      else
-        Report.Error(_("Saving the configuration failed"))
-      end
-      Builtins.sleep(1000)
-      UI.CloseDialog
+      Wizard.RestoreHelp(write_help_text)
+      Report.Error(_("Saving the configuration failed")) unless write_settings
+      Wizard.CloseDialog
+
+      service_widget.refresh
 
       nil
+    end
+
+    # Writes DNS server settings and saves the service
+    #
+    # @note currently, the DnsServer is a Perl module, reason why the write of
+    # settings is being performed in two steps.
+    #
+    # @return [Boolean] true if settings are saved successfully; false otherwise
+    def write_settings
+      DnsServer.Write && service.save
+    end
+
+    # Shows a popup asking to the user if wants to change settings
+    #
+    # @return [Boolean] true if user decides to go back to change settings; false otherwise
+    def back_to_change_setting?
+      change_settings_message = _("Saving the configuration failed. Change the settings?")
+      Yast2::Popup.show(change_settings_message, headline: :warning, buttons: :yes_no) == :yes
+    end
+
+    # Validates and saves CWM widgets
+    #
+    # @param [Hash] event map that triggered saving
+    #
+    # @return [Boolean] false if validation fails; true otherwise
+    def validate_and_save_widgets(event)
+      return false unless CWM.validate_current_widgets(event)
+
+      CWM.save_current_widgets(event)
+
+      true
+    end
+
+    # Returns the common help text during settings are being written
+    #
+    # @return [String] common help text, if any; empty string otherwise
+    def write_help_text
+     @HELPS.fetch("write") { "" }
+    rescue
+      ""
     end
 
     # Ask for exit without saving
@@ -1961,12 +1989,12 @@ module Yast
         "start_up"      => {
           # FIXME: new startup
           "contents"        => VBox(
-            status_widget.widget,
+            service_widget.contents,
             VSpacing(),
             "firewall",
             VStretch(),
             Right(
-              PushButton(Id("apply"), _("Apply Changes"))
+              "apply"
             )
           ),
           # Dialog Label - DNS - expert settings
@@ -1981,7 +2009,7 @@ module Yast
           # FIXME: new startup
           "widget_names"    => DnsServer.ExpertUI ?
             # expert mode
-            ["start_up", "firewall"] :
+            ["start_up", "firewall", "apply"] :
             # simple mode
             ["start_up", "firewall", "set_icon"]
         },
@@ -2078,18 +2106,12 @@ module Yast
     # Returns a hash describing the UI widgets
     def new_widgets
       @new_widgets ||= {
-        "start_up"    => {
-          "widget"        => :custom,
-          "custom_widget" => VBox(),
-          "init"          => fun_ref(
-            method(:InitStartUp),
-            "void (string)"
-          ),
-          "handle"        => fun_ref(
-            method(:HandleStartUp),
-            "symbol (string, map)"
-          ),
-          "help"          => status_widget.help
+        "start_up"    => service_widget.cwm_definition,
+        "apply"           => {
+          "widget" => :push_button,
+          "label"  => _("Apply Changes"),
+          "handle" => fun_ref(method(:handle_apply), "symbol (string, map)"),
+          "help"   => ""
         },
         "firewall"      => CWMFirewallInterfaces.CreateOpenFirewallWidget(
           { "services" => ["dns"], "display_details" => true }
@@ -2223,22 +2245,6 @@ module Yast
           "help"          => " "
         }
       }
-    end
-
-    # Returns the status widget for service
-    #
-    # @return [::UI::ServiceStatus] status widget
-    #
-    # @see #service
-    def status_widget
-      @status_widget ||= ::UI::ServiceStatus.new(service)
-    end
-
-    # Returns the 'named' systemd service
-    #
-    # @return [SystemdService] 'named' systemd service instance
-    def service
-      @service ||= SystemdService.find("named")
     end
   end
 end

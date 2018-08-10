@@ -1,20 +1,20 @@
 #! /usr/bin/env rspec
 
 require_relative "test_helper"
-require "yast"
-require "yast/rspec"
+
+require "yast2/system_service"
+require "dns-server/service_widget_helpers"
+
+Yast.import "DnsServerUI"
 
 describe "DnsServerDialogMainInclude" do
   class CurrentDialogMain
     include Yast::I18n
     include Yast::UIShortcuts
+    include Y2DnsServer::ServiceWidgetHelpers
 
-    attr_accessor :status_widget
-    attr_accessor :service
     def initialize
       Yast.include self, "dns-server/dialog-main.rb"
-      @status_widget = "status_widget"
-      @service = "named.service"
     end
   end
 
@@ -23,75 +23,56 @@ describe "DnsServerDialogMainInclude" do
   end
 
   describe "#WriteDialog" do
-    let(:m) { CurrentDialogMain.new }
-    let(:written) { false }
-    let(:running) { true }
+    subject(:main_dialog) { CurrentDialogMain.new }
 
     before do
-      allow(Yast::DnsServer).to receive(:Write).and_return written
-      allow(m.service).to receive(:running?).and_return running
+      allow(Yast::DnsServer).to receive(:Write).and_return(dns_configuration_written)
+      allow(Yast2::SystemService).to receive(:find).and_return(service)
     end
 
-    it "writes the DNS configuration" do
-      expect(Yast::DnsServer).to receive(:Write).and_return written
-      m.WriteDialog
-    end
+    let(:service) { instance_double(Yast2::SystemService, save: true) }
+    let(:dns_configuration_written) { true }
 
-    context "when the configuration is written" do
-      let(:written) { true }
+    context "when DNS configuration is written" do
+      it "saves the system service" do
+        expect(service).to receive(:save)
 
-      context "and the named service is running" do
-        context "and the config is marked to be reloaded" do
-          it "reloads the service" do
-            expect(m.status_widget).to receive(:reload_flag?).and_return true
-            expect(m.service).to receive(:reload)
-            expect(m.WriteDialog ).to eq(:next)
-          end
-        end
-
-        context "and the config is not marked to be reloaded" do
-          it "does not restart nor reload the service" do
-            expect(m.status_widget).to receive(:reload_flag?).and_return false
-            expect(m.service).to_not receive(:reload)
-            expect(m.service).to_not receive(:restart)
-            expect(m.WriteDialog ).to eq(:next)
-          end
-        end
+        main_dialog.WriteDialog
       end
 
-      context "and the named service is not running" do
-        let(:running) { false}
-
-        before do
-          allow(m.status_widget).to receive(:reload_flag?).and_return true
-        end
-
-        it "does not restart nor reload the service" do
-          expect(m.service).to_not receive(:restart)
-          expect(m.service).to_not receive(:reload)
-          expect(m.WriteDialog ).to eq(:next)
-        end
+      it "returns :next" do
+        expect(main_dialog.WriteDialog).to eq(:next)
       end
     end
 
     context "when the configuration is not written" do
-      let(:written) { false }
+      before do
+        allow(Yast2::Popup).to receive(:show).and_return(change_settings)
+      end
+
+      let(:change_settings) { :yes }
+      let(:dns_configuration_written) { false }
 
       it "aks for changing the current settings" do
-        expect(Yast::Popup).to receive(:YesNo)
-        m.WriteDialog
+        expect(Yast2::Popup).to receive(:show)
+          .with(instance_of(String), hash_including(buttons: :yes_no))
+
+        main_dialog.WriteDialog
       end
 
-      it "returns :back if decided to change the current settings" do
-        expect(Yast::Popup).to receive(:YesNo).and_return true
-        expect(m.WriteDialog).to eq(:back)
+      context "and user decides to change the current setting" do
+        it "returns :back" do
+          expect(main_dialog.WriteDialog).to eq(:back)
+        end
       end
 
-      it "returns :abort if canceled" do
-        expect(Yast::Popup).to receive(:YesNo).and_return false
-        expect(m.WriteDialog).to eq(:abort)
+      context "and user decides to cancel" do
+        let(:change_settings) { :no }
+
+        it "returns :abort" do
+          expect(subject.WriteDialog).to eq(:abort)
+        end
       end
     end
   end
-
 end
