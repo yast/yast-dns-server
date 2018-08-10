@@ -1,21 +1,19 @@
 #! /usr/bin/env rspec
 
 require_relative "test_helper"
-require "yast"
-require "yast/rspec"
+require_relative "../src/modules/DnsServerUI.rb"
+require "dns-server/service_widget_helpers"
+
+require "yast2/system_service"
 
 describe "DnsServerDialogMainInclude" do
   class CurrentDialogMain
     include Yast::I18n
     include Yast::UIShortcuts
-
-    attr_accessor :status_widget
-    attr_accessor :service
+    include Y2DnsServer::ServiceWidgetHelpers
 
     def initialize
       Yast.include self, "dns-server/dialog-main.rb"
-      @status_widget = "status_widget"
-      @service = "named.service"
     end
   end
 
@@ -24,29 +22,46 @@ describe "DnsServerDialogMainInclude" do
   end
 
   describe "#WriteDialog" do
-    subject { CurrentDialogMain.new }
+    subject(:main_dialog) { CurrentDialogMain.new }
 
     before do
-      allow(Yast::DnsServer).to receive(:Write).and_return written
+      allow(Yast::DnsServer).to receive(:Write).and_return(dns_configuration_written)
+      allow(Yast2::SystemService).to receive(:find).and_return(service)
+    end
+
+    let(:service) { instance_double(Yast2::SystemService, save: true) }
+    let(:dns_configuration_written) { true }
+
+    context "when DNS configuration is written" do
+      it "saves the system service" do
+        expect(service).to receive(:save)
+
+        main_dialog.WriteDialog
+      end
+
+      it "returns :next" do
+        expect(main_dialog.WriteDialog).to eq(:next)
+      end
     end
 
     context "when the configuration is not written" do
-      let(:written) { false }
-      let(:change_settings) { :yes }
-
       before do
         allow(Yast2::Popup).to receive(:show).and_return(change_settings)
       end
 
-      it "aks for changing the current settings" do
-        expect(Yast2::Popup).to receive(:show).with(instance_of(String), hash_including(buttons: :yes_no))
+      let(:change_settings) { :yes }
+      let(:dns_configuration_written) { false }
 
-        subject.WriteDialog
+      it "aks for changing the current settings" do
+        expect(Yast2::Popup).to receive(:show)
+          .with(instance_of(String), hash_including(buttons: :yes_no))
+
+        main_dialog.WriteDialog
       end
 
       context "and user decides to change the current setting" do
         it "returns :back" do
-          expect(subject.WriteDialog).to eq(:back)
+          expect(main_dialog.WriteDialog).to eq(:back)
         end
       end
 
