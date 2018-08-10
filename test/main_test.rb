@@ -1,10 +1,11 @@
 #! /usr/bin/env rspec
 
 require_relative "test_helper"
-require_relative "../src/modules/DnsServerUI.rb"
-require "dns-server/service_widget_helpers"
 
 require "yast2/system_service"
+require "dns-server/service_widget_helpers"
+
+Yast.import "DnsServerUI"
 
 describe "DnsServerDialogMainInclude" do
   class CurrentDialogMain

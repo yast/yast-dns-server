@@ -28,7 +28,7 @@ module Yast
       Yast.import "CWMFirewallInterfaces"
     end
 
-    # Writes settings and save the service
+    # Writes settings and saves the service
     #
     # @return [Boolean] true if service is saved successfully; false otherwise
     def write_dns_settings

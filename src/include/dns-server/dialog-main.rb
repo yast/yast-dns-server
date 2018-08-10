@@ -5,7 +5,7 @@
 # Summary:	Data for configuration of dns-server, input and output functions.
 # Authors:	Jiri Srain <jsrain@suse.cz>
 
-require "yast/logger"
+require "yast"
 require "yast2/popup"
 require "dns-server/service_widget_helpers"
 
@@ -1875,8 +1875,6 @@ module Yast
     #                  :back if user decided to change settings
     #                  :abort otherwise
     def WriteDialog
-      log.info("Running write dialog")
-
       Wizard.RestoreHelp(write_help_text)
 
       return :next if write_settings
@@ -1898,7 +1896,7 @@ module Yast
       nil
     end
 
-    # Writes DNS server settings and save the service
+    # Writes DNS server settings and saves the service
     #
     # @note currently, the DnsServer is a Perl module, reason why the write of
     # settings is being performed in two steps.
@@ -1908,7 +1906,7 @@ module Yast
       DnsServer.Write && service.save
     end
 
-    # Shows a popup asking to user if wants to change settings
+    # Shows a popup asking to the user if wants to change settings
     #
     # @return [Boolean] true if user decides to go back to change settings; false otherwise
     def back_to_change_setting?
@@ -1919,6 +1917,8 @@ module Yast
     # Validates and saves CWM widgets
     #
     # @param [Hash] event map that triggered saving
+    #
+    # @return [Boolean] false if validation fails; true otherwise
     def validate_and_save_widgets(event)
       return false unless CWM.validate_current_widgets(event)
 
