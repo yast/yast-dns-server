@@ -1801,7 +1801,7 @@ module Yast
         # IPv6 zone name in forward format
         # e.g., "3ffe:ffff::210:a4ff:fe01:1/48"
         if Builtins.regexpmatch(zone_name, "^[:0-9A-Fa-f]+/[0-9]+$")
-          zone_name = TransformToReverseIPv6ZoneName(zone_name) 
+          zone_name = TransformToReverseIPv6ZoneName(zone_name)
           # e.g., "3ffe:ffff::210:a4ff:fe01:1" without bits
         elsif IP.Check6(zone_name)
           zone_name = TransformToReverseIPv6ZoneName(Ops.add(zone_name, "/64"))
