@@ -1898,12 +1898,32 @@ module Yast
 
     # Writes DNS server settings and saves the service
     #
-    # @note currently, the DnsServer is a Perl module, reason why the write of
-    # settings is being performed in two steps.
+    # As side effect, it also sets/resets the local forwarder
     #
     # @return [Boolean] true if settings are saved successfully; false otherwise
     def write_settings
-      DnsServer.Write && service.save
+      return false unless DnsServer.Write
+
+      result = service.save(keep_state: Mode.auto)
+      reset_local_forwarder
+      result
+    end
+
+    # Resets the local forwarder to "resolver"
+    #
+    # Local forwarder will be changed to "resolver" if
+    #
+    #   * its current value is "bind", and
+    #   * service is stopped (was stopped or could not be (re)started or reloaded)
+    def reset_local_forwarder
+      return unless DnsServer.GetLocalForwarder == "bind"
+
+      service.refresh
+
+      unless service.currently_active?
+        DnsServer.SetLocalForwarder("resolver")
+        log.warn("Local forwarder set to: #{DnsServer.GetLocalForwarder}")
+      end
     end
 
     # Shows a popup asking to the user if wants to change settings
