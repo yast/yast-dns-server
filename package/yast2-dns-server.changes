@@ -7,7 +7,7 @@ Mon Aug 20 09:08:17 CEST 2018 - schubi@suse.de
 Tue Aug 14 07:46:55 UTC 2018 - dgonzalez@suse.com
 
 - Manage the start mode and service status directly from Ruby.
-- 4.1.1
+- 4.1.1 (related to fate#319428)
 
 -------------------------------------------------------------------
 Tue Aug  7 12:14:35 UTC 2018 - dgonzalez@suse.com
