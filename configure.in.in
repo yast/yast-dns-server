@@ -4,6 +4,9 @@
 @YAST2-INIT-COMMON@
 @YAST2-INIT-YCP@
 
+icondir=/usr/share/icons
+AC_SUBST(icondir)
+
 ## some common checks
 @YAST2-CHECKS-COMMON@
 @YAST2-CHECKS-YCP@

@@ -18,7 +18,7 @@ module Yast
     end
 
     def SetDNSSErverIcon
-      Wizard.SetTitleIcon("yast-dns-server")
+      Wizard.SetDesktopIcon("dns-server")
 
       nil
     end
