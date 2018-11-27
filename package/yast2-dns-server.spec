@@ -99,7 +99,7 @@ This package contains the YaST2 component for DNS server configuration.
 %{yast_agentdir}/ag_convert_named_conf
 %{yast_schemadir}/autoyast/rnc/dns-server.rnc
 %doc %{yast_docdir}
-%{_datadir}/icons/*
+%{yast_icondir}
 %license COPYING
 
 %changelog
