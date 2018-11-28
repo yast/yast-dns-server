@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dns-server
-Version:        4.1.1
+Version:        4.1.2
 Release:        0
 Url:            https://github.com/yast/yast-dns-server
 
@@ -99,6 +99,7 @@ This package contains the YaST2 component for DNS server configuration.
 %{yast_agentdir}/ag_convert_named_conf
 %{yast_schemadir}/autoyast/rnc/dns-server.rnc
 %doc %{yast_docdir}
+%{yast_icondir}
 %license COPYING
 
 %changelog

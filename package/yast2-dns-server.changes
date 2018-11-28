@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Sun Nov 25 02:10:40 UTC 2018 - Stasiek Michalski <hellcp@mailbox.org>
+
+- Provide icon with module (boo#1109310)
+- 4.1.2
+
+-------------------------------------------------------------------
 Tue Oct 16 15:11:54 CEST 2018 - schubi@suse.de
 
 - Added license file to spec.
