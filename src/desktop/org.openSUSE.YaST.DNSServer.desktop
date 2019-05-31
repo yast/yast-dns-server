@@ -21,6 +21,7 @@ X-SuSE-YaST-Keywords=dns,domain,nameserver,network,lookup
 Icon=yast-dns-server
 Exec=xdg-su -c "/sbin/yast2 dns-server"
 
-Name=DNS Server
-GenericName=Configure a DNS server
+Name=YaST DNS Server
+GenericName=DNS Server
+Comment=Configure a DNS server
 StartupNotify=true
