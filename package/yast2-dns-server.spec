@@ -12,7 +12,7 @@
 # license that conforms to the Open Source Definition (Version 1.9)
 # published by the Open Source Initiative.
 
-# Please submit bugfixes or comments via http://bugs.opensuse.org/
+# Please submit bugfixes or comments via https://bugs.opensuse.org/
 #
 
 
@@ -20,8 +20,10 @@ Name:           yast2-dns-server
 Version:        4.1.2
 Release:        0
 Url:            https://github.com/yast/yast-dns-server
+Summary:        YaST2 - DNS Server Configuration
+License:        GPL-2.0-only
+Group:          System/YaST
 
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Source0:        %{name}-%{version}.tar.bz2
 
 BuildRequires:  perl-XML-Writer
@@ -32,9 +34,9 @@ BuildRequires:  yast2-ldap >= 3.1.4
 BuildRequires:  yast2-perl-bindings
 BuildRequires:  yast2-testsuite
 BuildRequires:  rubygem(rspec)
-
 # Yast2::ServiceWidget
 BuildRequires:  yast2 >= 4.1.0
+
 Requires:       /usr/bin/host
 Requires:       perl-gettext
 # Exporter Data::Dumper
@@ -50,54 +52,38 @@ Requires:       iproute2
 # DnsServerUI::CurrentlyUsedIPs
 Requires:       grep
 Requires:       sed
-
 # Script /sbin/netconfig 0.71.2+?
 # FATE #303386: Network setup tools
 Requires:       yast2-sysconfig
-
 # Yast2::ServiceWidget
 Requires:       yast2 >= 4.1.0
-
-BuildArch:      noarch
-
 Requires:       yast2-ruby-bindings >= 1.0.0
 
-Summary:        YaST2 - DNS Server Configuration
-License:        GPL-2.0-only
-Group:          System/YaST
+BuildArch:      noarch
 
 %description
 This package contains the YaST2 component for DNS server configuration.
 
 %prep
-%setup -n %{name}-%{version}
+%setup -q
 
 %build
 %yast_build
 
 %install
 %yast_install
+%yast_metainfo
 
 %files
-%defattr(-,root,root)
-%dir %{yast_yncludedir}/dns-server
-%{yast_yncludedir}/dns-server/*
-%dir %{yast_libdir}/dns-server
-%{yast_libdir}/dns-server/*.rb
-%{yast_clientdir}/dns-server.rb
-%{yast_clientdir}/dns-server_*.rb
-%{yast_moduledir}/*
-%{yast_desktopdir}/dns-server.desktop
-%{yast_scrconfdir}/dns_named.scr
-%{yast_scrconfdir}/dns_zone.scr
-%{yast_scrconfdir}/cfg_named.scr
-%{yast_scrconfdir}/named_forwarders.scr
-%{yast_scrconfdir}/named_forwarders.scr
-%{yast_scrconfdir}/convert_named_conf.scr
-%{yast_agentdir}/ag_dns_zone
-%{yast_agentdir}/ag_named_forwarders
-%{yast_agentdir}/ag_convert_named_conf
-%{yast_schemadir}/autoyast/rnc/dns-server.rnc
+%{yast_yncludedir}
+%{yast_libdir}
+%{yast_clientdir}
+%{yast_moduledir}
+%{yast_desktopdir}
+%{yast_metainfodir}
+%{yast_scrconfdir}
+%{yast_agentdir}
+%{yast_schemadir}
 %doc %{yast_docdir}
 %{yast_icondir}
 %license COPYING
