@@ -51,7 +51,7 @@ schemafiles_DATA = \
   autoyast-rnc/dns-server.rnc
 
 desktop_DATA = \
-  desktop/dns-server.desktop
+  desktop/org.openSUSE.YaST.DNSServer.desktop
 
 symbolicdir = @icondir@/hicolor/symbolic/apps
 symbolic_DATA = \
