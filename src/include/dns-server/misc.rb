@@ -18,7 +18,7 @@ module Yast
     end
 
     def SetDNSSErverIcon
-      Wizard.SetDesktopIcon("dns-server")
+      Wizard.SetDesktopIcon("org.opensuse.yast.DNSServer")
 
       nil
     end
