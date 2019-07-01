@@ -84,32 +84,6 @@ module Yast
           }
         },
         "sysconfig" => {
-          "SuSEfirewall2"     => {
-            "FW_ALLOW_FW_TRACEROUTE"   => "yes",
-            "FW_AUTOPROTECT_SERVICES"  => "no",
-            "FW_DEV_DMZ"               => "",
-            "FW_DEV_EXT"               => "eth-id-00:c0:df:22:c6:a8",
-            "FW_DEV_INT"               => "",
-            "FW_IPSEC_TRUST"           => "no",
-            "FW_LOG_ACCEPT_ALL"        => "no",
-            "FW_LOG_ACCEPT_CRIT"       => "yes",
-            "FW_LOG_DROP_ALL"          => "no",
-            "FW_LOG_DROP_CRIT"         => "yes",
-            "FW_MASQUERADE"            => "no",
-            "FW_MASQ_NETS"             => "",
-            "FW_PROTECT_FROM_INTERNAL" => "yes",
-            "FW_ROUTE"                 => "no",
-            "FW_SERVICES_DMZ_IP"       => "",
-            "FW_SERVICES_DMZ_TCP"      => "",
-            "FW_SERVICES_DMZ_UDP"      => "",
-            "FW_SERVICES_EXT_IP"       => "",
-            "FW_SERVICES_EXT_RPC"      => "nlockmgr status nfs nfs_acl mountd ypserv fypxfrd ypbind ypasswdd",
-            "FW_SERVICES_EXT_TCP"      => "32768 5801 5901 dixie domain hostname microsoft-ds netbios-dgm netbios-ns netbios-ssn nfs ssh sunrpc",
-            "FW_SERVICES_EXT_UDP"      => "222 bftp domain ipp sunrpc",
-            "FW_SERVICES_INT_IP"       => "",
-            "FW_SERVICES_INT_TCP"      => "ddd eee fff 44 55 66",
-            "FW_SERVICES_INT_UDP"      => "aaa bbb ccc 11 22 33"
-          },
           "personal-firewall" => { "REJECT_ALL_INCOMING_CONNECTIONS" => "" },
           "network"           => {
             "config" => {

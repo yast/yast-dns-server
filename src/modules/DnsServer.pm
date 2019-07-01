@@ -1309,6 +1309,7 @@ sub update_forwarding {
 # when applying configuration in AutoYast config module
 sub check_and_install_package {
     my $self = shift;
+    return 1 if (Mode->test ());
     return 1 if (PackageSystem->Installed("bind"));
 
     my $installed = 0;
