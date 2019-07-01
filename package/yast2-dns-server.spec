@@ -17,7 +17,7 @@
 
 
 Name:           yast2-dns-server
-Version:        4.2.0
+Version:        4.2.1
 Release:        0
 Url:            https://github.com/yast/yast-dns-server
 Summary:        YaST2 - DNS Server Configuration
@@ -35,7 +35,7 @@ BuildRequires:  yast2-perl-bindings
 BuildRequires:  yast2-testsuite
 BuildRequires:  rubygem(rspec)
 # Yast2::ServiceWidget
-BuildRequires:  yast2 >= 4.1.0
+BuildRequires:  yast2 >= 4.2.11
 
 Requires:       /usr/bin/host
 Requires:       perl-gettext
