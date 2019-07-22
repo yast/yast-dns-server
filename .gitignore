@@ -11,6 +11,8 @@ config.sub
 configure
 /configure.in
 configure.ac
+coverage/
+doc/
 depcomp
 install-sh
 missing
@@ -26,3 +28,4 @@ pluglib-bindings.ami
 test-driver
 /test/*.log
 /test/*.trs
+.yardoc/
