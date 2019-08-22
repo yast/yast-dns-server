@@ -33,7 +33,7 @@ BuildRequires:  yast2-devtools >= 4.2.2
 BuildRequires:  yast2-ldap >= 3.1.4
 BuildRequires:  yast2-perl-bindings
 BuildRequires:  yast2-testsuite
-BuildRequires:  rubygem(rspec)
+BuildRequires:  rubygem(%{rb_default_ruby_abi}:rspec)
 # Yast2::ServiceWidget
 BuildRequires:  yast2 >= 4.2.11
 
