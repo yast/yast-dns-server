@@ -28,14 +28,6 @@ module Yast
       Yast.import "CWMFirewallInterfaces"
     end
 
-    # Writes settings and saves the service
-    #
-    # @return [Boolean] true if service is saved successfully; false otherwise
-    def write_dns_settings
-      service_widget.store
-      service.save
-    end
-
     def runInstallWizardForwardersDialog
       caption =
         # Dialog caption (before a colon)
@@ -261,7 +253,7 @@ module Yast
       end
 
       if ret == :next || ret == :expert
-        write_dns_settings
+        service_widget.store
 
         CWMFirewallInterfaces.OpenFirewallStore(firewall_widget, "", event)
       end
