@@ -1260,6 +1260,20 @@ sub GetWhichZonesAreConnectedWith {
     return \@ret;
 }
 
+sub netconfig_update_dns {
+    my $force_update = shift;
+    my $cmd = "/sbin/netconfig".($force_update ? " -f" : "")." update -m dns";
+
+    y2milestone("Updating forwarders by netconfig");
+
+    my $ret = SCR->Execute (".target.bash_output", $cmd);
+    if ($ret->{'exit'} != 0) {
+      Report->Error (sformat(__("Error occurred while calling netconfig.\nError: %1"), $ret->{'stdout'}));
+    }
+
+    return $ret->{'exit'};
+}
+
 # Writes forwarding settings and updates the system using netconfig.
 # This also automatically updates /etc/named.d/forwarders.conf
 sub write_local_forwarder {
@@ -1269,10 +1283,11 @@ sub write_local_forwarder {
     SCR->Write (".sysconfig.network.config.NETCONFIG_DNS_FORWARDER", GetLocalForwarder());
     SCR->Write (".sysconfig.network.config", undef);
 
-    y2milestone("Updating forwarders by netconfig");
-    my $ret = SCR->Execute (".target.bash_output", "/sbin/netconfig update -m dns");
-    if ($ret->{'exit'} != 0) {
-        Report->Error (__("Error occurred while calling netconfig.\nError: ".$ret->{'stdout'}));
+    my $netconfig_dns_updated = netconfig_update_dns(0);
+
+    if ($netconfig_dns_updated == 20) {
+      my $retry = Popup->YesNo (__("Do you want to force an update now?"));
+      netconfig_update_dns(1) if ($retry);
     }
 }
 
