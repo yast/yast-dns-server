@@ -1262,7 +1262,7 @@ sub GetWhichZonesAreConnectedWith {
 
 sub netconfig_update_dns {
     my $force_update = shift;
-    my $cmd = "/sbin/netconfig".($force_update ? " -f":"")." update -m dns";
+    my $cmd = "/sbin/netconfig".($force_update ? " -f" : "")." update -m dns";
 
     y2milestone("Updating forwarders by netconfig");
 
