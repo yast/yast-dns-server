@@ -1264,7 +1264,7 @@ sub netconfig_update_dns {
     my $force_update = shift;
     my $cmd = "/sbin/netconfig".($force_update ? " -f" : "")." update -m dns";
 
-    y2milestone("Updating forwarders by netconfig");
+    y2milestone("Updating forwarders by netconfig (force_update: ".$force_update.")");
 
     my $ret = SCR->Execute (".target.bash_output", $cmd);
     if ($ret->{'exit'} != 0) {
@@ -1286,7 +1286,7 @@ sub write_local_forwarder {
     my $netconfig_dns_updated = netconfig_update_dns(0);
 
     if ($netconfig_dns_updated == 20) {
-      my $retry = Popup->YesNo (__("Do you want to force an update now?"));
+      my $retry = Mode->autoinst() || Popup->YesNo (__("Do you want to force an update now?"));
       netconfig_update_dns(1) if ($retry);
     }
 }
@@ -1602,6 +1602,12 @@ sub Import {
     $chroot = $settings{"chroot"} || 1;
     $use_ldap = $settings{"use_ldap"} || 0;
     @allowed_interfaces = @{$settings{"allowed_interfaces"} || []};
+
+    # Read current policy and forwarder
+    $netconfig_dns_policy = SCR->Read(".sysconfig.network.config.NETCONFIG_DNS_POLICY") || "auto";
+    y2milestone ("Current NETCONFIG_DNS_POLICY: $netconfig_dns_policy");
+    $local_forwarder = SCR->Read(".sysconfig.network.config.NETCONFIG_DNS_FORWARDER") || "resolver";
+    y2milestone ("Current NETCONFIG_DNS_FORWARDER: $local_forwarder");
 
     @zones = @{$settings{"zones"} || []};
     for my $zone (@zones) {
