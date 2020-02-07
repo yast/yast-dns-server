@@ -16,7 +16,7 @@ describe Y2DnsServer::ServiceWidgetHelpers do
 
   describe "#service" do
     context "when service is available" do
-      let(:service) { double("named") }
+      let(:service) { double("named").as_null_object }
 
       it "returns a service" do
         expect(subject.service).to be(service)
@@ -33,7 +33,7 @@ describe Y2DnsServer::ServiceWidgetHelpers do
   end
 
   describe "#service_widget" do
-    let(:service) { double("named") }
+    let(:service) { double("named").as_null_object }
 
     it "creates a service widget for \"named\" service" do
       expect(CWM::ServiceWidget).to receive(:new).with(service)
