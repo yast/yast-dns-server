@@ -2,17 +2,23 @@ default namespace = "http://www.suse.com/1.0/yast2ns"
 namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
 namespace config = "http://www.suse.com/1.0/configns"
 
+include "common.rnc"
+
+ONE_ZERO = STRING_ATTR, ( "1" | "0" )
 
 dns-server = element dns-server {
-    element chroot             { "1" | "0" }? &
-    element start_service      { "1" | "0" }? &
-    element use_ldap           { "1" | "0" }? &
+    MAP,
+    (
+      element chroot             { ONE_ZERO }? &
+      element start_service      { ONE_ZERO }? &
+      element use_ldap           { ONE_ZERO }? &
 
-    dns-allowed_interfaces? &
+      dns-allowed_interfaces? &
 
-    dns-server_logging? &
-    dns-server_options? &
-    dns-server_zones?
+      dns-server_logging? &
+      dns-server_options? &
+      dns-server_zones?
+    )
 }
 
 dns-allowed_interfaces = 
@@ -21,7 +27,7 @@ dns-allowed_interfaces =
     dns-allowed_interface*
 }  
 
-dns-allowed_interface = element allowed_interface { text }
+dns-allowed_interface = element allowed_interface { STRING }
 
 dns-server_logging = element logging {
     LIST,
@@ -29,8 +35,11 @@ dns-server_logging = element logging {
 }
 
 dns-server_logging_entry = element listentry {
-    element key   { text }? &
-    element value { text }?
+    MAP,
+    (
+      element key   { STRING }? &
+      element value { STRING }?
+    )
 }
 
 dns-server_options = element options {
@@ -39,8 +48,11 @@ dns-server_options = element options {
 }
 
 dns-server_option_entry = element option {
-    element key   { text }? &
-    element value { text }?
+    MAP,
+    (
+      element key   { STRING }? &
+      element value { STRING }?
+    )
 }
 
 dns-server_zones = element zones {
@@ -49,20 +61,23 @@ dns-server_zones = element zones {
 }
 
 dns-server_zones_entry = element listentry {
-    element is_new       { "1" | "0" }? &
-    element modified     { "1" | "0" }? &
-    element soa_modified { "1" | "0" }? &
-    element ttl          { text }? &
-    element type         { text }? &
-    element zone         { text }? &
-    element file         { text }? &
-    element this_zone_had_NS_record_at_start { text }? &
-    element connected_with { text }? &
+    MAP,
+    (
+      element is_new       { ONE_ZERO }? &
+      element modified     { ONE_ZERO }? &
+      element soa_modified { ONE_ZERO }? &
+      element ttl          { STRING }? &
+      element type         { STRING }? &
+      element zone         { STRING }? &
+      element file         { STRING }? &
+      element this_zone_had_NS_record_at_start { STRING }? &
+      element connected_with { STRING }? &
 
-    zone_options? &
-    zone_records? &
-    zone_soa? &
-    zone_update_actions?
+      zone_options? &
+      zone_records? &
+      zone_soa? &
+      zone_update_actions?
+    )
 }
 
 zone_options = element options {
@@ -71,8 +86,11 @@ zone_options = element options {
 }
 
 zone_option_entry = element option {
-    element key   { text }? &
-    element value { text }?
+    MAP,
+    (
+      element key   { STRING }? &
+      element value { STRING }?
+    )
 }
 
 zone_records = element records {
@@ -81,20 +99,26 @@ zone_records = element records {
 }
 
 zone_records_entry = element listentry {
-    element key   { text }? &
-    element value { text }? &
-    element type  { text }?
+    MAP,
+    (
+      element key   { STRING }? &
+      element value { STRING }? &
+      element type  { STRING }?
+    )
 }
 
 zone_soa = element soa {
-    element expiry  { text }? &
-    element mail    { text }? &
-    element minimum { text }? &
-    element refresh { text }? &
-    element retry   { text }? &
-    element serial  { text }? &
-    element server  { text }? &
-    element zone    { text }?
+    MAP,
+    (
+      element expiry  { STRING }? &
+      element mail    { STRING }? &
+      element minimum { STRING }? &
+      element refresh { STRING }? &
+      element retry   { STRING }? &
+      element serial  { STRING }? &
+      element server  { STRING }? &
+      element zone    { STRING }?
+    )
 }
 
 zone_update_actions = element update_actions {
@@ -103,9 +127,12 @@ zone_update_actions = element update_actions {
 }
 
 update_actions_entry = element listentry {
-    element key       { text }? &
-    element value     { text }? &
-    element type      { text }? &
-    element operation { text }?
+    MAP,
+    (
+      element key       { STRING }? &
+      element value     { STRING }? &
+      element type      { STRING }? &
+      element operation { STRING }?
+    )
 
 }
