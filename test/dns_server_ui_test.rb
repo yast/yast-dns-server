@@ -9,19 +9,23 @@ describe Yast::DnsServerUI do
 
   # Direct translation to RSpec of equivalent tests from the old testsuite
   describe "#ChangeIPToLocalEquivalent" do
-    it "transforms private IPv4 addresses" do
+    it "transforms private IPv4 addresses and reports the change to the user" do
+      expect(Yast::Report).to receive(:Warning).with(/changed to its local equivalent/)
       expect(subject.ChangeIPToLocalEquivalent("192.168.5.1")).to eq "127.0.0.1"
     end
 
-    it "transforms public IPv4 addresses" do
+    it "transforms public IPv4 addresses and reports the change to the user" do
+      expect(Yast::Report).to receive(:Warning).with(/changed to its local equivalent/)
       expect(subject.ChangeIPToLocalEquivalent("238.11.26.25")).to eq "127.0.0.1"
     end
 
-    it "transforms IPv6 addresses" do
+    it "transforms IPv6 addresses and reports the change to the user" do
+      expect(Yast::Report).to receive(:Warning).with(/changed to its local equivalent/)
       expect(subject.ChangeIPToLocalEquivalent("fe80::21c:c0ff:fe18:f01c")).to eq "::1"
     end
 
-    it "returns nil for invalid IPs" do
+    it "returns nil and reports an error for invalid IPs" do
+      expect(Yast::Report).to receive(:Error)
       expect(subject.ChangeIPToLocalEquivalent("trash")).to be_nil
     end
   end
