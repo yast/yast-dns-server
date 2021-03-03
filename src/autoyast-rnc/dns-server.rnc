@@ -60,7 +60,7 @@ dns-server_zones = element zones {
     dns-server_zones_entry*
 }
 
-dns-server_zones_entry = element listentry {
+dns-server_zones_entry = element (zone | listentry) {
     MAP,
     (
       element is_new       { ONE_ZERO }? &
