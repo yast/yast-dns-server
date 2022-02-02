@@ -272,7 +272,7 @@ module Yast
             "type" => "ip4",
             # TRANSLATORS: commandline short help for command
             "help" => _(
-              "DNS zone master server"
+              "DNS zone primary server"
             )
           },
           "zone"         => {

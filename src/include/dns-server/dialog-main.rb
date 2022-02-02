@@ -1685,13 +1685,13 @@ module Yast
         case Ops.get_string(z, "type", "master")
           when "master"
             # TRANSLATORS: Table item - Server type
-            type_trans = _("Master")
+            type_trans = _("Primary")
           when "slave"
             # TRANSLATORS: Table item - Server type
-            type_trans = _("Slave")
+            type_trans = _("Secondary")
           when "stub"
             # TRANSLATORS: Table item - Server type
-            type_trans = _("Slave")
+            type_trans = _("Secondary")
           when "forward"
             # TRANSLATORS: Table item - Server type
             type_trans = _("Forward")

@@ -2766,7 +2766,7 @@ module Yast
         if ret == :next
           if false
             # TRANSLATORS: A popup error message
-            Report.Error(_("No master DNS server defined."))
+            Report.Error(_("No primary DNS server defined."))
             next
           else
             # controlling sever name, IP
