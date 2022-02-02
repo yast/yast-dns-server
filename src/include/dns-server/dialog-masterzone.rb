@@ -1185,7 +1185,7 @@ module Yast
             _(
               "The expiration time-out is higher than the time period\n" +
                 "of zone refreshes. The zone will not be reachable\n" +
-                "from slave name servers all the time.\n" +
+                "from secondary name servers all the time.\n" +
                 "Continue?"
             )
           )
@@ -2679,7 +2679,7 @@ module Yast
         VSpacing(1),
         # TRANSLATORS: Text entry
         Left(
-          InputField(Id("master"), Opt(:hstretch), _("&Master DNS Server IP"))
+          InputField(Id("master"), Opt(:hstretch), _("&Primary DNS Server IP"))
         ),
         VSpacing(2),
         Left(
@@ -2743,10 +2743,10 @@ module Yast
           if Builtins.size(@current_zone_masters) == 0
             if Popup.ContinueCancelHeadline(
                 # TRANSLATORS: Popup error headline
-                _("Missing Master Server"),
+                _("Missing Primary Server"),
                 # TRANSLATORS: Popup error text
                 _(
-                  "Every slave zone must have its master server IP defined.\n" +
+                  "Every secondary zone must have its master server IP defined.\n" +
                     "Configuration of a DNS server without a master server would fail.\n" +
                     "If you continue, the current zone will be removed."
                 )
@@ -2777,7 +2777,7 @@ module Yast
               UI.SetFocus(Id("master"))
               # A popup error message
               Popup.Error(
-                _("The specified master name server is not a valid IP address.")
+                _("The specified primary name server is not a valid IP address.")
               )
               next
             end

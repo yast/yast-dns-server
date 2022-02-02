@@ -1593,9 +1593,9 @@ module Yast
                       _("Type"),
                       [
                         # Combobox - DNS adding zone - Type Master
-                        Item(Id("master"), _("Master")),
+                        Item(Id("master"), _("Primary")),
                         # Combobox - DNS adding zone - Type Slave
-                        Item(Id("slave"), _("Slave")),
+                        Item(Id("slave"), _("Secondary")),
                         # Combobox - DNS adding zone - Type Slave
                         Item(Id("forward"), _("Forward"))
                       ]
