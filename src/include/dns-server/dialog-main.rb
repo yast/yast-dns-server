@@ -1593,8 +1593,10 @@ module Yast
                       _("Type"),
                       [
                         # Combobox - DNS adding zone - Type Master
+                        # TRANSLATORS: Primary is new name for Master (zone)
                         Item(Id("master"), _("Primary")),
                         # Combobox - DNS adding zone - Type Slave
+                        # TRANSLATORS: Secondary is new name for Slave (zone)
                         Item(Id("slave"), _("Secondary")),
                         # Combobox - DNS adding zone - Type Slave
                         Item(Id("forward"), _("Forward"))

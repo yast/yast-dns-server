@@ -2743,11 +2743,12 @@ module Yast
           if Builtins.size(@current_zone_masters) == 0
             if Popup.ContinueCancelHeadline(
                 # TRANSLATORS: Popup error headline
+                # TRANSLATORS: Primary is new name for Master (zone)
                 _("Missing Primary Server"),
                 # TRANSLATORS: Popup error text
                 _(
-                  "Every secondary zone must have its master server IP defined.\n" +
-                    "Configuration of a DNS server without a master server would fail.\n" +
+                  "Every secondary zone must have its primary server IP defined.\n" +
+                    "Configuration of a DNS server without a primary server would fail.\n" +
                     "If you continue, the current zone will be removed."
                 )
               )
