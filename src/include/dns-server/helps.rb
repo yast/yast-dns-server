@@ -66,17 +66,17 @@ module Yast
         ),
         # help 2/5 alt. 2
         "zone_masters"                => _(
-          "<p><b><big>Master Servers</big></b><br>\n" +
-            "Set the IP addresses of the master name servers for this zone. Use <b>Add</b>\n" +
-            "to add a new master name server. Select an existing one then click <b>Delete</b>\n" +
+          "<p><b><big>Primary Servers</big></b><br>\n" +
+            "Set the IP addresses of the primary name servers for this zone. Use <b>Add</b>\n" +
+            "to add a new primary name server. Select an existing one then click <b>Delete</b>\n" +
             "to remove an existing one.</p>"
         ),
         # help 1/2
         "zone_type"                   => _(
           "<p><b><big>Zone Type</big></b><br>\n" +
             "To make this name server the primary source of the data of the zone,\n" +
-            "select <b>Master</b>. To make it the secondary name server, select <b>Slave</b>\n" +
-            "or <b>Stub</b>, so the data of the zone will be mirrored from the master\n" +
+            "select <b>Primary</b>. To make it the secondary name server, select <b>Secondary</b>\n" +
+            "or <b>Stub</b>, so the data of the zone will be mirrored from the primary\n" +
             "server.</p>"
         ),
         # help 2/2
@@ -121,26 +121,26 @@ module Yast
           # help text 5/9 - Serial
           _(
             "<p><b>Serial</b> number is used for determining if the zone has changed on\n" +
-              "the master servers (so that slave servers do not always need to synchronize the\n" +
+              "the primary servers (so that secondary servers do not always need to synchronize the\n" +
               "entire zone).</p>\n"
           ) +
           # help text 6/9 - Refresh
           _(
-            "<p><b>Refresh</b> sets how often the zone should be synchronized from\nmaster name server to slave name servers.</p>"
+            "<p><b>Refresh</b> sets how often the zone should be synchronized from\nprimary name server to secondary name servers.</p>"
           ) +
           # help text 7/9 - Retry
           _(
-            "<p><b>Retry</b> sets how often slave servers try to synchronize\nthe zone from the master server if synchronization fails.</p>"
+            "<p><b>Retry</b> sets how often secondary servers try to synchronize\nthe zone from the primary server if synchronization fails.</p>"
           ) +
           # help text 8/9 - Expiry
           _(
-            "<p><b>Expiry</b> means the period after which the zone expires on slave\n" +
-              "servers and slave servers stop answering replies until it is synchronized.\n" +
+            "<p><b>Expiry</b> means the period after which the zone expires on secondary\n" +
+              "servers and secondary servers stop answering replies until it is synchronized.\n" +
               "</p>"
           ) +
           # help text 9/9 - Minimum
           _(
-            "<p><b>Minimum</b> sets for how long the slave servers should cache\nnegative answers (name resolution failed).</p>"
+            "<p><b>Minimum</b> sets for how long the secondary servers should cache\nnegative answers (name resolution failed).</p>"
           ),
         # ddns keys dialog
         # help text 1/1
@@ -326,7 +326,7 @@ module Yast
           # Zone Editor - Help
           _(
             "<p>\n" +
-              "Reverse zone records can be generated from another master zone.\n" +
+              "Reverse zone records can be generated from another primary zone.\n" +
               "Select the <b>Automatically Generate Records From</b>\n" +
               "check-box and choose the zone to generate the records from.</p>\n"
           ) +
@@ -359,7 +359,7 @@ module Yast
           _(
             "<p><b>Serial</b> is the number used for determining if the zone has \n" +
               "changed on\n" +
-              "the master servers (then slave servers do not always need to synchronize the\n" +
+              "the primary servers (then secondary servers do not always need to synchronize the\n" +
               "entire zone).</p>\n"
           ) +
           # Zone Editor - Help for tab - Zone (SOA) 3/7
@@ -368,21 +368,21 @@ module Yast
           ) +
           # Zone Editor - Help for tab - Zone (SOA) 4/7
           _(
-            "<p><b>Refresh</b> sets how often the zone should be synchronized from\nmaster name server to slave name servers.</p>"
+            "<p><b>Refresh</b> sets how often the zone should be synchronized from\nprimary name server to secondary name servers.</p>"
           ) +
           # Zone Editor - Help for tab - Zone (SOA) 5/7
           _(
-            "<p><b>Retry</b> sets how often slave servers try to synchronize\nthe zone from the master server if synchronization fails.</p>"
+            "<p><b>Retry</b> sets how often secondary servers try to synchronize\nthe zone from the primary server if synchronization fails.</p>"
           ) +
           # Zone Editor - Help for tab - Zone (SOA) 6/7
           _(
-            "<p><b>Expiration</b> means the period after which the zone expires on slave\n" +
-              "servers and slave servers stop answering replies until it is synchronized.\n" +
+            "<p><b>Expiration</b> means the period after which the zone expires on secondary\n" +
+              "servers and secondary servers stop answering replies until it is synchronized.\n" +
               "</p>"
           ) +
           # Zone Editor - Help for tab - Zone (SOA) 7/7
           _(
-            "<p><b>Minimum</b> sets for how long the slave servers should cache\nnegative answers (name resolution failed).</p>"
+            "<p><b>Minimum</b> sets for how long the secondary servers should cache\nnegative answers (name resolution failed).</p>"
           ),
         # Zone Editor - Help for tab - Records 1/7  or 1/5
         "zone_editor_records"         => _(
@@ -482,9 +482,9 @@ module Yast
           ),
         # slave zone help text 1/2
         "slave_zone"                  => _(
-          "<p><big><b>Slave DNS Zone</b></big><br>\n" +
-            "Each slave zone must have the master name server defined. Use\n" +
-            "<b>Master DNS Server IP</b> to define the master name server.</p>"
+          "<p><big><b>Secondary DNS Zone</b></big><br>\n" +
+            "Each slave zone must have the primary name server defined. Use\n" +
+            "<b>Primary DNS Server IP</b> to define the primary name server.</p>"
         ) +
           # slave zone help text 2/2
           _(

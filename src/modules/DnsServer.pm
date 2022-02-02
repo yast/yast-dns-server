@@ -1638,9 +1638,11 @@ sub Summary {
 
     my %zone_types = (
 	# type of zone to be used in summary
-	"master" => __("Master"),
+	# TRANSLATORS: Primary is new name for Master (zone)
+	"master" => __("Primary"),
 	# type of zone to be used in summary
-	"slave" => __("Slave"),
+	# TRANSLATORS: Secondary is new name for Slave (zone)
+	"slave" => __("Secondary"),
 	# type of zone to be used in summary
 	"stub" => __("Stub"),
 	# type of zone to be used in summary
