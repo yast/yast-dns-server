@@ -1,4 +1,5 @@
 TESTS = \
+  dns_server_cmdline_test.rb \
   dns_server_test.rb \
   dns_server_ui_test.rb \
   etc_named_parsing_test.rb \
