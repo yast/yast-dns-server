@@ -65,11 +65,11 @@ module Yast
             ),
             "example" => [
               "zones show",
-              "zones add name=example.org zonetype=master",
-              "zones add name=example.com zonetype=slave masterserver=192.168.0.1",
+              "zones add name=example.org zonetype=primary",
+              "zones add name=example.com zonetype=secondary primaryserver=192.168.0.1",
               "zones add name=example.com zonetype=forward forwarders=192.168.0.1,192.168.0.2",
               "zones remove name=example.org",
-              "zones set name=example.com masterserver=192.168.10.1",
+              "zones set name=example.com primaryserver=192.168.10.1",
               "zones set name=example.com forwarders=192.168.0.3"
             ]
           },
@@ -257,10 +257,18 @@ module Yast
             "type" => "string",
             # TRANSLATORS: commandline short help for command
             "help" => _(
-              "Zone type, master or slave"
+              "Zone type, primary or secondary"
             )
           },
           "masterserver" => {
+            "type" => "ip4",
+            # TRANSLATORS: commandline short help for command
+            # TRANSLATORS: obsolete option, primaryserver should be used instead
+            "help" => _(
+              "DNS zone master server"
+            )
+          },
+          "primaryserver" => {
             "type" => "ip4",
             # TRANSLATORS: commandline short help for command
             "help" => _(
@@ -432,6 +440,7 @@ module Yast
             "set",
             "name",
             "masterserver",
+            "primaryserver",
             "zonetype",
             "forwarders"
           ],
@@ -814,7 +823,7 @@ module Yast
       Builtins.foreach(DnsServerAPI.GetZones) do |zone_name, zone|
         masterservers = []
         forwarders = []
-        if Ops.get(zone, "type") == "slave"
+        if ["slave", "secondary"].include?(zone)
           masterservers = DnsServerAPI.GetZoneMasterServers(zone_name)
         elsif Ops.get(zone, "type") == "forward"
           forwarders = DnsServerAPI.GetZoneForwarders(zone_name)
@@ -859,6 +868,7 @@ module Yast
       Builtins.y2milestone("Options: %1", options)
 
       # Show current settings
+      primaryserver = options["masterserver"] || options["primaryserver"]
       if Ops.get(options, "show") != nil
         return DNSHandlerZonesShow() 
 
@@ -872,7 +882,7 @@ module Yast
         if DnsServerAPI.AddZone(
             Ops.get_string(options, "name"),
             Ops.get_string(options, "zonetype"),
-            { "masterserver" => Ops.get_string(options, "masterserver") }
+            { "masterserver" => primaryserver }
           )
           if Ops.get_string(options, "zonetype") == "forward"
             return DnsServerAPI.SetZoneForwarders(
@@ -897,10 +907,10 @@ module Yast
         # Changing settings
       elsif Ops.get(options, "set") != nil
         # Zone MasterServers
-        if Ops.get(options, "masterserver") != nil
+        if primaryserver != nil
           return DnsServerAPI.SetZoneMasterServers(
             Ops.get_string(options, "name"),
-            [Ops.get_string(options, "masterserver")]
+            [primaryserver]
           ) 
           # Zone Forwarders
         elsif Ops.get(options, "forwarders") != nil
