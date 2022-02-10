@@ -483,10 +483,10 @@ module Yast
         # slave zone help text 1/2
         "slave_zone"                  => _(
           "<p><big><b>Secondary DNS Zone</b></big><br>\n" +
-            "Each slave zone must have the primary name server defined. Use\n" +
+            "Each secondary zone must have the primary name server defined. Use\n" +
             "<b>Primary DNS Server IP</b> to define the primary name server.</p>"
         ) +
-          # slave zone help text 2/2
+          # secondary zone help text 2/2
           _(
             "<p><big><b>Zone Transport</b></big><br>\n" +
               "To allow transports of the zone, set <b>Enable Zone Transport</b>\n" +
