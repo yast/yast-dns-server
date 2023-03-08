@@ -9,13 +9,8 @@ jobs:
   Tests:
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        distro:  [ "tumbleweed", "leap_latest" ]
-
     container:
-      image: registry.opensuse.org/yast/head/containers_${{matrix.distro}}/yast-ruby
+      image: registry.opensuse.org/yast/sle-15/sp5/containers/yast-ruby
 
     steps:
 
@@ -34,35 +29,15 @@ jobs:
 
     # send the coverage report to coveralls.io
     - name: Coveralls Report
-      # send it only from the TW build to avoid duplicate submits
-      if: ${{ matrix.distro == 'tumbleweed' }}
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
-# FIXME: Rubocop is not used
-  # Rubocop:
-  #   runs-on: ubuntu-latest
-  #   container: registry.opensuse.org/yast/head/containers/yast-ruby:latest
-
-  #   steps:
-
-  #   - name: Git Checkout
-  #     uses: actions/checkout@v2
-
-  #   - name: Rubocop
-  #     run: rake check:rubocop
-
   Package:
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        distro:  [ "tumbleweed", "leap_latest" ]
-
     container:
-      image: registry.opensuse.org/yast/head/containers_${{matrix.distro}}/yast-ruby
+      image: registry.opensuse.org/yast/sle-15/sp5/containers/yast-ruby
 
     steps:
 
@@ -75,13 +50,8 @@ jobs:
   Yardoc:
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        distro: [ "leap_latest" ]
-
     container:
-      image: registry.opensuse.org/yast/head/containers_${{matrix.distro}}/yast-ruby
+      image: registry.opensuse.org/yast/sle-15/sp5/containers/yast-ruby
 
     steps:
 
@@ -96,13 +66,8 @@ jobs:
   Checks:
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        distro: [ "leap_latest" ]
-
     container:
-      image: registry.opensuse.org/yast/head/containers_${{matrix.distro}}/yast-ruby
+      image: registry.opensuse.org/yast/sle-15/sp5/containers/yast-ruby
 
     steps:
 
